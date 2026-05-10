@@ -38,5 +38,56 @@
         <p>📧 你的邮箱地址</p>
         <p>🌐 <a href="https://shanca.me">shanca.me</a></p>
     </div>
+    <style>
+    /* 聊天窗口的样式 */
+    #advisor-widget { position: fixed; right: 20px; bottom: 20px; width: 300px; border: 1px solid #ccc; border-radius: 10px; background: white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); font-family: Arial, sans-serif; z-index: 9999; }
+    #advisor-header { background: #2c3e50; color: white; padding: 10px; border-radius: 10px 10px 0 0; cursor: pointer; }
+    #advisor-body { height: 300px; overflow-y: auto; padding: 10px; background: #f9f9f9; }
+    #advisor-input { display: flex; border-top: 1px solid #eee; }
+    #advisor-input input { flex: 1; border: none; padding: 10px; }
+    #advisor-input button { background: #2c3e50; color: white; border: none; padding: 10px 15px; cursor: pointer; }
+    .msg { margin-bottom: 8px; }
+    .user { text-align: right; color: #2c3e50; }
+    .bot { text-align: left; color: #555; }
+</style>
+
+<div id="advisor-widget">
+    <div id="advisor-header" onclick="document.getElementById('advisor-body').style.display = document.getElementById('advisor-body').style.display === 'none' ? 'block' : 'none'">🤖 我的AI顾问 (点击收起)</div>
+    <div id="advisor-body">
+        <div class="msg bot">你好！我是领袖的数字顾问，有什么想了解的？</div>
+    </div>
+    <div id="advisor-input">
+        <input type="text" id="user-input" placeholder="输入你的问题..." onkeypress="if(event.key==='Enter') askAdvisor()">
+        <button onclick="askAdvisor()">发送</button>
+    </div>
+</div>
+
+<script>
+// 前端JS函数，用来和后端Go服务通信
+async function askAdvisor() {
+    const input = document.getElementById('user-input');
+    const question = input.value;
+    if (!question) return;
+
+    // 在聊天框里显示用户的问题
+    const body = document.getElementById('advisor-body');
+    body.innerHTML += `<div class="msg user">你：${question}</div>`;
+    input.value = '';
+
+    try {
+        // 向后端Go服务发请求。注意，这里指向的是你服务器的8080端口
+        const response = await fetch('http://shanca.me:8080/api/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: question })
+        });
+        const data = await response.json();
+        // 在聊天框里显示AI的回答
+        body.innerHTML += `<div class="msg bot">顾问：${data.reply}</div>`;
+    } catch (error) {
+        body.innerHTML += `<div class="msg bot">顾问：抱歉，网络似乎开小差了。</div>`;
+    }
+}
+</script>
 </body>
 </html>
