@@ -76,7 +76,7 @@ async function askAdvisor() {
 
     try {
         // 向后端Go服务发请求。注意，这里指向的是你服务器的8080端口
-        const response = await fetch('http://shanca.me:8080/api/chat', {
+        const response = await fetch('/api/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ message: question })
