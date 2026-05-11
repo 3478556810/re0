@@ -1,19 +1,17 @@
 // backend/main.go
 package main
 
-import (
-    "github.com/gin-gonic/gin"
-)
+import "github.com/gin-gonic/gin"
 
 func main() {
     r := gin.Default()
-    
-    // 注册新API
+
+    // 注册博客 API
     r.GET("/api/posts", getPosts)
     r.POST("/api/posts", createPost)
-    
-    // 保留你原来的AI顾问路由（假设它有独立的处理逻辑）
-    // ...
-    
+
+    // 注册 AI 顾问路由（现在类型匹配了）
+    r.POST("/api/chat", handleChat)
+
     r.Run(":8080")
 }
