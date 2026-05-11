@@ -1,0 +1,136 @@
+---
+// 你的文章“数据库”，目前是直接写在这里的
+const posts = [
+  {
+    title: "记一次完整的网站部署：从本地到云端",
+    date: "2026-05-10",
+    slug: "first-deploy",
+    excerpt: "使用 Git、Nginx 和阿里云 ECS，我将个人网站 shanca.me 成功部署上线，并建成了自动化更新流水线。",
+  },
+  {
+    title: "解决 Git 连接问题与 HTTPS 配置",
+    date: "2026-05-10",
+    slug: "git-https-fix",
+    excerpt: "记录了解决 Git push 报错、配置 Nginx 反向代理以支持 HTTPS 的一系列问题。",
+  },
+  {
+    title: "为网站接入 DeepSeek AI 顾问",
+    date: "2026-05-10",
+    slug: "ai-advisor",
+    excerpt: "将 DeepSeek API 接入个人网站，打造专属的 AI 技术顾问，并注入了 System Prompt。",
+  },
+];
+---
+
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>领袖的根据地 | 技术博客</title>
+    <style>
+      /* 全局样式 - 干净利落 */
+      body {
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        max-width: 720px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+        background: #f9fafb;
+        color: #1f2937;
+        line-height: 1.6;
+      }
+
+      header {
+        border-bottom: 2px solid #e5e7eb;
+        padding-bottom: 1.5rem;
+        margin-bottom: 2.5rem;
+      }
+
+      header h1 {
+        font-size: 2.2rem;
+        margin: 0 0 0.5rem 0;
+        color: #111827;
+      }
+
+      header p {
+        margin: 0;
+        color: #6b7280;
+      }
+
+      .post-list {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+
+      .post-item {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 1.5rem 0;
+        transition: transform 0.1s ease;
+      }
+
+      .post-item:hover {
+        transform: translateX(4px);
+      }
+
+      .post-item h2 {
+        margin: 0 0 0.25rem 0;
+        font-size: 1.4rem;
+      }
+
+      .post-item h2 a {
+        text-decoration: none;
+        color: #111827;
+      }
+
+      .post-item h2 a:hover {
+        color: #2563eb;
+      }
+
+      .post-date {
+        font-size: 0.85rem;
+        color: #9ca3af;
+        margin-bottom: 0.5rem;
+      }
+
+      .post-excerpt {
+        margin: 0;
+        color: #4b5563;
+      }
+
+      footer {
+        margin-top: 3rem;
+        padding-top: 1.5rem;
+        border-top: 1px solid #e5e7eb;
+        text-align: center;
+        color: #9ca3af;
+        font-size: 0.85rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>⚔️ 领袖的根据地</h1>
+      <p>全栈开发者 · 终身学习者 · 技术笔记</p>
+    </header>
+
+    <main>
+      <ul class="post-list">
+        {posts.map((post) => (
+          <li class="post-item">
+            <article>
+              <h2>
+                <a href={`/posts/${post.slug}`}>{post.title}</a>
+              </h2>
+              <p class="post-date">{post.date}</p>
+              <p class="post-excerpt">{post.excerpt}</p>
+            </article>
+          </li>
+        ))}
+      </ul>
+    </main>
+
+    <footer>
+      <p>&copy; 2026 领袖的根据地 · 由 Astro 驱动</p>
+    </footer>
+  </body>
+</html>
