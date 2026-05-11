@@ -1,6 +1,14 @@
+---
+// 注意这两条“虚线”，它们就是 frontmatter 的“围墙”
+import PostEditor from '../components/PostEditor.vue';
+import PostList from '../components/PostList.vue';
+---
 <!DOCTYPE html>
+
 <html lang="zh-CN">
+
 <head>
+	  <!-- 你的简历头部信息 -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>领袖的简历 | shanca.me</title>
@@ -12,7 +20,9 @@
         .tag { display: inline-block; background: #f0f0f0; padding: 2px 8px; margin: 2px; border-radius: 3px; }
     </style>
 </head>
+
 <body>
+	    <!-- 你的简历内容 -->
     <h1>领袖的个人简历</h1>
     
     <div class="section">
@@ -38,6 +48,15 @@
         <p>📧 你的邮箱地址</p>
         <p>🌐 <a href="https://shanca.me">shanca.me</a></p>
     </div>
+
+  <!-- 插入文章列表和编辑器 -->
+    <PostList />
+    <PostEditor />
+
+
+
+ <!-- 你的AI顾问组件 -->
+
     <style>
     /* 聊天窗口的样式 */
     #advisor-widget { position: fixed; right: 20px; bottom: 20px; width: 300px; border: 1px solid #ccc; border-radius: 10px; background: white; box-shadow: 0 4px 8px rgba(0,0,0,0.1); font-family: Arial, sans-serif; z-index: 9999; }
