@@ -1,8 +1,9 @@
----
+﻿---
 // 注意这两条“虚线”，它们就是 frontmatter 的“围墙”
 import PostEditor from "../components/PostEditor.vue";
 import PostList from "../components/PostList.vue";
 import ChatWidget from "../components/ChatWidget.astro";
+import NavBar from '../components/NavBar.astro';
 ---
 
 <!doctype html>
@@ -43,6 +44,7 @@ import ChatWidget from "../components/ChatWidget.astro";
     </head>
 
     <body>
+         <NavBar />
         <!-- 你的简历内容 -->
         <h1>领袖的个人简历</h1>
 
