@@ -1,26 +1,29 @@
+<!-- src/components/ThemeProvider.vue -->
 <template>
-  <div class="theme-provider">
-    <slot></slot> <!-- 只做样式注入，不修改DOM结构 -->
+  <div>
+    <slot />
   </div>
 </template>
 
 <script setup>
-import { onMounted } from 'vue';
+import { ref, provide, onMounted, onBeforeUnmount } from 'vue'
+
+const currentThemeColor = ref('#60a5fa')
+
+// 监听全局主题切换事件
+const handleThemeSwitch = (event) => {
+  console.log('🔄 ThemeProvider 收到主题切换:', event.detail)
+  currentThemeColor.value = event.detail
+}
 
 onMounted(() => {
-  // 初始化默认主题（深空蓝）
-  document.documentElement.style.setProperty('--theme-bg', 'linear-gradient(135deg, #0a192f 0%, #1e3a8a 100%)');
-});
+  window.addEventListener('theme-switch', handleThemeSwitch)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('theme-switch', handleThemeSwitch)
+})
+
+// 将当前主题色通过 provide 传递给子组件（如 ParticleBackground）
+provide('currentThemeColor', currentThemeColor)
 </script>
-
-<style>
-:root {
-  --theme-bg: linear-gradient(135deg, #0a192f 0%, #1e3a8a 100%); /* 默认 */
-}
-
-.theme-provider {
-  min-height: 100vh;
-  background: var(--theme-bg);
-  transition: background 0.8s ease; /* 为后续主题切换预留 */
-}
-</style>
