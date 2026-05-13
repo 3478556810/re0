@@ -2,19 +2,29 @@ import { defineConfig } from 'astro/config';
 import vue from '@astrojs/vue';
 
 export default defineConfig({
-  integrations: [vue()],
+  integrations: [
+    vue({
+      appEntrypoint: '/src/pages/_app',
+      ssr: false,  // 禁用SSR，解决hydration问题
+      runtimeOptions: {
+        compilerOptions: {
+          isCustomElement: (tag) => ['particles', 'aplayer'].includes(tag)
+        }
+      }
+    })
+  ],
   vite: {
     build: {
-      // 强制所有生成的文件使用 UTF-8 编码
       charset: 'utf8',
     },
     esbuild: {
-      // 在更底层，强制 esbuild 也遵循 UTF-8 规则
       charset: 'utf8',
+    },
+    optimizeDeps: {  // 新增：预构建关键依赖
+      include: ['particles.vue3', 'tsparticles-slim', '@worstone/vue-aplayer']
     }
   },
-  // 开发服务器配跨域
-   server: {
+  server: {
     port: 4321,
     proxy: {
       '/api': {
@@ -23,5 +33,4 @@ export default defineConfig({
       }
     }
   }
-  
 });
