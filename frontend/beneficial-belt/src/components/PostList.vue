@@ -17,9 +17,14 @@ import { ref, onMounted } from 'vue';
 const posts = ref([]);
 
 onMounted(async () => {
-  const res = await fetch('/api/posts');
-  if (res.ok) {
-    posts.value = await res.json();
+  try {
+    const res = await fetch('/api/posts');
+    //const res = await fetch('http://localhost:8080/api/posts');
+    if (res.ok) {
+      posts.value = await res.json();
+    }
+  } catch (error) {
+    console.error('获取文章列表失败:', error);
   }
 });
 </script>

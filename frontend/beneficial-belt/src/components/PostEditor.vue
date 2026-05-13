@@ -17,7 +17,9 @@ const content = ref('');
 const message = ref('');
 
 const publish = async () => {
-  const res = await fetch('/api/posts', {
+
+  const res = await fetch('api/posts', {
+//const res = await fetch('http://localhost:8080/api/posts', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title: title.value, content: content.value }),
