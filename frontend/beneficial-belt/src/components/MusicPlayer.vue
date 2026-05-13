@@ -29,14 +29,14 @@
       :src="currentSrc"
       @play="isPlaying = true"
       @pause="isPlaying = false"
-      @ended="nextTrack"
+      @ended="onSongEnded"
       @error="onError"
     ></audio>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, inject } from 'vue'
+import { ref, computed } from 'vue'
 
 const playlist = [
   { title: 'CopyMemory', src: '/music/CopyMemory.mp3', cover: '/images/CopyMemory.png', theme: '#60a5fa' },
@@ -47,48 +47,67 @@ const playlist = [
 const audioRef = ref(null)
 const currentIndex = ref(0)
 const isPlaying = ref(false)
-const switchTheme = inject('switchTheme', () => {})
+let canAutoPlay = false
 
 const currentTrack = computed(() => playlist[currentIndex.value])
 const currentSrc = computed(() => currentTrack.value.src)
 const currentTitle = computed(() => currentTrack.value.title)
 const currentCover = computed(() => currentTrack.value.cover)
 
+// ========== 用户点击播放按钮（建立信任链） ==========
 const togglePlay = () => {
   const audio = audioRef.value
   if (!audio) return
   if (audio.paused) {
-    audio.play()
+    audio.play().then(() => {
+      canAutoPlay = true  // 播放成功后，允许后续自动切歌
+    }).catch(err => {
+      console.warn('播放失败:', err)
+    })
   } else {
     audio.pause()
   }
 }
 
+// ========== 歌曲结束时的自动切歌 ==========
+const onSongEnded = () => {
+  if (canAutoPlay) {
+    // 信任链已建立，直接切歌并播放
+    nextTrack()
+  } else {
+    // 信任链未建立，只切歌不自动播放
+    currentIndex.value = (currentIndex.value + 1) % playlist.length
+    switchTheme(playlist[currentIndex.value].theme)
+  }
+}
+
+// ========== 手动切歌 ==========
 const nextTrack = () => {
   currentIndex.value = (currentIndex.value + 1) % playlist.length
-  nextTickPlay()
   const nextColor = playlist[currentIndex.value].theme
   console.log('⏭ 切歌, 主题色:', nextColor)
-    // 通过全局事件发送主题切换
- window.dispatchEvent(new CustomEvent('theme-switch', { detail: nextColor }))
+  window.dispatchEvent(new CustomEvent('theme-switch', { detail: nextColor }))
+  playCurrentTrack()
 }
 
 const prevTrack = () => {
   currentIndex.value = (currentIndex.value - 1 + playlist.length) % playlist.length
-  nextTickPlay()
   const prevColor = playlist[currentIndex.value].theme
   console.log('⏮ 切歌, 主题色:', prevColor)
-// 通过全局事件发送主题切换
   window.dispatchEvent(new CustomEvent('theme-switch', { detail: prevColor }))
+  playCurrentTrack()
 }
 
-const nextTickPlay = () => {
+// ========== 播放当前音轨 ==========
+const playCurrentTrack = () => {
   const audio = audioRef.value
   if (!audio) return
   audio.load()
-  setTimeout(() => {
-    if (isPlaying.value) audio.play()
-  }, 100)
+  if (canAutoPlay || isPlaying.value) {
+    audio.play().catch(err => {
+      console.warn('自动播放被阻止:', err)
+    })
+  }
 }
 
 const onError = () => {

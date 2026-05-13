@@ -1,8 +1,15 @@
 import { defineConfig } from 'astro/config';
 import vue from '@astrojs/vue';
+import { fileURLToPath } from 'url';
+import { dirname, resolve } from 'path';
+
+// 在 ES 模块中手动构建 __dirname
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export default defineConfig({
   integrations: [vue()],
+
   vite: {
     build: {
       charset: 'utf8',
@@ -10,21 +17,30 @@ export default defineConfig({
     esbuild: {
       charset: 'utf8',
     },
-    optimizeDeps: {  // 新增：预构建关键依赖
-      include: []
+
+    ssr: {
+      noExternal: ['tsparticles-engine', 'tsparticles-slim'],
     },
-ssr: {
-      noExternal: ['tsparticles-engine', 'tsparticles-slim'] // 添加这一行
 
+    server: {
+      port: 4321,
+      proxy: {
+        '/api': {
+          target: 'http://localhost:8080',
+          changeOrigin: true,
+        },
+      },
+      fs: {
+        allow: [
+          resolve(__dirname, '.'),
+          resolve(__dirname, 'node_modules'),
+          resolve(__dirname, 'public'),
+        ],
+      },
+    },
 
+    optimizeDeps: {
+      include: [],
+    },
   },
-  server: {
-    port: 4321,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8080',
-        changeOrigin: true,
-      }
-    }
-  }
 });
