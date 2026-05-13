@@ -162,9 +162,11 @@
       messages.innerHTML += `<div class="msg user">${question}</div>`;
       chatInput.value = "";
 
+      // 在 fetch 之前，动态确定 API 地址
+      const isDev = import.meta.env.DEV;
+      const apiUrl = isDev ? "http://localhost:8080/api/chat" : "/api/chat";
       try {
-        const response = await fetch("/api/chat", {
-          //const response = await fetch('http://localhost:8080/api/chat', {
+        const response = await fetch(apiUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ message: question }),

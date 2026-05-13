@@ -1,4 +1,4 @@
-<!-- frontend/beneficial-belt/src/components/PostList.vue -->
+<!-- frontend/beneficial-belt/src/components/blog/PostList.vue -->
 <template>
   <div>
     <h2>📝 最新战报</h2>
@@ -13,13 +13,14 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import { POSTS_API } from '../config.js';  // 👈 移到这里
 
 const posts = ref([]);
 
 onMounted(async () => {
   try {
-    const res = await fetch('/api/posts');
-    //const res = await fetch('http://localhost:8080/api/posts');
+    const res = await fetch(POSTS_API);
+
     if (res.ok) {
       posts.value = await res.json();
     }
@@ -28,6 +29,7 @@ onMounted(async () => {
   }
 });
 </script>
+
 <style scoped>
 .post-item { margin-bottom: 2rem; padding-bottom: 1rem; border-bottom: 1px solid #eee; }
 .meta { color: #666; font-size: 0.9rem; }
