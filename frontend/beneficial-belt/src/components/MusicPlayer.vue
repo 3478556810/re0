@@ -1,7 +1,6 @@
 <!-- src/components/MusicPlayer.vue -->
 <template>
   <div class="vinyl-player">
-    <!-- 黑胶唱片盘片 -->
     <div class="vinyl-disc" :class="{ 'is-spinning': isPlaying }">
       <div class="vinyl-grooves"></div>
       <div class="vinyl-label" v-if="currentCover">
@@ -11,15 +10,7 @@
         <span>🎵</span>
       </div>
     </div>
-    
-    <!-- 唱臂 -->
-    <div class="tonearm" :class="{ 'is-playing': isPlaying }">
-      <div class="tonearm-base"></div>
-      <div class="tonearm-arm"></div>
-      <div class="tonearm-head"></div>
-    </div>
 
-    <!-- 控制面板 -->
     <div class="vinyl-controls">
       <div class="song-info" v-if="currentTitle">
         <div class="song-name">{{ currentTitle }}</div>
@@ -33,7 +24,6 @@
       </div>
     </div>
 
-    <!-- 隐藏的原生 audio 元素 -->
     <audio
       ref="audioRef"
       :src="currentSrc"
@@ -46,27 +36,24 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, inject } from 'vue'
 
-// ========== 歌单配置 ==========
 const playlist = [
   { title: 'CopyMemory', src: '/music/CopyMemory.mp3', cover: '/images/CopyMemory.png', theme: '#60a5fa' },
   { title: 'Bamboo', src: '/music/Bamboo.mp3', cover: '/images/Bamboo.jpg', theme: '#10b981' },
   { title: 'AspiralMoon', src: '/music/AspiralMoon.mp3', cover: '/images/AspiralMoon.jpg', theme: '#c084fc' },
 ]
 
-// ========== 状态 ==========
 const audioRef = ref(null)
 const currentIndex = ref(0)
 const isPlaying = ref(false)
+const switchTheme = inject('switchTheme', () => {})
 
-// ========== 计算属性 ==========
 const currentTrack = computed(() => playlist[currentIndex.value])
 const currentSrc = computed(() => currentTrack.value.src)
 const currentTitle = computed(() => currentTrack.value.title)
 const currentCover = computed(() => currentTrack.value.cover)
 
-// ========== 播放控制 ==========
 const togglePlay = () => {
   const audio = audioRef.value
   if (!audio) return
@@ -80,11 +67,19 @@ const togglePlay = () => {
 const nextTrack = () => {
   currentIndex.value = (currentIndex.value + 1) % playlist.length
   nextTickPlay()
+  const nextColor = playlist[currentIndex.value].theme
+  console.log('⏭ 切歌, 主题色:', nextColor)
+    // 通过全局事件发送主题切换
+ window.dispatchEvent(new CustomEvent('theme-switch', { detail: nextColor }))
 }
 
 const prevTrack = () => {
   currentIndex.value = (currentIndex.value - 1 + playlist.length) % playlist.length
   nextTickPlay()
+  const prevColor = playlist[currentIndex.value].theme
+  console.log('⏮ 切歌, 主题色:', prevColor)
+// 通过全局事件发送主题切换
+  window.dispatchEvent(new CustomEvent('theme-switch', { detail: prevColor }))
 }
 
 const nextTickPlay = () => {
@@ -113,7 +108,6 @@ const onError = () => {
   gap: 16px;
 }
 
-/* ========== 唱片盘片 ========== */
 .vinyl-disc {
   width: 160px;
   height: 160px;
@@ -151,7 +145,6 @@ const onError = () => {
   position: relative;
 }
 
-/* 旋转动画 */
 .vinyl-disc.is-spinning {
   animation: vinyl-spin 4s linear infinite;
 }
@@ -161,7 +154,6 @@ const onError = () => {
   to { transform: rotate(360deg); }
 }
 
-/* 中心标签 */
 .vinyl-label {
   width: 60px;
   height: 60px;
@@ -189,9 +181,6 @@ const onError = () => {
   z-index: 1;
 }
 
-
-
-/* ========== 控制面板 ========== */
 .vinyl-controls {
   display: flex;
   flex-direction: column;

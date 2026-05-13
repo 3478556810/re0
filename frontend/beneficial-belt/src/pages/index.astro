@@ -1,86 +1,81 @@
 ﻿---
 import NavBar from "../components/NavBar.astro";
 import ChatWidget from "../components/ChatWidget.vue";
-import ThemeProvider from '../components/ThemeProvider.vue';
-import ParticleBackground from '../components/ParticleBackground.vue';
+import ThemeProvider from "../components/ThemeProvider.vue";
+import ParticleBackground from "../components/ParticleBackground.vue";
 import MusicPlayer from "../components/MusicPlayer.vue";
 ---
 
 <!doctype html>
 <html lang="zh-CN">
-    <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-        <title>领袖的根据地 | 全栈开发者</title>
-        <style>
-            @import "/src/styles/global.css";
-        </style>
-    </head>
-    <body>
-        <!-- 粒子背景，确保在最底层 -->
-        <ParticleBackground client:only="vue" />
 
-        <ThemeProvider client:only="vue">
-            <div class="app-container">
-                <NavBar />
-                <div class="content">
-                    <!-- 英雄区域 -->
-                    <div class="hero">
-                        <h1>领袖的根据地</h1>
-                        <p class="tagline">全栈开发者 · AI先锋 · 终身学习者</p>
-                        <p class="intro">
-                            从深渊中觉醒，用代码在数字世界开疆拓土。
-                            这是我的个人技术作品集，一个由AI驱动的全栈帝国。
-                        </p>
-                    </div>
 
-                    <!-- 五大岛屿入口 -->
-                    <div class="island-grid">
-                        <a href="/resume" class="island-card">
-                            <span class="icon">📄</span>
-                            <h2>简历</h2>
-                            <p>我的技术战甲</p>
-                        </a>
-                        <a href="/projects" class="island-card">
-                            <span class="icon">🛠️</span>
-                            <h2>作品集</h2>
-                            <p>缴获的战利品</p>
-                        </a>
-                        <a href="/blog" class="island-card">
-                            <span class="icon">✍️</span>
-                            <h2>博客</h2>
-                            <p>战术反思日志</p>
-                        </a>
-                        <a href="/philosophy" class="island-card">
-                            <span class="icon">🧠</span>
-                            <h2>技术哲学</h2>
-                            <p>战略与纲领</p>
-                        </a>
-                        <a href="/timeline" class="island-card">
-                            <span class="icon">⏳</span>
-                            <h2>生命线</h2>
-                            <p>成长史诗</p>
-                        </a>
-                    </div>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>领袖的根据地 | 全栈开发者</title>
+    <style>
+      @import "/src/styles/global.css";
+       :root {
+    --theme-color: #60a5fa;
+    --theme-bg: #0a1628;
+  }
+  body {
+    background-color: var(--theme-bg);
+  }
+  .navbar {
+    background-color: var(--theme-bg);
+    border-bottom: 1px solid var(--theme-color);
+  }
+  .hero h1 {
+    color: var(--theme-color);
+  }
+  .island-card:hover {
+    border-color: var(--theme-color);
+    box-shadow: 0 0 20px var(--theme-color);
+  }
+  .skill-tag {
+    border-color: var(--theme-color);
+    color: var(--theme-color);
+  }
+    </style>
+  </head>
+  <body>
+    <ThemeProvider client:only="vue">
+      <!-- 粒子背景 -->
+      <ParticleBackground client:only="vue" />
 
-                    <!-- 技能标签云 -->
-                    <div class="skill-cloud">
-                        <span class="skill-tag">Java</span>
-                        <span class="skill-tag">Go</span>
-                        <span class="skill-tag">Astro</span>
-                        <span class="skill-tag">Vue.js</span>
-                        <span class="skill-tag">Redis</span>
-                        <span class="skill-tag">Docker</span>
-                        <span class="skill-tag">MySQL</span>
-                        <span class="skill-tag">Spring Cloud</span>
-                        <span class="skill-tag">DeepSeek</span>
-                        <span class="skill-tag">UML</span>
-                    </div>
-                </div>
+      <!-- 主内容层 -->
+      <div class="app-container" style="position: relative; z-index: 1;">
+        <NavBar />
+        <div class="content">
+          <!-- 英雄区域 -->
+          <div class="hero">
+            <h1>领袖的根据地</h1>
+            <p class="tagline">全栈开发者 · AI先锋 · 终身学习者</p>
+            <p class="intro">从深渊中觉醒，用代码在数字世界开疆拓土。这是我的个人技术作品集，一个由AI驱动的全栈帝国。</p>
+          </div>
 
-                <ChatWidget client:only="vue" />
-                <MusicPlayer client:only="vue" />
-            </div>
-        </ThemeProvider>
-    </body>
+          <!-- 五大岛屿入口 -->
+          <div class="island-grid">
+            <a href="/resume" class="island-card"><span class="icon">📄</span><h2>简历</h2><p>我的技术战甲</p></a>
+            <a href="/projects" class="island-card"><span class="icon">🛠️</span><h2>作品集</h2><p>缴获的战利品</p></a>
+            <a href="/blog" class="island-card"><span class="icon">✍️</span><h2>博客</h2><p>战术反思日志</p></a>
+            <a href="/philosophy" class="island-card"><span class="icon">🧠</span><h2>技术哲学</h2><p>战略与纲领</p></a>
+            <a href="/timeline" class="island-card"><span class="icon">⏳</span><h2>生命线</h2><p>成长史诗</p></a>
+          </div>
+
+          <!-- 技能标签云 -->
+          <div class="skill-cloud">
+            <span class="skill-tag">Java</span><span class="skill-tag">Go</span><span class="skill-tag">Astro</span><span class="skill-tag">Vue.js</span>
+            <span class="skill-tag">Redis</span><span class="skill-tag">Docker</span><span class="skill-tag">MySQL</span>
+            <span class="skill-tag">Spring Cloud</span><span class="skill-tag">DeepSeek</span><span class="skill-tag">UML</span>
+          </div>
+        </div>
+
+        <ChatWidget client:only="vue" />
+        <MusicPlayer client:only="vue" />
+      </div>
+    </ThemeProvider>
+  </body>
 </html>
