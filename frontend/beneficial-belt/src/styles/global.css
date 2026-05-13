@@ -1,0 +1,152 @@
+/* 全局暗黑模式与字体 */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    background-color: #0f172a;
+    /* 深邃的暗夜蓝 */
+    color: #e2e8f0;
+    overflow-x: hidden;
+     position: relative; /* 创建层叠上下文 */
+}
+
+/* 粒子背景的容器 */
+#particles-js {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 0;
+    /* 置于底层 */
+}
+
+/* 主内容区域，需要悬浮在粒子之上 */
+.content {
+    position: relative;
+    z-index: 2;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    text-align: center;
+}
+
+/* 英雄区域 (Hero) 的毛玻璃效果 */
+.hero {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(15px);
+    -webkit-backdrop-filter: blur(15px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    padding: 60px 40px;
+    margin-bottom: 60px;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.hero h1 {
+    font-size: 4rem;
+    margin: 0;
+    background: linear-gradient(135deg, #60a5fa, #a78bfa);
+    background-clip: text;
+    /* 新增：标准属性 */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 2px;
+}
+
+.hero .tagline {
+    font-size: 1.5rem;
+    color: #94a3b8;
+    margin-top: 10px;
+}
+
+.hero .intro {
+    font-size: 1.1rem;
+    color: #cbd5e1;
+    max-width: 600px;
+    margin: 20px auto 0;
+    line-height: 1.8;
+}
+
+/* 入口卡片的网格布局 */
+.island-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 25px;
+    margin-top: 40px;
+}
+
+/* 每个导航卡片的毛玻璃特效 */
+.island-card {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 20px;
+    padding: 30px 20px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: #e2e8f0;
+     border: 1px solid rgba(96, 165, 250, 0.2);
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.island-card:hover {
+   transform: translateY(-8px) scale(1.02);
+  background: rgba(30, 41, 59, 0.8);
+  border-color: #60a5fa;
+  box-shadow: 0 0 30px rgba(96, 165, 250, 0.3);
+}
+
+.island-card .icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.island-card h2 {
+    margin: 0;
+    font-size: 1.4rem;
+    background: linear-gradient(135deg, #e2e8f0, #cbd5e1);
+    background-clip: text;
+    /* 新增：标准属性 */
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.island-card p {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    margin-top: 8px;
+}
+
+/* 技能标签云 */
+.skill-cloud {
+    margin-top: 60px;
+}
+
+.skill-tag {
+    display: inline-block;
+    background: rgba(96, 165, 250, 0.15);
+    border: 1px solid rgba(96, 165, 250, 0.3);
+    color: #93c5fd;
+    padding: 6px 14px;
+    margin: 5px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+#tsparticles-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+#tsparticles {
+  width: 100%;
+  height: 100%;
+}
