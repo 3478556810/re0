@@ -13,7 +13,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
-import { POSTS_API } from '../config.js';  // 👈 移到这里
+import { POSTS_API } from '../../config.js';  // 👈 移到这里
 
 const posts = ref([]);
 

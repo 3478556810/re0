@@ -11,7 +11,7 @@
 
 <script setup>
 import { ref } from 'vue';
-import { POSTS_API } from '../config.js';  // 👈 加上这行
+import { POSTS_API } from '../../config.js';  // 👈 加上这行
 
 const title = ref('');
 const content = ref('');
