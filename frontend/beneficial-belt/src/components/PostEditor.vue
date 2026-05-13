@@ -11,15 +11,14 @@
 
 <script setup>
 import { ref } from 'vue';
+import { POSTS_API } from '../config.js';  // 👈 加上这行
 
 const title = ref('');
 const content = ref('');
 const message = ref('');
 
 const publish = async () => {
-
-  const res = await fetch('api/posts', {
-//const res = await fetch('http://localhost:8080/api/posts', {
+  const res = await fetch(POSTS_API, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ title: title.value, content: content.value }),
