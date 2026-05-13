@@ -54,16 +54,50 @@ const currentSrc = computed(() => currentTrack.value.src)
 const currentTitle = computed(() => currentTrack.value.title)
 const currentCover = computed(() => currentTrack.value.cover)
 
-// ========== 用户点击播放按钮（建立信任链） ==========
+// ========== 辅助函数：等待音频准备好 ==========
+const waitForCanPlay = () => {
+  return new Promise((resolve, reject) => {
+    const audio = audioRef.value
+    if (!audio) return reject(new Error('音频元素未初始化'))
+
+    const timeout = setTimeout(() => {
+      audio.removeEventListener('canplay', handler)
+      reject(new Error('音频加载超时'))
+    }, 5000)
+
+    const handler = () => {
+      clearTimeout(timeout)
+      audio.removeEventListener('canplay', handler)
+      resolve()
+    }
+
+    audio.addEventListener('canplay', handler)
+  })
+}
+
+// ========== 播放当前音轨（修复竞态） ==========
+const playCurrentTrack = async () => {
+  const audio = audioRef.value
+  if (!audio) return
+
+  audio.load()
+  
+  try {
+    await waitForCanPlay()
+    await audio.play()
+    canAutoPlay = true
+    isPlaying.value = true
+  } catch (err) {
+    console.warn('播放失败:', err.message || err)
+  }
+}
+
+// ========== 用户点击播放按钮 ==========
 const togglePlay = () => {
   const audio = audioRef.value
   if (!audio) return
   if (audio.paused) {
-    audio.play().then(() => {
-      canAutoPlay = true  // 播放成功后，允许后续自动切歌
-    }).catch(err => {
-      console.warn('播放失败:', err)
-    })
+    playCurrentTrack()
   } else {
     audio.pause()
   }
@@ -72,12 +106,7 @@ const togglePlay = () => {
 // ========== 歌曲结束时的自动切歌 ==========
 const onSongEnded = () => {
   if (canAutoPlay) {
-    // 信任链已建立，直接切歌并播放
     nextTrack()
-  } else {
-    // 信任链未建立，只切歌不自动播放
-    currentIndex.value = (currentIndex.value + 1) % playlist.length
-    switchTheme(playlist[currentIndex.value].theme)
   }
 }
 
@@ -96,18 +125,6 @@ const prevTrack = () => {
   console.log('⏮ 切歌, 主题色:', prevColor)
   window.dispatchEvent(new CustomEvent('theme-switch', { detail: prevColor }))
   playCurrentTrack()
-}
-
-// ========== 播放当前音轨 ==========
-const playCurrentTrack = () => {
-  const audio = audioRef.value
-  if (!audio) return
-  audio.load()
-  if (canAutoPlay || isPlaying.value) {
-    audio.play().catch(err => {
-      console.warn('自动播放被阻止:', err)
-    })
-  }
 }
 
 const onError = () => {
