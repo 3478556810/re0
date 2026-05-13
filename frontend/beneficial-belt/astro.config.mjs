@@ -12,5 +12,16 @@ export default defineConfig({
       // 在更底层，强制 esbuild 也遵循 UTF-8 规则
       charset: 'utf8',
     }
+  },
+  // 开发服务器配跨域
+   server: {
+    port: 4321,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080',
+        changeOrigin: true,
+      }
+    }
   }
+  
 });
