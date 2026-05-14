@@ -1,23 +1,39 @@
 <!-- src/components/shanxi/ChatWidget.vue -->
 <template>
   <div>
-<div class="chat-toggle-button" @click="toggleChat">
-  <div class="toggle-light-pulse"><LightPulse /></div>
-  <div class="toggle-icon"><div class="star-core"></div></div>
-</div>
+    <!-- 悬浮按钮 -->
+    <div class="chat-toggle-button" @click="toggleChat">
+      <div class="toggle-light-pulse"><LightPulse /></div>
+      <div class="toggle-icon"><div class="star-core"></div></div>
+    </div>
 
     <!-- 聊天窗口 -->
     <div class="chat-window" :style="{ display: isOpen ? 'flex' : 'none' }">
       <div class="chat-header">
         <div class="header-left">
-          <LightPulse />
+          <ShanxiAvatar :emotion="currentEmotion" :size="40" />
           <span>杉汐</span>
         </div>
         <button class="chat-close-button" @click="toggleChat">✕</button>
       </div>
 
       <div class="chat-messages" ref="messagesContainer">
-        <div class="message bot">你好！我是杉汐，你的数字伙伴。</div>
+        <div
+          v-for="msg in messages"
+          :key="msg.id"
+          class="message-row"
+          :class="msg.sender"
+        >
+          <ShanxiAvatar
+            v-if="msg.sender === 'bot'"
+            :emotion="currentEmotion"
+            :size="28"
+            class="msg-avatar"
+          />
+          <div class="message" :class="msg.sender">
+            {{ msg.content }}
+          </div>
+        </div>
       </div>
 
       <div class="chat-input-area">
@@ -37,53 +53,70 @@
 </template>
 
 <script setup>
-import { ref, nextTick } from 'vue'
+import { ref, watch, nextTick } from 'vue'
 import LightPulse from './LightPulse.vue'
+import ShanxiAvatar from './ShanxiAvatar.vue'
 
-const isOpen = ref(false)
-const userInput = ref('')
 const messagesContainer = ref(null)
 
-const toggleChat = () => { isOpen.value = !isOpen.value }
 
-const sendMessage = async () => {
-  const question = userInput.value.trim()
-  if (!question) return
 
-  addMessage(question, 'user')
-  userInput.value = ''
+/* ----- 状态 ----- */
+const isOpen = ref(false)
+const userInput = ref('')
+const messages = ref([])   // 纯 JS 数组，无需泛型
+let msgId = 0
 
-  try {
-    const apiUrl = import.meta.env.DEV ? 'http://localhost:8080/api/chat' : '/api/chat'
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: question })
-    })
-
-    if (!response.ok) throw new Error('Network response was not ok')
-
-    const data = await response.json()
-    addMessage(data.reply, 'bot')
-  } catch (error) {
-    console.error('Error sending message:', error)
-    addMessage('杉汐：抱歉，我的灵魂好像被风吹散了…稍等片刻可好？', 'bot')
-  }
-}
-
-const addMessage = (content, sender) => {
-  const messageDiv = document.createElement('div')
-  messageDiv.className = `message ${sender}`
-  messageDiv.textContent = content
-  messagesContainer.value?.appendChild(messageDiv)
+// 自动滚动到底部
+watch(messages, () => {
   nextTick(() => {
     if (messagesContainer.value) {
       messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
     }
   })
+}, { deep: true })
+
+/* 情绪（后续接引擎动态化） */
+const currentEmotion = ref({
+  current: 'calm',
+  color: '#f0a040',
+  speed: 3.5,
+  intensity: 1.0,
+  glowColor: 'rgba(255, 140, 100, 0.4)',
+})
+
+/* ----- 方法 ----- */
+const toggleChat = () => {
+  isOpen.value = !isOpen.value
+}
+
+const sendMessage = async () => {
+  const question = userInput.value.trim()
+  if (!question) return
+
+  // 用户消息
+  messages.value.push({ id: msgId++, content: question, sender: 'user' })
+  userInput.value = ''
+
+  try {
+    const res = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: question }),
+    })
+    if (!res.ok) throw new Error('Network error')
+    const data = await res.json()
+    // 杉汐回复
+    messages.value.push({ id: msgId++, content: data.reply, sender: 'bot' })
+  } catch {
+    messages.value.push({
+      id: msgId++,
+      content: '杉汐：抱歉，我的灵魂好像被风吹散了…稍等片刻可好？',
+      sender: 'bot',
+    })
+  }
 }
 </script>
-
 <style scoped>
 @import '../../styles/shanxi/chat-widget.css';
 </style>
