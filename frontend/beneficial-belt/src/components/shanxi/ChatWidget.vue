@@ -11,7 +11,7 @@
     <div class="chat-window" :style="{ display: isOpen ? 'flex' : 'none' }">
       <div class="chat-header">
         <div class="header-left">
-          <ShanxiAvatar :emotion="currentEmotion" :size="40" />
+          <ShanxiAvatar :emotion="currentEmotion" :size="64" />
           <span>杉汐</span>
         </div>
         <button class="chat-close-button" @click="toggleChat">✕</button>
@@ -27,7 +27,7 @@
           <ShanxiAvatar
             v-if="msg.sender === 'bot'"
             :emotion="currentEmotion"
-            :size="28"
+            :size="40"
             class="msg-avatar"
           />
           <div class="message" :class="msg.sender">
