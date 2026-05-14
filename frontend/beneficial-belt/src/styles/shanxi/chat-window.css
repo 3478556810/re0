@@ -5,8 +5,8 @@
   position: fixed;
   bottom: 90px;
   right: 100px;
-  width: 380px;
-  max-height: 520px;
+  width: 480px;
+  max-height: 600px;
   background: var(--shanxi-bg-dark);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -68,7 +68,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 320px;
+  max-height: 480px;
   background: transparent;
   scrollbar-width: thin;
   scrollbar-color: rgba(96, 165, 250, 0.3) transparent;
