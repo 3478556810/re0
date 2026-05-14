@@ -72,6 +72,7 @@
   background: transparent;
   scrollbar-width: thin;
   scrollbar-color: rgba(96, 165, 250, 0.3) transparent;
+  
 }
 
 .chat-messages::-webkit-scrollbar {
@@ -167,4 +168,36 @@
 .send-icon {
   font-size: 16px;
   color: white;
+}
+/* 消息行 */
+.message-row {
+  display: flex;
+  align-items: flex-start;  /* 改这里：顶部对齐 */
+  gap: 8px;
+  max-width: 100%;
+}
+
+.message.bot {
+  background: rgba(30, 41, 59, 0.9);
+  color: #e2e8f0;
+  /* 删掉 align-self: flex-start; */
+  border-bottom-left-radius: 6px;
+  border: 1px solid rgba(96, 165, 250, 0.2);
+}
+
+.message.user {
+  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+  color: white;
+ /* justify-content: flex-end; */
+  border-bottom-right-radius: 6px;
+  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+}
+.message-row.user {
+  justify-content: flex-end;
+}
+
+.msg-avatar {
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
 }
