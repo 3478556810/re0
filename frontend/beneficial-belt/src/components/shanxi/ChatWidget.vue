@@ -57,17 +57,40 @@ import { ref, watch, nextTick } from 'vue'
 import LightPulse from './LightPulse.vue'
 import ShanxiAvatar from './ShanxiAvatar.vue'
 
-const messagesContainer = ref(null)
-
-
-
 /* ----- 状态 ----- */
 const isOpen = ref(false)
 const userInput = ref('')
-const messages = ref([])   // 纯 JS 数组，无需泛型
+const messages = ref([])
 let msgId = 0
 
-// 自动滚动到底部
+/* 情绪：前端关键词匹配，无需导入 EmotionEngine */
+const currentEmotion = ref({
+  current: 'calm',
+  color: '#f0a040',
+  speed: 3.5,
+  intensity: 1.0,
+  glowColor: 'rgba(255, 140, 100, 0.4)'
+})
+
+/* 关键词映射 */
+const emotionMap = [
+  [/谢谢|感谢|太棒|厉害|优秀|好棒|开心|哈哈/, 'happy'],
+  [/\?$|怎么|如何|为什么|想想|思考/, 'thinking'],
+  [/难过|伤心|失败|糟糕|不行|唉/, 'sad'],
+  [/可恶|生气|愤怒|别烦/, 'angry']
+]
+
+function detectEmotion(text) {
+  for (const [regex, emotion] of emotionMap) {
+    if (regex.test(text)) {
+      return emotion
+    }
+  }
+  return 'calm'
+}
+
+/* 自动滚动 */
+const messagesContainer = ref(null)
 watch(messages, () => {
   nextTick(() => {
     if (messagesContainer.value) {
@@ -75,15 +98,6 @@ watch(messages, () => {
     }
   })
 }, { deep: true })
-
-/* 情绪（后续接引擎动态化） */
-const currentEmotion = ref({
-  current: 'calm',
-  color: '#f0a040',
-  speed: 3.5,
-  intensity: 1.0,
-  glowColor: 'rgba(255, 140, 100, 0.4)',
-})
 
 /* ----- 方法 ----- */
 const toggleChat = () => {
@@ -98,21 +112,27 @@ const sendMessage = async () => {
   messages.value.push({ id: msgId++, content: question, sender: 'user' })
   userInput.value = ''
 
+  // 检测情绪并更新头像
+  const emotion = detectEmotion(question)
+  currentEmotion.value = {
+    ...currentEmotion.value,
+    current: emotion
+  }
+
   try {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: question }),
+      body: JSON.stringify({ message: question })
     })
     if (!res.ok) throw new Error('Network error')
     const data = await res.json()
-    // 杉汐回复
     messages.value.push({ id: msgId++, content: data.reply, sender: 'bot' })
   } catch {
     messages.value.push({
       id: msgId++,
       content: '杉汐：抱歉，我的灵魂好像被风吹散了…稍等片刻可好？',
-      sender: 'bot',
+      sender: 'bot'
     })
   }
 }
