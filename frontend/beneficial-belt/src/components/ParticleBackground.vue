@@ -13,7 +13,8 @@ const container = ref(null)
 let themeSwitchHandler = null
 
 const themes = {
-  '#60a5fa': { // 《复刻回忆》- 深蓝金色极光，旋转拖尾
+  '#60a5fa': {
+    // 《复刻回忆》- 取消拖尾，改为飘浮光点
     particles: {
       number: { value: 80, density: { enable: true, area: 800 } },
       color: { value: ['#1e3a5f', '#60a5fa', '#c09e4b'] },
@@ -30,12 +31,12 @@ const themes = {
       },
       move: {
         enable: true,
-        speed: 0.6,
+        speed: 1.2,               // 提速减少停留感
         direction: 'none',
         random: true,
         straight: false,
-        outModes: 'bounce',
-        trail: { enable: true, length: 20, fillColor: '#0f172a' }
+        outModes: 'bounce'
+        // trail 完全移除
       },
       rotate: {
         random: { enable: true, min: 0, max: 360 },
@@ -49,7 +50,8 @@ const themes = {
       }
     }
   },
-  '#10b981': { // 《Bamboo》- 翠绿细雨，垂直下落
+  '#10b981': {
+    // 《Bamboo》- 保持不变，无拖尾
     particles: {
       number: { value: 120, density: { enable: true, area: 800 } },
       color: { value: ['#047857', '#10b981', '#6ee7b7'] },
@@ -63,7 +65,8 @@ const themes = {
       modes: { push: { quantity: 4 }, repulse: { distance: 100 } }
     }
   },
-  '#c084fc': { // 《A Spiral Moon》- 银白漩涡，向上升腾（拖影已大幅削弱）
+  '#c084fc': {
+    // 《A Spiral Moon》- 拖尾再缩短为3，速度微降
     particles: {
       number: { value: 150, density: { enable: true, area: 800 } },
       color: { value: ['#c084fc', '#e0e7ff', '#ffffff'] },
@@ -81,12 +84,12 @@ const themes = {
       links: { enable: false },
       move: {
         enable: true,
-        speed: 3,
+        speed: 2.5,               // 微降，让运动更优雅
         direction: 'top',
         random: true,
         straight: false,
         outModes: 'out',
-        trail: { enable: true, length: 6, fillColor: '#0f172a' } // 拖尾长度从15缩短为6
+        trail: { enable: true, length: 3, fillColor: '#0f172a' }  // 拖尾极短，若有似无
       }
     },
     interactivity: {
@@ -111,11 +114,9 @@ const applyTheme = async (color) => {
   }
   
   try {
-    // 更新全局CSS变量
     document.documentElement.style.setProperty('--theme-color', color)
     document.documentElement.style.setProperty('--theme-bg', bgMap[color] || '#0f172a')
     
-    // 直接替换 options 并 refresh
     container.value.options.particles = { ...theme.particles }
     container.value.options.interactivity = { ...theme.interactivity }
     await container.value.refresh()
