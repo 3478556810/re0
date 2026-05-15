@@ -37,7 +37,7 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-
+import {  onMounted } from 'vue'  // 如果没有 onMounted，加上它
 const playlist = [
   { title: 'CopyMemory', src: '/music/CopyMemory.mp3', cover: '/images/CopyMemory.png', theme: '#60a5fa' },
   { title: 'Bamboo', src: '/music/Bamboo.mp3', cover: '/images/Bamboo.jpg', theme: '#10b981' },
@@ -129,6 +129,38 @@ const prevTrack = () => {
 
 const onError = () => {
   console.warn('音频加载失败:', currentSrc.value)
+}
+
+
+
+onMounted(() => {
+    window.addEventListener('shanxi-action', (event) => {
+        const { action } = event.detail
+        if (action.startsWith('switch_music:')) {
+            const songName = action.split(':')[1]
+            switchToSong(songName)
+        } else if (action === 'play_music_calm') {
+            switchToSong('CopyMemory')
+        } else if (action === 'play_music_happy') {
+            switchToSong('Bamboo')
+        }
+    })
+})
+
+// 根据歌名切换到对应歌曲
+function switchToSong(songName) {
+    const index = playlist.findIndex(s => s.title === songName || s.src.includes(songName))
+    if (index !== -1) {
+        currentIndex.value = index
+        playCurrentTrack()
+    } else {
+        nextTrack() // 找不到就随机切一首
+    }
+}
+// 暴露播放器状态给 ChatWidget
+window.__musicState = {
+  get currentIndex() { return currentIndex.value },
+  playlist
 }
 </script>
 

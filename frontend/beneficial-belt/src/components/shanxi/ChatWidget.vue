@@ -69,6 +69,7 @@ import LightPulse from './LightPulse.vue'
 import ShanxiAvatar from './ShanxiAvatar.vue'
 import AdminLogin from './AdminLogin.vue'
 import { shouldSave } from '../../utils/memoryFilter'
+import { emotionMap, defaultEmotion } from '../../config/emotions'
 /* ----- 状态 ----- */
 const isOpen = ref(false)
 const isExpanded = ref(false)
@@ -121,6 +122,28 @@ const sendMessage = async () => {
   messages.value.push({ id: msgId++, content: question, sender: 'user' })
   userInput.value = ''
 
+
+
+  // 构造请求体
+  const requestBody = {
+    message: question,
+    sessionId: sessionId.value
+  }
+
+  // 如果用户说了切歌关键词，附加上下一首歌曲信息
+  const musicKeywords = ['换首歌', '切歌', '下一首', '来首', '放点', '放一首']
+  if (musicKeywords.some(k => question.includes(k))) {
+    // 通过全局变量获取下一首歌曲信息
+    const musicState = window.__musicState
+    if (musicState) {
+      const nextIndex = (musicState.currentIndex + 1) % musicState.playlist.length
+      const nextSong = musicState.playlist[nextIndex]
+      requestBody.nextSong = {
+        name: nextSong.title,
+        src: nextSong.src
+      }
+    }
+  }
   try {
     const token = localStorage.getItem('token')
     const headers = { 'Content-Type': 'application/json' }
@@ -138,18 +161,17 @@ const sendMessage = async () => {
     messages.value.push({ id: msgId++, content: data.reply, sender: 'bot' })
 
     // 3. 后端驱动情绪更新
-    if (data.emotion) {
-      const emotionMap = {
-        happy: { color: '#f5a623', speed: 2.2, intensity: 1.15, glowColor: 'rgba(255, 180, 50, 0.9)' },
-        sad: { color: '#60a5fa', speed: 5.0, intensity: 0.9, glowColor: 'rgba(96, 165, 250, 0.9)' },
-        angry: { color: '#ef4444', speed: 1.5, intensity: 1.3, glowColor: 'rgba(239, 68, 68, 0.9)' },
-        calm: { color: '#f0a040', speed: 3.5, intensity: 1.0, glowColor: 'rgba(255, 140, 100, 0.8)' },
-        thinking: { color: '#a78bfa', speed: 2.8, intensity: 1.05, glowColor: 'rgba(167, 139, 250, 0.9)' },
-        loving: { color: '#f472b6', speed: 1.0, intensity: 1.35, glowColor: 'rgba(244, 114, 182, 0.9)' }
-      }
-      const emo = emotionMap[data.emotion] || emotionMap.calm
-      currentEmotion.value = { current: data.emotion, ...emo }
-    }
+   // 收到后端返回的 data.emotion 时：
+if (data.emotion) {
+  const emo = emotionMap[data.emotion] || defaultEmotion
+  currentEmotion.value = { current: data.emotion, ...emo }
+}
+// 新增：处理控制指令
+if (data.action) {
+    window.dispatchEvent(new CustomEvent('shanxi-action', {
+        detail: { action: data.action }
+    }))
+}
 
     // 4. 异步归档记忆
     saveMemory('leader', question)
@@ -185,7 +207,19 @@ const loadWelcome = async () => {
 
 onMounted(() => {
   loadWelcome()
+// 监听杉汐的控制指令
+window.addEventListener('shanxi-action', (event) => {
+    const { action } = event.detail
+    // 切歌指令由 MusicPlayer 处理，这里不需要额外逻辑
+    if (action.startsWith('switch_music:')) {
+        const songName = action.split(':')[1]
+        switchToSong(songName)
+    }
+    // 未来如果有其他需要 ChatWidget 处理的动作，可以在这里扩展
 })
+
+}
+)
 
 
 // 记忆存档（带前端过滤）

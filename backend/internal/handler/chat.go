@@ -3,8 +3,7 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
+	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -12,16 +11,24 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+
 	"backend/internal/ai"
 )
 
 type ChatRequest struct {
 	Message   string `json:"message"`
 	SessionID string `json:"sessionId"`
+	NextSong  *struct {
+		Name string `json:"name"`
+		Src  string `json:"src"`
+	} `json:"nextSong,omitempty"`
 }
 type ChatResponse struct {
 	Reply   string `json:"reply"`
-	Emotion string `json:"emotion"`
+	Emotion string `json:"emotion,omitempty"`
+	Action  string `json:"action,omitempty"` // 新增
 }
 
 type DSMessage struct {
@@ -53,6 +60,18 @@ func parseEmotion(reply string) (string, string) {
 	return reply, "calm"
 }
 
+// 解析控制指令
+func parseAction(reply string) (string, string) {
+	re := regexp.MustCompile(`\[action:([^\]]+)\]`)
+	matches := re.FindStringSubmatch(reply)
+	if len(matches) >= 2 {
+		action := matches[1]
+		cleanReply := re.ReplaceAllString(reply, "")
+		return strings.TrimSpace(cleanReply), action
+	}
+	return reply, ""
+}
+
 func HandleChat(c *gin.Context) {
 	var req ChatRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -62,6 +81,9 @@ func HandleChat(c *gin.Context) {
 
 	// 动态 System Prompt（JWT 验证）
 	systemPrompt := ai.DeepSeekPrompt
+	if req.NextSong != nil && req.NextSong.Name != "" {
+		systemPrompt += fmt.Sprintf("\n主人想要切歌，下一首歌是《%s》。请在你回复主人时，自然地评论一下这首歌，表达你对这首歌的感受。", req.NextSong.Name)
+	}
 	authHeader := c.GetHeader("Authorization")
 	if strings.HasPrefix(authHeader, "Bearer ") {
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
@@ -92,7 +114,8 @@ func HandleChat(c *gin.Context) {
 	sessionStore.Append(req.SessionID, DSMessage{Role: "assistant", Content: reply})
 
 	cleanReply, emotion := parseEmotion(reply)
-	c.JSON(http.StatusOK, ChatResponse{Reply: cleanReply, Emotion: emotion})
+	cleanReply, action := parseAction(cleanReply) // 追加这行
+	c.JSON(http.StatusOK, ChatResponse{Reply: cleanReply, Emotion: emotion, Action: action})
 }
 
 func askDeepSeekWithMessages(messages []DSMessage) string {

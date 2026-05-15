@@ -1,11 +1,21 @@
 <template>
   <div class="avatar-container" :style="containerStyle">
-    <img :src="avatarSrc" alt="杉汐" class="avatar-image" @error="onImageError" />
+    <DissolveTransition :duration="1000">
+      <img
+        :key="displaySrc"
+        :src="displaySrc"
+        alt="杉汐"
+        class="avatar-image"
+        @error="onImageError"
+      />
+    </DissolveTransition>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { ref, computed, watch } from 'vue'
+import { DissolveTransition } from '@noction/vue-bezier'
+import '@noction/vue-bezier/styles'
 
 const props = defineProps({
   emotion: { type: Object, default: () => ({ current: 'calm' }) },
@@ -14,23 +24,35 @@ const props = defineProps({
 })
 
 const imageFailed = ref(false)
+const displaySrc = ref('/avatars/calm.png')
 
-// 动态样式：包含尺寸和动态光晕颜色
 const containerStyle = computed(() => ({
   width: props.size + 'px',
   height: props.size + 'px',
   boxShadow: `
     0 0 20px ${props.glowColor},
     0 0 40px ${props.glowColor},
-    0 0 60px ${props.glowColor.replace(/[\d\.]+\)$/, '0.4)')}
+    0 0 60px ${props.glowColor.replace(/[\d.]+\)$/, '0.4)')}
   `
 }))
 
-const avatarSrc = computed(() => {
-  if (imageFailed.value) return ''
-  const emotion = props.emotion?.current || 'calm'
-  return `/avatars/${emotion}.png`
-})
+// 预加载：新图片完全加载后才更新 displaySrc
+async function preloadAndSwitch(emotion) {
+  const src = `/avatars/${emotion}.png`
+  const img = new Image()
+  img.onload = () => {
+    displaySrc.value = src
+    imageFailed.value = false
+  }
+  img.onerror = () => {
+    imageFailed.value = true
+  }
+  img.src = src
+}
+
+watch(() => props.emotion?.current, (newEmotion) => {
+  if (newEmotion) preloadAndSwitch(newEmotion)
+}, { immediate: true })
 
 function onImageError() {
   imageFailed.value = true
@@ -43,17 +65,11 @@ function onImageError() {
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  background: linear-gradient(135deg, #f0a040, #f5c070);
+  background: rgba(15, 10, 20, 0.4);
   display: flex;
   align-items: center;
   justify-content: center;
-  animation: avatar-glow 3s ease-in-out infinite;
-  transition: box-shadow 1s ease; /* 从 0.5s 改为 1s */
-}
-
-@keyframes avatar-glow {
-  0%, 100% { opacity: 0.8; }
-  50% { opacity: 1; }
+  transition: box-shadow 1s ease;
 }
 
 .avatar-image {
