@@ -3,11 +3,12 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/gin-gonic/gin"
 )
 
 // MemoryRecord 代表一条对话记忆
@@ -39,7 +40,6 @@ func NewMemoryStore(path string) *MemoryStore {
 		json.Unmarshal(data, &store.records)
 	}
 	fmt.Printf("📂 记忆文件路径: %s\n", path) // 添加这行，路径中会包含 .json 文件名
-	return store
 	return store
 }
 
