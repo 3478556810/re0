@@ -1,0 +1,72 @@
+<template>
+  <div class="login-box">
+    <input
+      v-if="!isLoggedIn"
+      v-model="password"
+      type="password"
+      placeholder="Admin密码"
+      @keypress.enter="login"
+    />
+    <button v-if="!isLoggedIn" @click="login">登录</button>
+    <span v-else class="login-status">👑 已认证</span>
+    <button v-if="isLoggedIn" @click="logout">退出</button>
+  </div>
+</template>
+
+<script setup>
+import { ref } from 'vue'
+
+const password = ref('')
+const isLoggedIn = ref(!!localStorage.getItem('token'))
+
+const login = async () => {
+  const res = await fetch('/api/login', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: password.value })
+  })
+  if (res.ok) {
+    const data = await res.json()
+    localStorage.setItem('token', data.token)
+    isLoggedIn.value = true
+    password.value = ''
+  } else {
+    alert('密码错误')
+  }
+}
+
+const logout = () => {
+  localStorage.removeItem('token')
+  isLoggedIn.value = false
+}
+</script>
+
+<style scoped>
+.login-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.login-box input {
+  width: 120px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 140, 180, 0.3);
+  background: rgba(15, 10, 20, 0.6);
+  color: #e2e8f0;
+  font-size: 13px;
+}
+.login-box button {
+  padding: 4px 12px;
+  border-radius: 4px;
+  border: none;
+  background: linear-gradient(135deg, #f0a040, #f5c070);
+  color: #1a1a2e;
+  cursor: pointer;
+  font-size: 13px;
+}
+.login-status {
+  color: #f0a040;
+  font-size: 13px;
+}
+</style>

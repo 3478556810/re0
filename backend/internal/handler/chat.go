@@ -1,17 +1,15 @@
 package handler
 
 import (
+	"backend/internal/ai"
 	"bytes"
 	"encoding/json"
+	"github.com/gin-gonic/gin"
 	"io"
 	"log"
 	"net/http"
 	"os"
-"backend/internal/ai"
-	"github.com/gin-gonic/gin"
 )
-
-
 
 type ChatRequest struct {
 	Message string `json:"message"`
