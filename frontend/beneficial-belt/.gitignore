@@ -14,7 +14,7 @@ pnpm-debug.log*
 
 
 # environment variables
-.env
+
 .env.production
 
 # macOS-specific files
@@ -22,3 +22,8 @@ pnpm-debug.log*
 
 # jetbrains setting folder
 .idea/
+# 环境变量（包含 API Key 和敏感配置）
+.env
+
+# 杉汐的长期记忆数据（独立于项目，且为私密数据）
+shanxi_data/

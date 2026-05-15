@@ -3,11 +3,12 @@ package main
 import (
 	"backend/internal/database"
 	"backend/internal/handler"
-	"log"
-
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
+	"log"
+	"os"
+	"path/filepath"
 )
 
 func main() {
@@ -31,6 +32,18 @@ func main() {
 		AllowCredentials: true,
 	}))
 
-	handler.RegisterRoutes(r)
+	// 初始化记忆存储（路径可通过环境变量配置）
+	memoryPath := os.Getenv("MEMORY_FILE_PATH")
+	if memoryPath == "" {
+		// 使用 UserHomeDir 替代 HOME 环境变量
+		homeDir, err := os.UserHomeDir()
+		if err != nil {
+			panic("无法获取用户目录: " + err.Error())
+		}
+		memoryPath = filepath.Join(homeDir, "shanxi_data", "memory.json")
+	}
+	memoryStore := handler.NewMemoryStore(memoryPath)
+
+	handler.RegisterRoutes(r, memoryStore)
 	r.Run(":8080")
 }
