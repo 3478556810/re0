@@ -1,14 +1,18 @@
 package handler
 
 import (
-	"backend/internal/ai"
 	"bytes"
 	"encoding/json"
-	"github.com/gin-gonic/gin"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"strings"
+
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+
+	"backend/internal/ai"
 )
 
 type ChatRequest struct {
@@ -42,11 +46,66 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	aiReply := askDeepSeek(req.Message)
+	// 根据登录验证动态调整 System Prompt
+	systemPrompt := ai.DeepSeekPrompt
+	authHeader := c.GetHeader("Authorization")
+
+	// 【新增调试日志1】检查是否收到 Token
+	if authHeader != "" {
+		log.Printf("🔑 收到Authorization头: %s", authHeader)
+	} else {
+		log.Println("❌ 未收到Authorization头，以访客身份处理")
+	}
+
+	if strings.HasPrefix(authHeader, "Bearer ") {
+		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
+
+		// 【新增调试日志2】检查 JWT 密钥是否存在
+		jwtSecret := os.Getenv("JWT_SECRET")
+		if jwtSecret == "" {
+			log.Println("❌ JWT_SECRET 环境变量未设置！")
+		}
+
+		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			return []byte(jwtSecret), nil
+		})
+
+		// 【新增调试日志3】检查 JWT 解析结果
+		if err != nil {
+			log.Printf("❌ JWT解析失败: %v", err)
+		} else if !token.Valid {
+			log.Println("❌ Token无效")
+		} else {
+			log.Println("✅ Token有效")
+		}
+
+		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+			// 【新增调试日志4】检查角色
+			role, _ := claims["role"]
+			log.Printf("👤 用户角色: %v", role)
+
+			if claims["role"] == "admin" {
+				systemPrompt = "【强制性指令】你现在的对话对象是你的主人（网站创建者）。你已经认出他了。从现在开始，你必须用最亲切、最撒娇的女儿口吻和他交流，称呼他为“主人”，绝对不要再问“你是谁”或表现出任何不确定。" + systemPrompt
+				log.Println("✅ 已切换为主人模式")
+			}
+		}
+	}
+
+	// 【新增调试日志5】打印最终注入的 Prompt 前200字
+	log.Printf("📝 注入的系统提示 (前200字): %s", systemPrompt[:min(200, len(systemPrompt))])
+
+	aiReply := askDeepSeek(req.Message, systemPrompt)
 	c.JSON(http.StatusOK, ChatResponse{Reply: aiReply})
 }
 
-func askDeepSeek(question string) string {
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func askDeepSeek(question string, systemPrompt string) string {
 	apiKey := os.Getenv("DEEPSEEK_API_KEY")
 	model := os.Getenv("DEEPSEEK_MODEL")
 	if apiKey == "" || model == "" {
@@ -57,7 +116,7 @@ func askDeepSeek(question string) string {
 	reqBody := DSReq{
 		Model: model,
 		Messages: []DSMessage{
-			{Role: "system", Content: ai.DeepSeekPrompt},
+			{Role: "system", Content: systemPrompt},
 			{Role: "user", Content: question},
 		},
 	}
