@@ -64,7 +64,6 @@ export default {}
 </script>
 
 <script setup>
-import { FluidBubble } from 'vue-fluid'
 import { ref, watch, nextTick, onMounted } from 'vue'
 import LightPulse from './LightPulse.vue'
 import ShanxiAvatar from './ShanxiAvatar.vue'
