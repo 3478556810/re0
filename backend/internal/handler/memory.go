@@ -3,12 +3,12 @@ package handler
 import (
 	"encoding/json"
 	"fmt"
+	"github.com/gin-gonic/gin"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 // MemoryRecord 代表一条对话记忆
@@ -43,8 +43,28 @@ func NewMemoryStore(path string) *MemoryStore {
 	return store
 }
 
+// 判断是否值得存入长期记忆
+func shouldSave(content string) bool {
+	// 过滤纯寒暄
+	greetings := []string{"你好", "再见", "谢谢", "哈哈", "嗯", "哦", "好的", "ok", "hi", "hello", "bye"}
+	lower := strings.ToLower(strings.TrimSpace(content))
+	for _, g := range greetings {
+		if lower == g {
+			return false
+		}
+	}
+	// 过滤过短消息（少于2个字符）
+	if len([]rune(content)) < 2 {
+		return false
+	}
+	return true
+}
+
 // Append 追加一条记忆并保存
 func (m *MemoryStore) Append(role, content string) error {
+	if !shouldSave(content) {
+		return nil
+	}
 	m.records = append(m.records, MemoryRecord{
 		Timestamp: time.Now(),
 		Role:      role,
