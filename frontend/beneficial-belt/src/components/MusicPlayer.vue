@@ -139,10 +139,6 @@ onMounted(() => {
         if (action.startsWith('switch_music:')) {
             const songName = action.split(':')[1]
             switchToSong(songName)
-        } else if (action === 'play_music_calm') {
-            switchToSong('CopyMemory')
-        } else if (action === 'play_music_happy') {
-            switchToSong('Bamboo')
         }
     })
 })
@@ -152,9 +148,12 @@ function switchToSong(songName) {
     const index = playlist.findIndex(s => s.title === songName || s.src.includes(songName))
     if (index !== -1) {
         currentIndex.value = index
+        const targetTheme = playlist[index].theme
+        // 同步切换主题
+        window.dispatchEvent(new CustomEvent('theme-switch', { detail: targetTheme }))
         playCurrentTrack()
     } else {
-        nextTrack() // 找不到就随机切一首
+        nextTrack() // 找不到就随机切一首（nextTrack 里已有主题切换）
     }
 }
 // 暴露播放器状态给 ChatWidget

@@ -131,19 +131,19 @@ const sendMessage = async () => {
   }
 
   // 如果用户说了切歌关键词，附加上下一首歌曲信息
-  const musicKeywords = ['换首歌', '切歌', '下一首', '来首', '放点', '放一首']
-  if (musicKeywords.some(k => question.includes(k))) {
-    // 通过全局变量获取下一首歌曲信息
-    const musicState = window.__musicState
+  // 检测是否为切歌指令（更全面的模式）
+const musicPattern = /(换首歌|切歌|下一首|来首|放点|放一首|切换|换一首|切一下|切个歌|换歌|换一个)/;
+if (musicPattern.test(question)) {
+    const musicState = window.__musicState;
     if (musicState) {
-      const nextIndex = (musicState.currentIndex + 1) % musicState.playlist.length
-      const nextSong = musicState.playlist[nextIndex]
-      requestBody.nextSong = {
-        name: nextSong.title,
-        src: nextSong.src
-      }
+        const nextIndex = (musicState.currentIndex + 1) % musicState.playlist.length;
+        const nextSong = musicState.playlist[nextIndex];
+        requestBody.nextSong = {
+            name: nextSong.title,
+            src: nextSong.src
+        };
     }
-  }
+}
   try {
     const token = localStorage.getItem('token')
     const headers = { 'Content-Type': 'application/json' }
@@ -211,10 +211,6 @@ onMounted(() => {
 window.addEventListener('shanxi-action', (event) => {
     const { action } = event.detail
     // 切歌指令由 MusicPlayer 处理，这里不需要额外逻辑
-    if (action.startsWith('switch_music:')) {
-        const songName = action.split(':')[1]
-        switchToSong(songName)
-    }
     // 未来如果有其他需要 ChatWidget 处理的动作，可以在这里扩展
 })
 
