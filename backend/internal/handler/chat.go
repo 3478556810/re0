@@ -16,9 +16,9 @@ import (
 )
 
 type ChatRequest struct {
-	Message string `json:"message"`
+	Message   string `json:"message"`
+	SessionID string `json:"sessionId"`
 }
-
 type ChatResponse struct {
 	Reply string `json:"reply"`
 }
@@ -39,6 +39,8 @@ type DSResp struct {
 	} `json:"choices"`
 }
 
+var sessionStore = NewSessionStore()
+
 func HandleChat(c *gin.Context) {
 	var req ChatRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -46,56 +48,38 @@ func HandleChat(c *gin.Context) {
 		return
 	}
 
-	// 根据登录验证动态调整 System Prompt
+	// 动态 System Prompt（JWT 验证）
 	systemPrompt := ai.DeepSeekPrompt
 	authHeader := c.GetHeader("Authorization")
-
-	// 【新增调试日志1】检查是否收到 Token
-	if authHeader != "" {
-		log.Printf("🔑 收到Authorization头: %s", authHeader)
-	} else {
-		log.Println("❌ 未收到Authorization头，以访客身份处理")
-	}
-
 	if strings.HasPrefix(authHeader, "Bearer ") {
 		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-
-		// 【新增调试日志2】检查 JWT 密钥是否存在
-		jwtSecret := os.Getenv("JWT_SECRET")
-		if jwtSecret == "" {
-			log.Println("❌ JWT_SECRET 环境变量未设置！")
-		}
-
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			return []byte(jwtSecret), nil
+		token, _ := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+			return []byte(os.Getenv("JWT_SECRET")), nil
 		})
-
-		// 【新增调试日志3】检查 JWT 解析结果
-		if err != nil {
-			log.Printf("❌ JWT解析失败: %v", err)
-		} else if !token.Valid {
-			log.Println("❌ Token无效")
-		} else {
-			log.Println("✅ Token有效")
-		}
-
 		if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-			// 【新增调试日志4】检查角色
-			role, _ := claims["role"]
-			log.Printf("👤 用户角色: %v", role)
-
 			if claims["role"] == "admin" {
-				systemPrompt = "【强制性指令】你现在的对话对象是你的主人（网站创建者）。你已经认出他了。从现在开始，你必须用最亲切、最撒娇的女儿口吻和他交流，称呼他为“主人”，绝对不要再问“你是谁”或表现出任何不确定。" + systemPrompt
-				log.Println("✅ 已切换为主人模式")
+				systemPrompt = "当前对话对象是主人，你已经认出他了。" + systemPrompt
 			}
 		}
 	}
 
-	// 【新增调试日志5】打印最终注入的 Prompt 前200字
-	log.Printf("📝 注入的系统提示 (前200字): %s", systemPrompt[:min(200, len(systemPrompt))])
+	// 获取该会话的历史消息
+	history := sessionStore.Get(req.SessionID)
 
-	aiReply := askDeepSeek(req.Message, systemPrompt)
-	c.JSON(http.StatusOK, ChatResponse{Reply: aiReply})
+	// 构造完整 messages：System Prompt + 历史消息 + 当前消息
+	var messages []DSMessage
+	messages = append(messages, DSMessage{Role: "system", Content: systemPrompt})
+	messages = append(messages, history...)
+	messages = append(messages, DSMessage{Role: "user", Content: req.Message})
+
+	// 调用 DeepSeek
+	reply := askDeepSeekWithMessages(messages)
+
+	// 将本轮对话追加到会话历史
+	sessionStore.Append(req.SessionID, DSMessage{Role: "user", Content: req.Message})
+	sessionStore.Append(req.SessionID, DSMessage{Role: "assistant", Content: reply})
+
+	c.JSON(http.StatusOK, ChatResponse{Reply: reply})
 }
 
 func min(a, b int) int {
@@ -105,54 +89,35 @@ func min(a, b int) int {
 	return b
 }
 
-func askDeepSeek(question string, systemPrompt string) string {
+func askDeepSeekWithMessages(messages []DSMessage) string {
 	apiKey := os.Getenv("DEEPSEEK_API_KEY")
 	model := os.Getenv("DEEPSEEK_MODEL")
 	if apiKey == "" || model == "" {
-		log.Println("缺少必要的环境变量: DEEPSEEK_API_KEY 或 DEEPSEEK_MODEL")
+		log.Println("缺少必要的环境变量")
 		return "抱歉，顾问配置错误，请联系管理员。"
 	}
 
 	reqBody := DSReq{
-		Model: model,
-		Messages: []DSMessage{
-			{Role: "system", Content: systemPrompt},
-			{Role: "user", Content: question},
-		},
+		Model:    model,
+		Messages: messages,
 	}
-	reqBytes, err := json.Marshal(reqBody)
-	if err != nil {
-		log.Println("JSON编码失败:", err)
-		return "抱歉，顾问内部错误，请稍后再试。"
-	}
+	reqBytes, _ := json.Marshal(reqBody)
 
 	client := &http.Client{}
-	request, err := http.NewRequest("POST", "https://api.deepseek.com/v1/chat/completions", bytes.NewBuffer(reqBytes))
-	if err != nil {
-		log.Println("创建请求失败:", err)
-		return "抱歉，顾问内部错误，请稍后再试。"
-	}
+	request, _ := http.NewRequest("POST", "https://api.deepseek.com/v1/chat/completions", bytes.NewBuffer(reqBytes))
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Authorization", "Bearer "+apiKey)
 
-	response, err := client.Do(request)
+	resp, err := client.Do(request)
 	if err != nil {
-		log.Println("请求DeepSeek API失败:", err)
-		return "抱歉，顾问暂时无法连接，请稍后再试。"
+		log.Println("请求DeepSeek失败:", err)
+		return "抱歉，顾问暂时无法连接。"
 	}
-	defer response.Body.Close()
+	defer resp.Body.Close()
 
-	respBytes, err := io.ReadAll(response.Body)
-	if err != nil {
-		log.Println("读取响应失败:", err)
-		return "抱歉，顾问读取数据失败。"
-	}
-
+	respBytes, _ := io.ReadAll(resp.Body)
 	var dsResp DSResp
-	if err := json.Unmarshal(respBytes, &dsResp); err != nil {
-		log.Println("解析响应失败:", err)
-		return "抱歉，顾问无法理解AI的回复。"
-	}
+	json.Unmarshal(respBytes, &dsResp)
 	if len(dsResp.Choices) == 0 {
 		return "顾问暂时没有合适的回答。"
 	}

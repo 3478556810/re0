@@ -3,8 +3,12 @@
   <div>
     <!-- 悬浮按钮 -->
     <div class="chat-toggle-button" @click="toggleChat">
-      <div class="toggle-light-pulse"><LightPulse /></div>
-      <div class="toggle-icon"><div class="star-core"></div></div>
+      <div class="toggle-light-pulse">
+        <LightPulse />
+      </div>
+      <div class="toggle-icon">
+        <div class="star-core"></div>
+      </div>
     </div>
 
     <!-- 聊天窗口 -->
@@ -19,25 +23,15 @@
       </div>
 
       <div class="chat-messages" ref="messagesContainer">
-         <!-- 欢迎语：只在没有消息时显示 -->
-  <div v-if="messages.length === 0 && !welcomeLoading" class="message bot">
-  {{ welcomeMessage }}
-</div>
-<div v-if="messages.length === 0 && welcomeLoading" class="message bot" style="opacity:0.6">
-  杉汐正在想起你...
-</div>
-        <div
-          v-for="msg in messages"
-          :key="msg.id"
-          class="message-row"
-          :class="msg.sender"
-        >
-          <ShanxiAvatar
-            v-if="msg.sender === 'bot'"
-            :emotion="currentEmotion"
-            :size="40"
-            class="msg-avatar"
-          />
+        <!-- 欢迎语：只在没有消息时显示 -->
+        <div v-if="messages.length === 0 && !welcomeLoading" class="message bot">
+          {{ welcomeMessage }}
+        </div>
+        <div v-if="messages.length === 0 && welcomeLoading" class="message bot" style="opacity:0.6">
+          杉汐正在想起你...
+        </div>
+        <div v-for="msg in messages" :key="msg.id" class="message-row" :class="msg.sender">
+          <ShanxiAvatar v-if="msg.sender === 'bot'" :emotion="currentEmotion" :size="40" class="msg-avatar" />
           <div class="message" :class="msg.sender">
             {{ msg.content }}
           </div>
@@ -45,13 +39,8 @@
       </div>
 
       <div class="chat-input-area">
-        <input
-          type="text"
-          class="chat-input"
-          v-model="userInput"
-          placeholder="输入你的问题..."
-          @keypress.enter="sendMessage"
-        />
+        <input type="text" class="chat-input" v-model="userInput" placeholder="输入你的问题..."
+          @keypress.enter="sendMessage" />
         <button class="send-button" @click="sendMessage">
           <span class="send-icon">✈️</span>
         </button>
@@ -65,11 +54,15 @@ import { ref, watch, nextTick, onMounted } from 'vue'
 import LightPulse from './LightPulse.vue'
 import ShanxiAvatar from './ShanxiAvatar.vue'
 import AdminLogin from './AdminLogin.vue'
+import { shouldSave } from '../../utils/memoryFilter'
 /* ----- 状态 ----- */
 const isOpen = ref(false)
 const userInput = ref('')
 const messages = ref([])
 let msgId = 0
+// 生成或恢复会话ID
+const sessionId = ref(localStorage.getItem('sessionId') || Date.now().toString(36))
+localStorage.setItem('sessionId', sessionId.value)
 
 /* 情绪：前端关键词匹配，无需导入 EmotionEngine */
 const currentEmotion = ref({
@@ -128,10 +121,15 @@ const sendMessage = async () => {
   }
 
   try {
+    const token = localStorage.getItem('token')
+    const headers = { 'Content-Type': 'application/json' }
+    if (token) headers['Authorization'] = `Bearer ${token}`
+
+    // 在 sendMessage 中携带 sessionId
     const res = await fetch('/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: question })
+      headers,
+      body: JSON.stringify({ message: question, sessionId: sessionId.value })
     })
     if (!res.ok) throw new Error('Network error')
     const data = await res.json()
@@ -175,12 +173,16 @@ const loadWelcome = async () => {
 onMounted(() => {
   loadWelcome()
 })
-// 记忆存档辅助函数
+
+
+// 记忆存档（带前端过滤）
 function saveMemory(role, content) {
+  if (!shouldSave(content)) return  // 无价值内容直接跳过
+
   const token = localStorage.getItem('token')
   const headers = { 'Content-Type': 'application/json' }
   if (token) headers['Authorization'] = `Bearer ${token}`
-  
+
   fetch('/api/memory/save', {
     method: 'POST',
     headers,
