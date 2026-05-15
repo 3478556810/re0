@@ -59,6 +59,9 @@
     </div>
   </div>
 </template>
+<script >
+export default {}
+</script>
 
 <script setup>
 import { FluidBubble } from 'vue-fluid'
@@ -204,6 +207,8 @@ function saveMemory(role, content) {
 
 
 </script>
+
+
 <style scoped>
 @import '../../styles/shanxi/chat-widget.css';
 </style>
