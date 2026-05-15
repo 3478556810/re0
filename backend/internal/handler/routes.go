@@ -19,6 +19,6 @@ func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore) {
 	{
 		auth.POST("/save", memoryStore.SaveMemoryHandler)
 		auth.GET("/recall", memoryStore.RecallMemoryHandler)
-		auth.GET("/welcome", memoryStore.WelcomeHandler) // 新增
+		auth.GET("/welcome", memoryStore.WelcomeHandler)
 	}
 }
