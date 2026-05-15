@@ -7,9 +7,15 @@ import (
 )
 
 func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore) {
+
+	// 创建一个速率限制器
+	limiter := middleware.NewRateLimiter()
+
+	// 公开路由：聊天接口对未登录用户限流
+	r.POST("/api/chat", limiter.Limit(), HandleChat) // ← 只有聊天接口需要限流
+
 	r.GET("/api/posts", GetPosts)
 	r.POST("/api/posts", CreatePost)
-	r.POST("/api/chat", HandleChat)
 
 	// 登录接口（无需认证）
 	r.POST("/api/login", Login)
