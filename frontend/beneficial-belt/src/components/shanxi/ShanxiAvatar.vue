@@ -1,14 +1,6 @@
 <template>
-  <div
-    class="avatar-container"
-    :style="{ width: size + 'px', height: size + 'px' }"
-  >
-    <img
-      :src="avatarSrc"
-      alt="杉汐"
-      class="avatar-image"
-      @error="onImageError"
-    />
+  <div class="avatar-container" :style="containerStyle">
+    <img :src="avatarSrc" alt="杉汐" class="avatar-image" @error="onImageError" />
   </div>
 </template>
 
@@ -16,28 +8,30 @@
 import { computed, ref } from 'vue'
 
 const props = defineProps({
-  emotion: {
-    type: Object,
-    default: () => ({
-      current: 'calm'
-    })
-  },
-  size: {
-    type: Number,
-    default: 128
-  }
+  emotion: { type: Object, default: () => ({ current: 'calm' }) },
+  size: { type: Number, default: 128 },
+  glowColor: { type: String, default: 'rgba(240, 160, 64, 0.5)' }
 })
 
 const imageFailed = ref(false)
 
-// 根据情绪切换头像图片路径
+// 动态样式：包含尺寸和动态光晕颜色
+const containerStyle = computed(() => ({
+  width: props.size + 'px',
+  height: props.size + 'px',
+  boxShadow: `
+    0 0 20px ${props.glowColor},
+    0 0 40px ${props.glowColor},
+    0 0 60px ${props.glowColor.replace(/[\d\.]+\)$/, '0.4)')}
+  `
+}))
+
 const avatarSrc = computed(() => {
   if (imageFailed.value) return ''
   const emotion = props.emotion?.current || 'calm'
   return `/avatars/${emotion}.png`
 })
 
-// 图片加载失败时回退到占位文字
 function onImageError() {
   imageFailed.value = true
 }
@@ -53,6 +47,13 @@ function onImageError() {
   display: flex;
   align-items: center;
   justify-content: center;
+  animation: avatar-glow 3s ease-in-out infinite;
+  transition: box-shadow 1s ease; /* 从 0.5s 改为 1s */
+}
+
+@keyframes avatar-glow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
 }
 
 .avatar-image {
