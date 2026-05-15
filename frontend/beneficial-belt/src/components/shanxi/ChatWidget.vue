@@ -14,10 +14,18 @@
           <ShanxiAvatar :emotion="currentEmotion" :size="64" />
           <span>杉汐</span>
         </div>
+        <AdminLogin />
         <button class="chat-close-button" @click="toggleChat">✕</button>
       </div>
 
       <div class="chat-messages" ref="messagesContainer">
+         <!-- 欢迎语：只在没有消息时显示 -->
+  <div v-if="messages.length === 0 && !welcomeLoading" class="message bot">
+  {{ welcomeMessage }}
+</div>
+<div v-if="messages.length === 0 && welcomeLoading" class="message bot" style="opacity:0.6">
+  杉汐正在想起你...
+</div>
         <div
           v-for="msg in messages"
           :key="msg.id"
@@ -53,10 +61,10 @@
 </template>
 
 <script setup>
-import { ref, watch, nextTick } from 'vue'
+import { ref, watch, nextTick, onMounted } from 'vue'
 import LightPulse from './LightPulse.vue'
 import ShanxiAvatar from './ShanxiAvatar.vue'
-
+import AdminLogin from './AdminLogin.vue'
 /* ----- 状态 ----- */
 const isOpen = ref(false)
 const userInput = ref('')
@@ -140,15 +148,48 @@ const sendMessage = async () => {
   }
 }
 
+
+
+const welcomeMessage = ref('你好！我是杉汐，你的数字伙伴。')
+const welcomeLoading = ref(false)
+
+const loadWelcome = async () => {
+  const token = localStorage.getItem('token')
+  if (!token) return // 未登录，使用默认欢迎语
+
+  welcomeLoading.value = true
+  try {
+    const res = await fetch('/api/memory/welcome', {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+    if (res.ok) {
+      const data = await res.json()
+      welcomeMessage.value = data.message
+    }
+  } catch { /* 失败则保持默认 */ }
+  finally {
+    welcomeLoading.value = false
+  }
+}
+
+onMounted(() => {
+  loadWelcome()
+})
 // 记忆存档辅助函数
 function saveMemory(role, content) {
-console.log('📝 记忆存档:', role, content)
+  const token = localStorage.getItem('token')
+  const headers = { 'Content-Type': 'application/json' }
+  if (token) headers['Authorization'] = `Bearer ${token}`
+  
   fetch('/api/memory/save', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ role, content })
   }).catch(err => console.error('记忆存档失败:', err))
 }
+
+
+
 </script>
 <style scoped>
 @import '../../styles/shanxi/chat-widget.css';
