@@ -12,14 +12,20 @@
     </div>
 
     <!-- 聊天窗口 -->
-    <div class="chat-window" :style="{ display: isOpen ? 'flex' : 'none' }">
+    <div class="chat-window" :class="{ expanded: isExpanded }" :style="{ display: isOpen ? 'flex' : 'none' }">
       <div class="chat-header">
         <div class="header-left">
-          <ShanxiAvatar :emotion="currentEmotion" :size="64" />
-          <span>杉汐</span>
+          <ShanxiAvatar :emotion="currentEmotion" class="msg-avatar-header" :size="80"
+            :glowColor="currentEmotion.glowColor" />
+          <span style="font-size: 28px;">杉汐</span>
         </div>
         <AdminLogin />
-        <button class="chat-close-button" @click="toggleChat">✕</button>
+        <div class="header-actions">
+          <button class="chat-expand-button" @click="toggleExpand" :title="isExpanded ? '还原' : '放大'">
+            {{ isExpanded ? '🔲' : '🔳' }}
+          </button>
+          <button class="chat-close-button" @click="toggleChat">✕</button>
+        </div>
       </div>
 
       <div class="chat-messages" ref="messagesContainer">
@@ -31,15 +37,20 @@
           杉汐正在想起你...
         </div>
         <div v-for="msg in messages" :key="msg.id" class="message-row" :class="msg.sender">
-          <ShanxiAvatar v-if="msg.sender === 'bot'" :emotion="currentEmotion" :size="40" class="msg-avatar" />
-          <div class="message" :class="msg.sender">
+          <ShanxiAvatar v-if="msg.sender === 'bot'" :emotion="currentEmotion" :size="60" class="msg-avatar"
+            :glowColor="currentEmotion.glowColor" />
+
+
+          <div class="message bot">
             {{ msg.content }}
           </div>
+
+
         </div>
       </div>
 
       <div class="chat-input-area">
-        <input type="text" class="chat-input" v-model="userInput" placeholder="输入你的问题..."
+        <input type="text" style="font-size: 18px;" class="chat-input" v-model="userInput" placeholder="输入你的问题..."
           @keypress.enter="sendMessage" />
         <button class="send-button" @click="sendMessage">
           <span class="send-icon">✈️</span>
@@ -50,6 +61,7 @@
 </template>
 
 <script setup>
+import { FluidBubble } from 'vue-fluid'
 import { ref, watch, nextTick, onMounted } from 'vue'
 import LightPulse from './LightPulse.vue'
 import ShanxiAvatar from './ShanxiAvatar.vue'
@@ -57,8 +69,16 @@ import AdminLogin from './AdminLogin.vue'
 import { shouldSave } from '../../utils/memoryFilter'
 /* ----- 状态 ----- */
 const isOpen = ref(false)
+const isExpanded = ref(false)
+const toggleExpand = () => { isExpanded.value = !isExpanded.value }
 const userInput = ref('')
 const messages = ref([])
+
+const props = defineProps({
+  emotion: Object,
+  size: Number,
+  glowColor: { type: String, default: 'rgba(240, 160, 64, 0.5)' }
+})
 let msgId = 0
 // 生成或恢复会话ID
 const sessionId = ref(localStorage.getItem('sessionId') || Date.now().toString(36))
@@ -73,22 +93,8 @@ const currentEmotion = ref({
   glowColor: 'rgba(255, 140, 100, 0.4)'
 })
 
-/* 关键词映射 */
-const emotionMap = [
-  [/谢谢|感谢|太棒|厉害|优秀|好棒|开心|哈哈/, 'happy'],
-  [/\?$|怎么|如何|为什么|想想|思考/, 'thinking'],
-  [/难过|伤心|失败|糟糕|不行|唉/, 'sad'],
-  [/可恶|生气|愤怒|别烦/, 'angry']
-]
 
-function detectEmotion(text) {
-  for (const [regex, emotion] of emotionMap) {
-    if (regex.test(text)) {
-      return emotion
-    }
-  }
-  return 'calm'
-}
+
 
 /* 自动滚动 */
 const messagesContainer = ref(null)
@@ -113,19 +119,11 @@ const sendMessage = async () => {
   messages.value.push({ id: msgId++, content: question, sender: 'user' })
   userInput.value = ''
 
-  // 2. 检测情绪并更新头像
-  const emotion = detectEmotion(question)
-  currentEmotion.value = {
-    ...currentEmotion.value,
-    current: emotion
-  }
-
   try {
     const token = localStorage.getItem('token')
     const headers = { 'Content-Type': 'application/json' }
     if (token) headers['Authorization'] = `Bearer ${token}`
 
-    // 在 sendMessage 中携带 sessionId
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers,
@@ -134,10 +132,24 @@ const sendMessage = async () => {
     if (!res.ok) throw new Error('Network error')
     const data = await res.json()
 
-    // 3. 杉汐回复
+    // 2. 杉汐回复
     messages.value.push({ id: msgId++, content: data.reply, sender: 'bot' })
 
-    // 4. 异步归档记忆（此时 data 已定义）
+    // 3. 后端驱动情绪更新
+    if (data.emotion) {
+      const emotionMap = {
+        happy: { color: '#f5a623', speed: 2.2, intensity: 1.15, glowColor: 'rgba(255, 180, 50, 0.9)' },
+        sad: { color: '#60a5fa', speed: 5.0, intensity: 0.9, glowColor: 'rgba(96, 165, 250, 0.9)' },
+        angry: { color: '#ef4444', speed: 1.5, intensity: 1.3, glowColor: 'rgba(239, 68, 68, 0.9)' },
+        calm: { color: '#f0a040', speed: 3.5, intensity: 1.0, glowColor: 'rgba(255, 140, 100, 0.8)' },
+        thinking: { color: '#a78bfa', speed: 2.8, intensity: 1.05, glowColor: 'rgba(167, 139, 250, 0.9)' },
+        loving: { color: '#f472b6', speed: 1.0, intensity: 1.35, glowColor: 'rgba(244, 114, 182, 0.9)' }
+      }
+      const emo = emotionMap[data.emotion] || emotionMap.calm
+      currentEmotion.value = { current: data.emotion, ...emo }
+    }
+
+    // 4. 异步归档记忆
     saveMemory('leader', question)
     saveMemory('shanshi', data.reply)
   } catch {
@@ -145,7 +157,6 @@ const sendMessage = async () => {
     messages.value.push({ id: msgId++, content: fallback, sender: 'bot' })
   }
 }
-
 
 
 const welcomeMessage = ref('你好！我是杉汐，你的数字伙伴。')

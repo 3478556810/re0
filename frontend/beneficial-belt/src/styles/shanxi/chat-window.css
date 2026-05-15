@@ -3,10 +3,10 @@
 /* ========== 聊天窗口 (保持不变) ========== */
 .chat-window {
   position: fixed;
-  bottom: 90px;
-  right: 100px;
-  width: 480px;
-  max-height: 600px;
+  bottom: 60px;
+  right: 80px;
+  width: 40VW;
+  max-height: 85vh; 
   background: var(--shanxi-bg-dark);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -27,12 +27,19 @@
   color: #e2e8f0;
   padding: 14px 16px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 12px;
   font-weight: 600;
   font-size: 15px;
   border-bottom: 1px solid rgba(96, 165, 250, 0.15);
   letter-spacing: 0.5px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
 }
 
 .header-left {
@@ -55,7 +62,31 @@
   cursor: pointer;
   transition: color 0.2s;
 }
+/* 放大按钮 */
+.chat-expand-button {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 18px;
+  cursor: pointer;
+  transition: color 0.2s;
+  margin-right: 8px;
+}
+.chat-expand-button:hover {
+  color: #f1f5f9;
+}
 
+/* 放大模式 */
+.chat-window.expanded {
+  width: 60vw;
+  height: 80vh;
+  /* max-height: 85vh; */
+  top: 50%;
+  left: 50%;
+  right: auto;
+  bottom: auto;
+  transform: translate(-50%, -50%);
+}
 .chat-close-button:hover {
   color: #f1f5f9;
 }
@@ -68,7 +99,7 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
-  max-height: 480px;
+  max-height: none;
   background: transparent;
   scrollbar-width: thin;
   scrollbar-color: rgba(96, 165, 250, 0.3) transparent;
@@ -94,26 +125,39 @@
   border-radius: 18px;
   max-width: 85%;
   word-wrap: break-word;
-  font-size: 14px;
+  font-size: 23px;
   line-height: 1.5;
   animation: fadeIn 0.3s ease;
 }
 
 .message.bot {
-  background: rgba(30, 41, 59, 0.9);
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   color: #e2e8f0;
   align-self: flex-start;
   border-bottom-left-radius: 6px;
-  border: 1px solid rgba(96, 165, 250, 0.2);
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
 }
 
+.message.bot:hover {
+  border-color: rgba(148, 163, 184, 0.3);
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.4);
+} 
+
 .message.user {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  color: white;
-  align-self: flex-end;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #fff;
+  text-shadow: 0 0 6px rgba(255, 255, 255, 0.3);
+  /* align-self: flex-end; */
   border-bottom-right-radius: 6px;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3), 0 0 20px rgba(139, 92, 246, 0.1);
 }
+
+
 
 /* ---------- 输入区域 ---------- */
 .chat-input-area {
@@ -177,27 +221,28 @@
   max-width: 100%;
 }
 
-.message.bot {
-  background: rgba(30, 41, 59, 0.9);
-  color: #e2e8f0;
-  /* 删掉 align-self: flex-start; */
-  border-bottom-left-radius: 6px;
-  border: 1px solid rgba(96, 165, 250, 0.2);
-}
 
-.message.user {
-  background: linear-gradient(135deg, #3b82f6, #8b5cf6);
-  color: white;
- /* justify-content: flex-end; */
-  border-bottom-right-radius: 6px;
-  box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
-}
+
+
 .message-row.user {
   justify-content: flex-end;
 }
 
 .msg-avatar {
+   box-shadow: 0 0 15px rgba(240, 160, 64, 0.5),   /* 外层光晕 */
+              0 0 30px rgba(240, 160, 64, 0.2);   /* 外层扩散 */
+  transition: box-shadow 0.5s ease;
   flex-shrink: 0;
   border-radius: 50%;
   overflow: hidden;
 }
+
+.msg-avatar-header{
+   box-shadow: 0 0 15px rgba(240, 160, 64, 0.5),   /* 外层光晕 */
+              0 0 30px rgba(240, 160, 64, 0.2);   /* 外层扩散 */
+  transition: box-shadow 0.5s ease;
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+}
+

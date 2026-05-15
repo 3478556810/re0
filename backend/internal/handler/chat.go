@@ -3,14 +3,14 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"io"
 	"log"
 	"net/http"
 	"os"
+	"regexp"
 	"strings"
-
-	"github.com/gin-gonic/gin"
-	"github.com/golang-jwt/jwt/v5"
 
 	"backend/internal/ai"
 )
@@ -20,7 +20,8 @@ type ChatRequest struct {
 	SessionID string `json:"sessionId"`
 }
 type ChatResponse struct {
-	Reply string `json:"reply"`
+	Reply   string `json:"reply"`
+	Emotion string `json:"emotion"`
 }
 
 type DSMessage struct {
@@ -40,6 +41,17 @@ type DSResp struct {
 }
 
 var sessionStore = NewSessionStore()
+
+func parseEmotion(reply string) (string, string) {
+	re := regexp.MustCompile(`\[emotion:(\w+)\]`)
+	matches := re.FindStringSubmatch(reply)
+	if len(matches) >= 2 {
+		emotion := matches[1]
+		cleanReply := re.ReplaceAllString(reply, "")
+		return strings.TrimSpace(cleanReply), emotion
+	}
+	return reply, "calm"
+}
 
 func HandleChat(c *gin.Context) {
 	var req ChatRequest
@@ -79,14 +91,8 @@ func HandleChat(c *gin.Context) {
 	sessionStore.Append(req.SessionID, DSMessage{Role: "user", Content: req.Message})
 	sessionStore.Append(req.SessionID, DSMessage{Role: "assistant", Content: reply})
 
-	c.JSON(http.StatusOK, ChatResponse{Reply: reply})
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
+	cleanReply, emotion := parseEmotion(reply)
+	c.JSON(http.StatusOK, ChatResponse{Reply: cleanReply, Emotion: emotion})
 }
 
 func askDeepSeekWithMessages(messages []DSMessage) string {
