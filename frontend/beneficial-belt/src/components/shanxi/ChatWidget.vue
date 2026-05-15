@@ -108,11 +108,11 @@ const sendMessage = async () => {
   const question = userInput.value.trim()
   if (!question) return
 
-  // 用户消息
+  // 1. 用户消息
   messages.value.push({ id: msgId++, content: question, sender: 'user' })
   userInput.value = ''
 
-  // 检测情绪并更新头像
+  // 2. 检测情绪并更新头像
   const emotion = detectEmotion(question)
   currentEmotion.value = {
     ...currentEmotion.value,
@@ -127,14 +127,27 @@ const sendMessage = async () => {
     })
     if (!res.ok) throw new Error('Network error')
     const data = await res.json()
+
+    // 3. 杉汐回复
     messages.value.push({ id: msgId++, content: data.reply, sender: 'bot' })
+
+    // 4. 异步归档记忆（此时 data 已定义）
+    saveMemory('leader', question)
+    saveMemory('shanshi', data.reply)
   } catch {
-    messages.value.push({
-      id: msgId++,
-      content: '杉汐：抱歉，我的灵魂好像被风吹散了…稍等片刻可好？',
-      sender: 'bot'
-    })
+    const fallback = '杉汐：抱歉，我的灵魂好像被风吹散了…稍等片刻可好？'
+    messages.value.push({ id: msgId++, content: fallback, sender: 'bot' })
   }
+}
+
+// 记忆存档辅助函数
+function saveMemory(role, content) {
+console.log('📝 记忆存档:', role, content)
+  fetch('/api/memory/save', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ role, content })
+  }).catch(err => console.error('记忆存档失败:', err))
 }
 </script>
 <style scoped>
