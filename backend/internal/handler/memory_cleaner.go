@@ -34,7 +34,7 @@ func (m *MemoryStore) StartMemoryCleaner() {
 	}()
 }
 
-// cleanMemories 让杉汐分析记忆并自动执行清理
+// CleanMemories 让杉汐分析记忆并自动执行清理
 func (m *MemoryStore) CleanMemories() {
 	if len(m.records) == 0 {
 		return
@@ -43,8 +43,8 @@ func (m *MemoryStore) CleanMemories() {
 	var memoryList strings.Builder
 	for i, rec := range m.records {
 		memoryList.WriteString(fmt.Sprintf(
-			"[%d] ID:%s | 时间:%s | 关键词:%v | 内容:%s\n",
-			i, rec.ID, rec.Timestamp.Format("2006-01-02 15:04"), rec.Keywords, rec.Content,
+			"[%d] ID:%s | 时间:%s | 内容:%s\n",
+			i, rec.ID, rec.Timestamp.Format("2006-01-02 15:04"), rec.Content,
 		))
 	}
 
@@ -97,32 +97,21 @@ func (m *MemoryStore) executeCleanup(reply string) {
 
 		case "DISCARD":
 			m.records = removeByID(m.records, s.ID)
-			if m.index != nil {
-				m.index.RemoveID(s.ID)
-			}
 			logEntries = append(logEntries, fmt.Sprintf("DISCARD %s: %s", s.ID, s.Reason))
 
 		case "MERGE":
 			targetRec := findRecordByID(m.records, s.TargetID)
 			sourceRec := findRecordByID(m.records, s.ID)
 			if targetRec != nil && sourceRec != nil {
-				// 合并内容
+				// 合并内容并生成新的摘要
 				mergedContent := fmt.Sprintf("主人: %s | 杉汐: %s", targetRec.Content, sourceRec.Content)
-				// 调用 DeepSeek 重新生成摘要和关键词
+				summary := generateSummary(mergedContent)
 
-				newKeywords := extractKeywordsWithDS(mergedContent)
-
-				targetRec.Content = mergedContent
-				targetRec.Keywords = newKeywords
+				targetRec.Content = summary
 				targetRec.Timestamp = time.Now()
 
 				// 删除源记忆
 				m.records = removeByID(m.records, s.ID)
-				// 更新索引
-				if m.index != nil {
-					m.index.RemoveID(s.ID)
-					m.index.Add(s.TargetID, newKeywords)
-				}
 				logEntries = append(logEntries, fmt.Sprintf("MERGE %s→%s: %s", s.ID, s.TargetID, s.Reason))
 			}
 		}
@@ -132,9 +121,6 @@ func (m *MemoryStore) executeCleanup(reply string) {
 	data, _ := json.MarshalIndent(m.records, "", "  ")
 	if err := os.WriteFile(m.filePath, data, 0644); err != nil {
 		fmt.Printf("⚠️ 记忆持久化失败: %v\n", err)
-	}
-	if m.index != nil {
-		m.index.Save()
 	}
 
 	fmt.Printf("✅ 杉汐整理记忆完成，操作日志:\n%s\n", strings.Join(logEntries, "\n"))

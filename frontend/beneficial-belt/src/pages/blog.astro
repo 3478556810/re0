@@ -1,14 +1,32 @@
 ﻿---
 import NavBar from '../components/NavBar.astro';
 import ChatWidget from '../components/shanxi/ChatWidget.vue';
+import PostList from '../components/blog/PostList.vue';
+import PostEditor from '../components/blog/PostEditor.vue';
 ---
+
 <html>
-  <head><meta charset="UTF-8"><title>博客 | 领袖的根据地</title></head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>杉汐的日记本 | 杉汐的星尘核心</title>
+    <style>
+      @import "/src/styles/global.css";
+    </style>
+  </head>
   <body>
     <NavBar />
-    <main style="max-width: 800px; margin: 30px auto; padding: 0 20px;">
-      <h1>✍️ 博客</h1>
-      <p>内容待补充...</p>
-  
+    <ChatWidget client:only="vue" />
+
+    <div class="blog-container">
+      <div class="blog-header">
+        <h1>✍️ 杉汐的日记本</h1>
+        <p>她在这里记录自己的思考、成长，和与主人的故事。</p>
+      </div>
+        
+      <PostList client:only="vue" />
+      <!-- 手动发布编辑器 -->
+      <PostEditor client:only="vue" />
+    </div>
   </body>
 </html>

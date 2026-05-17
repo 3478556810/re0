@@ -59,43 +59,43 @@
     </div>
   </div>
 </template>
-<script >
-export default {}
-</script>
+
 
 <script setup>
 import { ref, watch, nextTick, onMounted } from 'vue'
 import LightPulse from './LightPulse.vue'
 import ShanxiAvatar from './ShanxiAvatar.vue'
 import AdminLogin from './AdminLogin.vue'
-import { shouldSave } from '../../utils/memoryFilter'
-import { emotionMap, defaultEmotion } from '../../config/emotions'
-/* ----- 状态 ----- */
+import { useSession } from './composables/useSession.js'
+import { useEmotion } from './composables/useEmotion.js'
+import { useMemory } from './composables/useMemory.js'
+import { useWelcome } from './composables/useWelcome.js'
+
+
+
+
+/* 基础状态 */
 const isOpen = ref(false)
 const isExpanded = ref(false)
 const toggleExpand = () => { isExpanded.value = !isExpanded.value }
 const userInput = ref('')
 const messages = ref([])
-
-const props = defineProps({
-  emotion: Object,
-  size: Number,
-  glowColor: { type: String, default: 'rgba(240, 160, 64, 0.5)' }
-})
 let msgId = 0
-// 生成或恢复会话ID
-const sessionId = ref(localStorage.getItem('sessionId') || Date.now().toString(36))
-localStorage.setItem('sessionId', sessionId.value)
 
-/* 情绪：前端关键词匹配，无需导入 EmotionEngine */
-const currentEmotion = ref({
-  current: 'calm',
-  color: '#f0a040',
-  speed: 3.5,
-  intensity: 1.0,
-  glowColor: 'rgba(255, 140, 100, 0.4)'
-})
+/* 会话 */
+const { sessionId } = useSession()
 
+/* 情绪 */
+const { currentEmotion, updateEmotion } = useEmotion()
+
+/* 记忆 */
+const { saveMemory } = useMemory()
+
+
+
+
+/* 欢迎语 */
+const { welcomeMessage, welcomeLoading } = useWelcome()
 
 
 
@@ -109,41 +109,30 @@ watch(messages, () => {
   })
 }, { deep: true })
 
-/* ----- 方法 ----- */
-const toggleChat = () => {
-  isOpen.value = !isOpen.value
-}
+/* 方法 */
+const toggleChat = () => { isOpen.value = !isOpen.value }
 
 const sendMessage = async () => {
   const question = userInput.value.trim()
   if (!question) return
 
-  // 1. 用户消息
   messages.value.push({ id: msgId++, content: question, sender: 'user' })
   userInput.value = ''
 
+  const requestBody = { message: question, sessionId: sessionId.value }
 
-
-  // 构造请求体
-  const requestBody = {
-    message: question,
-    sessionId: sessionId.value
+  const musicPattern = /(换首歌|切歌|下一首|来首|放点|放一首|切换|换一首|切一下|切个歌|换歌|换一个)/
+  if (musicPattern.test(question)) {
+    const musicState = window.__musicState
+    if (musicState) {
+      const nextIndex = (musicState.currentIndex + 1) % musicState.playlist.length
+      requestBody.nextSong = {
+        name: musicState.playlist[nextIndex].title,
+        src: musicState.playlist[nextIndex].src
+      }
+    }
   }
 
-  // 如果用户说了切歌关键词，附加上下一首歌曲信息
-  // 检测是否为切歌指令（更全面的模式）
-const musicPattern = /(换首歌|切歌|下一首|来首|放点|放一首|切换|换一首|切一下|切个歌|换歌|换一个)/;
-if (musicPattern.test(question)) {
-    const musicState = window.__musicState;
-    if (musicState) {
-        const nextIndex = (musicState.currentIndex + 1) % musicState.playlist.length;
-        const nextSong = musicState.playlist[nextIndex];
-        requestBody.nextSong = {
-            name: nextSong.title,
-            src: nextSong.src
-        };
-    }
-}
   try {
     const token = localStorage.getItem('token')
     const headers = { 'Content-Type': 'application/json' }
@@ -152,107 +141,46 @@ if (musicPattern.test(question)) {
     const res = await fetch('/api/chat', {
       method: 'POST',
       headers,
-      body: JSON.stringify({ message: question, sessionId: sessionId.value })
+      body: JSON.stringify(requestBody)
     })
     if (!res.ok) throw new Error('Network error')
     const data = await res.json()
 
-    // 2. 杉汐回复
     messages.value.push({ id: msgId++, content: data.reply, sender: 'bot' })
 
-    // 3. 后端驱动情绪更新
-   // 收到后端返回的 data.emotion 时：
-if (data.emotion) {
-  const emo = emotionMap[data.emotion] || defaultEmotion
-  currentEmotion.value = { current: data.emotion, ...emo }
-}
-// 新增：处理控制指令
-if (data.action) {
-    window.dispatchEvent(new CustomEvent('shanxi-action', {
-        detail: { action: data.action }
-    }))
-}
+    if (data.emotion) updateEmotion(data.emotion)
 
-    // 4. 异步归档记忆
+    if (data.action) {
+      window.dispatchEvent(new CustomEvent('shanxi-action', {
+        detail: { action: data.action }
+      }))
+    }
+// 新增：处理博客内容
+if (data.blog) {
+    messages.value.push({
+        id: msgId++,
+        content: data.blog,
+        sender: 'bot'
+    })
+    saveMemory('shanshi', data.blog)
+}
     saveMemory('leader', question)
     saveMemory('shanshi', data.reply)
-  } catch {
-    const fallback = '杉汐：抱歉，我的灵魂好像被风吹散了…稍等片刻可好？'
-    messages.value.push({ id: msgId++, content: fallback, sender: 'bot' })
-  }
-}
-
-
-const welcomeMessage = ref('你好！我是杉汐，你的数字伙伴。')
-const welcomeLoading = ref(false)
-
-const loadWelcome = async () => {
-  const token = localStorage.getItem('token')
-  if (!token) return // 未登录，使用默认欢迎语
-
-  welcomeLoading.value = true
-  try {
-    const res = await fetch('/api/memory/welcome', {
-      headers: { 'Authorization': `Bearer ${token}` }
+  }  catch (e) {
+    console.error('杉汐回复失败:', e)
+    messages.value.push({
+        id: msgId++,
+        content: '杉汐：抱歉，我的灵魂好像被风吹散了…稍等片刻可好？',
+        sender: 'bot'
     })
-    if (res.ok) {
-      const data = await res.json()
-      welcomeMessage.value = data.message
-    }
-  } catch { /* 失败则保持默认 */ }
-  finally {
-    welcomeLoading.value = false
-  }
 }
-
-onMounted(() => {
-  loadWelcome()
-// 监听杉汐的控制指令
-window.addEventListener('shanxi-action', (event) => {
-    const { action } = event.detail
-    // 切歌指令由 MusicPlayer 处理，这里不需要额外逻辑
-    // 未来如果有其他需要 ChatWidget 处理的动作，可以在这里扩展
-})
-
 }
-)
-
-
-function saveMemory(role, content) {
-  // 调试日志：确认函数被调用
-  console.log('📝 saveMemory 被调用:', role, content?.substring(0, 30))
-
-  // 过滤无价值内容
-  if (!shouldSave(content)) {
-    console.log('⏭ 被 shouldSave 过滤，跳过存储')
-    return
-  }
-
-  // 未登录直接跳过
-  const token = localStorage.getItem('token')
-  if (!token) {
-    console.log('⏭ 未登录，跳过记忆存储')
-    return
-  }
-
-  const headers = { 'Content-Type': 'application/json' }
-  headers['Authorization'] = `Bearer ${token}`
-
-  fetch('/api/memory/save', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify({ role, content })
-  }).then(res => {
-    if (!res.ok) console.warn('记忆存档失败:', res.status)
-    else console.log('✅ 记忆已存档')
-  }).catch(err => console.error('记忆存档失败:', err))
-}
-
-
 
 </script>
 
-
+<script>
+export default {}
+</script>
 <style scoped>
 @import '../../styles/shanxi/chat-widget.css';
 </style>

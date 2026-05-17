@@ -1,4 +1,3 @@
-// internal/handler/memory_embedder.go
 package handler
 
 import (
@@ -9,15 +8,18 @@ import (
 	"math"
 	"net/http"
 	"os"
-	"strings"
+	"sort"
 	"time"
 )
 
 type EmbeddingRequest struct {
-	Model string `json:"model"`
-	Input string `json:"input"`
+	Model          string `json:"model"`
+	Input          string `json:"input"` // 兼容模式直接传字符串
+	EncodingFormat string `json:"encoding_format,omitempty"`
+	Dimensions     int    `json:"dimensions,omitempty"` // 维度参数
 }
 
+// 兼容模式响应结构
 type EmbeddingResponse struct {
 	Data []struct {
 		Embedding []float64 `json:"embedding"`
@@ -25,19 +27,35 @@ type EmbeddingResponse struct {
 }
 
 func getEmbedding(text string) ([]float64, error) {
-	apiKey := os.Getenv("DEEPSEEK_API_KEY")
-
-	// 修正模型名和请求体格式
-	reqBody := EmbeddingRequest{
-		Model: "deepseek-embedding", // DeepSeek 官方 Embedding 模型名
-		Input: text,
+	apiKey := os.Getenv("DASHSCOPE_API_KEY")
+	if apiKey == "" {
+		return nil, fmt.Errorf("缺少 DASHSCOPE_API_KEY")
 	}
-	reqBytes, _ := json.Marshal(reqBody)
 
-	// 修正 URL
-	req, _ := http.NewRequest("POST", "https://api.deepseek.com/v1/embeddings", bytes.NewBuffer(reqBytes))
+	if text == "" {
+		return nil, fmt.Errorf("输入文本为空")
+	}
+
+	// 构造请求体，Input 直接赋值字符串
+	reqBody := EmbeddingRequest{
+		Model:      "text-embedding-v4",
+		Input:      text,
+		Dimensions: 128,
+	}
+
+	reqBytes, err := json.Marshal(reqBody)
+	if err != nil {
+		return nil, fmt.Errorf("序列化失败: %v", err)
+	}
+	fmt.Printf("📤 Embedding请求: %s\n", string(reqBytes))
+
+	req, err := http.NewRequest("POST", "https://dashscope.aliyuncs.com/compatible-mode/v1/embeddings", bytes.NewBuffer(reqBytes))
+	if err != nil {
+		return nil, fmt.Errorf("创建请求失败: %v", err)
+	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Authorization", "Bearer "+apiKey)
+	req.Header.Set("Accept", "application/json")
 
 	client := &http.Client{Timeout: 15 * time.Second}
 	resp, err := client.Do(req)
@@ -46,13 +64,13 @@ func getEmbedding(text string) ([]float64, error) {
 	}
 	defer resp.Body.Close()
 
+	bodyBytes, _ := io.ReadAll(resp.Body)
 	if resp.StatusCode != 200 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API返回非200: %d, body: %s", resp.StatusCode, string(body))
+		return nil, fmt.Errorf("API返回非200: %d, body: %s", resp.StatusCode, string(bodyBytes))
 	}
 
 	var embResp EmbeddingResponse
-	if err := json.NewDecoder(resp.Body).Decode(&embResp); err != nil {
+	if err := json.Unmarshal(bodyBytes, &embResp); err != nil {
 		return nil, fmt.Errorf("解析失败: %v", err)
 	}
 	if len(embResp.Data) == 0 {
@@ -61,7 +79,6 @@ func getEmbedding(text string) ([]float64, error) {
 	return embResp.Data[0].Embedding, nil
 }
 
-// cosineSimilarity 余弦相似度
 func cosineSimilarity(a, b []float64) float64 {
 	if len(a) != len(b) || len(a) == 0 {
 		return 0
@@ -77,39 +94,42 @@ func cosineSimilarity(a, b []float64) float64 {
 	}
 	return dot / (math.Sqrt(normA) * math.Sqrt(normB))
 }
+
 func (m *MemoryStore) SearchSimilar(query string, topK int) []MemoryRecord {
 	if len(m.records) == 0 {
 		return nil
 	}
 
-	// 关键词粗筛：遍历倒排索引，匹配用户消息中包含的关键词
 	var candidates []MemoryRecord
-	if m.index != nil && len(m.index.KeywordToID) > 0 {
-		matchedIDs := make(map[string]bool)
-		for kw, ids := range m.index.KeywordToID {
-			if strings.Contains(query, kw) {
-				for _, id := range ids {
-					matchedIDs[id] = true
-				}
-			}
-		}
-
-		if len(matchedIDs) > 0 {
-			for _, rec := range m.records {
-				if matchedIDs[rec.ID] {
-					candidates = append(candidates, rec)
-				}
-			}
+	for _, rec := range m.records {
+		if len(rec.Embedding) > 0 {
+			candidates = append(candidates, rec)
 		}
 	}
 
-	// 如果关键词没命中，回退到最近记忆
 	if len(candidates) == 0 {
-		return m.GetRecent(topK)
+		return nil
 	}
 
-	if len(candidates) <= topK {
-		return candidates
+	queryEmb, err := getEmbedding(query)
+	if err != nil {
+		fmt.Printf("⚠️ 生成查询向量失败: %v\n", err)
+		return nil
 	}
-	return candidates[:topK]
+
+	type scored struct {
+		rec   MemoryRecord
+		score float64
+	}
+	var scores []scored
+	for _, rec := range candidates {
+		scores = append(scores, scored{rec, cosineSimilarity(queryEmb, rec.Embedding)})
+	}
+	sort.Slice(scores, func(i, j int) bool { return scores[i].score > scores[j].score })
+
+	var results []MemoryRecord
+	for i := 0; i < topK && i < len(scores); i++ {
+		results = append(results, scores[i].rec)
+	}
+	return results
 }
