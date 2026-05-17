@@ -15,15 +15,24 @@ type MemoryRecord struct {
 	Timestamp time.Time `json:"timestamp"`
 	Role      string    `json:"role"`
 	Content   string    `json:"content"`
+	Keywords  []string  `json:"keywords,omitempty"`
+	Embedding []float64 `json:"embedding,omitempty"` // 新增字段用于存储文本的向量表示
+	ID        string    `json:"id,omitempty"`
 }
 
 type MemoryStore struct {
 	filePath string
 	records  []MemoryRecord
+	index    *MemoryIndex   // 新增：关键词倒排索引
+	tfidf    *TFIDFAnalyzer // 新增
 }
 
-func NewMemoryStore(path string) *MemoryStore {
-	store := &MemoryStore{filePath: path}
+func NewMemoryStore(path string, index *MemoryIndex) *MemoryStore {
+	store := &MemoryStore{
+		filePath: path,
+		index:    index,
+		tfidf:    NewTFIDFAnalyzer(), // 初始化
+	}
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		panic("无法创建记忆数据目录: " + err.Error())
@@ -36,19 +45,70 @@ func NewMemoryStore(path string) *MemoryStore {
 	return store
 }
 
-func (m *MemoryStore) Append(role, content string) error {
+// SmartAppend 智能追加记忆（带关键词提取、向量化、索引更新）
+func (m *MemoryStore) SmartAppend(role, content string) error {
+	// 提取关键词
+	keywords := extractKeywordsWithDS(content)
+
+	// TF-IDF 自动过滤低区分度词
+	filteredKeywords := m.tfidf.FilterKeywords(keywords)
+
+	// 将过滤后的关键词加入 TF-IDF 统计
+	m.tfidf.AddDocument(filteredKeywords)
+
+	// 暂时注释：DeepSeek 不支持 Embedding API
+	// emb, err := getEmbedding(content)
+	// if err != nil {
+	// 	fmt.Printf("⚠️ 生成记忆向量失败: %v\n", err)
+	// } else {
+	// 	fmt.Println("✅ 向量已生成")
+	// }
+	var emb []float64
+
+	// 生成记忆ID
+	id := fmt.Sprintf("mem_%d", time.Now().UnixNano())
+
 	m.records = append(m.records, MemoryRecord{
 		Timestamp: time.Now(),
 		Role:      role,
 		Content:   content,
+		Keywords:  filteredKeywords,
+		Embedding: emb,
+		ID:        id,
 	})
+
+	// 持久化记忆
 	data, err := json.MarshalIndent(m.records, "", "  ")
 	if err != nil {
 		return err
 	}
+	if err := os.WriteFile(m.filePath, data, 0644); err != nil {
+		return err
+	}
+
+	// 更新关键词倒排索引
+	if m.index != nil && len(keywords) > 0 {
+		m.index.Add(id, keywords)
+		m.index.Save()
+	}
+
 	fmt.Printf("✅ 记忆已保存到: %s\n", m.filePath)
-	return os.WriteFile(m.filePath, data, 0644)
+	return nil
 }
+
+// func (m *MemoryStore) Append(role, content string) error {
+// 	m.records = append(m.records, MemoryRecord{
+// 		Timestamp: time.Now(),
+// 		Role:      role,
+// 		Content:   content,
+// 	})
+// 	data, err := json.MarshalIndent(m.records, "", "  ")
+// 	if err != nil {
+// 		return err
+// 	}
+// 	fmt.Printf("✅ 记忆已保存到: %s\n", m.filePath)
+// 	return os.WriteFile(m.filePath, data, 0644)
+// }
 
 func (m *MemoryStore) GetRecent(limit int) []MemoryRecord {
 	if len(m.records) <= limit {
@@ -68,7 +128,7 @@ func (m *MemoryStore) SaveMemoryHandler(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	if err := m.Append(req.Role, req.Content); err != nil {
+	if err := m.SmartAppend(req.Role, req.Content); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
