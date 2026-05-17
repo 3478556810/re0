@@ -1,6 +1,7 @@
 ---
 import NavBar from '../../components/NavBar.astro';
 import ChatWidget from '../../components/shanxi/ChatWidget.vue';
+export const prerender = false;  // 不预渲染，用户访问时动态加载
 export async function getStaticPaths() {
   try {
     const res = await fetch('http://localhost:8080/api/posts')
