@@ -40,9 +40,22 @@ func main() {
 		}
 		memoryPath = filepath.Join(homeDir, "shanxi_data", "memory.json")
 	}
+	// 初始化关键词倒排索引
+	indexPath := filepath.Join(filepath.Dir(memoryPath), "memory_index.json")
+	memoryIndex := handler.NewMemoryIndex(indexPath)
 
-	memoryStore := handler.NewMemoryStore(memoryPath)
+	// 初始化记忆存储（传入索引）
+	memoryStore := handler.NewMemoryStore(memoryPath, memoryIndex)
 	handler.RegisterRoutes(r, memoryStore)
+
+	// 启动杉汐的记忆自动清理（每天深夜自动执行）
+	memoryStore.StartMemoryCleaner()
+
+	// 临时测试端点：手动触发记忆清理
+	r.GET("/api/admin/clean-memories", func(c *gin.Context) {
+		memoryStore.CleanMemories()
+		c.JSON(200, gin.H{"status": "ok"})
+	})
 
 	r.Run(":8080")
 }

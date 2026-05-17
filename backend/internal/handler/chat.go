@@ -72,7 +72,7 @@ func parseAction(reply string) (string, string) {
 	return reply, ""
 }
 
-func HandleChat(c *gin.Context) {
+func HandleChat(c *gin.Context, memoryStore *MemoryStore) {
 	var req ChatRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "请求格式错误"})
@@ -100,12 +100,26 @@ func HandleChat(c *gin.Context) {
 	// 获取该会话的历史消息
 	history := sessionStore.Get(req.SessionID)
 
+	// ===== 检索长期记忆并注入 Prompt =====
+	if memoryStore != nil {
+		related := memoryStore.SearchSimilar(req.Message, 3)
+		if len(related) > 0 {
+			var builder strings.Builder
+			builder.WriteString("\n\n以下是主人过去的对话记忆，如果与当前问题相关，请自然地在对话中引用：\n")
+			for i, rec := range related {
+				builder.WriteString(fmt.Sprintf("%d. %s\n", i+1, rec.Content))
+			}
+			systemPrompt += builder.String()
+		}
+	}
+	// ===== 记忆检索结束 =====
+
 	// 构造完整 messages：System Prompt + 历史消息 + 当前消息
 	var messages []DSMessage
 	messages = append(messages, DSMessage{Role: "system", Content: systemPrompt})
 	messages = append(messages, history...)
 	messages = append(messages, DSMessage{Role: "user", Content: req.Message})
-
+	fmt.Printf("📊 messages 数量: %d\n", len(messages))
 	// 调用 DeepSeek
 	reply := askDeepSeekWithMessages(messages)
 
