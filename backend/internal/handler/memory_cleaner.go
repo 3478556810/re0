@@ -11,9 +11,20 @@ import (
 // StartMemoryCleaner 启动后台记忆清理协程
 func (m *MemoryStore) StartMemoryCleaner() {
 	go func() {
+		// 如果当前时间在20:00之后，立即执行一次清理
+		now := time.Now()
+		today8pm := time.Date(now.Year(), now.Month(), now.Day(), 20, 0, 0, 0, now.Location())
+		if now.After(today8pm) {
+			fmt.Println("🧹 服务器启动晚于20:00，立即执行一次记忆清理...")
+			m.CleanMemories()
+		}
+
 		for {
 			now := time.Now()
-			next := time.Date(now.Year(), now.Month(), now.Day()+1, 3, 0, 0, 0, now.Location())
+			next := time.Date(now.Year(), now.Month(), now.Day(), 20, 0, 0, 0, now.Location())
+			if now.After(next) {
+				next = next.Add(24 * time.Hour)
+			}
 			time.Sleep(next.Sub(now))
 
 			fmt.Println("🧹 杉汐开始整理记忆...")
