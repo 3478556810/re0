@@ -23,15 +23,11 @@ type MemoryRecord struct {
 type MemoryStore struct {
 	filePath string
 	records  []MemoryRecord
-	index    *MemoryIndex   // 新增：关键词倒排索引
-	tfidf    *TFIDFAnalyzer // 新增
 }
 
-func NewMemoryStore(path string, index *MemoryIndex) *MemoryStore {
+func NewMemoryStore(path string) *MemoryStore {
 	store := &MemoryStore{
 		filePath: path,
-		index:    index,
-		tfidf:    NewTFIDFAnalyzer(), // 初始化
 	}
 	dir := filepath.Dir(path)
 	if err := os.MkdirAll(dir, 0755); err != nil {
@@ -46,24 +42,19 @@ func NewMemoryStore(path string, index *MemoryIndex) *MemoryStore {
 }
 
 // SmartAppend 智能追加记忆（带关键词提取、向量化、索引更新）
+// SmartAppend 智能追加记忆（带关键词提取、向量化、索引更新）
 func (m *MemoryStore) SmartAppend(role, content string) error {
-	// 提取关键词
-	keywords := extractKeywordsWithDS(content)
-
-	// TF-IDF 自动过滤低区分度词
-	filteredKeywords := m.tfidf.FilterKeywords(keywords)
-
-	// 将过滤后的关键词加入 TF-IDF 统计
-	m.tfidf.AddDocument(filteredKeywords)
-
-	// 暂时注释：DeepSeek 不支持 Embedding API
-	// emb, err := getEmbedding(content)
-	// if err != nil {
-	// 	fmt.Printf("⚠️ 生成记忆向量失败: %v\n", err)
-	// } else {
-	// 	fmt.Println("✅ 向量已生成")
-	// }
+	// 生成向量（只对长度足够的文本）
 	var emb []float64
+	if len([]rune(content)) >= 10 {
+		var err error
+		emb, err = getEmbedding(content)
+		if err != nil {
+			fmt.Printf("⚠️ 生成记忆向量失败: %v\n", err)
+		} else {
+			fmt.Println("✅ 向量已生成")
+		}
+	}
 
 	// 生成记忆ID
 	id := fmt.Sprintf("mem_%d", time.Now().UnixNano())
@@ -72,7 +63,6 @@ func (m *MemoryStore) SmartAppend(role, content string) error {
 		Timestamp: time.Now(),
 		Role:      role,
 		Content:   content,
-		Keywords:  filteredKeywords,
 		Embedding: emb,
 		ID:        id,
 	})
@@ -84,12 +74,6 @@ func (m *MemoryStore) SmartAppend(role, content string) error {
 	}
 	if err := os.WriteFile(m.filePath, data, 0644); err != nil {
 		return err
-	}
-
-	// 更新关键词倒排索引
-	if m.index != nil && len(keywords) > 0 {
-		m.index.Add(id, keywords)
-		m.index.Save()
 	}
 
 	fmt.Printf("✅ 记忆已保存到: %s\n", m.filePath)

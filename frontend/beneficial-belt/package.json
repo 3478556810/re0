@@ -18,6 +18,7 @@
     "@tsparticles/plugin-emitters": "^3.9.1",
     "@worstone/vue-aplayer": "^1.0.8",
     "astro": "^6.3.1",
+    "easymde": "^2.21.0",
     "gsap": "^3.15.0",
     "tsparticles": "^3.9.1",
     "tsparticles-slim": "^2.12.0",

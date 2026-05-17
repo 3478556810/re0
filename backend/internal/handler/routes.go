@@ -14,7 +14,7 @@ func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore) {
 	// 公开路由：聊天接口对未登录用户限流
 	r.POST("/api/chat", limiter.Limit(), func(c *gin.Context) {
 		HandleChat(c, memoryStore)
-	}) // ← 只有聊天接口需要限流
+	})
 
 	r.GET("/api/posts", GetPosts)
 	r.POST("/api/posts", CreatePost)

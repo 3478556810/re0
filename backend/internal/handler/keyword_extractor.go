@@ -52,13 +52,14 @@ func extractKeywordsWithDS(text string) []string {
 		return nil
 	}
 
-	// 切割关键词
+	// 确保正确处理逗号分隔的返回结果
 	raw := strings.TrimSpace(dsResp.Choices[0].Message.Content)
 	parts := strings.Split(raw, ",")
 	var keywords []string
 	for _, p := range parts {
 		p = strings.TrimSpace(p)
-		if p != "" {
+		// 过滤掉空字符串和单字符
+		if len([]rune(p)) >= 2 {
 			keywords = append(keywords, p)
 		}
 	}
