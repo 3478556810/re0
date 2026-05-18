@@ -43,7 +43,7 @@
 
           <div class="message bot">
             {{ msg.content }}
-             <button class="voice-btn" @click="playVoice(msg.content)" title="播放语音">🔊</button>
+            <button class="voice-btn" @click="playVoice(msg.content)" title="播放语音">🔊</button>
           </div>
 
 
@@ -51,6 +51,9 @@
       </div>
 
       <div class="chat-input-area">
+        <!-- 放在聊天输入框旁边 -->
+        <input type="file" accept="image/*" ref="imageInput" style="display:none" @change="handleImageUpload" />
+        <button @click="$refs.imageInput.click()" title="上传图片">🖼️</button>
         <input type="text" style="font-size: 18px;" class="chat-input" v-model="userInput" placeholder="输入你的问题..."
           @keypress.enter="sendMessage" />
         <button class="send-button" @click="sendMessage">
@@ -156,33 +159,116 @@ const sendMessage = async () => {
         detail: { action: data.action }
       }))
     }
-// 新增：处理博客内容
-if (data.blog) {
-    messages.value.push({
+    // 新增：处理博客内容
+    if (data.blog) {
+      messages.value.push({
         id: msgId++,
         content: data.blog,
         sender: 'bot'
-    })
-    saveMemory('shanshi', data.blog)
-}
+      })
+      saveMemory('shanshi', data.blog)
+    }
     saveMemory('leader', question)
     saveMemory('shanshi', data.reply)
-  }  catch (e) {
+  } catch (e) {
     console.error('杉汐回复失败:', e)
     messages.value.push({
-        id: msgId++,
-        content: '杉汐：抱歉，我的灵魂好像被风吹散了…稍等片刻可好？',
-        sender: 'bot'
+      id: msgId++,
+      content: '杉汐：抱歉，我的灵魂好像被风吹散了…稍等片刻可好？',
+      sender: 'bot'
     })
-}
+  }
 }
 
+
+// 图片上传
+const imageInput = ref(null)
+
+function handleImageUpload(event) {
+    const file = event.target.files[0]
+    if (!file) return
+
+    // 显示用户正在上传图片
+    messages.value.push({
+        id: msgId++,
+        content: '🖼️ [上传了一张图片]',
+        sender: 'user'
+    })
+
+    const reader = new FileReader()
+    reader.onload = async (e) => {
+        const base64 = e.target.result.split(',')[1] // 去掉 data:image/xxx;base64, 前缀
+
+        const requestBody = {
+            message: '帮我看看这张图片',
+            sessionId: sessionId.value,
+            image: base64
+        }
+
+        try {
+            const token = localStorage.getItem('token')
+            const headers = { 'Content-Type': 'application/json' }
+            if (token) headers['Authorization'] = `Bearer ${token}`
+
+            const res = await fetch('/api/chat', {
+                method: 'POST',
+                headers,
+                body: JSON.stringify(requestBody)
+            })
+            const data = await res.json()
+            messages.value.push({ id: msgId++, content: data.reply, sender: 'bot' })
+            saveMemory('shanshi', data.reply)
+        } catch {
+            messages.value.push({
+                id: msgId++,
+                content: '杉汐：抱歉，我暂时看不清这张图片...',
+                sender: 'bot'
+            })
+        }
+    }
+    reader.readAsDataURL(file)
+}
+
+async function sendMessageWithImage(imageBase64) {
+  const question = userInput.value.trim() || "帮我看看这张图片"
+  messages.value.push({ id: msgId++, content: question, sender: 'user' })
+  userInput.value = ''
+
+  const requestBody = {
+    message: question,
+    sessionId: sessionId.value,
+    image: imageBase64
+  }
+
+  try {
+    const requestBody = {
+    message: question,
+    sessionId: sessionId.value
+}
+if (imageBase64) {
+    requestBody.image = imageBase64
+}
+const res = await fetch('/api/chat', {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(requestBody)
+})
+    const data = await res.json()
+    messages.value.push({ id: msgId++, content: data.reply, sender: 'bot' })
+  } catch {
+    messages.value.push({
+      id: msgId++,
+      content: '杉汐：抱歉，我暂时看不清这张图片...',
+      sender: 'bot'
+    })
+  }
+}
 const isVoicePlaying = ref(false)
 
 async function playVoice(text) {
   if (isVoicePlaying.value) return
   isVoicePlaying.value = true
-  
+
   try {
     const res = await fetch('/api/tts', {
       method: 'POST',
