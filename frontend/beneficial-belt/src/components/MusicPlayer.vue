@@ -37,7 +37,8 @@
 
 <script setup>
 import { ref, computed } from 'vue'
-import {  onMounted } from 'vue'  // 如果没有 onMounted，加上它
+import { onMounted } from 'vue'
+
 const playlist = [
   { title: 'CopyMemory', src: '/music/CopyMemory.mp3', cover: '/images/CopyMemory.png', theme: '#60a5fa' },
   { title: 'Bamboo', src: '/music/Bamboo.mp3', cover: '/images/Bamboo.jpg', theme: '#10b981' },
@@ -54,34 +55,27 @@ const currentSrc = computed(() => currentTrack.value.src)
 const currentTitle = computed(() => currentTrack.value.title)
 const currentCover = computed(() => currentTrack.value.cover)
 
-// ========== 辅助函数：等待音频准备好 ==========
 const waitForCanPlay = () => {
   return new Promise((resolve, reject) => {
     const audio = audioRef.value
     if (!audio) return reject(new Error('音频元素未初始化'))
-
     const timeout = setTimeout(() => {
       audio.removeEventListener('canplay', handler)
       reject(new Error('音频加载超时'))
     }, 5000)
-
     const handler = () => {
       clearTimeout(timeout)
       audio.removeEventListener('canplay', handler)
       resolve()
     }
-
     audio.addEventListener('canplay', handler)
   })
 }
 
-// ========== 播放当前音轨（修复竞态） ==========
 const playCurrentTrack = async () => {
   const audio = audioRef.value
   if (!audio) return
-
   audio.load()
-  
   try {
     await waitForCanPlay()
     await audio.play()
@@ -92,7 +86,6 @@ const playCurrentTrack = async () => {
   }
 }
 
-// ========== 用户点击播放按钮 ==========
 const togglePlay = () => {
   const audio = audioRef.value
   if (!audio) return
@@ -103,18 +96,15 @@ const togglePlay = () => {
   }
 }
 
-// ========== 歌曲结束时的自动切歌 ==========
 const onSongEnded = () => {
   if (canAutoPlay) {
     nextTrack()
   }
 }
 
-// ========== 手动切歌 ==========
 const nextTrack = () => {
   currentIndex.value = (currentIndex.value + 1) % playlist.length
   const nextColor = playlist[currentIndex.value].theme
-  console.log('⏭ 切歌, 主题色:', nextColor)
   window.dispatchEvent(new CustomEvent('theme-switch', { detail: nextColor }))
   playCurrentTrack()
 }
@@ -122,7 +112,6 @@ const nextTrack = () => {
 const prevTrack = () => {
   currentIndex.value = (currentIndex.value - 1 + playlist.length) % playlist.length
   const prevColor = playlist[currentIndex.value].theme
-  console.log('⏮ 切歌, 主题色:', prevColor)
   window.dispatchEvent(new CustomEvent('theme-switch', { detail: prevColor }))
   playCurrentTrack()
 }
@@ -130,8 +119,6 @@ const prevTrack = () => {
 const onError = () => {
   console.warn('音频加载失败:', currentSrc.value)
 }
-
-
 
 onMounted(() => {
     window.addEventListener('shanxi-action', (event) => {
@@ -143,20 +130,18 @@ onMounted(() => {
     })
 })
 
-// 根据歌名切换到对应歌曲
 function switchToSong(songName) {
     const index = playlist.findIndex(s => s.title === songName || s.src.includes(songName))
     if (index !== -1) {
         currentIndex.value = index
         const targetTheme = playlist[index].theme
-        // 同步切换主题
         window.dispatchEvent(new CustomEvent('theme-switch', { detail: targetTheme }))
         playCurrentTrack()
     } else {
-        nextTrack() // 找不到就随机切一首（nextTrack 里已有主题切换）
+        nextTrack()
     }
 }
-// 暴露播放器状态给 ChatWidget
+
 window.__musicState = {
   get currentIndex() { return currentIndex.value },
   playlist
@@ -302,14 +287,33 @@ window.__musicState = {
   background: #2c3e50 !important;
   border-color: #60a5fa !important;
 }
-</style>
-<style scoped>
+
+/* 手机端适配 */
 @media (max-width: 768px) {
   .vinyl-player {
-    left: 10px;
-    bottom: 10px;
-    transform: scale(0.7);
-    transform-origin: left bottom;
+    left: 8px !important;
+    bottom: 80px !important;
+    transform: scale(0.55) !important;
+    transform-origin: left bottom !important;
+  }
+  .vinyl-disc {
+    width: 120px;
+    height: 120px;
+  }
+  .vinyl-controls {
+    gap: 4px;
+  }
+  .song-name {
+    font-size: 0.7rem;
+  }
+  .control-buttons button {
+    width: 28px;
+    height: 28px;
+    font-size: 0.7rem;
+  }
+  .play-btn {
+    width: 32px !important;
+    height: 32px !important;
   }
 }
 </style>
