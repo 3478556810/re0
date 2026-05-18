@@ -1,0 +1,21 @@
+---
+import NavBar from '../../components/NavBar.astro';
+import ChatWidget from '../../components/shanxi/ChatWidget.vue';
+import BlogPost from '../../components/blog/BlogPost.vue';
+---
+
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>文章 | 杉汐的日记本</title>
+    <style>
+      @import "/src/styles/global.css";
+    </style>
+  </head>
+  <body>
+    <NavBar />
+    <ChatWidget client:only="vue" />
+    <BlogPost client:only="vue" />
+  </body>
+</html>
