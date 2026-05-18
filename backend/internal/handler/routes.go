@@ -9,22 +9,28 @@ import (
 
 func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore) {
 
-	r.POST("/api/tts", func(c *gin.Context) {
-		var req struct {
-			Text string `json:"text"`
-		}
-		if err := c.BindJSON(&req); err != nil {
-			c.JSON(400, gin.H{"error": "参数错误"})
-			return
-		}
-		audio, err := SynthesizeSpeech(req.Text)
-		if err != nil {
-			log.Printf("❌ TTS合成失败: %v\n", err)       // 添加这行
-			c.JSON(500, gin.H{"error": err.Error()}) // 返回具体错误信息
-			return
-		}
-		c.Data(200, "audio/wav", audio)
-	})
+	// 需要登录才能使用的功能
+	authGroup := r.Group("/api", middleware.AuthRequired())
+	{
+		authGroup.POST("/tts", func(c *gin.Context) {
+			var req struct {
+				Text string `json:"text"`
+			}
+			if err := c.BindJSON(&req); err != nil {
+				c.JSON(400, gin.H{"error": "参数错误"})
+				return
+			}
+			audio, err := SynthesizeSpeech(req.Text)
+			if err != nil {
+				log.Printf("❌ TTS合成失败: %v\n", err)       // 添加这行
+				c.JSON(500, gin.H{"error": err.Error()}) // 返回具体错误信息
+				return
+			}
+			c.Data(200, "audio/wav", audio)
+		})
+		authGroup.POST("/chat/image", func(c *gin.Context) { /* ... */ })
+	}
+
 	// 创建一个速率限制器
 	limiter := middleware.NewRateLimiter()
 

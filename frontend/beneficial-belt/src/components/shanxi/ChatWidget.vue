@@ -52,8 +52,8 @@
 
       <div class="chat-input-area">
         <!-- 放在聊天输入框旁边 -->
-        <input type="file" accept="image/*" ref="imageInput" style="display:none" @change="handleImageUpload" />
-        <button @click="$refs.imageInput.click()" title="上传图片">🖼️</button>
+        <input type="file" accept="image/*" ref="imageInput" style="display:none" v-if="isLoggedIn" @change="handleImageUpload" />
+        <button v-if="isLoggedIn" @click="$refs.imageInput.click()" title="上传图片">🖼️</button>
         <input type="text" style="font-size: 18px;" class="chat-input" v-model="userInput" placeholder="输入你的问题..."
           @keypress.enter="sendMessage" />
         <button class="send-button" @click="sendMessage">
@@ -76,7 +76,8 @@ import { useMemory } from './composables/useMemory.js'
 import { useWelcome } from './composables/useWelcome.js'
 
 
-
+// 新增一个响应式变量判断是否登录
+const isLoggedIn = ref(!!localStorage.getItem('token'))
 
 /* 基础状态 */
 const isOpen = ref(false)
