@@ -2,7 +2,7 @@
 <template>
   <div>
     <!-- 悬浮按钮 -->
-    <div class="chat-toggle-button" @click="toggleChat">
+    <div class="chat-toggle-button" v-if="!isOpen" @click="toggleChat">
       <div class="toggle-light-pulse">
         <LightPulse />
       </div>
