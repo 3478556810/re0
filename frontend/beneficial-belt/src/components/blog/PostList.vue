@@ -2,7 +2,7 @@
   <div class="post-list">
     <div v-if="loading" class="loading">正在加载杉汐的日记...</div>
     <div v-else-if="posts.length === 0" class="empty">杉汐还没有写过日记呢，去和她聊聊天吧 ✨</div>
-    <a v-for="post in posts" :key="post.id" :href="`/blog/${post.slug}`" class="post-card">
+    <a v-for="post in posts" :key="post.id" :href="`/blog/post?slug=${post.slug}`" class="post-card">
       <h2>{{ post.title }}</h2>
       <div class="post-date">{{ formatDate(post.created_at) }}</div>
       <div class="post-desc">{{ getExcerpt(post.content) }}</div>

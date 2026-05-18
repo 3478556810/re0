@@ -9,7 +9,6 @@ const __dirname = dirname(__filename);
 
 export default defineConfig({
   integrations: [vue()],
- output: 'hybrid',  // 改为 hybrid 模式
   vite: {
     build: {
       charset: 'utf8',
