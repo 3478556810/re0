@@ -366,3 +366,15 @@
     min-height: 40px !important;
   }
 }
+.voice-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+  margin-left: 6px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+.voice-btn:hover {
+  opacity: 1;
+}

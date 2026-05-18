@@ -43,6 +43,7 @@
 
           <div class="message bot">
             {{ msg.content }}
+             <button class="voice-btn" @click="playVoice(msg.content)" title="播放语音">🔊</button>
           </div>
 
 
@@ -176,6 +177,32 @@ if (data.blog) {
 }
 }
 
+const isVoicePlaying = ref(false)
+
+async function playVoice(text) {
+  if (isVoicePlaying.value) return
+  isVoicePlaying.value = true
+  
+  try {
+    const res = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text })
+    })
+    if (res.ok) {
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const audio = new Audio(url)
+      audio.onended = () => {
+        isVoicePlaying.value = false
+        URL.revokeObjectURL(url)
+      }
+      audio.play()
+    }
+  } catch (e) {
+    isVoicePlaying.value = false
+  }
+}
 </script>
 
 <script>
