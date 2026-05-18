@@ -303,3 +303,13 @@ window.__musicState = {
   border-color: #60a5fa !important;
 }
 </style>
+<style scoped>
+@media (max-width: 768px) {
+  .vinyl-player {
+    left: 10px;
+    bottom: 10px;
+    transform: scale(0.7);
+    transform-origin: left bottom;
+  }
+}
+</style>

@@ -246,3 +246,30 @@
   overflow: hidden;
 }
 
+
+/* 手机端适配 */
+@media (max-width: 768px) {
+  .chat-window {
+    width: 100vw !important;
+    height: 100vh !important;
+    max-height: 100vh !important;
+    bottom: 0 !important;
+    right: 0 !important;
+    border-radius: 0 !important;
+  }
+  .chat-window.expanded {
+    width: 100vw !important;
+    height: 100vh !important;
+    top: 0 !important;
+    left: 0 !important;
+    transform: none !important;
+  }
+  .chat-toggle-button {
+    right: 8px !important;
+    width: 52px;
+    height: 52px;
+  }
+  .message {
+    font-size: 15px;
+  }
+}
