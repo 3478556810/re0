@@ -3,6 +3,13 @@ import NavBar from '../../components/NavBar.astro';
 import ChatWidget from '../../components/shanxi/ChatWidget.vue';
 import BlogPost from '../../components/blog/BlogPost.vue';
 
+export function getStaticPaths() {
+  return [
+    { params: { slug: 'hello-world' } },
+    // 后续发布新博客后，在这里追加新的 slug
+  ];
+}
+
 const { slug } = Astro.params;
 ---
 
