@@ -43,7 +43,7 @@
 
           <div class="message bot">
             {{ msg.content }}
-            <button class="voice-btn" @click="playVoice(msg.content)" title="播放语音">🔊</button>
+            <button  v-if="isLoggedIn" class="voice-btn" @click="playVoice(msg.content)" title="播放语音">🔊</button>
           </div>
 
 
