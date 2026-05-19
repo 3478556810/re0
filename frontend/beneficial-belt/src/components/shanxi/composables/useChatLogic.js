@@ -3,15 +3,20 @@ export function useChatLogic({ messages, userInput, sessionId, updateEmotion, sa
 
   const sendMessage = async () => {
     const question = userInput.value.trim()
-    if (!question) return
+  if (!question) return
 
-    ({ id: msgId++, content: question, sender: 'user' })
-    userInput.value = ''
+  // 1. 立即添加用户消息
+  messages.value.push({ 
+    id: msgId++, 
+    content: question, 
+    sender: 'user'  // 明确标记发送者
+  })
+  userInput.value = ''
 
-    // 构造请求体，直接从 localStorage 读取调试参数
-    const requestBody = {
-      message: question,
-      sessionId: sessionId.value,
+  // 构造请求体...（后续代码保持不变）
+  const requestBody = {
+    message: question,
+    sessionId: sessionId.value,
       temperature: parseFloat(localStorage.getItem('debugTemp') || 0.7),
       top_p: parseFloat(localStorage.getItem('debugTopP') || 0.9),
       max_tokens: parseInt(localStorage.getItem('debugMaxTokens') || 2000),
@@ -53,7 +58,9 @@ export function useChatLogic({ messages, userInput, sessionId, updateEmotion, sa
       }
 
       messages.value.push({ id: msgId++, content: data.reply, sender: 'bot' })
-
+// 在 push 用户消息之后，加上这两行调试代码
+console.log('🔍 [调试] messages 数组内容:', JSON.parse(JSON.stringify(messages.value)));
+console.log('🔍 [调试] 最新一条消息:', messages.value[messages.value.length - 1]);
       // 更新 Token 消耗和延迟到调试面板
       if (lastTokenUsage) {
         lastTokenUsage.value = data.token_usage || '--'
