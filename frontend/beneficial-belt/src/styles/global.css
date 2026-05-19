@@ -266,7 +266,37 @@ body {
 }
 
 /* 手机端适配 */
+/* 手机端适配 */
 @media (max-width: 768px) {
+  .navbar {
+    padding: 8px 12px !important;
+  }
+  .nav-content {
+    flex-wrap: wrap !important;
+    justify-content: center !important;
+  }
+  .nav-links {
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  .nav-links a {
+    font-size: 0.7em !important;
+  }
+  .nav-actions {
+    display: none !important;
+  }
+  .app-container {
+    padding: 0 48px !important;
+  }
+  .hero h1 {
+    font-size: 28px !important;
+    padding-top: 100px !important;
+  }
+  .island-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
+  }
   .chat-window {
     width: 100vw !important;
     height: 100vh !important;
@@ -283,33 +313,28 @@ body {
     transform: none !important;
   }
   .chat-toggle-button {
+    right: 6px !important;
+    width: 44px !important;
+    height: 44px !important;
+  }
+  .mini-player {
+    left: auto !important;
     right: 8px !important;
-    width: 52px;
-    height: 52px;
+    bottom: 8px !important;
+    top: auto !important;
+    transform: none !important;
+    flex-direction: row !important;
+    padding: 4px 10px !important;
+    width: auto !important;
+    height: auto !important;
   }
-  .navbar {
-    padding: 10px 16px;
+  .player-info {
+    max-width: 70px !important;
   }
-  .hero h1 {
-    font-size: 32px;
-  }
-  .island-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-  .blog-container {
-    padding: 20px 16px;
+  .player-song {
+    font-size: 9px !important;
   }
   .message {
-    font-size: 15px;
+    font-size: 14px !important;
   }
-
-.app-container {
-  padding: 0 16px;    /* 手机端恢复窄边距 */
-}
-.island-grid {
-  grid-template-columns: repeat(2, 1fr);
-  max-width: 100%;
-}
-
 }
