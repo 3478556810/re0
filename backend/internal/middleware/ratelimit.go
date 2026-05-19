@@ -14,15 +14,22 @@ import (
 type RateLimiter struct {
 	mu       sync.Mutex
 	visitors map[string]time.Time
+	interval time.Duration // 限流间隔
 }
 
 func NewRateLimiter() *RateLimiter {
 	return &RateLimiter{
 		visitors: make(map[string]time.Time),
+		interval: 30 * time.Second, // 默认间隔
 	}
 }
-
-func (r *RateLimiter) Limit() gin.HandlerFunc {
+func NewStrictRateLimiter() *RateLimiter {
+	return &RateLimiter{
+		visitors: make(map[string]time.Time),
+		interval: 20 * time.Second, // 严格限流
+	}
+}
+func (rl *RateLimiter) Limit() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// 1. 如果携带有效 JWT 且角色为 admin，跳过限流
 		authHeader := c.GetHeader("Authorization")
@@ -40,19 +47,19 @@ func (r *RateLimiter) Limit() gin.HandlerFunc {
 		}
 
 		// 2. 未登录，按 IP 限流
-		r.mu.Lock()
-		defer r.mu.Unlock()
+		rl.mu.Lock()
+		defer rl.mu.Unlock()
 
 		ip := c.ClientIP()
-		lastVisit, exists := r.visitors[ip]
+		lastVisit, exists := rl.visitors[ip]
 
-		if exists && time.Since(lastVisit) < 30*time.Second {
+		if exists && time.Since(lastVisit) < rl.interval {
 			c.JSON(http.StatusTooManyRequests, gin.H{"error": "访问过于频繁，请30秒后再试"})
 			c.Abort()
 			return
 		}
 
-		r.visitors[ip] = time.Now()
+		rl.visitors[ip] = time.Now()
 		c.Next()
 	}
 }
