@@ -14,18 +14,14 @@
     <div class="chat-window" :class="{ expanded: isExpanded }" :style="{ display: isOpen ? 'flex' : 'none' }">
       <div class="chat-header">
         <div class="header-left">
-
           <div class="header-user-info">
-            <!-- 名字改为白色，更清晰 -->
             <span class="header-name">杉汐</span>
             <div class="status-wrapper">
-              <!-- 状态小圆点，模仿QQ -->
               <span class="status-dot" :style="{ background: statusDotColor }"></span>
               <span class="status-text">{{ currentStatus }}</span>
             </div>
           </div>
         </div>
-        <!-- 登录组件已移除 -->
         <div class="header-actions">
           <button class="ds-btn" @click="toggleExpand" :title="isExpanded ? '还原' : '放大'">
             <Icon :icon="isExpanded ? 'mdi:arrow-collapse' : 'mdi:arrow-expand'" width="16" color="#666" />
@@ -42,22 +38,19 @@
         <div v-if="messages.length === 0 && welcomeLoading" class="message bot" style="opacity:0.6">杉汐正在想起你...</div>
 
         <div v-for="msg in messages" :key="msg.id" class="message-row" :class="msg.sender">
-          <!-- 图片消息：直接展示图片卡片 -->
-          <div v-if="msg.type === 'image'" class="image-card">
-            <img :src="msg.image" style="max-width: 240px; border-radius: 12px; cursor: pointer;"
-              @click="previewImage(msg.image)" />
-          </div>
-
-          <!-- 普通文本消息 -->
-          <div v-else class="message bot">
-            {{ msg.content }}
-            <!-- 语音按钮保持不变 -->
-            <button v-if="isLoggedIn && msg.sender === 'bot'" class="ds-btn ds-btn-msg" @click="playVoice(msg.content)"
-              title="播放语音">
-              <Icon icon="mdi:microphone" width="14" color="#666" />
-            </button>
-          </div>
-        </div>
+  <!-- 图片消息：直接展示图片卡片 -->
+  <div v-if="msg.type === 'image'" class="image-card">
+    <img :src="msg.image" style="max-width: 240px; border-radius: 12px;" />
+  </div>
+  <!-- 普通文字消息：动态绑定样式类，区分用户和杉汐 -->
+  <div v-else class="message" :class="msg.sender">
+    {{ msg.content }}
+    <!-- 语音按钮：只给杉汐的消息 -->
+    <button v-if="isLoggedIn && msg.sender === 'bot'" class="ds-btn ds-btn-msg" @click="playVoice(msg.content)" title="播放语音">
+      <Icon icon="mdi:microphone" width="14" color="#666" />
+    </button>
+  </div>
+</div>
       </div>
 
       <!-- 输入区域 -->
@@ -74,9 +67,8 @@
         </button>
       </div>
 
-
-      <details class="debug-panel">
-        <summary>⚙️ 调试参数</summary>
+      <details class="debug-panel" v-if="isLoggedIn">
+        <summary>调试参数</summary>
         <div class="debug-controls">
           <label>T: <input type="range" min="0" max="2" step="0.1" v-model.number="debugTemp" @change="updateParams" />
             <span>{{ debugTemp }}</span>
