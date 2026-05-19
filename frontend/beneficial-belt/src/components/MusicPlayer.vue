@@ -1,43 +1,27 @@
-<!-- src/components/MusicPlayer.vue -->
 <template>
-  <div class="vinyl-player">
-    <div class="vinyl-disc" :class="{ 'is-spinning': isPlaying }">
-      <div class="vinyl-grooves"></div>
-      <div class="vinyl-label" v-if="currentCover">
-        <img :src="currentCover" alt="封面" />
-      </div>
-      <div class="vinyl-label-placeholder" v-else>
-        <span>🎵</span>
-      </div>
+  <div class="mini-player">
+    <div class="player-info">
+      <span class="player-song">{{ currentTitle || '未播放' }}</span>
     </div>
-
-    <div class="vinyl-controls">
-      <div class="song-info" v-if="currentTitle">
-        <div class="song-name">{{ currentTitle }}</div>
-      </div>
-      <div class="control-buttons">
-        <button @click="prevTrack" title="上一首">⏮</button>
-        <button @click="togglePlay" class="play-btn" title="播放/暂停">
-          {{ isPlaying ? '⏸' : '▶️' }}
-        </button>
-        <button @click="nextTrack" title="下一首">⏭</button>
-      </div>
+    <div class="player-controls">
+      <button @click="prevTrack" title="上一首">
+        <Icon icon="mdi:skip-previous" width="18" color="#475467" />
+      </button>
+      <button @click="togglePlay" class="play-btn" title="播放/暂停">
+        <Icon :icon="isPlaying ? 'mdi:pause' : 'mdi:play'" width="18" color="#fff" />
+      </button>
+      <button @click="nextTrack" title="下一首">
+        <Icon icon="mdi:skip-next" width="18" color="#475467" />
+      </button>
     </div>
-
-    <audio
-      ref="audioRef"
-      :src="currentSrc"
-      @play="isPlaying = true"
-      @pause="isPlaying = false"
-      @ended="onSongEnded"
-      @error="onError"
-    ></audio>
+    <audio ref="audioRef" :src="currentSrc" @play="isPlaying = true" @pause="isPlaying = false" @ended="onSongEnded" @error="onError"></audio>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
 import { onMounted } from 'vue'
+import { Icon } from '@iconify/vue'
 
 const playlist = [
   { title: 'CopyMemory', src: '/music/CopyMemory.mp3', cover: '/images/CopyMemory.png', theme: '#60a5fa' },
@@ -149,171 +133,87 @@ window.__musicState = {
 </script>
 
 <style scoped>
-.vinyl-player {
+.mini-player {
   position: fixed;
-  left: 30px;
-  bottom: 40px;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
   z-index: 10;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid #e5e5e5;
+  border-radius: 20px;
+  padding: 10px 14px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.04);
+  transition: all 0.2s ease;
 }
 
-.vinyl-disc {
-  width: 160px;
-  height: 160px;
-  border-radius: 50%;
-  background: radial-gradient(circle at center,
-    #1a1a2e 0%,
-    #1a1a2e 22%,
-    #111 22.5%,
-    #333 23%,
-    #111 23.5%,
-    #222 25%,
-    #111 25.5%,
-    #333 26%,
-    #111 26.5%,
-    #222 28%,
-    #111 28.5%,
-    #333 29%,
-    #111 29.5%,
-    #222 31%,
-    #111 31.5%,
-    #333 32%,
-    #111 32.5%,
-    #222 34%,
-    #111 34.5%,
-    #333 35%,
-    #111 35.5%,
-    #222 37%,
-    #111 37.5%,
-    #333 38%
-  );
-  box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  position: relative;
+.mini-player:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  background: #fff;
 }
 
-.vinyl-disc.is-spinning {
-  animation: vinyl-spin 4s linear infinite;
-}
-
-@keyframes vinyl-spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-.vinyl-label {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
+.player-info {
+  max-width: 120px;
   overflow: hidden;
-  z-index: 1;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  text-align: center;
 }
 
-.vinyl-label img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.player-song {
+  font-size: 11px;
+  color: #333;
+  font-weight: 500;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  display: block;
 }
 
-.vinyl-label-placeholder {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  background: #e74c3c;
+.player-controls {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 24px;
-  z-index: 1;
-}
-
-.vinyl-controls {
-  display: flex;
-  flex-direction: column;
   align-items: center;
   gap: 8px;
 }
 
-.song-info {
-  text-align: center;
-}
-
-.song-name {
-  color: #e2e8f0;
-  font-size: 0.9rem;
-  font-weight: 500;
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.control-buttons {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.control-buttons button {
-  background: rgba(255,255,255,0.1);
-  border: 1px solid rgba(255,255,255,0.2);
-  color: #e2e8f0;
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s;
+.player-controls button {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #d0d5dd;
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s ease;
 }
 
-.control-buttons button:hover {
-  background: rgba(255,255,255,0.2);
-  border-color: #60a5fa;
+.player-controls button:hover {
+  background: #f0f0f0;
+  border-color: #a0a8b4;
 }
 
 .play-btn {
-  width: 44px !important;
-  height: 44px !important;
-  font-size: 1.1rem !important;
-  background: #2c3e50 !important;
-  border-color: #60a5fa !important;
+  background: #2563eb !important;
+  border-color: #2563eb !important;
+  width: 36px !important;
+  height: 36px !important;
 }
 
-/* 手机端适配 */
-@media (max-width: 768px) {
-  .vinyl-player {
-    left: 8px !important;
-    bottom: 80px !important;
-    transform: scale(0.55) !important;
-    transform-origin: left bottom !important;
-  }
-  .vinyl-disc {
-    width: 120px;
-    height: 120px;
-  }
-  .vinyl-controls {
-    gap: 4px;
-  }
-  .song-name {
-    font-size: 0.7rem;
-  }
-  .control-buttons button {
-    width: 28px;
-    height: 28px;
-    font-size: 0.7rem;
-  }
-  .play-btn {
-    width: 32px !important;
-    height: 32px !important;
-  }
+.play-btn:hover {
+  background: #1d4ed8 !important;
+  border-color: #1d4ed8 !important;
+}
+
+.mini-player {
+  position: fixed;
+  left: 24px;        /* 从 20px 改为 24px，稍微靠内 */
+  top: 50%;
+  transform: translateY(-50%);
+  /* 其余不变 */
 }
 </style>

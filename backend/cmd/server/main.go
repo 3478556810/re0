@@ -50,11 +50,5 @@ func main() {
 	// 启动杉汐的记忆自动清理（每天20:00执行）
 	//memoryStore.StartMemoryCleaner()
 
-	// 手动触发记忆清理（管理员测试用）
-	r.GET("/api/admin/clean-memories", func(c *gin.Context) {
-		memoryStore.CleanMemories()
-		c.JSON(200, gin.H{"status": "ok", "message": "记忆清理已触发，请查看控制台日志"})
-	})
-
 	r.Run(":8080")
 }

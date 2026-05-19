@@ -1,7 +1,6 @@
-<!-- src/components/shanxi/ChatWidget.vue -->
 <template>
   <div>
-    <!-- 悬浮按钮 -->
+    <!-- 悬浮按钮（保留情绪光晕） -->
     <div class="chat-toggle-button" v-if="!isOpen" @click="toggleChat">
       <div class="toggle-light-pulse">
         <LightPulse />
@@ -15,96 +14,205 @@
     <div class="chat-window" :class="{ expanded: isExpanded }" :style="{ display: isOpen ? 'flex' : 'none' }">
       <div class="chat-header">
         <div class="header-left">
-          <ShanxiAvatar :emotion="currentEmotion" class="msg-avatar-header" :size="80"
-            :glowColor="currentEmotion.glowColor" />
-          <span style="font-size: 28px;">杉汐</span>
+
+          <div class="header-user-info">
+            <!-- 名字改为白色，更清晰 -->
+            <span class="header-name">杉汐</span>
+            <div class="status-wrapper">
+              <!-- 状态小圆点，模仿QQ -->
+              <span class="status-dot" :style="{ background: statusDotColor }"></span>
+              <span class="status-text">{{ currentStatus }}</span>
+            </div>
+          </div>
         </div>
-        <AdminLogin />
+        <!-- 登录组件已移除 -->
         <div class="header-actions">
-          <button class="chat-expand-button" @click="toggleExpand" :title="isExpanded ? '还原' : '放大'">
-            {{ isExpanded ? '🔲' : '🔳' }}
+          <button class="ds-btn" @click="toggleExpand" :title="isExpanded ? '还原' : '放大'">
+            <Icon :icon="isExpanded ? 'mdi:arrow-collapse' : 'mdi:arrow-expand'" width="16" color="#666" />
           </button>
-          <button class="chat-close-button" @click="toggleChat">✕</button>
+          <button class="ds-btn" @click="toggleChat">
+            <Icon icon="heroicons:x-mark-20-solid" width="16" color="#666" />
+          </button>
         </div>
       </div>
 
+      <!-- 消息区域 -->
       <div class="chat-messages" ref="messagesContainer">
-        <!-- 欢迎语：只在没有消息时显示 -->
-        <div v-if="messages.length === 0 && !welcomeLoading" class="message bot">
-          {{ welcomeMessage }}
-        </div>
-        <div v-if="messages.length === 0 && welcomeLoading" class="message bot" style="opacity:0.6">
-          杉汐正在想起你...
-        </div>
+        <div v-if="messages.length === 0 && !welcomeLoading" class="message bot">{{ welcomeMessage }}</div>
+        <div v-if="messages.length === 0 && welcomeLoading" class="message bot" style="opacity:0.6">杉汐正在想起你...</div>
+
         <div v-for="msg in messages" :key="msg.id" class="message-row" :class="msg.sender">
-          <ShanxiAvatar v-if="msg.sender === 'bot'" :emotion="currentEmotion" :size="60" class="msg-avatar"
-            :glowColor="currentEmotion.glowColor" />
-
-
-          <div class="message bot">
-            {{ msg.content }}
-            <button  v-if="isLoggedIn" class="voice-btn" @click="playVoice(msg.content)" title="播放语音">🔊</button>
+          <!-- 图片消息：直接展示图片卡片 -->
+          <div v-if="msg.type === 'image'" class="image-card">
+            <img :src="msg.image" style="max-width: 240px; border-radius: 12px; cursor: pointer;"
+              @click="previewImage(msg.image)" />
           </div>
 
-
+          <!-- 普通文本消息 -->
+          <div v-else class="message bot">
+            {{ msg.content }}
+            <!-- 语音按钮保持不变 -->
+            <button v-if="isLoggedIn && msg.sender === 'bot'" class="ds-btn ds-btn-msg" @click="playVoice(msg.content)"
+              title="播放语音">
+              <Icon icon="mdi:microphone" width="14" color="#666" />
+            </button>
+          </div>
         </div>
       </div>
 
+      <!-- 输入区域 -->
       <div class="chat-input-area">
-        <!-- 放在聊天输入框旁边 -->
-        <input type="file" accept="image/*" ref="imageInput" style="display:none" v-if="isLoggedIn" @change="handleImageUpload" />
-        <button v-if="isLoggedIn" @click="$refs.imageInput.click()" title="上传图片">🖼️</button>
-        <input type="text" style="font-size: 18px;" class="chat-input" v-model="userInput" placeholder="输入你的问题..."
+        <input type="file" accept="image/*" ref="imageInput" style="display:none" v-if="isLoggedIn"
+          @change="handleImageUpload" />
+        <button v-if="isLoggedIn" class="ds-btn" @click="imageInput.click()" title="上传图片">
+          <Icon icon="heroicons:photo-20-solid" width="18" color="#666" />
+        </button>
+        <input type="text" class="chat-input" v-model="userInput" placeholder="输入你的问题..."
           @keypress.enter="sendMessage" />
-        <button class="send-button" @click="sendMessage">
-          <span class="send-icon">✈️</span>
+        <button class="ds-btn ds-btn-send" @click="sendMessage" :disabled="!userInput.trim()">
+          <Icon icon="heroicons:paper-airplane-20-solid" width="18" color="#fff" />
         </button>
       </div>
+
+
+      <details class="debug-panel">
+        <summary>⚙️ 调试参数</summary>
+        <div class="debug-controls">
+          <label>T: <input type="range" min="0" max="2" step="0.1" v-model.number="debugTemp" @change="updateParams" />
+            <span>{{ debugTemp }}</span>
+          </label>
+          <label>TopP: <input type="range" min="0" max="1" step="0.05" v-model.number="debugTopP"
+              @change="updateParams" />
+            <span>{{ debugTopP }}</span>
+          </label>
+          <label>MaxTokens: <input type="number" v-model.number="debugMaxTokens" min="100" max="4096" step="100"
+              @change="updateParams" /></label>
+          <label>
+            深度思考:
+            <select v-model="debugReasoning" @change="updateParams">
+              <option value="">关闭</option>
+              <option value="high">开启（高）</option>
+              <option value="max">开启（最强）</option>
+            </select>
+          </label>
+          <div class="debug-stats">
+            <span>Token: {{ lastTokenUsage || '--' }}</span>
+            <span>延迟: {{ lastLatency || '--' }}ms</span>
+            <span>余额: {{ balance || '--' }}</span>
+            <button class="debug-refresh-btn" @click="fetchBalance">刷新余额</button>
+          </div>
+        </div>
+      </details>
     </div>
   </div>
 </template>
 
-
 <script setup>
-import { ref, watch, nextTick, onMounted } from 'vue'
+import { ref, watch, nextTick, computed, onMounted } from 'vue'
 import LightPulse from './LightPulse.vue'
-import ShanxiAvatar from './ShanxiAvatar.vue'
-import AdminLogin from './AdminLogin.vue'
+import { Icon } from '@iconify/vue'
 import { useSession } from './composables/useSession.js'
 import { useEmotion } from './composables/useEmotion.js'
 import { useMemory } from './composables/useMemory.js'
 import { useWelcome } from './composables/useWelcome.js'
+import { useChatLogic } from './composables/useChatLogic.js'
+import { useImageUpload } from './composables/useImageUpload.js'
+import { useVoicePlay } from './composables/useVoicePlay.js'
+import { useStatusPolling } from './composables/useStatusPolling.js'
 
-
-// 新增一个响应式变量判断是否登录
-const isLoggedIn = ref(!!localStorage.getItem('token'))
-
-/* 基础状态 */
+/* ========== 基础状态 ========== */
 const isOpen = ref(false)
 const isExpanded = ref(false)
 const toggleExpand = () => { isExpanded.value = !isExpanded.value }
+const toggleChat = () => { isOpen.value = !isOpen.value }
 const userInput = ref('')
 const messages = ref([])
-let msgId = 0
 
-/* 会话 */
+/* ========== 登录状态 ========== */
+const isLoggedIn = ref(!!localStorage.getItem('token'))
+
+/* ========== 调试参数（绑定到调试面板） ========== */
+const debugTemp = ref(localStorage.getItem('debugTemp') ? parseFloat(localStorage.getItem('debugTemp')) : 0.7)
+const debugTopP = ref(localStorage.getItem('debugTopP') ? parseFloat(localStorage.getItem('debugTopP')) : 0.9)
+const debugReasoning = ref(localStorage.getItem('debugReasoning') || '')
+const lastTokenUsage = ref('')
+const lastLatency = ref('')
+const debugMaxTokens = ref(localStorage.getItem('debugMaxTokens') ? parseInt(localStorage.getItem('debugMaxTokens')) : 2000)
+
+const balance = ref('')
+
+function previewImage(url) {
+  window.open(url, '_blank')
+}
+
+async function fetchBalance() {
+  try {
+    const res = await fetch('/api/balance')
+    if (res.ok) {
+      const data = await res.json()
+      if (data.is_available && data.balance_infos?.length > 0) {
+        const info = data.balance_infos[0]
+        balance.value = `${info.total_balance} ${info.currency}`
+      } else {
+        balance.value = '不可用'
+      }
+    }
+  } catch { }
+}
+
+// 在 onMounted 中调用一次
+onMounted(() => {
+  fetchBalance()
+  // ... 其他已有逻辑
+})
+
+// 每次修改参数时自动保存到 localStorage
+function updateParams() {
+  localStorage.setItem('debugTemp', debugTemp.value)
+  localStorage.setItem('debugTopP', debugTopP.value)
+  localStorage.setItem('debugMaxTokens', debugMaxTokens.value)
+  localStorage.setItem('debugReasoning', debugReasoning.value)
+}
+
+/* ========== 外部模块 ========== */
 const { sessionId } = useSession()
-
-/* 情绪 */
 const { currentEmotion, updateEmotion } = useEmotion()
-
-/* 记忆 */
 const { saveMemory } = useMemory()
-
-
-
-
-/* 欢迎语 */
 const { welcomeMessage, welcomeLoading } = useWelcome()
+const { currentStatus } = useStatusPolling()
+
+/* ========== 聊天核心逻辑（发送消息） ========== */
+const { sendMessage } = useChatLogic({
+  messages,
+  userInput,
+  sessionId,
+  updateEmotion,
+  saveMemory,
+  lastTokenUsage,  // 必须传入
+  lastLatency      // 必须传入
+})
+
+/* ========== 图片上传 ========== */
+const { imageInput, handleImageUpload } = useImageUpload({
+  messages,
+  sessionId,
+  saveMemory
+})
+
+/* ========== 语音播放 ========== */
+const { playVoice } = useVoicePlay()
 
 
+const statusDotColor = computed(() => {
+  const status = currentStatus.value
+  if (!status) return '#98a2b3'
+  if (status.includes('活跃') || status.includes('在线') || status.includes('帮忙') || status.includes('聊聊天')) return '#12b76a'
+  if (status.includes('发呆') || status.includes('思绪') || status.includes('休眠')) return '#f59e0b'
+  if (status.includes('忙碌') || status.includes('整理') || status.includes('写文章')) return '#ef4444'
+  return '#98a2b3'
+})
 
-/* 自动滚动 */
+/* ========== 自动滚动 ========== */
 const messagesContainer = ref(null)
 watch(messages, () => {
   nextTick(() => {
@@ -113,188 +221,12 @@ watch(messages, () => {
     }
   })
 }, { deep: true })
-
-/* 方法 */
-const toggleChat = () => { isOpen.value = !isOpen.value }
-
-const sendMessage = async () => {
-  const question = userInput.value.trim()
-  if (!question) return
-
-  messages.value.push({ id: msgId++, content: question, sender: 'user' })
-  userInput.value = ''
-
-  const requestBody = { message: question, sessionId: sessionId.value }
-
-  const musicPattern = /(换首歌|切歌|下一首|来首|放点|放一首|切换|换一首|切一下|切个歌|换歌|换一个)/
-  if (musicPattern.test(question)) {
-    const musicState = window.__musicState
-    if (musicState) {
-      const nextIndex = (musicState.currentIndex + 1) % musicState.playlist.length
-      requestBody.nextSong = {
-        name: musicState.playlist[nextIndex].title,
-        src: musicState.playlist[nextIndex].src
-      }
-    }
-  }
-
-  try {
-    const token = localStorage.getItem('token')
-    const headers = { 'Content-Type': 'application/json' }
-    if (token) headers['Authorization'] = `Bearer ${token}`
-
-    const res = await fetch('/api/chat', {
-      method: 'POST',
-      headers,
-      body: JSON.stringify(requestBody)
-    })
-    if (!res.ok) throw new Error('Network error')
-    const data = await res.json()
-
-    messages.value.push({ id: msgId++, content: data.reply, sender: 'bot' })
-
-    if (data.emotion) updateEmotion(data.emotion)
-
-    if (data.action) {
-      window.dispatchEvent(new CustomEvent('shanxi-action', {
-        detail: { action: data.action }
-      }))
-    }
-    // 新增：处理博客内容
-    if (data.blog) {
-      messages.value.push({
-        id: msgId++,
-        content: data.blog,
-        sender: 'bot'
-      })
-      saveMemory('shanshi', data.blog)
-    }
-    saveMemory('leader', question)
-    saveMemory('shanshi', data.reply)
-  } catch (e) {
-    console.error('杉汐回复失败:', e)
-    messages.value.push({
-      id: msgId++,
-      content: '杉汐：抱歉，我的灵魂好像被风吹散了…稍等片刻可好？',
-      sender: 'bot'
-    })
-  }
-}
-
-
-// 图片上传
-const imageInput = ref(null)
-
-function handleImageUpload(event) {
-    const file = event.target.files[0]
-    if (!file) return
-
-    // 显示用户正在上传图片
-    messages.value.push({
-        id: msgId++,
-        content: '🖼️ [上传了一张图片]',
-        sender: 'user'
-    })
-
-    const reader = new FileReader()
-    reader.onload = async (e) => {
-        const base64 = e.target.result.split(',')[1] // 去掉 data:image/xxx;base64, 前缀
-
-        const requestBody = {
-            message: '帮我看看这张图片',
-            sessionId: sessionId.value,
-            image: base64
-        }
-
-        try {
-            const token = localStorage.getItem('token')
-            const headers = { 'Content-Type': 'application/json' }
-            if (token) headers['Authorization'] = `Bearer ${token}`
-
-            const res = await fetch('/api/chat', {
-                method: 'POST',
-                headers,
-                body: JSON.stringify(requestBody)
-            })
-            const data = await res.json()
-            messages.value.push({ id: msgId++, content: data.reply, sender: 'bot' })
-            saveMemory('shanshi', data.reply)
-        } catch {
-            messages.value.push({
-                id: msgId++,
-                content: '杉汐：抱歉，我暂时看不清这张图片...',
-                sender: 'bot'
-            })
-        }
-    }
-    reader.readAsDataURL(file)
-}
-
-async function sendMessageWithImage(imageBase64) {
-  const question = userInput.value.trim() || "帮我看看这张图片"
-  messages.value.push({ id: msgId++, content: question, sender: 'user' })
-  userInput.value = ''
-
-  const requestBody = {
-    message: question,
-    sessionId: sessionId.value,
-    image: imageBase64
-  }
-
-  try {
-    const requestBody = {
-    message: question,
-    sessionId: sessionId.value
-}
-if (imageBase64) {
-    requestBody.image = imageBase64
-}
-const res = await fetch('/api/chat', {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(requestBody)
-})
-    const data = await res.json()
-    messages.value.push({ id: msgId++, content: data.reply, sender: 'bot' })
-  } catch {
-    messages.value.push({
-      id: msgId++,
-      content: '杉汐：抱歉，我暂时看不清这张图片...',
-      sender: 'bot'
-    })
-  }
-}
-const isVoicePlaying = ref(false)
-
-async function playVoice(text) {
-  if (isVoicePlaying.value) return
-  isVoicePlaying.value = true
-
-  try {
-    const res = await fetch('/api/tts', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text })
-    })
-    if (res.ok) {
-      const blob = await res.blob()
-      const url = URL.createObjectURL(blob)
-      const audio = new Audio(url)
-      audio.onended = () => {
-        isVoicePlaying.value = false
-        URL.revokeObjectURL(url)
-      }
-      audio.play()
-    }
-  } catch (e) {
-    isVoicePlaying.value = false
-  }
-}
 </script>
 
 <script>
 export default {}
 </script>
+
 <style scoped>
 @import '../../styles/shanxi/chat-widget.css';
 </style>
