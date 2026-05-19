@@ -57,10 +57,10 @@ func (m *MemoryStore) CleanMemories() {
 
 以下是你的记忆库：` + memoryList.String()
 
-	reply := askDeepSeekWithMessages([]DSMessage{
+	reply, _, _ := askDeepSeekWithMessages([]DSMessage{
 		{Role: "system", Content: systemPrompt},
 		{Role: "user", Content: "请开始整理你的记忆库"},
-	})
+	}, 0, 0, 0, "")
 
 	m.executeCleanup(reply)
 }
@@ -104,7 +104,7 @@ func (m *MemoryStore) executeCleanup(reply string) {
 			sourceRec := findRecordByID(m.records, s.ID)
 			if targetRec != nil && sourceRec != nil {
 				// 合并内容并生成新的摘要
-				mergedContent := fmt.Sprintf("主人: %s | 杉汐: %s", targetRec.Content, sourceRec.Content)
+				mergedContent := fmt.Sprintf("朋友: %s | 杉汐: %s", targetRec.Content, sourceRec.Content)
 				summary := generateSummary(mergedContent)
 
 				targetRec.Content = summary

@@ -12,6 +12,6 @@ type WelcomeResponse struct {
 
 func (m *MemoryStore) WelcomeHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, WelcomeResponse{
-		Message: "主人，你回来了。我在呢，一直都在。",
+		Message: "好朋友，你回来了。我在呢，一直都在。",
 	})
 }

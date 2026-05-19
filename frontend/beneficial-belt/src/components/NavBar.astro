@@ -1,14 +1,23 @@
-﻿<nav class="navbar">
-  <div class="nav-brand">
-    <a href="/">✨ 杉汐的星尘核心</a>
+﻿---
+import AdminLogin from './shanxi/AdminLogin.vue';
+---
+
+<nav class="navbar">
+  <div class="nav-content">
+    <div class="nav-brand">
+      <a href="/"> 杉汐的星尘核心</a>
+    </div>
+    <ul class="nav-links">
+      <li><a href="/resume"> 关于他</a></li>
+      <li><a href="/projects"> 作品集</a></li>
+      <li><a href="/blog"> 杉汐的日记</a></li>
+      <li><a href="/philosophy"> 技术哲学</a></li>
+      <li><a href="/timeline">生命线</a></li>
+    </ul>
+    <div class="nav-actions">
+      <AdminLogin client:only="vue" />
+    </div>
   </div>
-  <ul class="nav-links">
-    <li><a href="/resume">📄 关于主人</a></li>
-    <li><a href="/projects">🛠️ 作品集</a></li>
-    <li><a href="/blog">✍️ 杉汐的日记</a></li>
-    <li><a href="/philosophy">🧠 技术哲学</a></li>
-    <li><a href="/timeline">⏳ 生命线</a></li>
-  </ul>
 </nav>
 
 <style>
@@ -18,18 +27,23 @@
     left: 0;
     width: 100%;
     z-index: 100;
+    background: rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid #e2e8f0;
+    box-sizing: border-box;
+  }
+
+  .nav-content {
+    max-width: 1200px;
+    margin: 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 12px 30px;
-    background: rgba(26, 16, 37, 0.7);
-    backdrop-filter: blur(10px);
-    border-bottom: 1px solid rgba(244, 114, 182, 0.3);
-    box-sizing: border-box;
   }
 
   .nav-brand a {
-    color: #fce4ec;
+    color: #0f172a;
     text-decoration: none;
     font-size: 1.2em;
     font-weight: bold;
@@ -38,19 +52,24 @@
   .nav-links {
     list-style: none;
     display: flex;
-    gap: 20px;
+    gap: 24px;
     margin: 0;
     padding: 0;
   }
 
   .nav-links a {
-    color: rgba(252, 228, 236, 0.7);
+    color: #475467;
     text-decoration: none;
     transition: color 0.2s;
     font-size: 0.95em;
   }
 
   .nav-links a:hover {
-    color: #f472b6;
+    color: #2563eb;
+  }
+
+  .nav-actions {
+    display: flex;
+    align-items: center;
   }
 </style>

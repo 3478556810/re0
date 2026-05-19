@@ -8,7 +8,7 @@
       @keypress.enter="login"
     />
     <button v-if="!isLoggedIn" @click="login">登录</button>
-    <span v-else class="login-status">👑 已认证</span>
+    <span v-else class="login-status">开发者模式</span>
     <button v-if="isLoggedIn" @click="logout">退出</button>
   </div>
 </template>
@@ -60,13 +60,12 @@ const logout = () => {
   padding: 4px 12px;
   border-radius: 4px;
   border: none;
-  background: linear-gradient(135deg, #f0a040, #f5c070);
   color: #1a1a2e;
   cursor: pointer;
   font-size: 13px;
 }
 .login-status {
-  color: #f0a040;
+  color: #000000;
   font-size: 13px;
 }
 </style>

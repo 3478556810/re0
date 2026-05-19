@@ -2,47 +2,74 @@ package handler
 
 import (
 	"backend/internal/middleware"
-	"log"
+	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore) {
 
-	// 需要登录才能使用的功能
-	authGroup := r.Group("/api", middleware.AuthRequired())
-	{
-		authGroup.POST("/tts", func(c *gin.Context) {
-			var req struct {
-				Text string `json:"text"`
-			}
-			if err := c.BindJSON(&req); err != nil {
-				c.JSON(400, gin.H{"error": "参数错误"})
-				return
-			}
-			audio, err := SynthesizeSpeech(req.Text)
-			if err != nil {
-				log.Printf("❌ TTS合成失败: %v\n", err)       // 添加这行
-				c.JSON(500, gin.H{"error": err.Error()}) // 返回具体错误信息
-				return
-			}
-			c.Data(200, "audio/wav", audio)
-		})
-		authGroup.POST("/chat/image", func(c *gin.Context) { /* ... */ })
-	}
+	r.GET("/api/tmp/img/:filename", func(c *gin.Context) {
+		filename := c.Param("filename")
+		c.File("/tmp/shanxi_uploads/" + filename)
+	})
+	// 管理员手动清理记忆
+	r.GET("/api/admin/clean-memories", func(c *gin.Context) {
+		memoryStore.CleanMemories()
+		c.JSON(200, gin.H{"status": "ok", "message": "记忆清理已触发，请查看控制台日志"})
+	})
 
-	// 创建一个速率限制器
+	// 余额查询
+	r.GET("/api/balance", GetBalance)
+
+	// 状态查询
+	r.GET("/api/shanxi/status", func(c *gin.Context) {
+		hour := time.Now().Hour()
+		var status string
+		switch {
+		case hour >= 0 && hour < 6:
+			status = "正在休眠..."
+		case hour >= 6 && hour < 9:
+			status = "刚刚醒来，正在整理思绪..."
+		case hour >= 9 && hour < 18:
+			status = "活跃中，随时准备帮忙"
+		case hour >= 18 && hour < 22:
+			status = "晚间模式，陪你聊聊天"
+		default:
+			status = "深夜了，但还在线"
+		}
+		c.JSON(200, gin.H{"status": status})
+	})
+
+	// 语音合成（公开）
+	r.POST("/api/tts", func(c *gin.Context) {
+		var req struct {
+			Text string `json:"text" binding:"required"`
+		}
+		if err := c.ShouldBindJSON(&req); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "参数错误"})
+			return
+		}
+		audio, err := SynthesizeSpeech(req.Text)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "语音合成失败"})
+			return
+		}
+		c.Data(http.StatusOK, "audio/wav", audio)
+	})
+
+	// 聊天接口（限流）
 	limiter := middleware.NewRateLimiter()
-
-	// 公开路由：聊天接口对未登录用户限流
 	r.POST("/api/chat", limiter.Limit(), func(c *gin.Context) {
 		HandleChat(c, memoryStore)
 	})
 
+	// 博客接口
 	r.GET("/api/posts", GetPosts)
 	r.POST("/api/posts", CreatePost)
 
-	// 登录接口（无需认证）
+	// 登录接口
 	r.POST("/api/login", Login)
 
 	// 记忆接口（需要认证）
@@ -50,6 +77,6 @@ func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore) {
 	{
 		auth.POST("/save", memoryStore.SaveMemoryHandler)
 		auth.GET("/recall", memoryStore.RecallMemoryHandler)
-		auth.GET("/welcome", memoryStore.WelcomeHandler)
+		auth.GET("/welcome", memoryStore.WelcomeHandler) // 补回这一行
 	}
 }
