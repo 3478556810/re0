@@ -1,0 +1,35 @@
+---
+import NavBar from '../components/NavBar.astro';
+import ReaderView from '../components/reading/ReaderView.vue';
+---
+
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>阅读 | 杉汐</title>
+    <style>
+      @import "/src/styles/global.css";
+    </style>
+  </head>
+  <body>
+    <NavBar />
+    <main class="reader-page">
+      <ReaderView client:only="vue" />
+    </main>
+  </body>
+</html>
+
+<style>
+    html, body {
+    height: 100%;
+    margin: 0;
+    overflow: hidden;
+  }
+  .reader-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 16px;
+    height: calc(100vh - 60px);
+  }
+</style>

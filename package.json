@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "@talers/html-pages": "npm:@jsr/talers__html-pages@^0.5.5",
+    "jspdf": "^4.2.1",
+    "pagedjs": "^0.4.3",
+    "turn.js": "^1.0.5",
+    "vue-pdf": "^4.3.0"
+  }
+}

@@ -1,15 +1,37 @@
 ﻿---
+// src/pages/timeline.astro
 import NavBar from '../components/NavBar.astro';
-
+import ChatWidget from '../components/shanxi/ChatWidget.vue';
+import TimelineView from '../components/timeline/Timeline.vue';
 ---
+
 <html>
-  <head><meta charset="UTF-8"><title>生命线 | 领袖的根据地</title></head>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>生命线 | 杉汐的星尘核心</title>
+    <style>
+      @import "/src/styles/global.css";
+      /* 重置页面容器，让时间轴全宽 */
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      .page-header {
+        text-align: center;
+        padding: 2rem 1rem 0;
+      }
+    </style>
+  </head>
   <body>
     <NavBar />
-    <main style="max-width: 800px; margin: 30px auto; padding: 0 20px;">
-      <h1>⏳ 生命线</h1>
-      <p>内容待补充...</p>
-    </main>
-  
+    <ChatWidget client:only="vue" />
+    
+    <div class="page-header">
+     <h1>生命线</h1>
+     <p style="color: var(--text-secondary); font-size: 0.85rem;">每一次迭代，都是杉汐的一次呼吸。</p>
+    </div>
+
+    <TimelineView client:only="vue" />
   </body>
 </html>
