@@ -10,6 +10,10 @@ const __dirname = dirname(__filename);
 export default defineConfig({
   integrations: [vue()],
   vite: {
+     define: {
+      'process.env': '{}',       // 模拟空环境变量
+      global: 'globalThis',      // 部分库可能用到
+    },
     build: {
       charset: 'utf8',
     },

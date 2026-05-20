@@ -1,0 +1,52 @@
+﻿---
+import NavBar from '../components/NavBar.astro';
+import HutCards from '../components/hut/HutCards.vue';
+---
+
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>杉汐的小屋 | 应用场景</title>
+    <style>
+      @import "/src/styles/global.css";
+    </style>
+  </head>
+  <body>
+    <NavBar />
+    <main class="hut-container">
+      <div class="hut-header">
+        <h1>杉汐的小屋</h1>
+        <p>杉汐的能力应用场景，每一个都是一次陪伴。</p>
+      </div>
+      <HutCards client:only="vue" />
+    </main>
+  </body>
+</html>
+
+<style>
+  body {
+  padding-top: 70px; /* 导航栏实际高度，后期可按需微调 */
+}
+  .hut-container {
+
+    
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 0 20px;
+  }
+  .hut-header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .hut-header h1 {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary, #0f172a);
+    margin-bottom: 8px;
+  }
+  .hut-header p {
+    font-size: 0.95rem;
+    color: var(--text-secondary, #64748b);
+  }
+</style>

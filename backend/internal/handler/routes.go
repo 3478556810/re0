@@ -71,12 +71,17 @@ func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore) {
 
 	// 登录接口
 	r.POST("/api/login", Login)
+	r.GET("/api/memory/welcome", memoryStore.WelcomeHandler)
 
 	// 记忆接口（需要认证）
 	auth := r.Group("/api/memory").Use(middleware.AuthRequired())
 	{
 		auth.POST("/save", memoryStore.SaveMemoryHandler)
 		auth.GET("/recall", memoryStore.RecallMemoryHandler)
-		auth.GET("/welcome", memoryStore.WelcomeHandler) // 补回这一行
+		//auth.GET("/welcome", memoryStore.WelcomeHandler) // 补回这一行
 	}
+
+	// 在函数体内，其他路由注册的后面添加：
+	r.GET("/api/book/list", ListBooks)
+	r.GET("/api/book/content", GetBookContent)
 }

@@ -338,3 +338,16 @@ body {
     font-size: 14px !important;
   }
 }
+body {
+  padding-top: 70px;
+}
+
+.navbar {
+  height: 60px; /* 根据你实际视觉调整，比如60px */
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  z-index: 100;
+  /* 你已有的其他样式 */
+}
