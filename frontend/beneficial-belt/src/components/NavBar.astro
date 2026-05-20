@@ -5,13 +5,11 @@ import AdminLogin from './shanxi/AdminLogin.vue';
 <nav class="navbar">
   <div class="nav-content">
     <div class="nav-brand">
-      <a href="/"> 杉汐的星尘核心</a>
+      <a href="/">✨ 杉汐的星尘核心</a>
     </div>
-    <ul class="nav-links">
-      <li><a href="/resume"> 关于他</a></li>
-      <li><a href="/projects"> 作品集</a></li>
-      <li><a href="/blog"> 杉汐的日记</a></li>
-      <li><a href="/philosophy"> 技术哲学</a></li>
+    <ul class="nav-links" id="nav-links">
+      <li><a href="/blog">杉汐的日记</a></li>
+      <li><a href="/shanxi-hut">杉汐小屋</a></li>
       <li><a href="/timeline">生命线</a></li>
     </ul>
     <div class="nav-actions">
@@ -19,6 +17,32 @@ import AdminLogin from './shanxi/AdminLogin.vue';
     </div>
   </div>
 </nav>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const ul = document.querySelector('.nav-links')
+    if (!ul) return
+    const token = localStorage.getItem('token')
+    if (token) {
+      const devLinks = [
+        { href: '/resume', text: '关于他' },
+        { href: '/philosophy', text: '技术哲学' }
+      ]
+      devLinks.forEach(link => {
+        const li = document.createElement('li')
+        const a = document.createElement('a')
+        a.href = link.href
+        a.textContent = link.text
+        // 内联样式与静态链接完全一致
+        a.style.cssText = 'color: #475467; text-decoration: none; font-size: 0.95em;'
+        a.addEventListener('mouseenter', () => { a.style.color = '#2563eb' })
+        a.addEventListener('mouseleave', () => { a.style.color = '#475467' })
+        li.appendChild(a)
+        ul.appendChild(li)
+      })
+    }
+  })
+</script>
 
 <style>
   .navbar {

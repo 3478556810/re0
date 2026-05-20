@@ -1,0 +1,94 @@
+.reader-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+.status-msg { text-align: center; padding: 40px; color: var(--text-secondary); }
+.error { color: red; }
+.toolbar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 0; border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+.tb-title { font-weight: 600; }
+.tb-actions { display: flex; gap: 8px; }
+.tb-btn {
+  background: var(--bg-card); border: 1px solid var(--border);
+  padding: 4px 10px; border-radius: 6px; cursor: pointer;
+}
+
+.reader-card {
+  flex: 1;
+  margin: 8px 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  overflow: hidden;
+  min-height: 0;
+  color: var(--text-primary, #0f172a);
+}
+
+/* 虚拟滚动容器必须有固定高度 */
+.reader-scroller {
+  height: 100%;
+  overflow-y: auto;
+  padding: 24px 32px;
+  box-sizing: border-box;
+}
+
+/* 强制覆盖库内文字颜色 */
+.reader-scroller,
+.reader-scroller *,
+.dynamic-scroller-item,
+.dynamic-scroller-item *,
+.vue-recycle-scroller__item-view,
+.vue-recycle-scroller__item-view * {
+  color: inherit !important;
+}
+
+.text-block {
+  color: var(--text-primary, #0f172a);
+}
+
+/* 目录浮层 */
+.outline-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.3);
+  z-index: 20;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.outline-panel {
+  background: #fff;
+  width: 90%;
+  max-width: 400px;
+  max-height: 70vh;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+.outline-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 16px; border-bottom: 1px solid var(--border);
+}
+.outline-header h3 { margin: 0; font-size: 1.1rem; }
+.outline-list {
+  overflow-y: auto;
+  padding: 8px;
+}
+.outline-item {
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  transition: background 0.15s;
+}
+.outline-item:hover { background: var(--bg-card); }
+.outline-empty { padding: 20px; text-align: center; color: var(--text-secondary); }
+
+.outline-fade-enter-active, .outline-fade-leave-active { transition: opacity 0.2s ease; }
+.outline-fade-enter-from, .outline-fade-leave-to { opacity: 0; }
