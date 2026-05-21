@@ -8,38 +8,32 @@
         <button class="tb-btn" @click="back">← 书架</button>
         <span class="tb-title">{{ reader.title.value }}</span>
         <div class="tb-actions">
-
-      <button class="tb-btn" @click="reader.toggleReadingMode()" :title="reader.readingMode.value === 'three-d' ? '切换传统模式' : '切换3D模式'">
-  <Icon :icon="reader.readingMode.value === 'three-d' ? 'ph:cube-fill' : 'ph:cube' " width="18" />
-</button>
+          <!-- 书签 -->
           <button class="tb-btn" @click="reader.toggleBookmark()">
             {{ reader.isBookmarked.value ? '🔖' : '☆' }}
           </button>
+          <!-- 字体大小 -->
           <button class="tb-btn" @click="reader.changeFont()">{{ reader.fontSize.value }}px</button>
+          <!-- 目录 -->
           <button class="tb-btn" @click="showOutline = !showOutline">
             <Icon icon="ph:list-bullets" width="18" />
           </button>
         </div>
       </div>
 
-      <div class="reader-card">
-        <DynamicScroller v-if="reader.readingMode.value === 'traditional'" ref="scrollerRef" class="reader-scroller" :items="textBlocks" :min-item-size="40"
-          key-field="id" :size-dependencies="[reader.fontSize.value]" v-slot="{ item, active }">
-          <DynamicScrollerItem :item="item" :active="active" :size-dependencies="[reader.fontSize.value]"
-            :data-index="item.id">
-            <div class="text-block"
-              :style="{ fontSize: reader.fontSize.value + 'px', lineHeight: '1.8', whiteSpace: 'pre-wrap', wordWrap: 'break-word' }">
-              {{ item.text }}
-            </div>
-          </DynamicScrollerItem>
-        </DynamicScroller>
-<!-- 3D 阅读模式 -->
-<div class="three-reader-wrapper">
-  <ThreeReader :reader="reader" />
-</div>
+      <!-- 主体区域：3D 阅读 + 侧边栏 -->
+      <div class="reader-body">
+        <div class="reader-card">
+          <div class="three-reader-wrapper">
+            <ThreeReader ref="threeReaderRef" :reader="reader" />
+          </div>
+        </div>
+        <div class="side-panel">
+          <SidePanel :threeReaderRef="threeReaderRef" />
+        </div>
       </div>
 
-      <!-- 目录浮层 -->
+      <!-- 目录浮层（保留） -->
       <transition name="outline-fade">
         <div v-if="showOutline" class="outline-overlay" @click.self="showOutline = false">
           <div class="outline-panel">
@@ -50,13 +44,10 @@
               </button>
             </div>
             <div class="outline-list">
-              <div v-for="(item, idx) in outline" :key="idx" class="outline-item"
-                @click="jumpToChapter(item.blockIndex)">
+              <div v-for="(item, idx) in outline" :key="idx" class="outline-item" @click="jumpToChapter(item.blockIndex)">
                 {{ item.title }}
               </div>
-              <div v-if="outline.length === 0" class="outline-empty">
-                未识别到章节标题
-              </div>
+              <div v-if="outline.length === 0" class="outline-empty">未识别到章节标题</div>
             </div>
           </div>
         </div>
@@ -67,68 +58,39 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick } from 'vue'
-import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
-import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import { Icon } from '@iconify/vue'
 import { useReader } from './useReader.js'
 import ThreeReader from './ThreeReader.vue'
+import SidePanel from './SidePanel.vue'
 
 const reader = useReader()
-const scrollerRef = ref(null)
+const threeReaderRef = ref(null)
 const showOutline = ref(false)
 const outline = ref([])
 
-// 按固定行数切割文本，保证每块高度可控
-const LINES_PER_BLOCK = 80
-
-const textBlocks = computed(() => {
-  const text = reader.fullText.value || ''
+// 简单的章节提取（从全文中解析）
+const parseOutline = (text) => {
   const lines = text.split('\n')
-  const blocks = []
-  outline.value = []
-
   const chapterPattern = /^(第[一二三四五六七八九十百千\d]+[卷章节回]|序章|尾声|楔子|[Pp]art\s+\d+|Chapter\s+\d+)[ 　\t].*$/
-
-  for (let i = 0; i < lines.length; i += LINES_PER_BLOCK) {
-    const slice = lines.slice(i, Math.min(i + LINES_PER_BLOCK, lines.length))
-    let blockText = slice.join('\n')
-    const firstLine = slice[0]?.trim()
-
-    // 检测章节标题
-    if (firstLine && chapterPattern.test(firstLine)) {
-      blocks.push({ id: i, text: blockText })
-      outline.value.push({ title: firstLine, blockIndex: blocks.length - 1 })
-    } else {
-      // 检查内部是否有章节标题
-      let foundChapter = false
-      for (let j = 1; j < slice.length; j++) {
-        const line = slice[j].trim()
-        if (chapterPattern.test(line)) {
-          // 切分成两个块
-          const prevText = slice.slice(0, j).join('\n')
-          blocks.push({ id: i, text: prevText })
-
-          const chapterText = slice.slice(j).join('\n')
-          const newId = i + j
-          blocks.push({ id: newId, text: chapterText })
-          outline.value.push({ title: line, blockIndex: blocks.length - 1 })
-          foundChapter = true
-          break
-        }
-      }
-      if (!foundChapter) {
-        blocks.push({ id: i, text: blockText })
-      }
+  const result = []
+  lines.forEach((line, idx) => {
+    const trimmed = line.trim()
+    if (chapterPattern.test(trimmed)) {
+      result.push({ title: trimmed, blockIndex: idx })
     }
-  }
-  return blocks
-})
+  })
+  return result
+}
 
-const jumpToChapter = (index) => {
-  if (scrollerRef.value) {
-    scrollerRef.value.scrollToItem(index)
-    showOutline.value = false
+// 跳转到章节（通过翻页模拟，可改为精确跳转页数）
+const jumpToChapter = (blockIndex) => {
+  // 简单实现：计算出大致页码并翻页（需根据分页情况优化）
+  // 暂时用 blockIndex 除以估算行数来计算页码，然后调用 threeReader 跳转
+  if (threeReaderRef.value) {
+    const approxPage = Math.floor(blockIndex / 10) // 假设每页10行
+    threeReaderRef.value.flipToPage(approxPage)
   }
+  showOutline.value = false
 }
 
 const back = () => window.location.href = '/reading-hut'
@@ -148,16 +110,7 @@ onMounted(async () => {
 
     await nextTick()
     reader.restoreProgress()
-
-    // 恢复阅读位置
-    if (scrollerRef.value) {
-      const progress = reader.currentProgress.value || 0
-      const totalItems = textBlocks.value.length
-      const targetIndex = Math.floor((progress / 100) * totalItems)
-      if (targetIndex > 0) {
-        scrollerRef.value.scrollToItem(targetIndex)
-      }
-    }
+    outline.value = parseOutline(text)
   } catch (e) {
     reader.error.value = e.message
   } finally {
@@ -168,10 +121,4 @@ onMounted(async () => {
 
 <style>
 @import './ReaderView.css';
-.three-reader-wrapper {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-}
 </style>

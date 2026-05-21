@@ -1,12 +1,15 @@
+/* ========== 根容器 ========== */
 .reader-root {
   display: flex;
   flex-direction: column;
-  /* height: 100%; */
   height: calc(100vh - 60px);
   overflow: hidden;
 }
+
 .status-msg { text-align: center; padding: 40px; color: var(--text-secondary); }
 .error { color: red; }
+
+/* 工具栏 */
 .toolbar {
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 0; border-bottom: 1px solid var(--border);
@@ -19,26 +22,56 @@
   padding: 4px 10px; border-radius: 6px; cursor: pointer;
 }
 
-.reader-card {
+/* ========== 主体区域（三列 Flex） ========== */
+.reader-body {
+  display: flex;
   flex: 1;
-  margin: 8px 0;
+  min-height: 0;
+  overflow: hidden;            /* 禁止全局滚动条 */
+  align-items: flex-start;     /* 顶部对齐 */
+}
+
+/* 左侧占位列（推挤卡片居中） */
+.reader-body::before {
+  content: '';
+  flex: 1;
+  min-width: 0;
+}
+
+/* 书页卡片：固定宽度，自动居中 */
+.reader-card {
+  width: 550px;
+  flex-shrink: 0;
+  margin: 8px 16px 8px 0;     /* 右侧 16px 与侧边栏分隔 */
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-  overflow: hidden;
+  overflow: visible;
   min-height: 0;
   color: var(--text-primary, #0f172a);
+  position: relative;
 }
 
-/* 虚拟滚动容器必须有固定高度 */
+/* 侧边栏：固定宽度，不收缩 */
+.side-panel {
+  width: 460px;                /* 可调整，如 400px */
+  flex-shrink: 0;
+  margin: 8px 0;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+  overflow-y: auto;           /* 内容超长时自己滚动 */
+  min-height: 0;            /* 继承父容器高度 */
+  box-sizing: border-box;
+}
+
+/* ========== 内部组件（不变） ========== */
 .reader-scroller {
   height: 100%;
   overflow-y: auto;
   padding: 24px 32px;
   box-sizing: border-box;
 }
-
-/* 强制覆盖库内文字颜色 */
 .reader-scroller,
 .reader-scroller *,
 .dynamic-scroller-item,
@@ -47,49 +80,24 @@
 .vue-recycle-scroller__item-view * {
   color: inherit !important;
 }
+.text-block { color: var(--text-primary, #0f172a); }
 
-.text-block {
-  color: var(--text-primary, #0f172a);
-}
-
-/* 目录浮层 */
-.outline-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.3);
-  z-index: 20;
+.three-reader-wrapper {
+  width: 100%;
+  height: 100%;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
 }
-.outline-panel {
-  background: #fff;
-  width: 90%;
-  max-width: 400px;
-  max-height: 70vh;
-  border-radius: 12px;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-.outline-header {
-  display: flex; justify-content: space-between; align-items: center;
-  padding: 12px 16px; border-bottom: 1px solid var(--border);
-}
+
+/* 目录浮层保持不变 */
+.outline-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 20; display: flex; justify-content: center; align-items: center; }
+.outline-panel { background: #fff; width: 90%; max-width: 400px; max-height: 70vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
+.outline-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
 .outline-header h3 { margin: 0; font-size: 1.1rem; }
-.outline-list {
-  overflow-y: auto;
-  padding: 8px;
-}
-.outline-item {
-  padding: 10px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: var(--text-primary);
-  transition: background 0.15s;
-}
+.outline-list { overflow-y: auto; padding: 8px; }
+.outline-item { padding: 10px 12px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; color: var(--text-primary); transition: background 0.15s; }
 .outline-item:hover { background: var(--bg-card); }
 .outline-empty { padding: 20px; text-align: center; color: var(--text-secondary); }
-
 .outline-fade-enter-active, .outline-fade-leave-active { transition: opacity 0.2s ease; }
 .outline-fade-enter-from, .outline-fade-leave-to { opacity: 0; }
