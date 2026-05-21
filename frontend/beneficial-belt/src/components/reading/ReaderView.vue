@@ -8,6 +8,10 @@
         <button class="tb-btn" @click="back">← 书架</button>
         <span class="tb-title">{{ reader.title.value }}</span>
         <div class="tb-actions">
+
+      <button class="tb-btn" @click="reader.toggleReadingMode()" :title="reader.readingMode.value === 'three-d' ? '切换传统模式' : '切换3D模式'">
+  <Icon :icon="reader.readingMode.value === 'three-d' ? 'ph:cube-fill' : 'ph:cube' " width="18" />
+</button>
           <button class="tb-btn" @click="reader.toggleBookmark()">
             {{ reader.isBookmarked.value ? '🔖' : '☆' }}
           </button>
@@ -19,29 +23,20 @@
       </div>
 
       <div class="reader-card">
-        <DynamicScroller
-          ref="scrollerRef"
-          class="reader-scroller"
-          :items="textBlocks"
-          :min-item-size="40"
-          key-field="id"
-          :size-dependencies="[reader.fontSize.value]"
-          v-slot="{ item, active }"
-        >
-          <DynamicScrollerItem
-            :item="item"
-            :active="active"
-            :size-dependencies="[reader.fontSize.value]"
-            :data-index="item.id"
-          >
-            <div
-              class="text-block"
-              :style="{ fontSize: reader.fontSize.value + 'px', lineHeight: '1.8', whiteSpace: 'pre-wrap', wordWrap: 'break-word' }"
-            >
+        <DynamicScroller v-if="reader.readingMode.value === 'traditional'" ref="scrollerRef" class="reader-scroller" :items="textBlocks" :min-item-size="40"
+          key-field="id" :size-dependencies="[reader.fontSize.value]" v-slot="{ item, active }">
+          <DynamicScrollerItem :item="item" :active="active" :size-dependencies="[reader.fontSize.value]"
+            :data-index="item.id">
+            <div class="text-block"
+              :style="{ fontSize: reader.fontSize.value + 'px', lineHeight: '1.8', whiteSpace: 'pre-wrap', wordWrap: 'break-word' }">
               {{ item.text }}
             </div>
           </DynamicScrollerItem>
         </DynamicScroller>
+<!-- 3D 阅读模式 -->
+<div class="three-reader-wrapper">
+  <ThreeReader :reader="reader" />
+</div>
       </div>
 
       <!-- 目录浮层 -->
@@ -55,12 +50,8 @@
               </button>
             </div>
             <div class="outline-list">
-              <div
-                v-for="(item, idx) in outline"
-                :key="idx"
-                class="outline-item"
-                @click="jumpToChapter(item.blockIndex)"
-              >
+              <div v-for="(item, idx) in outline" :key="idx" class="outline-item"
+                @click="jumpToChapter(item.blockIndex)">
                 {{ item.title }}
               </div>
               <div v-if="outline.length === 0" class="outline-empty">
@@ -80,6 +71,7 @@ import { DynamicScroller, DynamicScrollerItem } from 'vue-virtual-scroller'
 import 'vue-virtual-scroller/dist/vue-virtual-scroller.css'
 import { Icon } from '@iconify/vue'
 import { useReader } from './useReader.js'
+import ThreeReader from './ThreeReader.vue'
 
 const reader = useReader()
 const scrollerRef = ref(null)
@@ -176,4 +168,10 @@ onMounted(async () => {
 
 <style>
 @import './ReaderView.css';
+.three-reader-wrapper {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
 </style>

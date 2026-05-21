@@ -1,7 +1,8 @@
 .reader-root {
   display: flex;
   flex-direction: column;
-  height: 100%;
+  /* height: 100%; */
+  height: calc(100vh - 60px);
   overflow: hidden;
 }
 .status-msg { text-align: center; padding: 40px; color: var(--text-secondary); }

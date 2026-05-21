@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 export function useReader() {
   const loading = ref(true)
@@ -36,6 +36,13 @@ export function useReader() {
       bookmarks: bookmarks.value
     }))
   }
+
+  const readingMode = ref('traditional') // 'traditional' | 'three-d'
+  const toggleReadingMode = () => {
+    readingMode.value = readingMode.value === 'traditional' ? 'three-d' : 'traditional'
+    // 持久化
+    localStorage.setItem('reading-mode', readingMode.value)
+  }
   const restoreProgress = () => {
     const key = `${STORAGE_KEY}-${title.value}`
     const raw = localStorage.getItem(key)
@@ -45,13 +52,19 @@ export function useReader() {
         if (data.progress !== undefined) currentProgress.value = data.progress
         if (data.fontSize) fontSize.value = data.fontSize
         if (data.bookmarks) bookmarks.value = data.bookmarks
-      } catch (e) {}
+      } catch (e) { }
     }
   }
 
+
+
+  onMounted (() => {const savedMode = localStorage.getItem('reading-mode')
+if (savedMode) readingMode.value = savedMode
+  })
+
   return {
     loading, error, title, fullText, fontSize, bookmarks,
-    currentProgress, isBookmarked,
+    currentProgress, isBookmarked,readingMode,toggleReadingMode,
     changeFont, toggleBookmark,
     saveProgress, restoreProgress
   }
