@@ -26,10 +26,13 @@ import ReaderView from '../components/reading/ReaderView.vue';
     margin: 0;
     overflow: hidden;
   }
-  .reader-page {
-    max-width: 900px;
-    margin: 0 auto;
-    padding: 0 16px;
-    height: calc(100vh - 60px);
-  }
+.reader-page {
+  max-width: 1400px;   /* 足够容纳 550px 卡片 + 240px 侧边栏 + 间距 */
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 16px;
+  height: calc(100vh - 60px);
+  box-sizing: border-box;
+  overflow: hidden;
+}
 </style>

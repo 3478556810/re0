@@ -1,6 +1,8 @@
 // pagination.js
 let worker = null;
-const WORKER_VERSION = '5'; // 与 worker 版本同步
+// pagination.js
+// pagination.js
+const WORKER_VERSION = '6'; // 同步 v7 // 与 Worker v6 同步// 
 
 function getWorker() {
   if (!worker) {
