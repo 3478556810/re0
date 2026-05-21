@@ -9,6 +9,12 @@ import (
 )
 
 func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore) {
+	r.DELETE("/api/images", DeleteImage)
+	r.POST("/api/upload", UploadToOSS)
+
+	r.GET("/api/images", ListImages)
+	r.GET("/api/images/view", ViewImage)
+	r.POST("/api/images/tag", UpdateImageTag)
 
 	r.GET("/api/tmp/img/:filename", func(c *gin.Context) {
 		filename := c.Param("filename")

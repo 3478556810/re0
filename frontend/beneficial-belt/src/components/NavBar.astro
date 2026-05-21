@@ -20,30 +20,39 @@ import AdminLogin from './shanxi/AdminLogin.vue';
 
 <script>
   document.addEventListener('DOMContentLoaded', () => {
-    const ul = document.querySelector('.nav-links')
+    const ul = document.querySelector('.nav-links')!
     if (!ul) return
-    const token = localStorage.getItem('token')
-    if (token) {
-      const devLinks = [
-        { href: '/resume', text: '关于他' },
-        { href: '/philosophy', text: '技术哲学' }
-      ]
-      devLinks.forEach(link => {
-        const li = document.createElement('li')
-        const a = document.createElement('a')
-        a.href = link.href
-        a.textContent = link.text
-        // 内联样式与静态链接完全一致
-        a.style.cssText = 'color: #475467; text-decoration: none; font-size: 0.95em;'
-        a.addEventListener('mouseenter', () => { a.style.color = '#2563eb' })
-        a.addEventListener('mouseleave', () => { a.style.color = '#475467' })
-        li.appendChild(a)
-        ul.appendChild(li)
-      })
+
+    function updateLinks() {
+      // 移除旧的动态链接（直接调用 forEach，不需要额外变量）
+      ul.querySelectorAll('.dynamic-link').forEach(el => el.remove())
+
+      const token = localStorage.getItem('token')
+      if (token) {
+        const devLinks = [
+          { href: '/resume', text: '关于他' },
+          { href: '/image-bed', text: '图床' }
+        ]
+        devLinks.forEach(link => {
+          const li = document.createElement('li')
+          li.className = 'dynamic-link'
+          const a = document.createElement('a')
+          a.href = link.href
+          a.textContent = link.text
+          a.style.cssText = 'color: #475467; text-decoration: none; font-size: 0.95em;'
+          a.addEventListener('mouseenter', () => { a.style.color = '#2563eb' })
+          a.addEventListener('mouseleave', () => { a.style.color = '#475467' })
+          li.appendChild(a)
+          ul.appendChild(li)
+        })
+      }
     }
+
+    updateLinks()
+    window.addEventListener('storage', updateLinks)
+    window.addEventListener('login-state-changed', updateLinks)
   })
 </script>
-
 <style>
   .navbar {
     position: fixed;
