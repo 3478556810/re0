@@ -1,0 +1,21 @@
+---
+import NavBar from '../components/NavBar.astro';
+import ChatWidget from '../components/shanxi/ChatWidget.vue';
+import ImageGallery from '../components/image-bed/ImageGallery.vue';
+---
+
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>图床 | 杉汐的星尘核心</title>
+    <style>
+      @import "/src/styles/global.css";
+    </style>
+  </head>
+  <body>
+    <NavBar />
+    <ChatWidget client:only="vue" />
+    <ImageGallery client:only="vue" />
+  </body>
+</html>
