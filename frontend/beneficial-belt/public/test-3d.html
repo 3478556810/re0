@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>PageFlip 本地测试</title>
+  <style>
+    body { margin: 0; padding: 50px; background: #1a1a2e; }
+    #flip-container {
+      width: 550px;
+      height: 700px;
+      margin: 0 auto;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <div id="flip-container"></div>
+  <!-- 直接引用本地已安装的 page-flip 文件 -->
+  <script src="/node_modules/page-flip/dist/page-flip.browser.js"></script>
+  <script>
+    // page-flip 浏览器版本会在 window 上暴露 PageFlip
+    const FlipClass = window.PageFlip;
+    if (!FlipClass) {
+      alert('本地 PageFlip 加载失败');
+      throw new Error('PageFlip 未定义');
+    }
+
+    const container = document.getElementById('flip-container');
+    const pageFlip = new FlipClass(container, {
+      width: 550,
+      height: 700,
+      size: 'fixed',
+      autoSize: false,
+      display: 'single',
+      maxShadowOpacity: 0.3,
+      showCover: false,
+      flippingTime: 600,
+      usePortrait: false,
+      swipeDistance: 30,
+    });
+
+    const page1 = document.createElement('div');
+    page1.innerHTML = '<p>第一页内容</p>';
+    const page2 = document.createElement('div');
+    page2.innerHTML = '<p>第二页内容</p>';
+    pageFlip.loadFromHTML([page1, page2]);
+
+    console.log('方向:', pageFlip.getOrientation());
+    alert('方向: ' + pageFlip.getOrientation());
+  </script>
+</body>
+</html>
