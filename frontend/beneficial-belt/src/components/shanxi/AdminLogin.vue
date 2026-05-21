@@ -30,6 +30,8 @@ const login = async () => {
     localStorage.setItem('token', data.token)
     isLoggedIn.value = true
     password.value = ''
+    // 在 login 函数中，登录成功后添加
+window.dispatchEvent(new Event('login-state-changed'))
   } else {
     alert('密码错误')
   }
