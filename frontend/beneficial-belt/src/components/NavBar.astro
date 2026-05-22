@@ -1,5 +1,6 @@
 ﻿---
 import AdminLogin from './shanxi/AdminLogin.vue';
+import NavLinks from './shanxi/NavLinks.vue';
 ---
 
 <nav class="navbar">
@@ -7,50 +8,12 @@ import AdminLogin from './shanxi/AdminLogin.vue';
     <div class="nav-brand">
       <a href="/">杉汐的星尘核心</a>
     </div>
-    <ul class="nav-links" id="nav-links">
-      <li><a href="/reading-hut">阅读小屋</a></li>
-      <li><a href="/blog">日记</a></li>
-      <li><a href="/timeline">生命线</a></li>
-    </ul>
+    <NavLinks client:only="vue" />
     <div class="nav-actions">
       <AdminLogin client:only="vue" />
     </div>
   </div>
 </nav>
-
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    const ul = document.querySelector('.nav-links')!
-    if (!ul) return
-
-    function updateLinks() {
-      ul.querySelectorAll('.dynamic-link').forEach(el => el.remove())
-      const token = localStorage.getItem('token')
-      if (token) {
-        const devLinks = [
-          { href: '/resume', text: '关于他' },
-          { href: '/image-bed', text: '图床' }
-        ]
-        devLinks.forEach(link => {
-          const li = document.createElement('li')
-          li.className = 'dynamic-link'
-          const a = document.createElement('a')
-          a.href = link.href
-          a.textContent = link.text
-          a.style.cssText = 'color: #475569; text-decoration: none; font-size: 0.9rem;'
-          a.addEventListener('mouseenter', () => { a.style.color = '#0066cc' })
-          a.addEventListener('mouseleave', () => { a.style.color = '#475569' })
-          li.appendChild(a)
-          ul.appendChild(li)
-        })
-      }
-    }
-
-    updateLinks()
-    window.addEventListener('storage', updateLinks)
-    window.addEventListener('login-state-changed', updateLinks)
-  })
-</script>
 
 <style>
   .navbar {

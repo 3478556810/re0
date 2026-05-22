@@ -1,7 +1,7 @@
 <template>
   <div class="post-list">
     <div v-if="loading" class="loading">正在加载杉汐的日记...</div>
-    <div v-else-if="posts.length === 0" class="empty">杉汐还没有写过日记呢，去和她聊聊天吧 ✨</div>
+    <div v-else-if="posts.length === 0" class="empty">杉汐还没有写过日记呢，去和她聊聊天吧</div>
     <a v-for="post in posts" :key="post.id" :href="`/blog/post?slug=${post.slug}`" class="post-card">
       <h2>{{ post.title }}</h2>
       <div class="post-date">{{ formatDate(post.created_at) }}</div>
@@ -42,9 +42,11 @@ function getExcerpt(content) {
 </script>
 
 <style scoped>
+/* 白蓝极简日记本样式 */
+
 .loading, .empty {
   text-align: center;
-  color: rgba(252, 228, 236, 0.6);
+  color: var(--text-secondary);
   padding: 60px 20px;
   font-size: 16px;
 }
@@ -58,29 +60,19 @@ function getExcerpt(content) {
 .post-card {
   background: var(--bg-card);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(244, 114, 182, 0.2);
-  border-radius: 16px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
   padding: 28px 32px;
   text-decoration: none;
-  color: var(--text);
-  transition: all 0.3s ease;
+  color: var(--text-primary);
+  transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
 }
 
-.post-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: linear-gradient(90deg, #f472b6, #f0a0c0, transparent);
-}
-
 .post-card:hover {
-  border-color: rgba(244, 114, 182, 0.5);
-  box-shadow: 0 8px 32px rgba(244, 114, 182, 0.15);
+  border-color: var(--primary);
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.08);
   transform: translateY(-2px);
 }
 
@@ -88,18 +80,18 @@ function getExcerpt(content) {
   font-size: 22px;
   font-weight: 600;
   margin: 0 0 8px 0;
-  color: #fce4ec;
+  color: var(--text-primary);
 }
 
 .post-date {
   font-size: 13px;
-  color: rgba(252, 228, 236, 0.5);
+  color: var(--text-secondary);
   margin-bottom: 12px;
 }
 
 .post-desc {
   font-size: 15px;
-  color: rgba(252, 228, 236, 0.7);
+  color: var(--text-secondary);
   line-height: 1.6;
 }
 </style>

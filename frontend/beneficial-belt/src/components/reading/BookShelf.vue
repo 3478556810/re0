@@ -82,37 +82,67 @@ function openEditor(book) {
   editingBook.value = book
   editModalVisible.value = true
 }
-
 async function handleSaveBook({ title, cover }) {
-  const bookId = editingBook.value.id
-  if (cover) {
-    const form = new FormData()
-    form.append('cover', cover)
-    form.append('bookId', bookId)
-    await fetch('/api/book/upload-cover', { method: 'POST', body: form })
-  }
+  // 如果 cover 是 URL，说明已经上传成功；否则可能是 base64 或留空
+  // 这里无需再上传，直接刷新书架即可（后端已更新索引）
   await loadBooks()
   editModalVisible.value = false
 }
-
 async function handleDeleteBook() {
   const bookId = editingBook.value.id
   try {
-    await fetch(`/api/book/delete?bookId=${encodeURIComponent(bookId)}`, { method: 'DELETE' })
-    // 清除 IndexedDB
-    const db = await openDB()
-    const tx = db.transaction(STORE_NAME, 'readwrite')
-    const store = tx.objectStore(STORE_NAME)
-    const allKeys = await store.getAllKeys()
-    for (const key of allKeys) {
-      if (key.startsWith(`${bookId}_`)) store.delete(key)
+    const res = await fetch(`/api/book/delete?bookId=${encodeURIComponent(bookId)}`, { method: 'DELETE' })
+    const text = await res.text()
+    let data
+    try {
+      data = JSON.parse(text)
+    } catch (e) {
+      throw new Error('服务器返回异常: ' + text.slice(0, 200))
     }
-    await tx.done
+    if (!res.ok) throw new Error(data.error || '删除失败')
+
+    // 清除 IndexedDB 中该书的所有缓存（兼容所有浏览器）
+    try {
+      const db = await openDB()
+      const tx = db.transaction(STORE_NAME, 'readwrite')
+      const store = tx.objectStore(STORE_NAME)
+      
+      // 使用游标遍历所有键，代替可能不支持的 getAllKeys()
+      const keys = []
+      await new Promise((resolve, reject) => {
+        const cursorRequest = store.openCursor()
+        cursorRequest.onsuccess = (event) => {
+          const cursor = event.target.result
+          if (cursor) {
+            keys.push(cursor.key)
+            cursor.continue()
+          } else {
+            resolve()
+          }
+        }
+        cursorRequest.onerror = () => reject(cursorRequest.error)
+      })
+
+      // 删除匹配的键
+      for (const key of keys) {
+        if (key && key.toString().startsWith(`${bookId}_`)) {
+          store.delete(key)
+        }
+      }
+
+      await new Promise((resolve, reject) => {
+        tx.oncomplete = resolve
+        tx.onerror = reject
+      })
+    } catch (e) {
+      console.warn('清除本地缓存失败:', e)
+    }
+
     editModalVisible.value = false
     await loadBooks()
   } catch (e) {
-    console.error('删除失败:', e)
-    alert('删除失败')
+    alert('删除失败: ' + e.message)
+    console.error(e)
   }
 }
 </script>
