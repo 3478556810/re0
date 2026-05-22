@@ -50,11 +50,9 @@
 
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
-import { PageFlip } from 'page-flip'
 import { Icon } from '@iconify/vue'
-import { getCachedPages, setCachedPages } from './cachePagination.js'
 import EmotionGlow from './EmotionGlow.vue'
-import { exactPaginate } from './ExactPaginator.js'
+import { usePageFlip } from './usePageFlip.js'
 import { useReadingStats } from './useReadingStats.js'
 import { useBookmarks } from './useBookmarks.js'
 import { useAnnotation } from './useAnnotation.js'
@@ -63,160 +61,54 @@ const props = defineProps({ reader: Object })
 const flipContainerRef = ref(null)
 const statusMsg = ref('正在准备...')
 const progressPercent = ref(0)
-let pageFlip = null
 let currentFontSize = null
-let taskId = 0
 
-const currentPage = ref(0)
-const totalPages = ref(0)
+const width = ref(550)
+const height = ref(700)
 
-// 书签
-const { isCurrentPageBookmarked, getCurrentPageText, removeCurrentBookmark } = useBookmarks(
-  props.reader, currentPage, flipContainerRef, pageFlip
-)
+// 翻页核心
+const {
+  currentPage,
+  totalPages,
+  pageFlip,
+  initFlip,
+  destroyFlip,
+  flipToPage,
+  flipToPhysicalPage,
+  jumpToChapter,
+  flipToCoverAnimated,
+  flipPrev,
+  flipNext,
+} = usePageFlip(flipContainerRef, props.reader, width, height)
 
 // 阅读统计
 const textProvider = () => props.reader.fullText.value || ''
 const stats = useReadingStats(textProvider, currentPage, totalPages, flipContainerRef)
 const { currentTime, remainingTime, markPageEnter, recordPageTurn, startClock, destroy: destroyStats } = stats
 
+// 书签
+const { isCurrentPageBookmarked, getCurrentPageText, removeCurrentBookmark } = useBookmarks(
+  props.reader, currentPage, flipContainerRef, pageFlip
+)
+
 // 选中批注
-const {   showCommentCard, commentCardStyle, displayedComment, commentTyping, 
-  showActionMenu, actionMenuStyle, onMouseUp, closeCard, 
-  chooseComment, chooseSearch  } =useAnnotation(flipContainerRef, currentPage)  
+const {
+  showCommentCard,
+  commentCardStyle,
+  displayedComment,
+  commentTyping,
+  showActionMenu,
+  actionMenuStyle,
+  onMouseUp,
+  closeCard,
+  chooseComment,
+  chooseSearch,
+} = useAnnotation(flipContainerRef, currentPage)
 
-// ---- HTML 辅助 ----
-function escapeHtml(str) {
-  const div = document.createElement('div')
-  div.textContent = str
-  return div.innerHTML
-}
-function createCoverHTML(rawTitle) {
-  const safeTitle = escapeHtml(rawTitle)
-  return `<div style="width:100%;height:100%;background:linear-gradient(135deg,#1e2a3a 0%,#2c3e50 100%);display:flex;flex-direction:column;justify-content:center;align-items:center;font-family:'Georgia','Noto Serif SC',serif;box-shadow:inset 0 0 60px rgba(0,0,0,0.4);border-radius:4px;"><div style="width:80px;height:2px;background:rgba(200,160,80,0.6);margin-bottom:2rem;"></div><h1 style="font-size:2.2rem;margin-bottom:0.5rem;color:#e8d5b7;text-shadow:0 2px 6px rgba(0,0,0,0.5);letter-spacing:4px;">${safeTitle}</h1><p style="font-size:1rem;color:rgba(200,160,80,0.8);letter-spacing:2px;">杉汐注</p><div style="margin-top:3rem;font-size:0.8rem;color:rgba(255,255,255,0.4);">—— 脂砚斋风 · 活态传承 ——</div></div>`
-}
-function createBackHTML() {
-  return `<div style="width:100%;height:100%;background:linear-gradient(135deg,#1e2a3a 0%,#2c3e50 100%);display:flex;flex-direction:column;justify-content:center;align-items:center;box-shadow:inset 0 0 40px rgba(0,0,0,0.3);border-radius:4px;"><div style="width:60px;height:60px;border:1px solid rgba(200,160,80,0.4);border-radius:50%;display:flex;align-items:center;justify-content:center;margin-bottom:1.5rem;"><span style="color:rgba(200,160,80,0.6);font-size:0.8rem;font-family:'Georgia',serif;">S</span></div><p style="color:rgba(200,160,80,0.6);font-size:0.85rem;letter-spacing:2px;">脂砚斋风 · 活态传承</p><p style="color:rgba(255,255,255,0.3);font-size:0.7rem;margin-top:2rem;">阅读小屋 · 杉汐</p></div>`
-}
-
-// ---- 翻页管理 ----
-function destroyFlip() {
-  if (pageFlip) {
-    try { pageFlip.off('flip'); pageFlip.destroy() } catch (e) {}
-    pageFlip = null
-  }
-  if (flipContainerRef.value) {
-    const pages = flipContainerRef.value.querySelectorAll('.flip-page')
-    pages.forEach(p => p.remove())
-  }
-}
-
-// 左右点击翻页
-function flipPrev() { if (pageFlip) pageFlip.flipPrev() }
-function flipNext() { if (pageFlip) pageFlip.flipNext() }
-
-async function initFlip() {
-  if (!flipContainerRef.value) return
-  const id = ++taskId
-  destroyFlip()
-  flipContainerRef.value.style.width = '550px'
-  flipContainerRef.value.style.height = '700px'
-
-  const fontSize = props.reader.fontSize.value
-  const text = props.reader.fullText.value || ''
-  const bookId = props.reader.title.value || 'unknown'
-
-  statusMsg.value = '正在准备...'
-  progressPercent.value = 0
-
-  try {
-    let htmlPages = await getCachedPages(bookId, fontSize)
-    if (!htmlPages) {
-      statusMsg.value = '正在精确排版... 0%'
-      const bodyPages = await exactPaginate(text, fontSize, 550, 700, (p) => {
-        statusMsg.value = `正在精确排版... ${p}%`
-        progressPercent.value = p
-      })
-      if (id !== taskId) return
-      if (!bodyPages || bodyPages.length === 0) {
-        statusMsg.value = '暂无内容'
-        return
-      }
-      const coverHTML = createCoverHTML(props.reader.title.value)
-      const backHTML = createBackHTML()
-      htmlPages = [coverHTML, ...bodyPages, backHTML]
-      await setCachedPages(bookId, fontSize, htmlPages)
-    }
-
-    if (id !== taskId) return
-    if (!htmlPages || htmlPages.length === 0) {
-      statusMsg.value = '暂无内容'
-      return
-    }
-
-    const pageElements = htmlPages.map(html => {
-      const div = document.createElement('div')
-      div.className = 'flip-page'
-      div.style.width = '550px'; div.style.height = '700px'
-      div.innerHTML = html
-      return div
-    })
-
-    if (id !== taskId || !flipContainerRef.value) return
-
-    pageFlip = new PageFlip(flipContainerRef.value, {
-      width: 550, height: 700,
-      size: 'fixed', autoSize: false,
-      usePortrait: true, showCover: true,
-      maxShadowOpacity: 0.1, flippingTime: 400,
-      swipeDistance: 30,
-      useMouseEvents: false,    // 禁用鼠标交互，完全由我们自定义的左右区域负责点击
-      mobileScrollSupport: false,
-      renderWhileFlipping: false,
-    })
-    pageFlip.loadFromHTML(pageElements)
-
-    nextTick(() => {
-      const allPages = flipContainerRef.value.querySelectorAll('.flip-page')
-      totalPages.value = Math.max(0, allPages.length - 2)
-      markPageEnter()
-    })
-
-    statusMsg.value = ''
-    progressPercent.value = 0
-    currentFontSize = fontSize
-
-    pageFlip.on('flip', (e) => {
-      currentPage.value = e.data ?? pageFlip.getCurrentPageIndex()
-      recordPageTurn()
-    })
-  } catch (err) {
-    console.error('分页失败:', err)
-    if (id === taskId) statusMsg.value = '加载失败，请重试'
-  }
-}
-
-// 翻页与高亮（保持原样，用于侧边栏跳转）
-function flipToPage(pageIndex, highlightText = null) {
-  if (!pageFlip) return
-  const targetIndex = pageIndex + 1
-  try {
-    pageFlip.turnToPage?.(targetIndex) ?? pageFlip.flip?.(targetIndex)
-  } catch {
-    const current = pageFlip.getCurrentPageIndex()
-    const diff = targetIndex - current
-    const fn = diff > 0 ? () => pageFlip.flipNext() : () => pageFlip.flipPrev()
-    for (let i = 0; i < Math.abs(diff); i++) setTimeout(fn, i * 100)
-  }
-  if (highlightText) {
-    setTimeout(() => requestAnimationFrame(() => highlightOnPage(highlightText, targetIndex)), 450)
-  }
-}
-
+// 高亮函数（内部实现）
 function highlightOnPage(text, targetIndex) {
-  const container = flipContainerRef.value
-  if (!container || !text) return
-  const pages = container.querySelectorAll('.flip-page')
+  if (!flipContainerRef.value || !text) return
+  const pages = flipContainerRef.value.querySelectorAll('.flip-page')
   if (targetIndex >= pages.length) return
   const page = pages[targetIndex]
   if (!page?.textContent.includes(text)) return
@@ -257,91 +149,18 @@ function highlightOnPage(text, targetIndex) {
   }
 }
 
-function jumpToChapter(title) {
-  if (!flipContainerRef.value || !pageFlip) return
-  const pages = flipContainerRef.value.querySelectorAll('.flip-page')
-  for (let i = 1; i < pages.length - 1; i++) {
-    if (pages[i].textContent.includes(title)) {
-      pageFlip.turnToPage?.(i) ?? pageFlip.flip?.(i)
-      return
-    }
-  }
+// 将高亮函数注入到 flipToPage 调用中（侧边栏跳转时使用）
+function handleSidebarFlip(pageIndex, quote) {
+  flipToPage(pageIndex, quote, highlightOnPage)
 }
 
-// 直接翻到物理页码（不偏移）
-function flipToPhysicalPage(pageIndex) {
-  if (!pageFlip) return
-  try {
-    pageFlip.turnToPage?.(pageIndex) ?? pageFlip.flip?.(pageIndex)
-  } catch {
-    // 回退手动翻页
-    const current = pageFlip.getCurrentPageIndex()
-    const diff = pageIndex - current
-    const fn = diff > 0 ? () => pageFlip.flipNext() : () => pageFlip.flipPrev()
-    for (let i = 0; i < Math.abs(diff); i++) setTimeout(fn, i * 100)
-  }
-}
-
-function flipToCover() {
-  if (!pageFlip) return
-  const current = pageFlip.getCurrentPageIndex()
-  if (current === 0) return // 已经在封面，无需翻页
-  // 直接跳转到索引 0（封面），使用 turnToPage 触发动画
-  if (typeof pageFlip.turnToPage === 'function') {
-    pageFlip.turnToPage(0)
-  } else {
-    // 回退手动翻页
-    pageFlip.flip(0)
-  }
-}
-// 在 defineExpose 之前添加
-// 在 defineExpose 之前添加
-async function flipToCoverAnimated() {
-  if (!pageFlip) return
-
-  const stepDelay = 50                    // 每步翻页间隔 200ms（可根据需要调整）
-  const coverPause = 1000                 // 封面停留 1s
-  const current = pageFlip.getCurrentPageIndex()
-
-  if (current === 0) {
-    // 已经在封面，直接停留 1s
-    await new Promise(r => setTimeout(r, coverPause))
-    return
-  }
-
-  // 等待一次翻页完成的辅助函数（监听 flip 事件）
-  const waitForFlip = () => new Promise(resolve => {
-    const handler = () => {
-      pageFlip.off('flip', handler)
-      resolve()
-    }
-    pageFlip.on('flip', handler)
+// 绑定翻页事件以更新阅读统计
+function bindFlipEvent(flip) {
+  if (!flip) return
+  flip.on('flip', (e) => {
+    currentPage.value = e.data ?? flip.getCurrentPageIndex()
+    recordPageTurn()
   })
-
-  // 快速往前翻页，每次翻一页，直到封面（索引 0）
-  while (pageFlip.getCurrentPageIndex() > 0) {
-    pageFlip.flipPrev()
-    await waitForFlip()                     // 等待本次翻页动画完成
-    await new Promise(r => setTimeout(r, stepDelay))  // 额外停顿，制造“唰唰”效果
-  }
-
-  // 封面停留 1 秒
-  await new Promise(r => setTimeout(r, coverPause))
-}
-
-
-
-// 暴露给父组件
-
-
-defineExpose({ flipToPage, flipToPhysicalPage,flipToCover,  flipToCoverAnimated,jumpToChapter, currentPage, getCurrentPageText })
-
-
-// 生命周期
-function reInit() {
-  destroyFlip()
-  statusMsg.value = '正在准备...'
-  nextTick().then(initFlip)
 }
 
 function onKeyDown(e) {
@@ -350,26 +169,61 @@ function onKeyDown(e) {
   else if (e.key === 'ArrowLeft') pageFlip.flipPrev()
 }
 
-watch(() => props.reader.fontSize.value, (v) => { if (v !== currentFontSize) reInit() })
+async function reInit() {
+  destroyFlip()
+  statusMsg.value = '正在准备...'
+  try {
+    const flip = await initFlip()
+    if (flip) {
+      bindFlipEvent(flip)
+      statusMsg.value = ''
+    } else {
+      statusMsg.value = '暂无内容'
+    }
+  } catch (e) {
+    console.error('重新初始化失败:', e)
+    statusMsg.value = '加载失败，请重试'
+  }
+}
+
+watch(() => props.reader.fontSize.value, (v) => {
+  if (v !== currentFontSize) reInit()
+})
 watch(() => props.reader.fullText.value, () => reInit())
 
 onMounted(async () => {
   startClock()
   await nextTick()
-  await initFlip()
-  // 只监听选中文字事件，不再拦截全局点击
+  try {
+    const flip = await initFlip()
+    if (flip) {
+      bindFlipEvent(flip)
+      statusMsg.value = ''
+    } else {
+      statusMsg.value = '暂无内容'
+    }
+  } catch (e) {
+    console.error('初始化翻页失败:', e)
+    statusMsg.value = '加载失败，请重试'
+  }
   flipContainerRef.value?.addEventListener('mouseup', onMouseUp)
   document.addEventListener('keydown', onKeyDown)
 })
-
 onBeforeUnmount(() => {
   flipContainerRef.value?.removeEventListener('mouseup', onMouseUp)
   document.removeEventListener('keydown', onKeyDown)
-  taskId = 0
   destroyFlip()
   destroyStats()
 })
 
+defineExpose({
+  flipToPage: handleSidebarFlip, // 侧边栏跳转使用带高亮的版本
+  flipToPhysicalPage,
+  jumpToChapter,
+  currentPage,
+  getCurrentPageText,
+  flipToCoverAnimated,
+})
 </script>
 
 <style src="./ThreeReader.css"></style>

@@ -13,6 +13,9 @@ import (
 )
 
 func main() {
+	r := gin.Default()
+	// 设置最大上传文件大小为 50MB
+	r.MaxMultipartMemory = 50 << 20 // 50MB
 	// 加载 .env 文件
 	if err := godotenv.Load(); err != nil {
 		if err2 := godotenv.Load("C:\\Pro2026\\re0\\backend\\.env"); err2 != nil {
@@ -21,8 +24,6 @@ func main() {
 	}
 
 	database.InitDB()
-
-	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"http://localhost:4321"},

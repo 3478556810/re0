@@ -116,18 +116,23 @@ async function upload() {
   const formData = new FormData()
   formData.append('file', file.value)
   formData.append('title', title.value || file.value.name.replace(/\.txt$/i, ''))
-  if (coverFile.value) {
-    formData.append('cover', coverFile.value)
-  }
+  if (coverFile.value) formData.append('cover', coverFile.value)
 
   try {
     const res = await fetch('/api/book/upload', { method: 'POST', body: formData })
-    if (!res.ok) throw new Error((await res.json()).error || '上传失败')
-    const data = await res.json()
+    const text = await res.text() // 先读为文本
+    let data
+    try {
+      data = JSON.parse(text) // 尝试解析 JSON
+    } catch (e) {
+      throw new Error('服务器返回异常: ' + text.slice(0, 200))
+    }
+    if (!res.ok) throw new Error(data.error || '上传失败')
     emit('uploaded', data.books)
     close()
   } catch (e) {
     alert('上传失败: ' + e.message)
+    console.error(e)
   }
 }
 

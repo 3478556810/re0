@@ -35,11 +35,13 @@ window.dispatchEvent(new Event('login-state-changed'))
   } else {
     alert('密码错误')
   }
+  window.dispatchEvent(new Event('auth-change'))
 }
 
 const logout = () => {
   localStorage.removeItem('token')
   isLoggedIn.value = false
+  window.dispatchEvent(new Event('auth-change'))
 }
 </script>
 

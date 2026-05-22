@@ -9,9 +9,13 @@
       </div>
 
       <div class="card-body">
-        <!-- 封面预览 -->
+        <!-- 封面预览与更换 -->
         <div class="cover-section">
-          <div class="cover-preview" :style="{ backgroundImage: `url(${coverPreview})` }">
+          <div
+            class="cover-preview"
+            :style="{ backgroundImage: `url(${coverPreview})` }"
+            @click="triggerCoverInput"
+          >
             <div v-if="!coverPreview" class="cover-placeholder">
               <Icon icon="ph:book" width="32" />
             </div>
@@ -19,14 +23,23 @@
           <label class="cover-upload-label">
             <Icon icon="ph:camera" width="16" />
             <span>更换封面</span>
-            <input type="file" accept="image/*" @change="onCoverChange" hidden />
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              @change="onCoverChange"
+            />
           </label>
         </div>
 
         <!-- 书名 -->
         <div class="form-group">
           <label>书名</label>
-          <input v-model="editTitle" class="input" placeholder="输入书名" />
+          <input
+            v-model="editTitle"
+            class="input"
+            placeholder="输入书名"
+          />
         </div>
       </div>
 
@@ -56,8 +69,16 @@ watch(() => props.book, (book) => {
   if (book) {
     editTitle.value = book.title || book.id
     coverPreview.value = book.cover || ''
+    // 重置文件选择状态（避免之前选择的文件残留）
+    coverFile.value = null
   }
 }, { immediate: true })
+
+function triggerCoverInput() {
+  // 点击预览区域也可触发文件选择
+  const fileInput = document.querySelector('.cover-upload-label input[type="file"]')
+  if (fileInput) fileInput.click()
+}
 
 function onCoverChange(e) {
   const file = e.target.files[0]
@@ -69,8 +90,31 @@ function onCoverChange(e) {
   }
 }
 
-function save() {
-  emit('save', { title: editTitle.value, cover: coverFile.value })
+async function save() {
+  // 封面上传（如果选择了新封面）
+  if (coverFile.value) {
+    try {
+      const form = new FormData()
+      form.append('cover', coverFile.value)
+      form.append('bookId', props.book.id)
+      const res = await fetch('/api/book/upload-cover', { method: 'POST', body: form })
+      const text = await res.text()
+      let data
+      try { data = JSON.parse(text) } catch (e) {
+        throw new Error('服务器返回异常: ' + text.slice(0, 200))
+      }
+      if (!res.ok) throw new Error(data.error || '封面上传失败')
+      // 上传成功，将新封面 URL 传出去
+      emit('save', { title: editTitle.value, cover: data.cover || coverPreview.value })
+      return
+    } catch (e) {
+      alert('封面上传失败: ' + e.message)
+      return
+    }
+  }
+
+  // 未选择新封面，直接保存书名
+  emit('save', { title: editTitle.value, cover: props.book?.cover || '' })
 }
 
 function confirmDelete() {
@@ -91,8 +135,7 @@ function close() {
 }
 .modal-card {
   background: #fff; border-radius: 16px; width: 380px;
-  box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-  overflow: hidden;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.12); overflow: hidden;
 }
 .card-header {
   display: flex; justify-content: space-between; align-items: center;
@@ -108,7 +151,7 @@ function close() {
   width: 120px; height: 160px; border-radius: 8px; background-size: cover;
   background-position: center; background-color: #f8fafc;
   border: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: center;
-  margin-bottom: 12px;
+  margin-bottom: 12px; cursor: pointer;
 }
 .cover-placeholder { color: #cbd5e1; }
 .cover-upload-label {
