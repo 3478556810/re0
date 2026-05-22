@@ -103,4 +103,5 @@ func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore) {
 			c.JSON(200, gin.H{"status": "disabled", "message": "Redis 未启用"})
 		}
 	})
+	r.POST("/api/image/generate", GenerateImage)
 }

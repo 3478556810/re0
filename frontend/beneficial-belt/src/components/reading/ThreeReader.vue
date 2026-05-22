@@ -33,6 +33,18 @@
         </div>
       </div>
     </div>
+
+    <!-- 选择菜单：批注 or 搜索 -->
+<div v-if="showActionMenu" class="action-menu" :style="actionMenuStyle" @click.stop>
+  <div class="menu-item" @click="chooseComment">
+    <Icon icon="ph:pen" width="16" />
+    <span>批注</span>
+  </div>
+  <div class="menu-item" @click="chooseSearch">
+    <Icon icon="ph:magnifying-glass" width="16" />
+    <span>搜索</span>
+  </div>
+</div>
   </div>
 </template>
 
@@ -69,7 +81,9 @@ const stats = useReadingStats(textProvider, currentPage, totalPages, flipContain
 const { currentTime, remainingTime, markPageEnter, recordPageTurn, startClock, destroy: destroyStats } = stats
 
 // 选中批注
-const { showCommentCard, commentCardStyle, displayedComment, commentTyping, onMouseUp, closeCard } =useAnnotation(flipContainerRef, currentPage)  
+const {   showCommentCard, commentCardStyle, displayedComment, commentTyping, 
+  showActionMenu, actionMenuStyle, onMouseUp, closeCard, 
+  chooseComment, chooseSearch  } =useAnnotation(flipContainerRef, currentPage)  
 
 // ---- HTML 辅助 ----
 function escapeHtml(str) {
@@ -303,6 +317,7 @@ onBeforeUnmount(() => {
   destroyFlip()
   destroyStats()
 })
+
 </script>
 
 <style src="./ThreeReader.css"></style>
@@ -335,7 +350,7 @@ onBeforeUnmount(() => {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 25%;           /* 两侧各占 25% 宽度 */
+  width: 8%;           /* 两侧各占 25% 宽度 */
   z-index: 10;          /* 高于内容，低于卡片 */
   cursor: pointer;
   /* 调试时可临时加背景色查看区域：background: rgba(255,0,0,0.1); */
@@ -345,5 +360,29 @@ onBeforeUnmount(() => {
 }
 .flip-tap-area.right {
   right: 0;
+}
+
+.action-menu {
+  position: absolute;
+  z-index: 60;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+}
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  transition: background 0.2s;
+}
+.menu-item:hover {
+  background: #f1f5f9;
 }
 </style>

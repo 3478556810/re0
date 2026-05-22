@@ -22,50 +22,74 @@
   padding: 4px 10px; border-radius: 6px; cursor: pointer;
 }
 
-/* ========== 主体区域（三列 Flex） ========== */
+/* ========== 主体区域：三列，确保不遮挡 ========== */
 .reader-body {
   display: flex;
   flex: 1;
   min-height: 0;
-  overflow: hidden;            /* 禁止全局滚动条 */
-  align-items: flex-start;     /* 顶部对齐 */
+  overflow: hidden;
+  padding: 0;
+  gap: 16px;                /* ★ 增加列间距，防止重叠 */
 }
 
-/* 左侧占位列（推挤卡片居中） */
-.reader-body::before {
-  content: '';
-  flex: 1;
-  min-width: 0;
-}
-
-/* 书页卡片：固定宽度，自动居中 */
-.reader-card {
-  width: 550px;
+/* 左侧空白占位，与右侧面板等宽 */
+.left-spacer {
+  width: 460px;
   flex-shrink: 0;
-  margin: 8px 16px 8px 0;     /* 右侧 16px 与侧边栏分隔 */
+}
+
+/* 书页卡片：不再贪婪伸缩，限制最大宽度，留出右侧安全距离 */
+.reader-card {
+  flex: 0 1 auto;           /* ★ 不强行扩展，只占据内容所需空间 */
+  max-width: 550px;         /* 确保不会超过书页本身宽度 */
+  min-width: 0;
+  margin: 8px 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  position: relative;
+  z-index: 1;              /* 稍低的层级，让右侧面板可以覆盖溢出 */
+}
+
+/* 书页固定尺寸 */
+.three-reader-wrapper {
+  width: 550px;
+  height: 700px;
+  flex-shrink: 0;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 8px 30px rgba(0,0,0,0.08);
-  overflow: visible;
-  min-height: 0;
-  color: var(--text-primary, #0f172a);
-  position: relative;
 }
 
-/* 侧边栏：固定宽度，不收缩 */
-.side-panel {
-  width: 460px;                /* 可调整，如 400px */
+/* 右侧面板容器（笔记上，侧边栏下） */
+.right-panels {
+  width: 460px;
   flex-shrink: 0;
   margin: 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  position: relative;
+  z-index: 2;              /* ★ 高于书页，确保不被遮挡 */
+}
+
+/* 笔记与侧边栏等宽，禁止横向滚动 */
+.notes-panel,
+.side-panel {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   background: #fff;
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.06);
-  overflow-y: auto;           /* 内容超长时自己滚动 */
-  min-height: 0;            /* 继承父容器高度 */
   box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
 }
 
-/* ========== 内部组件（不变） ========== */
+/* 内部组件 */
 .reader-scroller {
   height: 100%;
   overflow-y: auto;
@@ -82,14 +106,6 @@
 }
 .text-block { color: var(--text-primary, #0f172a); }
 
-.three-reader-wrapper {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 /* 目录浮层保持不变 */
 .outline-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 20; display: flex; justify-content: center; align-items: center; }
 .outline-panel { background: #fff; width: 90%; max-width: 400px; max-height: 70vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
@@ -101,29 +117,11 @@
 .outline-empty { padding: 20px; text-align: center; color: var(--text-secondary); }
 .outline-fade-enter-active, .outline-fade-leave-active { transition: opacity 0.2s ease; }
 .outline-fade-enter-from, .outline-fade-leave-to { opacity: 0; }
-.outline-tabs {
-  display: flex;
-  gap: 8px;
-}
+.outline-tabs { display: flex; gap: 8px; }
 .tab-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9rem;
+  background: transparent; border: none; color: var(--text-secondary);
+  padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.9rem;
 }
-.tab-btn.active {
-  background: var(--bg-card);
-  color: var(--text-primary);
-  font-weight: 600;
-}
-.bm-text {
-  flex: 1;
-}
-.bm-page {
-  color: var(--text-secondary);
-  font-size: 0.8rem;
-}
-
+.tab-btn.active { background: var(--bg-card); color: var(--text-primary); font-weight: 600; }
+.bm-text { flex: 1; }
+.bm-page { color: var(--text-secondary); font-size: 0.8rem; }
