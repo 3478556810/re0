@@ -2,6 +2,7 @@ package handler
 
 import (
 	"backend/internal/middleware"
+	"context"
 	"net/http"
 	"time"
 
@@ -90,4 +91,16 @@ func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore) {
 	// 在函数体内，其他路由注册的后面添加：
 	r.GET("/api/book/list", ListBooks)
 	r.GET("/api/book/content", GetBookContent)
+
+	r.POST("/api/book/upload", UploadBook)
+	r.DELETE("/api/book/delete", DeleteBook)
+	r.GET("/api/admin/clear-redis", func(c *gin.Context) {
+		if redisEnabled {
+			ctx := context.Background()
+			redisClient.FlushAll(ctx)
+			c.JSON(200, gin.H{"status": "ok", "message": "Redis 缓存已清空"})
+		} else {
+			c.JSON(200, gin.H{"status": "disabled", "message": "Redis 未启用"})
+		}
+	})
 }
