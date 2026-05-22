@@ -1,4 +1,4 @@
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted } from 'vue'
 
 export function useReader() {
   const loading = ref(true)
@@ -6,11 +6,10 @@ export function useReader() {
   const title = ref('')
   const fullText = ref('')
   const fontSize = ref(20)
-  const bookmarks = ref([])
+  const bookmarks = ref([]) // 格式：[{ page: number, text: string, time: number }]
 
-  const currentProgress = ref(0) // 0-100
-  const isBookmarked = computed(() => bookmarks.value.includes(currentProgress.value))
-
+  const currentProgress = ref(0) // 0-100 (百分比)
+  
   const changeFont = () => {
     const sizes = [16, 20, 24]
     const idx = sizes.indexOf(fontSize.value)
@@ -18,12 +17,25 @@ export function useReader() {
     saveProgress()
   }
 
-  const toggleBookmark = () => {
-    if (bookmarks.value.includes(currentProgress.value)) {
-      bookmarks.value = bookmarks.value.filter(p => p !== currentProgress.value)
+  // 添加或删除书签（根据页码）
+  function toggleBookmark(page, text) {
+    const index = bookmarks.value.findIndex(b => b.page === page)
+    if (index !== -1) {
+      bookmarks.value.splice(index, 1)
     } else {
-      bookmarks.value.push(currentProgress.value)
+      bookmarks.value.push({ page, text, time: Date.now() })
     }
+    saveProgress()
+  }
+
+  // 判断某页是否为书签
+  function isBookmarked(page) {
+    return bookmarks.value.some(b => b.page === page)
+  }
+
+  // 删除指定书签（可选）
+  function removeBookmark(page) {
+    bookmarks.value = bookmarks.value.filter(b => b.page !== page)
     saveProgress()
   }
 
@@ -37,12 +49,12 @@ export function useReader() {
     }))
   }
 
-  const readingMode = ref('traditional') // 'traditional' | 'three-d'
+  const readingMode = ref('traditional')
   const toggleReadingMode = () => {
     readingMode.value = readingMode.value === 'traditional' ? 'three-d' : 'traditional'
-    // 持久化
     localStorage.setItem('reading-mode', readingMode.value)
   }
+
   const restoreProgress = () => {
     const key = `${STORAGE_KEY}-${title.value}`
     const raw = localStorage.getItem(key)
@@ -52,20 +64,19 @@ export function useReader() {
         if (data.progress !== undefined) currentProgress.value = data.progress
         if (data.fontSize) fontSize.value = data.fontSize
         if (data.bookmarks) bookmarks.value = data.bookmarks
-      } catch (e) { }
+      } catch (e) { /* ignore */ }
     }
   }
 
-
-
-  onMounted (() => {const savedMode = localStorage.getItem('reading-mode')
-if (savedMode) readingMode.value = savedMode
+  onMounted(() => {
+    const savedMode = localStorage.getItem('reading-mode')
+    if (savedMode) readingMode.value = savedMode
   })
 
   return {
     loading, error, title, fullText, fontSize, bookmarks,
-    currentProgress, isBookmarked,readingMode,toggleReadingMode,
-    changeFont, toggleBookmark,
+    currentProgress, isBookmarked, readingMode, toggleReadingMode,
+    changeFont, toggleBookmark, removeBookmark,
     saveProgress, restoreProgress
   }
 }

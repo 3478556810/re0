@@ -1,6 +1,14 @@
 <template>
   <div class="three-reader" ref="flipContainerRef">
     <EmotionGlow />
+    <!-- 中国传统纸签书签，夹在书页边缘 -->
+    <div v-if="isCurrentPageBookmarked" class="paper-bookmark" @click="removeCurrentBookmark">
+      <div class="bookmark-body">
+        <span class="bookmark-char">签</span>
+      </div>
+      <div class="bookmark-tassel"></div>
+    </div>
+
     <div v-if="statusMsg" class="status-overlay">
       <div class="status-box">
         <span class="status-text">{{ statusMsg }}</span>
@@ -13,7 +21,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
+import { ref, computed, onMounted, onBeforeUnmount, watch, nextTick } from 'vue'
 import { PageFlip } from 'page-flip'
 import { getCachedPages, setCachedPages } from './cachePagination.js'
 import EmotionGlow from './EmotionGlow.vue'
@@ -26,6 +34,32 @@ const progressPercent = ref(0)
 let pageFlip = null
 let currentFontSize = null
 let taskId = 0
+const currentPage = ref(0)
+
+// 计算当前页是否为书签
+const isCurrentPageBookmarked = computed(() => {
+  return props.reader.isBookmarked?.(currentPage.value) ?? false
+})
+
+// 获取当前页文本预览（用于书签描述）
+function getCurrentPageText() {
+  if (!flipContainerRef.value) return ''
+  const pages = flipContainerRef.value.querySelectorAll('.flip-page')
+  const index = pageFlip?.getCurrentPageIndex()
+  if (index >= 0 && index < pages.length) {
+    const text = pages[index].textContent.trim()
+    return text.slice(0, 30) + (text.length > 30 ? '...' : '')
+  }
+  return ''
+}
+
+// 点击纸签删除书签
+const removeCurrentBookmark = () => {
+  const page = currentPage.value
+  if (page !== undefined) {
+    props.reader.toggleBookmark(page, getCurrentPageText())
+  }
+}
 
 // ========== HTML 辅助函数 ==========
 function escapeHtml(str) {
@@ -46,7 +80,10 @@ function createBackHTML() {
 // ========== 翻页实例管理 ==========
 function destroyFlip() {
   if (pageFlip) {
-    try { pageFlip.destroy() } catch (e) { /* ignore */ }
+    try {
+      pageFlip.off('flip') // 移除监听
+      pageFlip.destroy()
+    } catch (e) { /* ignore */ }
     pageFlip = null
   }
   if (flipContainerRef.value) {
@@ -76,7 +113,7 @@ async function initFlip() {
 
     if (!htmlPages) {
       statusMsg.value = '正在精确排版... 0%'
-      
+
       const bodyPages = await exactPaginate(
         text,
         fontSize,
@@ -87,7 +124,7 @@ async function initFlip() {
           progressPercent.value = progress
         }
       )
-      
+
       if (id !== taskId) return
 
       if (!bodyPages || bodyPages.length === 0) {
@@ -134,6 +171,11 @@ async function initFlip() {
     statusMsg.value = ''
     progressPercent.value = 0
     currentFontSize = fontSize
+
+    // ★ 在这里监听翻页事件（pageFlip 已初始化）
+    pageFlip.on('flip', (e) => {
+      currentPage.value = e.data ?? pageFlip.getCurrentPageIndex()
+    })
   } catch (err) {
     console.error('分页失败:', err)
     if (id === taskId) statusMsg.value = '加载失败，请重试'
@@ -205,7 +247,6 @@ function highlightOnPage(text, targetIndex) {
 function jumpToChapter(title) {
   if (!flipContainerRef.value || !pageFlip) return
   const pages = flipContainerRef.value.querySelectorAll('.flip-page')
-  // 跳过封面(0)和封底(最后)
   for (let i = 1; i < pages.length - 1; i++) {
     if (pages[i].textContent.includes(title)) {
       if (typeof pageFlip.turnToPage === 'function') {
@@ -224,7 +265,8 @@ function jumpToChapter(title) {
   console.warn('未找到章节:', title)
 }
 
-defineExpose({ flipToPage, jumpToChapter })
+// 暴露给父组件
+defineExpose({ flipToPage, jumpToChapter, currentPage, getCurrentPageText })
 
 // ========== 生命周期 ==========
 function reInit() {
@@ -284,5 +326,56 @@ onBeforeUnmount(() => {
   background: #60a5fa;
   border-radius: 2px;
   transition: width 0.3s ease;
+}
+
+/* 纸签容器 */
+.paper-bookmark {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  z-index: 15;
+  cursor: pointer;
+  filter: drop-shadow(1px 2px 4px rgba(0, 0, 0, 0.2));
+  transition: transform 0.2s ease;
+}
+.paper-bookmark:hover {
+  transform: translateY(-2px) rotate(-2deg);
+}
+
+.bookmark-body {
+  width: 28px;
+  height: 70px;
+  background: linear-gradient(135deg, #f7e9d0 0%, #e7d2b5 100%);
+  border: 1px solid #b8977a;
+  border-radius: 2px 8px 2px 2px;
+  writing-mode: vertical-rl;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.bookmark-char {
+  font-size: 14px;
+  color: #8b5e3c;
+  font-family: 'KaiTi', '楷体', 'Noto Serif SC', serif;
+  letter-spacing: 2px;
+}
+
+.bookmark-tassel {
+  width: 2px;
+  height: 16px;
+  background: #c4493e;
+  margin: 0 auto;
+  position: relative;
+}
+.bookmark-tassel::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: -4px;
+  width: 10px;
+  height: 8px;
+  background: radial-gradient(circle, #c4493e 20%, transparent 80%);
+  border-radius: 50%;
 }
 </style>
