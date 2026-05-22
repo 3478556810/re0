@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -17,8 +18,9 @@ var indexMutex sync.Mutex
 type BookEntry struct {
 	ID    string `json:"id"`
 	Title string `json:"title"`
-	Cover string `json:"cover,omitempty"` // 封面图片 URL
+	Cover string `json:"cover,omitempty"` // 封面图片 Base64 编码
 }
+
 type BookIndex struct {
 	Books []BookEntry `json:"books"`
 }
@@ -40,7 +42,7 @@ func UploadBook(c *gin.Context) {
 		title = strings.TrimSuffix(file.Filename, ".txt")
 		title = strings.TrimSuffix(title, ".TXT")
 	}
-	title = sanitizeBookID(title) // 复用之前的清理函数
+	title = sanitizeBookID(title)
 
 	booksDir := GetBooksDir()
 	if err := os.MkdirAll(booksDir, 0755); err != nil {
@@ -73,15 +75,17 @@ func UploadBook(c *gin.Context) {
 		return
 	}
 
-	// 处理封面图片
-	coverURL := ""
+	// 处理封面图片（转为 Base64 存储）
+	coverBase64 := ""
 	if coverFile, err := c.FormFile("cover"); err == nil {
-		coverDir := filepath.Join(booksDir, "covers")
-		os.MkdirAll(coverDir, 0755)
-		ext := filepath.Ext(coverFile.Filename)
-		coverPath := filepath.Join(coverDir, title+ext)
-		if err := c.SaveUploadedFile(coverFile, coverPath); err == nil {
-			coverURL = "/books/covers/" + title + ext
+		src, err := coverFile.Open()
+		if err == nil {
+			defer src.Close()
+			imgData, err := io.ReadAll(src)
+			if err == nil {
+				mimeType := "image/" + strings.TrimPrefix(filepath.Ext(coverFile.Filename), ".")
+				coverBase64 = "data:" + mimeType + ";base64," + base64.StdEncoding.EncodeToString(imgData)
+			}
 		}
 	}
 
@@ -99,18 +103,18 @@ func UploadBook(c *gin.Context) {
 	}
 
 	found := false
+	// 在索引更新处
 	for i, b := range index.Books {
 		if b.ID == title {
 			index.Books[i].Title = title
-			index.Books[i].Cover = coverURL
+			index.Books[i].Cover = coverBase64 // 改为 Base64
 			found = true
 			break
 		}
 	}
 	if !found {
-		index.Books = append(index.Books, BookEntry{ID: title, Title: title, Cover: coverURL})
+		index.Books = append(index.Books, BookEntry{ID: title, Title: title, Cover: coverBase64})
 	}
-
 	idxData, _ := json.MarshalIndent(index, "", "  ")
 	os.WriteFile(indexPath, idxData, 0644)
 
@@ -118,10 +122,12 @@ func UploadBook(c *gin.Context) {
 		"bookId":   title,
 		"fileName": file.Filename,
 		"books":    index.Books,
-		"cover":    coverURL,
+		"cover":    coverBase64,
 		"message":  "上传成功",
 	})
 }
+
+// sanitizeBookID 清理书名中的危险字符
 func sanitizeBookID(name string) string {
 	return strings.Map(func(r rune) rune {
 		switch r {

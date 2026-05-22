@@ -125,3 +125,72 @@
 .tab-btn.active { background: var(--bg-card); color: var(--text-primary); font-weight: 600; }
 .bm-text { flex: 1; }
 .bm-page { color: var(--text-secondary); font-size: 0.8rem; }
+
+/* ========== 移动端适配 ========== */
+@media (max-width: 768px) {
+  /* 隐藏左侧读书笔记和右侧侧边栏 */
+  .notes-panel,
+  .side-panel {
+    display: none !important;
+  }
+
+  /* 移除左右空白占位 */
+  .left-spacer,
+  .right-panels {
+    display: none !important;
+  }
+
+  /* 阅读器主体区域：只留书页居中 */
+  .reader-body {
+    justify-content: center;
+    gap: 0;
+  }
+
+  /* 书页卡片：取消固定宽度，使用 flex 居中，并撑满可用高度 */
+  .reader-card {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+  }
+
+  /* 3D 翻书容器：去掉固定尺寸，由 JS 动态设置 */
+  .three-reader-wrapper {
+    width: 100% !important;
+    height: 100% !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* 工具栏：缩小内边距，换行或缩小按钮 */
+  .toolbar {
+    padding: 8px 12px;
+    flex-wrap: wrap;
+  }
+  .tb-title {
+    font-size: 0.9rem;
+    max-width: 120px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .tb-btn {
+    padding: 4px 8px;
+    font-size: 0.8rem;
+  }
+  .tb-actions {
+    gap: 4px;
+  }
+
+  /* 页脚信息：缩小字体，调整位置 */
+  .footer-info {
+    font-size: 10px;
+    bottom: 4px;
+    left: 12px;
+    right: 12px;
+  }
+}

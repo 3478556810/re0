@@ -2,11 +2,14 @@ package handler
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -94,33 +97,12 @@ func GetBookContent(c *gin.Context) {
 
 	c.String(http.StatusOK, text)
 }
-func UploadCover(c *gin.Context) {
-	bookID := c.PostForm("bookId")
-	file, err := c.FormFile("cover")
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "未上传封面"})
-		return
-	}
-	coverDir := filepath.Join(GetBooksDir(), "covers")
-	os.MkdirAll(coverDir, 0755)
-	ext := filepath.Ext(file.Filename)
-	coverPath := filepath.Join(coverDir, bookID+ext)
-	if err := c.SaveUploadedFile(file, coverPath); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "保存失败"})
-		return
-	}
-	coverURL := "/books/covers/" + bookID + ext
-
-	// 更新索引
-	indexMutex.Lock()
-	defer indexMutex.Unlock()
-	updateBookCoverInIndex(bookID, coverURL)
-
-	c.JSON(http.StatusOK, gin.H{"cover": coverURL})
-}
 
 // 在 handler/book.go 中添加
 func updateBookCoverInIndex(bookID, coverURL string) {
+	indexMutex.Lock()
+	defer indexMutex.Unlock()
+
 	indexPath := filepath.Join(GetBooksDir(), "index.json")
 	data, err := os.ReadFile(indexPath)
 	if err != nil {
@@ -147,15 +129,26 @@ func DeleteBook(c *gin.Context) {
 	}
 
 	booksDir := GetBooksDir()
-	filePath := filepath.Join(booksDir, bookID+".txt")
 
-	// 删除文件
-	if err := os.Remove(filePath); err != nil && !os.IsNotExist(err) {
+	// 1. 删除 TXT 文件
+	txtPath := filepath.Join(booksDir, bookID+".txt")
+	if err := os.Remove(txtPath); err != nil && !os.IsNotExist(err) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "删除文件失败"})
 		return
 	}
 
-	// 更新索引
+	// 2. 删除封面图片（如果存在）
+	coversDir := filepath.Join(booksDir, "covers")
+	coverPattern := filepath.Join(coversDir, bookID+".*")
+	if matches, err := filepath.Glob(coverPattern); err == nil {
+		for _, path := range matches {
+			if err := os.Remove(path); err != nil {
+				fmt.Printf("[WARN] 删除封面文件失败: %s, %v\n", path, err)
+			}
+		}
+	}
+
+	// 3. 更新索引文件
 	indexMutex.Lock()
 	defer indexMutex.Unlock()
 
@@ -168,7 +161,7 @@ func DeleteBook(c *gin.Context) {
 		index.Books = []BookEntry{}
 	}
 
-	newBooks := []BookEntry{}
+	newBooks := make([]BookEntry, 0, len(index.Books))
 	for _, b := range index.Books {
 		if b.ID != bookID {
 			newBooks = append(newBooks, b)
@@ -177,18 +170,65 @@ func DeleteBook(c *gin.Context) {
 	index.Books = newBooks
 
 	idxData, _ := json.MarshalIndent(index, "", "  ")
-	os.WriteFile(indexPath, idxData, 0644)
+	if err := os.WriteFile(indexPath, idxData, 0644); err != nil {
+		fmt.Printf("[ERROR] 写入索引文件失败: %v\n", err)
+	}
 
-	// ★ 清除 Redis 中该书的所有缓存（分页索引、书籍内容等）
+	// 4. 清除 Redis 缓存（与本书相关的所有键）
 	if redisEnabled {
 		ctx := context.Background()
-		// 删除匹配 book_indices:* 和 book_content:* 的 key
+		// 安全删除：先搜索再批量删除
 		keys, err := redisClient.Keys(ctx, fmt.Sprintf("*%s*", bookID)).Result()
 		if err == nil && len(keys) > 0 {
-			redisClient.Del(ctx, keys...)
-			fmt.Printf("[INFO] 已清除 Redis 缓存 %d 条\n", len(keys))
+			if err := redisClient.Del(ctx, keys...).Err(); err != nil {
+				fmt.Printf("[WARN] 清除 Redis 缓存失败: %v\n", err)
+			} else {
+				fmt.Printf("[INFO] 已清除 Redis 缓存 %d 条\n", len(keys))
+			}
 		}
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "已删除"})
+}
+
+// 在 handler/book.go 中添加
+func imageToBase64(filePath string) (string, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return "", err
+	}
+	ext := filepath.Ext(filePath)
+	mimeType := "image/" + strings.TrimPrefix(ext, ".")
+	return "data:" + mimeType + ";base64," + base64.StdEncoding.EncodeToString(data), nil
+}
+func UploadCover(c *gin.Context) {
+	bookID := c.PostForm("bookId")
+	if bookID == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "缺少 bookId"})
+		return
+	}
+	coverFile, err := c.FormFile("cover")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "未上传封面"})
+		return
+	}
+
+	src, err := coverFile.Open()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "读取封面失败"})
+		return
+	}
+	defer src.Close()
+	imgData, err := io.ReadAll(src)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "读取封面失败"})
+		return
+	}
+
+	mimeType := "image/" + strings.TrimPrefix(filepath.Ext(coverFile.Filename), ".")
+	coverBase64 := "data:" + mimeType + ";base64," + base64.StdEncoding.EncodeToString(imgData)
+
+	updateBookCoverInIndex(bookID, coverBase64)
+
+	c.JSON(http.StatusOK, gin.H{"cover": coverBase64})
 }

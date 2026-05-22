@@ -33,7 +33,9 @@ export default defineConfig({
           changeOrigin: true,
         secure: false,
         timeout: 120000,
-        
+         proxyTimeout: 120000,
+         // 设置请求体大小限制为 50MB
+        maxBodyLength: 50 * 1024 * 1024,
         }
       },
       fs: {
