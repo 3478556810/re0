@@ -29,19 +29,16 @@
     </div>
 
     <!-- ========== 阅读痕迹 ========== -->
-    <div class="annotations-section">
-      <h4>杉汐的痕迹</h4>
-      <div
-        v-for="ann in annotations"
-        :key="ann.page"
-        class="annotation-item"
-        @click="goToPage(ann.page, ann.quote)"
-      >
-        <span class="emoji">{{ ann.emoji }}</span>
-        <span class="text">{{ ann.text }}</span>
-        <span class="page">p.{{ ann.page + 1 }}</span>
-      </div>
-    </div>
+   <div
+  v-for="ann in annotations"
+  :key="ann.quote"
+  class="annotation-item"
+  @click="goToPage(ann.page, ann.quote)"
+>
+  <Icon :icon="ann.icon" width="16" class="anno-icon" />
+  <span class="text">{{ ann.text }}</span>
+  <span class="page">p.{{ ann.page }}</span>
+</div>
   </div>
 </template>
 
@@ -111,9 +108,9 @@ const doSearch = async () => {
 // ----- 阅读痕迹 -----
 // SidePanel.vue 中的 annotations 數組修改
 const annotations = [
-  { page: 1, emoji: '💙', text: '这里男主第一次说出真心话', quote: '微微' },
-  { page: 5, emoji: '💚', text: '这个比喻实在太妙了', quote: '她的笑容像晨曦中的露珠，晶莹而短暂。' },
-  { page: 8, emoji: '💜', text: '为什么她要离开？', quote: '她转身离去，没有留下只言片语。' },
+  { page: 2, icon: 'ph:heart-straight', text: '这里男主第一次说出真心话', quote: '微微' },
+  { page: 5, icon: 'ph:sparkle', text: '这个比喻实在太妙了', quote: '她的笑容像晨曦中的露珠' },
+  { page: 8, icon: 'ph:question', text: '为什么她要离开？', quote: '她转身离去' },
 ]
 
 // 修改 goToPage
@@ -221,5 +218,10 @@ const goToPage = (pageIndex, quote) => {
 .page {
   font-size: 0.75rem;
   color: #94a3b8;
+}
+
+.anno-icon {
+  color: var(--emotion-color, #60a5fa);
+  flex-shrink: 0;
 }
 </style>
