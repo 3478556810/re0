@@ -1,5 +1,7 @@
 <template>
   <div class="reader-root">
+
+    
     <div v-if="reader.loading.value" class="status-msg">加载中...</div>
     <div v-else-if="reader.error.value" class="status-msg error">{{ reader.error.value }}</div>
 
@@ -19,14 +21,20 @@
       </div>
 
       <div class="reader-body">
+       <div class="left-spacer"></div>
         <div class="reader-card">
+          
           <div class="three-reader-wrapper">
             <ThreeReader ref="threeReaderRef" :reader="reader" />
           </div>
         </div>
+
+        <div class="right-panels">
+    <NotesPanel />
         <div class="side-panel">
           <SidePanel :threeReaderRef="threeReaderRef" />
         </div>
+         </div>
       </div>
 
      <!-- 替换原来的目录浮层部分 -->
@@ -72,7 +80,7 @@ import { Icon } from '@iconify/vue'
 import { useReader } from './useReader.js'
 import ThreeReader from './ThreeReader.vue'
 import SidePanel from './SidePanel.vue'
-
+import NotesPanel from './NotesPanel.vue'
 const reader = useReader()
 const threeReaderRef = ref(null)
 const showOutline = ref(false)

@@ -15,11 +15,22 @@
 
     <div class="annotations-section">
       <h4>杉汐的痕迹</h4>
-      <div v-for="(item, idx) in dynamicAnnotations" :key="idx" class="annotation-item" @click="jumpToPage(item.page)">
-        <Icon icon="ph:chat-centered-text" width="16" />
-        <span class="text">{{ item.comment }}</span>
-        <span class="quote">“{{ item.text }}”</span>
-        <span class="page">p.{{ item.page }}</span>
+      <div v-for="(item, idx) in dynamicAnnotations" :key="idx" class="annotation-wrapper">
+        <div
+          class="annotation-item"
+          :class="{ swiped: swipedIndex === idx }"
+          @click="handleAnnotationClick(item, idx)"
+        >
+          <div class="anno-content">
+            <Icon icon="ph:chat-centered-text" width="16" />
+            <span class="text">{{ item.comment }}</span>
+            <span class="quote">“{{ item.text }}”</span>
+            <span class="page">p.{{ item.page }}</span>
+          </div>
+        </div>
+        <div class="delete-btn" @click.stop="deleteAnnotation(idx)">
+          <Icon icon="ph:trash" width="18" />
+        </div>
       </div>
       <div v-if="dynamicAnnotations.length === 0" class="outline-empty">暂无批注，选中文本即可生成</div>
     </div>
@@ -84,25 +95,49 @@ const doSearch = async () => {
 
 const STORAGE_KEY = 'shanxi_annotations'
 const dynamicAnnotations = ref([])
+const swipedIndex = ref(-1)
 
 function loadAnnotations() {
   dynamicAnnotations.value = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]')
 }
-
-onMounted(() => {
-  loadAnnotations()
-  window.addEventListener('annotations-updated', loadAnnotations)
-})
-
-onBeforeUnmount(() => {
-  window.removeEventListener('annotations-updated', loadAnnotations)
-})
 
 function jumpToPage(pageIndex) {
   if (props.threeReaderRef?.flipToPhysicalPage) {
     props.threeReaderRef.flipToPhysicalPage(pageIndex)
   }
 }
+
+function handleAnnotationClick(item, idx) {
+  if (swipedIndex.value === idx) {
+    // 已左滑，跳转并复位
+    jumpToPage(item.page)
+    swipedIndex.value = -1
+  } else {
+    swipedIndex.value = idx
+  }
+}
+
+function deleteAnnotation(idx) {
+  dynamicAnnotations.value.splice(idx, 1)
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(dynamicAnnotations.value))
+  swipedIndex.value = -1
+}
+
+function handleSearchEvent(e) {
+  keyword.value = e.detail.text
+  doSearch()
+}
+
+onMounted(() => {
+  loadAnnotations()
+  window.addEventListener('annotations-updated', loadAnnotations)
+  window.addEventListener('search-text', handleSearchEvent)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('annotations-updated', loadAnnotations)
+  window.removeEventListener('search-text', handleSearchEvent)
+})
 </script>
 
 <style scoped>
@@ -113,10 +148,58 @@ function jumpToPage(pageIndex) {
 .result-card { margin-top: 8px; background: #fff; border-radius: 12px; padding: 12px 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); font-size: 0.9rem; line-height: 1.6; color: #1e293b; white-space: pre-wrap; word-wrap: break-word; }
 .cursor { color: #60a5fa; animation: blink 0.8s infinite; }
 @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
-.annotation-item { display: flex; align-items: center; gap: 6px; padding: 8px; border-radius: 8px; cursor: pointer; transition: background 0.2s; }
-.annotation-item:hover { background: #f1f5f9; }
+
+/* 批注条目包裹（相对定位 + 溢出隐藏） */
+.annotation-wrapper {
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 6px;
+  border-radius: 8px;
+}
+.annotation-item {
+  display: flex;
+  align-items: center;
+  transition: transform 0.25s ease;
+  transform: translateX(0);
+  padding: 8px 0;
+  background: #fff;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+}
+.annotation-item.swiped {
+  transform: translateX(-50px);
+}
+.anno-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding-right: 8px;
+}
+/* 垃圾桶（绝对定位在右侧外部） */
+.delete-btn {
+  position: absolute;
+  right: -50px;
+  top: 0;
+  bottom: 0;
+  width: 50px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fee2e2;
+  color: #ef4444;
+  cursor: pointer;
+  border-radius: 0 8px 8px 0;
+  transition: right 0.25s ease;
+  z-index: 1;
+}
+.annotation-item.swiped ~ .delete-btn {
+  right: 0;
+}
 .text { flex: 1; font-size: 0.85rem; color: #334155; }
 .quote { font-size: 0.8rem; color: #64748b; font-style: italic; margin-right: 4px; }
-.page { font-size: 0.75rem; color: #94a3b8; }
+.page { font-size: 0.75rem; color: #94a3b8; flex-shrink: 0; }
 .outline-empty { padding: 20px; text-align: center; color: var(--text-secondary); }
 </style>
