@@ -167,14 +167,17 @@ func downloadAndSaveImage(imageURL string) (string, error) {
 		return "", fmt.Errorf("下载图片返回非200: %d", resp.StatusCode)
 	}
 
-	// 2. 确定保存路径（本地开发或服务器上的可访问目录）
-	// 注意：根据实际部署调整这个路径，确保它对应前端静态文件目录下的 images 子目录
-	saveDir := "C:\\Pro2026\\re0\\frontend\\beneficial-belt\\public\\images"
-	// 本地开发时，你可能需要改成类似 C:\Pro2026\re0\frontend\beneficial-belt\public\images
-	// 为了兼容，我们尝试自动检测：如果环境变量设置了 IMAGE_SAVE_DIR 则使用，否则使用默认路径
-	if envDir := os.Getenv("IMAGE_SAVE_DIR"); envDir != "" {
-		saveDir = envDir
+	// 2. 确定保存路径（通过环境变量控制）
+	saveDir := os.Getenv("IMAGE_SAVE_DIR")
+	if saveDir == "" {
+		// 默认本地开发路径（Windows）
+		saveDir = "C:\\Pro2026\\re0\\frontend\\beneficial-belt\\public\\images"
+		// 如果 Linux 环境，自动尝试常见路径
+		if _, err := os.Stat("/var/www/shanca"); err == nil {
+			saveDir = "/var/www/shanca/frontend/beneficial-belt/public/images"
+		}
 	}
+
 	// 确保目录存在
 	if err := os.MkdirAll(saveDir, 0755); err != nil {
 		return "", fmt.Errorf("创建保存目录失败: %w", err)
@@ -197,11 +200,10 @@ func downloadAndSaveImage(imageURL string) (string, error) {
 		return "", fmt.Errorf("保存图片失败: %w", err)
 	}
 
-	// 3. 返回可公开访问的URL
-	// 注意：根据你的实际部署情况，可能需要调整基础URL
-	baseURL := "http://localhost:4321" // 本地开发环境 // 默认生产环境
-	if os.Getenv("ENV") == "dev" {
-		baseURL = "http://localhost:4321" // 本地开发环境
+	// 3. 返回可公开访问的URL（通过环境变量控制）
+	baseURL := os.Getenv("IMAGE_BASE_URL")
+	if baseURL == "" {
+		baseURL = "http://localhost:4321" // 默认本地开发环境
 	}
 	return fmt.Sprintf("%s/images/%s", baseURL, fileName), nil
 }

@@ -282,7 +282,59 @@ function flipToPhysicalPage(pageIndex) {
   }
 }
 
-defineExpose({ flipToPage, flipToPhysicalPage, jumpToChapter, currentPage, getCurrentPageText })
+function flipToCover() {
+  if (!pageFlip) return
+  const current = pageFlip.getCurrentPageIndex()
+  if (current === 0) return // 已经在封面，无需翻页
+  // 直接跳转到索引 0（封面），使用 turnToPage 触发动画
+  if (typeof pageFlip.turnToPage === 'function') {
+    pageFlip.turnToPage(0)
+  } else {
+    // 回退手动翻页
+    pageFlip.flip(0)
+  }
+}
+// 在 defineExpose 之前添加
+// 在 defineExpose 之前添加
+async function flipToCoverAnimated() {
+  if (!pageFlip) return
+
+  const stepDelay = 50                    // 每步翻页间隔 200ms（可根据需要调整）
+  const coverPause = 1000                 // 封面停留 1s
+  const current = pageFlip.getCurrentPageIndex()
+
+  if (current === 0) {
+    // 已经在封面，直接停留 1s
+    await new Promise(r => setTimeout(r, coverPause))
+    return
+  }
+
+  // 等待一次翻页完成的辅助函数（监听 flip 事件）
+  const waitForFlip = () => new Promise(resolve => {
+    const handler = () => {
+      pageFlip.off('flip', handler)
+      resolve()
+    }
+    pageFlip.on('flip', handler)
+  })
+
+  // 快速往前翻页，每次翻一页，直到封面（索引 0）
+  while (pageFlip.getCurrentPageIndex() > 0) {
+    pageFlip.flipPrev()
+    await waitForFlip()                     // 等待本次翻页动画完成
+    await new Promise(r => setTimeout(r, stepDelay))  // 额外停顿，制造“唰唰”效果
+  }
+
+  // 封面停留 1 秒
+  await new Promise(r => setTimeout(r, coverPause))
+}
+
+
+
+// 暴露给父组件
+
+
+defineExpose({ flipToPage, flipToPhysicalPage,flipToCover,  flipToCoverAnimated,jumpToChapter, currentPage, getCurrentPageText })
 
 
 // 生命周期
