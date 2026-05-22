@@ -3,9 +3,7 @@
     <li><a href="/shanxi-hut">杉汐小屋</a></li>
     <li><a href="/blog">日记</a></li>
     <li><a href="/timeline">生命线</a></li>
-    <li v-if="isLoggedIn"><a href="/resume">关于他</a></li>
-    <li v-if="isLoggedIn"><a href="/projects">作品集</a></li>
-    <li v-if="isLoggedIn"><a href="/philosophy">技术哲学</a></li>
+    <li v-if="isLoggedIn"><a href="/image-bed">杉汐图库</a></li>
   </ul>
 </template>
 
