@@ -104,4 +104,5 @@ func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore) {
 		}
 	})
 	r.POST("/api/image/generate", GenerateImage)
+	r.POST("/api/book/upload-cover", UploadCover)
 }

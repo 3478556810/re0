@@ -75,3 +75,4 @@ export async function setCachedPages(bookId, fontSize, pages) {
     console.warn('[Cache] 写入异常', e);
   }
 }
+export { openDB, STORE_NAME }

@@ -94,13 +94,58 @@ func GetBookContent(c *gin.Context) {
 
 	c.String(http.StatusOK, text)
 }
+func UploadCover(c *gin.Context) {
+	bookID := c.PostForm("bookId")
+	file, err := c.FormFile("cover")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "未上传封面"})
+		return
+	}
+	coverDir := filepath.Join(GetBooksDir(), "covers")
+	os.MkdirAll(coverDir, 0755)
+	ext := filepath.Ext(file.Filename)
+	coverPath := filepath.Join(coverDir, bookID+ext)
+	if err := c.SaveUploadedFile(file, coverPath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "保存失败"})
+		return
+	}
+	coverURL := "/books/covers/" + bookID + ext
 
+	// 更新索引
+	indexMutex.Lock()
+	defer indexMutex.Unlock()
+	updateBookCoverInIndex(bookID, coverURL)
+
+	c.JSON(http.StatusOK, gin.H{"cover": coverURL})
+}
+
+// 在 handler/book.go 中添加
+func updateBookCoverInIndex(bookID, coverURL string) {
+	indexPath := filepath.Join(GetBooksDir(), "index.json")
+	data, err := os.ReadFile(indexPath)
+	if err != nil {
+		return
+	}
+	var index BookIndex
+	if json.Unmarshal(data, &index) != nil {
+		return
+	}
+	for i, b := range index.Books {
+		if b.ID == bookID {
+			index.Books[i].Cover = coverURL
+			break
+		}
+	}
+	idxData, _ := json.MarshalIndent(index, "", "  ")
+	os.WriteFile(indexPath, idxData, 0644)
+}
 func DeleteBook(c *gin.Context) {
 	bookID := c.Query("bookId")
 	if bookID == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "缺少 bookId"})
 		return
 	}
+
 	booksDir := GetBooksDir()
 	filePath := filepath.Join(booksDir, bookID+".txt")
 
@@ -133,6 +178,17 @@ func DeleteBook(c *gin.Context) {
 
 	idxData, _ := json.MarshalIndent(index, "", "  ")
 	os.WriteFile(indexPath, idxData, 0644)
+
+	// ★ 清除 Redis 中该书的所有缓存（分页索引、书籍内容等）
+	if redisEnabled {
+		ctx := context.Background()
+		// 删除匹配 book_indices:* 和 book_content:* 的 key
+		keys, err := redisClient.Keys(ctx, fmt.Sprintf("*%s*", bookID)).Result()
+		if err == nil && len(keys) > 0 {
+			redisClient.Del(ctx, keys...)
+			fmt.Printf("[INFO] 已清除 Redis 缓存 %d 条\n", len(keys))
+		}
+	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "已删除"})
 }
