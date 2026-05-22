@@ -4,6 +4,7 @@ import { exactPaginate } from './ExactPaginator.js'
 import { getCachedPages, setCachedPages } from './cachePagination.js'
 
 export function usePageFlip(flipContainerRef, reader, width, height) {
+  
   const currentPage = ref(0)
   const totalPages = ref(0)
   let pageFlip = null
