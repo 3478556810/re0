@@ -101,3 +101,28 @@
 .outline-empty { padding: 20px; text-align: center; color: var(--text-secondary); }
 .outline-fade-enter-active, .outline-fade-leave-active { transition: opacity 0.2s ease; }
 .outline-fade-enter-from, .outline-fade-leave-to { opacity: 0; }
+.outline-tabs {
+  display: flex;
+  gap: 8px;
+}
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+.tab-btn.active {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.bm-text {
+  flex: 1;
+}
+.bm-page {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
