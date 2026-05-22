@@ -130,7 +130,7 @@ const jumpToChapter = (item) => {
   showOutline.value = false
 }
 
-const back = () => window.location.href = '/reading-hut'
+
 
 onMounted(async () => {
   try {
@@ -152,6 +152,13 @@ onMounted(async () => {
     reader.loading.value = false
   }
 })
+
+const back = async () => {
+  if (threeReaderRef.value?.flipToCoverAnimated) {
+    await threeReaderRef.value.flipToCoverAnimated()
+  }
+  window.location.href = '/reading-hut'
+}
 </script>
 
 <style>

@@ -5,11 +5,11 @@ import AdminLogin from './shanxi/AdminLogin.vue';
 <nav class="navbar">
   <div class="nav-content">
     <div class="nav-brand">
-      <a href="/">✨ 杉汐的星尘核心</a>
+      <a href="/">杉汐的星尘核心</a>
     </div>
     <ul class="nav-links" id="nav-links">
-      <li><a href="/blog">杉汐的日记</a></li>
-      <li><a href="/shanxi-hut">杉汐小屋</a></li>
+      <li><a href="/reading-hut">阅读小屋</a></li>
+      <li><a href="/blog">日记</a></li>
       <li><a href="/timeline">生命线</a></li>
     </ul>
     <div class="nav-actions">
@@ -24,9 +24,7 @@ import AdminLogin from './shanxi/AdminLogin.vue';
     if (!ul) return
 
     function updateLinks() {
-      // 移除旧的动态链接（直接调用 forEach，不需要额外变量）
       ul.querySelectorAll('.dynamic-link').forEach(el => el.remove())
-
       const token = localStorage.getItem('token')
       if (token) {
         const devLinks = [
@@ -39,9 +37,9 @@ import AdminLogin from './shanxi/AdminLogin.vue';
           const a = document.createElement('a')
           a.href = link.href
           a.textContent = link.text
-          a.style.cssText = 'color: #475467; text-decoration: none; font-size: 0.95em;'
-          a.addEventListener('mouseenter', () => { a.style.color = '#2563eb' })
-          a.addEventListener('mouseleave', () => { a.style.color = '#475467' })
+          a.style.cssText = 'color: #475569; text-decoration: none; font-size: 0.9rem;'
+          a.addEventListener('mouseenter', () => { a.style.color = '#0066cc' })
+          a.addEventListener('mouseleave', () => { a.style.color = '#475569' })
           li.appendChild(a)
           ul.appendChild(li)
         })
@@ -53,6 +51,7 @@ import AdminLogin from './shanxi/AdminLogin.vue';
     window.addEventListener('login-state-changed', updateLinks)
   })
 </script>
+
 <style>
   .navbar {
     position: fixed;
@@ -60,49 +59,61 @@ import AdminLogin from './shanxi/AdminLogin.vue';
     left: 0;
     width: 100%;
     z-index: 100;
-    background: rgba(255, 255, 255, 0.85);
-    backdrop-filter: blur(12px);
-    border-bottom: 1px solid #e2e8f0;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid rgba(0, 102, 204, 0.1);
     box-sizing: border-box;
   }
 
   .nav-content {
-    max-width: 1200px;
+    max-width: 1400px;
     margin: 0 auto;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 30px;
+    padding: 0 24px;
+    height: 60px;
   }
 
   .nav-brand a {
-    color: #0f172a;
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #0066cc;
     text-decoration: none;
-    font-size: 1.2em;
-    font-weight: bold;
+    letter-spacing: -0.3px;
   }
 
   .nav-links {
     list-style: none;
     display: flex;
-    gap: 24px;
+    gap: 32px;
     margin: 0;
     padding: 0;
   }
 
   .nav-links a {
-    color: #475467;
+    color: #334155;
     text-decoration: none;
-    transition: color 0.2s;
-    font-size: 0.95em;
+    font-size: 0.9rem;
+    font-weight: 450;
+    transition: color 0.2s, border-color 0.2s;
+    padding: 6px 0;
+    border-bottom: 2px solid transparent;
   }
 
   .nav-links a:hover {
-    color: #2563eb;
+    color: #0066cc;
+    border-bottom-color: #0066cc;
   }
 
   .nav-actions {
     display: flex;
     align-items: center;
+  }
+
+  @media (max-width: 768px) {
+    .nav-links {
+      display: none;
+    }
   }
 </style>
