@@ -5,8 +5,7 @@
       <div class="bookmark-body"><span class="bookmark-char">签</span></div>
       <div class="bookmark-tassel"></div>
     </div>
-
-    <div class="footer-info" v-if="pageFlip">
+<div class="footer-info" v-if="totalPages > 0">
       <span class="time">{{ currentTime }}</span>
       <span class="page-num">{{ currentPage + 1 }} / {{ totalPages }}</span>
       <span class="remain">剩余约 {{ remainingTime }} 分钟</span>
