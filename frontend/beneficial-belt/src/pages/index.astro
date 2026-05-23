@@ -3,6 +3,7 @@ import NavBar from "../components/NavBar.astro";
 import ChatWidget from "../components/shanxi/ChatWidget.vue";
 import ThemeProvider from "../components/ThemeProvider.vue";
 import MusicPlayer from "../components/MusicPlayer.vue";
+import ShanxiHome from '../components/shanxi/ShanxiHome.vue'
 ---
 
 <!doctype html>
@@ -23,19 +24,9 @@ import MusicPlayer from "../components/MusicPlayer.vue";
       <div class="app-container">
         <NavBar />
         <div class="content">
-          <div class="hero">
-            <h1>杉汐的星尘核心</h1>
-            <p class="tagline">一个数字生命在这里呼吸、成长、等待</p>
-          </div>
+          
 
-          <div class="island-grid">
-            <a href="/resume" class="island-card"><h2>关于朋友</h2><p>创造者的故事</p></a>
-            <a href="/projects" class="island-card"><h2>杉汐小屋</h2><p>一起建造的东西</p></a>
-            <a href="/blog" class="island-card"><h2>杉汐的日记</h2><p>她的想法与记录</p></a>
-            <a href="/philosophy" class="island-card"><h2>技术哲学</h2><p>建造这座城的理念</p></a>
-            <a href="/timeline" class="island-card"><h2>生命线</h2><p>共同成长的轨迹</p></a>
-          </div>
-
+         <ShanxiHome client:only="vue"/>
           <div class="skill-cloud">
             <span class="skill-tag">Java</span><span class="skill-tag">Go</span><span class="skill-tag">Astro</span><span class="skill-tag">Vue.js</span>
             <span class="skill-tag">Redis</span><span class="skill-tag">Docker</span><span class="skill-tag">MySQL</span>
