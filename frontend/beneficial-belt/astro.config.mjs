@@ -28,6 +28,7 @@ export default defineConfig({
     server: {
       port: 4321,
       proxy: {
+        '/images': 'http://localhost:8080' , // 新增
         '/api': {
           target: 'http://localhost:8080',
           changeOrigin: true,
