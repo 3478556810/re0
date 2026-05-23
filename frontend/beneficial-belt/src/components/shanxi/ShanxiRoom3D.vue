@@ -1,8 +1,6 @@
-<!-- src/components/shanxi/ShanxiRoom3D.vue -->
 <template>
   <TresCanvas :shadows="true" window-size>
-    <!-- ✅ 移除 OrbitControls，改成手动控制相机 -->
-    <TresPerspectiveCamera ref="cameraRef" :position="[0, 2.5, 4]" />
+    <TresPerspectiveCamera ref="cameraRef" :position="[3, 2.5, 4]" />
 
     <TresAmbientLight :intensity="0.8" color="#fff5ee" />
     <TresDirectionalLight :position="[2, 5, 3]" :intensity="1.2" color="#fffaf0" cast-shadow />
@@ -22,8 +20,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import * as THREE from 'three'
 import { TresCanvas } from '@tresjs/core'
-// ❌ 移除 OrbitControls
-// import { OrbitControls } from '@tresjs/cientos'
 import RoomStructure from './three/RoomStructure.vue'
 import Desk from './three/Desk.vue'
 import Bed from './three/Bed.vue'
@@ -41,37 +37,85 @@ const lampColor = computed(() => props.isNight ? '#aaccff' : '#ffe4b5')
 
 const shanxiRef = ref(null)
 const cameraRef = ref(null)
+
+// 摄像机参数
+const cameraYaw = ref(0)      // 水平旋转角度（弧度）
+const cameraPitch = ref(0.3)  // 俯仰角度（弧度，0.3 略俯视）
+const distance = 3.0          // 摄像机距离
+const height = 1.8            // 摄像机相对角色的高度
+
+// 鼠标控制相关
+let isPointerLocked = false
+const MOUSE_SENSITIVITY = 0.0005
+
+// 动画循环ID
 let animFrameId = null
 
-// 相机相对偏移
-const cameraOffset = new THREE.Vector3(0, 1.8, 3.5)
-const lookAtOffset = new THREE.Vector3(0, 0.9, 0) // 注视腰部
+function onMouseMove(e) {
+  if (!isPointerLocked) return
+  cameraYaw.value -= e.movementX * MOUSE_SENSITIVITY
+  cameraPitch.value += e.movementY * MOUSE_SENSITIVITY
+  // 限制俯仰角度
+  cameraPitch.value = Math.max(-Math.PI / 3, Math.min(Math.PI / 2.5, cameraPitch.value))
+}
 
-// ✅ 手动的摄像机跟随逻辑
+function onPointerLockChange() {
+  isPointerLocked = document.pointerLockElement !== null
+}
+
+function onClickCanvas() {
+  const canvas = document.querySelector('canvas')
+  if (canvas) canvas.requestPointerLock()
+}
+
+// 摄像机跟随与旋转更新
 function updateCamera() {
-  if (!cameraRef.value || !shanxiRef.value?.modelRef) {
+  const model = shanxiRef.value?.modelRef
+  if (!model || !cameraRef.value) {
     animFrameId = requestAnimationFrame(updateCamera)
     return
   }
 
-  const model = shanxiRef.value.modelRef
-  const targetPos = model.position.clone().add(cameraOffset)
-  const lookAtPos = model.position.clone().add(lookAtOffset)
+  // 根据 Yaw/Pitch 计算摄像机在角色身后的偏移
+  const yaw = cameraYaw.value
+  const pitch = cameraPitch.value
 
-  // 平滑移动摄像机
-  cameraRef.value.position.lerp(targetPos, 0.08)
-  
-  // 注视杉汐腰部
-  cameraRef.value.lookAt(lookAtPos)
+  // 计算摄像机世界位置：从角色位置出发，先绕 Y 轴旋转 Yaw，再绕 X 轴旋转 Pitch
+  const offset = new THREE.Vector3(0, 0, distance)  // 初始在角色后方（Z轴正方向？注意角色面朝 +Z）
+  // 应用俯仰（绕局部X轴）
+ 
+  // 应用水平旋转（绕世界Y轴）
+  const yawQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw)
+  offset.applyQuaternion(yawQuat)
+
+
+   const pitchQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), pitch)
+  offset.applyQuaternion(pitchQuat)
+  // 摄像机目标位置 = 角色位置 + 偏移 + 高度
+  const targetPos = model.position.clone().add(offset).add(new THREE.Vector3(0, height, 0))
+
+  // 平滑移动
+  cameraRef.value.position.lerp(targetPos, 0.1)
+
+  // 注视角色腰部
+  const lookTarget = model.position.clone().add(new THREE.Vector3(0, 0.8, 0))
+  cameraRef.value.lookAt(lookTarget)
 
   animFrameId = requestAnimationFrame(updateCamera)
 }
 
 onMounted(() => {
+  document.addEventListener('mousemove', onMouseMove)
+  document.addEventListener('pointerlockchange', onPointerLockChange)
+  document.addEventListener('click', onClickCanvas)
+
   updateCamera()
 })
 
 onUnmounted(() => {
+  document.removeEventListener('mousemove', onMouseMove)
+  document.removeEventListener('pointerlockchange', onPointerLockChange)
+  document.removeEventListener('click', onClickCanvas)
   if (animFrameId) cancelAnimationFrame(animFrameId)
 })
 </script>
