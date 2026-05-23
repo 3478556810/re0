@@ -100,7 +100,7 @@ export async function exactPaginate(text, fontSize, pageWidth, pageHeight, onPro
   const contentWidth = pageWidth - pad * 2;
   const contentHeight = pageHeight - pad * 2;
   const lineHeight = fontSize * 1.8;
-  const maxLinesPerPage = Math.floor(contentHeight / lineHeight);
+  let maxLinesPerPage = Math.floor(contentHeight / lineHeight);
   if (maxLinesPerPage < 1) maxLinesPerPage = 1;
 
   const ctx = createMeasureContext(fontSize);
