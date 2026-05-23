@@ -69,24 +69,35 @@ const typewriter = (text) => {
 const doSearch = async () => {
   const kw = keyword.value.trim()
   if (!kw) return
+  // 防止重复点击
+  if (searchLoading.value) return
+
   clearInterval(typingTimer)
   isTyping.value = false
   searchLoading.value = true
   searchDone.value = false
   displayedText.value = ''
+
   try {
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: `帮我搜索一下“${kw}”` })
+      body: JSON.stringify({
+        message: `帮我搜索一下“${kw}”`
+      })
     })
-    if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    if (!response.ok) {
+      if (response.status === 429) {
+        throw new Error('请求太频繁，请稍后再试')
+      }
+      throw new Error(`HTTP ${response.status}`)
+    }
     const data = await response.json()
     const reply = data.reply || data.message || data.content || '杉汐暂时没有回复'
     typewriter(reply)
   } catch (e) {
     console.error('搜索失败:', e)
-    typewriter('搜索失败，请稍后重试')
+    typewriter(e.message || '搜索失败，请稍后重试')
   } finally {
     searchLoading.value = false
     searchDone.value = true
@@ -109,7 +120,6 @@ function jumpToPage(pageIndex) {
 
 function handleAnnotationClick(item, idx) {
   if (swipedIndex.value === idx) {
-    // 已左滑，跳转并复位
     jumpToPage(item.page)
     swipedIndex.value = -1
   } else {
@@ -149,55 +159,12 @@ onBeforeUnmount(() => {
 .cursor { color: #60a5fa; animation: blink 0.8s infinite; }
 @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
 
-/* 批注条目包裹（相对定位 + 溢出隐藏） */
-.annotation-wrapper {
-  position: relative;
-  overflow: hidden;
-  margin-bottom: 6px;
-  border-radius: 8px;
-}
-.annotation-item {
-  display: flex;
-  align-items: center;
-  transition: transform 0.25s ease;
-  transform: translateX(0);
-  padding: 8px 0;
-  background: #fff;
-  cursor: pointer;
-  position: relative;
-  z-index: 2;
-}
-.annotation-item.swiped {
-  transform: translateX(-50px);
-}
-.anno-content {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  padding-right: 8px;
-}
-/* 垃圾桶（绝对定位在右侧外部） */
-.delete-btn {
-  position: absolute;
-  right: -50px;
-  top: 0;
-  bottom: 0;
-  width: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #fee2e2;
-  color: #ef4444;
-  cursor: pointer;
-  border-radius: 0 8px 8px 0;
-  transition: right 0.25s ease;
-  z-index: 1;
-}
-.annotation-item.swiped ~ .delete-btn {
-  right: 0;
-}
+.annotation-wrapper { position: relative; overflow: hidden; margin-bottom: 6px; border-radius: 8px; }
+.annotation-item { display: flex; align-items: center; transition: transform 0.25s ease; transform: translateX(0); padding: 8px 0; background: #fff; cursor: pointer; position: relative; z-index: 2; }
+.annotation-item.swiped { transform: translateX(-36px); }
+.anno-content { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; padding-right: 8px; }
+.delete-btn { position: absolute; right: -36px; top: 0; bottom: 0; width: 36px; display: flex; align-items: center; justify-content: center; background: #fee2e2; color: #ef4444; cursor: pointer; border-radius: 0 8px 8px 0; transition: right 0.25s ease; z-index: 1; }
+.annotation-item.swiped ~ .delete-btn { right: 0; }
 .text { flex: 1; font-size: 0.85rem; color: #334155; }
 .quote { font-size: 0.8rem; color: #64748b; font-style: italic; margin-right: 4px; }
 .page { font-size: 0.75rem; color: #94a3b8; flex-shrink: 0; }

@@ -168,15 +168,13 @@ func downloadAndSaveImage(imageURL string) (string, error) {
 	}
 
 	// 2. 确定保存路径（通过环境变量控制）
-	saveDir := os.Getenv("IMAGE_SAVE_DIR")
-	if saveDir == "" {
-		// 默认本地开发路径（Windows）
-		saveDir = "C:\\Pro2026\\re0\\frontend\\beneficial-belt\\public\\images"
-		// 如果 Linux 环境，自动尝试常见路径
-		if _, err := os.Stat("/var/www/shanca"); err == nil {
-			saveDir = "/var/www/shanca/frontend/beneficial-belt/public/images"
-		}
+	saveDir := filepath.Join(".", "public", "images")
+	if err := os.MkdirAll(saveDir, 0755); err != nil {
+		return "", fmt.Errorf("创建保存目录失败: %w", err)
 	}
+
+	fileName := fmt.Sprintf("generated_%d.png", time.Now().UnixNano())
+	savePath := filepath.Join(saveDir, fileName)
 
 	// 确保目录存在
 	if err := os.MkdirAll(saveDir, 0755); err != nil {
@@ -184,8 +182,6 @@ func downloadAndSaveImage(imageURL string) (string, error) {
 	}
 
 	// 生成唯一文件名
-	fileName := fmt.Sprintf("generated_%d.png", time.Now().UnixNano())
-	savePath := filepath.Join(saveDir, fileName)
 
 	// 创建文件
 	file, err := os.Create(savePath)
@@ -205,5 +201,8 @@ func downloadAndSaveImage(imageURL string) (string, error) {
 	if baseURL == "" {
 		baseURL = "http://localhost:4321" // 默认本地开发环境
 	}
-	return fmt.Sprintf("%s/images/%s", baseURL, fileName), nil
+
+	fmt.Printf("[DEBUG] 图片保存目录: %s\n", saveDir)
+	fmt.Printf("[DEBUG] 图片完整路径: %s\n", savePath)
+	return "/images/" + fileName, nil
 }

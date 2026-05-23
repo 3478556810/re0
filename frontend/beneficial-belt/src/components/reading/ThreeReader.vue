@@ -300,4 +300,10 @@ defineExpose({
 .menu-item:hover {
   background: #f1f5f9;
 }
+/* 强制批注列表横向显示 */
+.annotation-item,
+.annotation-item * {
+  writing-mode: horizontal-tb !important;
+  text-orientation: mixed !important;
+}
 </style>
