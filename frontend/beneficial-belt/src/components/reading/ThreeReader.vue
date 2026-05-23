@@ -34,7 +34,15 @@
     </div>
 
     <!-- 选择菜单：批注 or 搜索 -->
-<div v-if="showActionMenu" class="action-menu" :style="actionMenuStyle" @click.stop>
+<!-- 选择菜单：批注 or 搜索 （使用 Teleport 渲染到 body，避免遮挡） -->
+<!-- 选择菜单：批注 or 搜索 -->
+<div
+  v-if="showActionMenu"
+  class="action-menu"
+  :style="actionMenuStyle"
+  @click.stop
+  @mousedown.prevent
+>
   <div class="menu-item" @click="chooseComment">
     <Icon icon="ph:pen" width="16" />
     <span>批注</span>
@@ -44,7 +52,7 @@
     <span>搜索</span>
   </div>
 </div>
-  </div>
+</div>
 </template>
 
 <script setup>
@@ -268,21 +276,23 @@ defineExpose({
 }
 
 .action-menu {
-  position: absolute;
-  z-index: 60;
+  position: fixed;          /* 固定定位，不受容器限制 */
+  z-index: 99999;           /* 确保最顶层 */
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   padding: 4px;
   display: flex;
   flex-direction: column;
+  pointer-events: auto !important;  /* 强制可接收事件 */
 }
 .menu-item {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  cursor: pointer;
+  cursor: pointer !important;       /* 强制手型 */
+  pointer-events: auto !important;
   border-radius: 6px;
   font-size: 0.9rem;
   transition: background 0.2s;
