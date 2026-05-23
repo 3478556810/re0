@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, onUnmounted } from 'vue'
+import { onMounted, onUnmounted, watch } from 'vue'
 
 const props = defineProps({
   target: { type: Object, required: true },
@@ -11,14 +11,16 @@ const keys = { w: false, a: false, s: false, d: false }
 let animFrameId = null
 let walkTime = 0
 
-// 碰撞区域
+let leftUpperArm, rightUpperArm, leftLowerArm, rightLowerArm
+let leftUpperLeg, rightUpperLeg, leftLowerLeg, rightLowerLeg
+
+// 碰撞区域（不变）
 const obstacles = [
   { type: 'box', center: [2, 0, 1.5], half: [0.8, 0.5, 0.4] },
   { type: 'box', center: [-2, 0, 2.5], half: [0.45, 0.3, 0.9] },
   { type: 'box', center: [3, 1, -2], half: [0.5, 1.25, 0.15] },
 ]
 const wallBound = 3.6
-
 function checkCollision(x, z, radius = 0.4) {
   if (Math.abs(x) > wallBound - radius || Math.abs(z) > wallBound - radius) return true
   for (const obs of obstacles) {
@@ -29,55 +31,84 @@ function checkCollision(x, z, radius = 0.4) {
   return false
 }
 
-function animateWalk(delta, moving) {
+function cacheBones() {
   const humanoid = props.vrm?.humanoid
   if (!humanoid) return
 
-  const leftUpperArm = humanoid.getNormalizedBoneNode('leftUpperArm')
-  const rightUpperArm = humanoid.getNormalizedBoneNode('rightUpperArm')
-  const leftLowerArm = humanoid.getNormalizedBoneNode('leftLowerArm')
-  const rightLowerArm = humanoid.getNormalizedBoneNode('rightLowerArm')
+  leftUpperArm = humanoid.getNormalizedBoneNode('leftUpperArm')
+  rightUpperArm = humanoid.getNormalizedBoneNode('rightUpperArm')
+  leftLowerArm = humanoid.getNormalizedBoneNode('leftLowerArm')
+  rightLowerArm = humanoid.getNormalizedBoneNode('rightLowerArm')
 
-  // ... 腿骨骼获取相同 ...
+  leftUpperLeg = humanoid.getNormalizedBoneNode('leftUpperLeg')
+  rightUpperLeg = humanoid.getNormalizedBoneNode('rightUpperLeg')
+  leftLowerLeg = humanoid.getNormalizedBoneNode('leftLowerLeg')
+  rightLowerLeg = humanoid.getNormalizedBoneNode('rightLowerLeg')
 
-  if (!leftUpperArm || !rightUpperArm) return
+  humanoid.autoUpdateHumanBones = true
+
+  // 统一旋转顺序，避免万向锁
+  if (leftUpperArm) leftUpperArm.rotation.order = 'YXZ'
+  if (rightUpperArm) rightUpperArm.rotation.order = 'YXZ'
+  if (leftLowerArm) leftLowerArm.rotation.order = 'YXZ'
+  if (rightLowerArm) rightLowerArm.rotation.order = 'YXZ'
+
+  console.log('骨骼就绪，左手Z=-1.57下垂，右手Z=+1.57下垂')
+}
+
+watch(() => props.vrm, (val) => { if (val) cacheBones() }, { immediate: true })
+
+function animateWalk(delta, moving) {
+  if (!leftUpperArm || !rightUpperArm || !leftUpperLeg || !rightUpperLeg) return
 
   const speed = moving ? 10 : 0
   walkTime += delta * speed
   const legSwing = moving ? Math.sin(walkTime) * 0.8 : 0
-  const armSwing = moving ? Math.sin(walkTime + Math.PI) * 0.5 : 0
+  const armSwingX = moving ? Math.sin(walkTime + Math.PI) * 0.5 : 0
 
-  // 基础下垂角度
-  const armDownAngle = -Math.PI / 2
+  // 左手：Z轴-1.57下垂，X轴正向摆动
+  leftUpperArm.rotation.z = -Math.PI / 2
+  leftUpperArm.rotation.x = armSwingX
 
-  // 手臂：基础下垂 + 前后摆动
-  leftUpperArm.rotation.x = armDownAngle + armSwing
-  rightUpperArm.rotation.x = armDownAngle - armSwing
-  if (leftLowerArm) leftLowerArm.rotation.x = Math.abs(armSwing) * 0.3
-  if (rightLowerArm) rightLowerArm.rotation.x = Math.abs(armSwing) * 0.3
+  // 右手：Z轴+1.57下垂，X轴负向摆动（使左右交替）
+  rightUpperArm.rotation.z = Math.PI / 2
+  rightUpperArm.rotation.x = -armSwingX
+
+  // 小臂联动
+  if (leftLowerArm) {
+    leftLowerArm.rotation.z = 0
+    leftLowerArm.rotation.x = Math.abs(armSwingX) * 0.3
+  }
+  if (rightLowerArm) {
+    rightLowerArm.rotation.z = 0
+    rightLowerArm.rotation.x = Math.abs(armSwingX) * 0.3
+  }
 
   // 腿（不变）
-  if (leftUpperLeg) leftUpperLeg.rotation.x = legSwing
-  if (rightUpperLeg) rightUpperLeg.rotation.x = -legSwing
+  leftUpperLeg.rotation.x = legSwing
+  rightUpperLeg.rotation.x = -legSwing
   if (leftLowerLeg) leftLowerLeg.rotation.x = Math.abs(legSwing) * 0.4
   if (rightLowerLeg) rightLowerLeg.rotation.x = Math.abs(legSwing) * 0.4
 
   if (!moving) {
-    // 静止时手臂保持下垂，腿归零
-    [leftUpperLeg, rightUpperLeg, leftLowerLeg, rightLowerLeg].forEach(b => { if (b) b.rotation.x = 0 })
-    leftUpperArm.rotation.x = armDownAngle
-    rightUpperArm.rotation.x = armDownAngle
-    if (leftLowerArm) leftLowerArm.rotation.x = 0
-    if (rightLowerArm) rightLowerArm.rotation.x = 0
+    // 静止姿态
+    leftUpperArm.rotation.z = -Math.PI / 2
+    leftUpperArm.rotation.x = 0
+    rightUpperArm.rotation.z = Math.PI / 2
+    rightUpperArm.rotation.x = 0
+    if (leftLowerArm) { leftLowerArm.rotation.z = 0; leftLowerArm.rotation.x = 0 }
+    if (rightLowerArm) { rightLowerArm.rotation.z = 0; rightLowerArm.rotation.x = 0 }
+
+    leftUpperLeg.rotation.x = 0
+    rightUpperLeg.rotation.x = 0
+    if (leftLowerLeg) leftLowerLeg.rotation.x = 0
+    if (rightLowerLeg) rightLowerLeg.rotation.x = 0
     walkTime = 0
   }
 }
 
 function update() {
   if (!props.target) { animFrameId = requestAnimationFrame(update); return }
-
-  // 每帧调用 vrm.update()，drive spring bones + normalize→raw 同步
-  if (props.vrm) props.vrm.update(0.016)
 
   const delta = 0.016
   let dx = 0, dz = 0
@@ -101,6 +132,7 @@ function update() {
   }
 
   animateWalk(delta, moving)
+  if (props.vrm) props.vrm.update(delta)
   animFrameId = requestAnimationFrame(update)
 }
 
