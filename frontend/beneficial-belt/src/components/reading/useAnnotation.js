@@ -9,7 +9,6 @@ export function useAnnotation(flipContainerRef, currentPage) {
   const commentTyping = ref(false)
   let typingTimer = null
 
-  // 选择菜单
   const showActionMenu = ref(false)
   const actionMenuStyle = ref({})
   const selectedRange = ref(null)
@@ -17,22 +16,14 @@ export function useAnnotation(flipContainerRef, currentPage) {
 
   const annotations = ref(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'))
 
-  // 监听选区变化的函数引用（用于移除监听）
   let selectionListener = null
-
-  function clearTypingTimer() {
-    if (typingTimer) {
-      clearInterval(typingTimer)
-      typingTimer = null
-    }
-  }
+  let clickOutsideHandler = null
 
   function saveAnnotations() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(annotations.value))
     window.dispatchEvent(new CustomEvent('annotations-updated'))
   }
 
-  // 原地圈红
   function highlightText(text, range) {
     const span = document.createElement('span')
     span.className = 'shanxi-highlight selected'
@@ -51,9 +42,8 @@ export function useAnnotation(flipContainerRef, currentPage) {
     range.insertNode(span)
   }
 
-  // 打字机效果
   function typewrite(text) {
-    clearTypingTimer()
+    clearInterval(typingTimer)
     displayedComment.value = ''
     commentTyping.value = true
     let i = 0
@@ -68,7 +58,6 @@ export function useAnnotation(flipContainerRef, currentPage) {
     }, 40)
   }
 
-  // 生成批注
   async function generateComment(text) {
     try {
       const response = await fetch('/api/chat', {
@@ -85,7 +74,6 @@ export function useAnnotation(flipContainerRef, currentPage) {
     }
   }
 
-  // 显示批注卡片（不再自动消失，保留手动关闭）
   function showResultCard(text, range, resultText) {
     const containerRect = flipContainerRef.value.getBoundingClientRect()
     const rect = range.getBoundingClientRect()
@@ -103,7 +91,6 @@ export function useAnnotation(flipContainerRef, currentPage) {
     commentTyping.value = true
     typewrite(resultText)
 
-    // 保存批注
     annotations.value.push({
       text: selectedText.value,
       comment: resultText,
@@ -113,22 +100,19 @@ export function useAnnotation(flipContainerRef, currentPage) {
     saveAnnotations()
   }
 
-  // 关闭批注卡片
   function closeCard() {
     showCommentCard.value = false
-    clearTypingTimer()
+    clearInterval(typingTimer)
     commentTyping.value = false
   }
 
-  // 关闭选择菜单（并移除选区监听）
   function closeActionMenu() {
     showActionMenu.value = false
     removeSelectionListener()
+    removeClickOutsideListener()
   }
 
-  // 添加选区变化监听
   function addSelectionListener() {
-    // 避免重复添加
     if (selectionListener) return
     selectionListener = () => {
       const selection = window.getSelection()
@@ -139,7 +123,6 @@ export function useAnnotation(flipContainerRef, currentPage) {
     document.addEventListener('selectionchange', selectionListener)
   }
 
-  // 移除选区变化监听
   function removeSelectionListener() {
     if (selectionListener) {
       document.removeEventListener('selectionchange', selectionListener)
@@ -147,18 +130,34 @@ export function useAnnotation(flipContainerRef, currentPage) {
     }
   }
 
-  // 用户选择"批注"
+  function addClickOutsideListener() {
+    if (clickOutsideHandler) return
+    clickOutsideHandler = (event) => {
+      const menu = document.querySelector('.action-menu')
+      if (menu && !menu.contains(event.target)) {
+        closeActionMenu()
+      }
+    }
+    document.addEventListener('mousedown', clickOutsideHandler, true)
+  }
+
+  function removeClickOutsideListener() {
+    if (clickOutsideHandler) {
+      document.removeEventListener('mousedown', clickOutsideHandler, true)
+      clickOutsideHandler = null
+    }
+  }
+
   async function chooseComment() {
     const text = selectedText.value
     const range = selectedRange.value
     if (!text || !range) return
-    closeActionMenu() // 菜单关闭，移除监听
+    closeActionMenu()
     highlightText(text, range)
     const comment = await generateComment(text)
     showResultCard(text, range, comment)
   }
 
-  // 用户选择"搜索"
   function chooseSearch() {
     const text = selectedText.value
     if (!text) return
@@ -166,8 +165,8 @@ export function useAnnotation(flipContainerRef, currentPage) {
     window.dispatchEvent(new CustomEvent('search-text', { detail: { text } }))
   }
 
-  // 鼠标抬起事件：弹出选择菜单
   function onMouseUp(event) {
+    event.preventDefault()
     const selection = window.getSelection()
     const text = selection.toString().trim()
     if (text.length === 0) return
@@ -182,6 +181,7 @@ export function useAnnotation(flipContainerRef, currentPage) {
     let left = rect.left - containerRect.left + rect.width / 2 - menuWidth / 2
     left = Math.max(8, Math.min(left, containerRect.width - menuWidth - 8))
     const top = rect.bottom - containerRect.top + 8
+
     actionMenuStyle.value = {
       left: `${left}px`,
       top: `${Math.min(top, containerRect.height - 60)}px`,
@@ -189,8 +189,11 @@ export function useAnnotation(flipContainerRef, currentPage) {
     }
     showActionMenu.value = true
 
-    // 监听选区变化：当取消选中时自动关闭菜单
-    addSelectionListener()
+    // 延迟添加选区监听，避免因浏览器自身的选区变化而立即关闭菜单
+    setTimeout(() => {
+      addSelectionListener()
+      addClickOutsideListener()
+    }, 200)
   }
 
   return {
