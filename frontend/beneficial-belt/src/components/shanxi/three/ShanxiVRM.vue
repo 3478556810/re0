@@ -42,16 +42,28 @@ onMounted(() => {
     const model = vrm.scene
 
     // [参考] 物理修复：缩小碰撞体半径 50%，这是社区验证过的黄金比例
-    if (vrm.springBoneManager) {
-      const colliders = Array.from(vrm.springBoneManager.colliders || [])
-      colliders.forEach(collider => {
-        if (collider.shape?.radius > 0) {
-          collider.shape.radius *= 0.5
-        }
-      })
-      console.log(`[VRM] 已缩小 ${colliders.length} 个碰撞体半径至 50%，物理效果应恢复正常`)
-    }
-
+  // 物理修正：缩小碰撞体半径 + 调整重力
+if (vrm.springBoneManager) {
+  const joints = vrm.springBoneManager.joints;
+  if (joints) {
+    joints.forEach(joint => {
+      // 1. 缩小碰撞体半径到 20%
+      joint.colliderGroups?.forEach(group => {
+        group.colliders?.forEach(c => {
+          if (c.shape?.radius) c.shape.radius *= 0.2;
+        });
+      });
+      // 2. 设置物理参数
+      if (joint.settings) {
+        joint.settings.gravityPower = 0.1;
+        joint.settings.gravityDir?.set(0, -1, 0);
+        joint.settings.stiffness = 0.001;
+        joint.settings.dragForce = 0.001;
+      }
+    });
+  }
+  console.log('物理已修正：碰撞体缩小80%，重力增强');
+}
     model.position.set(props.position[0], props.position[1], props.position[2])
     model.rotation.y = 0
     model.scale.set(props.scale, props.scale, props.scale)
