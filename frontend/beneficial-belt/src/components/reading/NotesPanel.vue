@@ -57,6 +57,7 @@ const expanded = ref(true)
 const aiResult = ref('')
 const aiImage = ref('')
 const swipedIndex = ref(-1)
+const isGenerating = ref(false)
 
 onMounted(() => {
   const saved = localStorage.getItem(STORAGE_KEY)
@@ -95,6 +96,8 @@ function deleteNote(idx) {
 }
 
 async function generateSummary() {
+  if (isGenerating.value) return
+  isGenerating.value = true
   aiResult.value = '杉汐正在思考...'
   aiImage.value = ''
 
@@ -110,36 +113,51 @@ async function generateSummary() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ message: prompt })
     })
+    if (!res.ok) throw new Error(`总结请求失败 (${res.status})`)
     const data = await res.json()
     const summary = data.reply || data.message || '暂时无法生成总结。'
     aiResult.value = summary
 
-    // 2. 调用正确的绘图接口（路径不带 s）
+    // 2. 生成插图
     aiResult.value += '\n\n杉汐正在画图...'
-    const imgRes = await fetch('/api/image/generate', {   // ★ 修正为 /api/image/generate
+    const imgRes = await fetch('/api/image/generate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt: summary })
     })
 
     if (imgRes.ok) {
-      const imgData = await imgRes.json()
-      let imagePath = imgData.url || imgData.imageUrl || ''
-      if (imagePath) {
-        // 确保图片路径是完整的 URL
-        if (!imagePath.startsWith('http')) {
-          imagePath = window.location.origin + (imagePath.startsWith('/') ? '' : '/') + imagePath
-        }
-        aiImage.value = imagePath
-      }
+  const imgData = await imgRes.json()
+  let rawUrl = imgData.url || imgData.imageUrl || ''
+  if (rawUrl) {
+    // 自动替换 localhost 为当前域名
+    if (rawUrl.includes('localhost')) {
+      const url = new URL(rawUrl)
+      rawUrl = rawUrl.replace(url.origin, window.location.origin)
+    }
+    if (!rawUrl.startsWith('http')) {
+      rawUrl = window.location.origin + (rawUrl.startsWith('/') ? '' : '/') + rawUrl
+    }
+    aiImage.value = rawUrl
+  } else {
+    // ★ 如果后端返回空 URL，则隐藏图片区域，只显示总结
+    aiImage.value = ''
+    console.warn('后端返回图片URL为空')
+  }
+
+    } else if (imgRes.status === 429) {
+      aiResult.value = summary + '\n\n（绘图接口繁忙，请稍后再试）'
+      console.warn('绘图接口 429 限流')
     } else {
       console.warn('绘图接口返回错误', imgRes.status)
     }
 
-    aiResult.value = summary // 恢复为纯总结文字
+    aiResult.value = summary
   } catch (e) {
     aiResult.value = '生成失败，请重试。'
     console.error(e)
+  } finally {
+    setTimeout(() => { isGenerating.value = false }, 5000)
   }
 }
 </script>
