@@ -8,12 +8,57 @@ import NavLinks from './shanxi/NavLinks.vue';
     <div class="nav-brand">
       <a href="/">杉汐的星尘核心</a>
     </div>
-    <NavLinks client:only="vue" />
-    <div class="nav-actions">
+
+    <!-- 桌面端正常链接 -->
+    <NavLinks client:only="vue" class="desktop-only" />
+
+    <!-- 移动端侧边栏按钮 -->
+    <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="菜单">
+      <span class="bar"></span>
+      <span class="bar"></span>
+      <span class="bar"></span>
+    </button>
+
+    <!-- 侧边栏覆盖层 -->
+    <div id="mobile-sidebar" class="mobile-sidebar">
+      <div class="sidebar-header">
+        <span class="sidebar-title">导航</span>
+        <button id="sidebar-close" class="sidebar-close">&times;</button>
+      </div>
+      <div class="sidebar-links">
+        <NavLinks client:only="vue" />
+      </div>
+      <div class="sidebar-actions">
+        <AdminLogin client:only="vue" />
+      </div>
+    </div>
+
+    <!-- 桌面端登录 -->
+    <div class="nav-actions desktop-only">
       <AdminLogin client:only="vue" />
     </div>
   </div>
 </nav>
+
+<script>
+  // 移动端侧边栏交互
+  const menuBtn = document.getElementById('mobile-menu-btn');
+  const sidebar = document.getElementById('mobile-sidebar');
+  const closeBtn = document.getElementById('sidebar-close');
+
+  menuBtn?.addEventListener('click', () => {
+    sidebar?.classList.add('open');
+  });
+
+  closeBtn?.addEventListener('click', () => {
+    sidebar?.classList.remove('open');
+  });
+
+  // 点击覆盖层外部关闭（可选）
+  sidebar?.addEventListener('click', (e) => {
+    if (e.target === sidebar) sidebar.classList.remove('open');
+  });
+</script>
 
 <style>
   .navbar {
@@ -46,33 +91,100 @@ import NavLinks from './shanxi/NavLinks.vue';
     letter-spacing: -0.3px;
   }
 
-  .nav-links {
-    list-style: none;
-    display: flex;
-    gap: 32px;
-    margin: 0;
-    padding: 0;
+  /* 桌面端默认显示，移动端隐藏 */
+  .desktop-only {
+    display: block;
   }
 
-  .nav-links a {
-    color: #334155;
-    text-decoration: none;
-    font-size: 0.9rem;
-    font-weight: 450;
-    transition: color 0.2s, border-color 0.2s;
-    padding: 6px 0;
-    border-bottom: 2px solid transparent;
-  }
-
-  .nav-links a:hover {
-    color: #0066cc;
-    border-bottom-color: #0066cc;
-  }
-
-  .nav-actions {
-    display: flex;
+  /* 移动端汉堡按钮默认隐藏 */
+  .mobile-menu-btn {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
     align-items: center;
+    gap: 4px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 8px;
   }
 
+  .bar {
+    width: 22px;
+    height: 2px;
+    background: #334155;
+    border-radius: 1px;
+  }
 
+  /* 侧边栏样式 */
+  .mobile-sidebar {
+    position: fixed;
+    top: 0;
+    right: -280px;
+    width: 260px;
+    height: 100vh;
+    background: #ffffff;
+    box-shadow: -2px 0 12px rgba(0,0,0,0.1);
+    z-index: 200;
+    transition: right 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    padding: 20px;
+    box-sizing: border-box;
+  }
+
+  .mobile-sidebar.open {
+    right: 0;
+  }
+
+  .sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 24px;
+  }
+
+  .sidebar-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  .sidebar-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: #64748b;
+    padding: 4px;
+  }
+
+  .sidebar-links :global(.nav-links) {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .sidebar-links :global(.nav-links a) {
+    font-size: 1rem;
+    padding: 8px 0;
+  }
+
+  .sidebar-actions {
+    margin-top: 32px;
+  }
+
+  /* 移动端适配 */
+  @media (max-width: 768px) {
+    .desktop-only {
+      display: none !important;
+    }
+
+    .mobile-menu-btn {
+      display: flex;
+    }
+
+    .nav-content {
+      padding: 0 16px;
+    }
+  }
 </style>

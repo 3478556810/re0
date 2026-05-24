@@ -5,7 +5,7 @@
       <div class="bookmark-body"><span class="bookmark-char">签</span></div>
       <div class="bookmark-tassel"></div>
     </div>
-<div class="footer-info" v-if="totalPages > 0">
+    <div class="footer-info" v-if="totalPages > 0">
       <span class="time">{{ currentTime }}</span>
       <span class="page-num">{{ currentPage + 1 }} / {{ totalPages }}</span>
       <span class="remain">剩余约 {{ remainingTime }} 分钟</span>
@@ -34,25 +34,23 @@
     </div>
 
     <!-- 选择菜单：批注 or 搜索 -->
-<!-- 选择菜单：批注 or 搜索 （使用 Teleport 渲染到 body，避免遮挡） -->
-<!-- 选择菜单：批注 or 搜索 -->
-<div
-  v-if="showActionMenu"
-  class="action-menu"
-  :style="actionMenuStyle"
-  @click.stop
-  @mousedown.prevent
->
-  <div class="menu-item" @click="chooseComment">
-    <Icon icon="ph:pen" width="16" />
-    <span>批注</span>
+    <div
+      v-if="showActionMenu"
+      class="action-menu"
+      :style="actionMenuStyle"
+      @click.stop
+      @mousedown.prevent
+    >
+      <div class="menu-item" @click="chooseComment">
+        <Icon icon="ph:pen" width="16" />
+        <span>批注</span>
+      </div>
+      <div class="menu-item" @click="chooseSearch">
+        <Icon icon="ph:magnifying-glass" width="16" />
+        <span>搜索</span>
+      </div>
+    </div>
   </div>
-  <div class="menu-item" @click="chooseSearch">
-    <Icon icon="ph:magnifying-glass" width="16" />
-    <span>搜索</span>
-  </div>
-</div>
-</div>
 </template>
 
 <script setup>
@@ -72,6 +70,7 @@ let currentFontSize = null
 
 const width = ref(550)
 const height = ref(700)
+
 function updatePageSize() {
   const isMobile = window.innerWidth <= 768
   if (isMobile) {
@@ -90,36 +89,12 @@ const handleResize = () => {
     const oldWidth = width.value
     const oldHeight = height.value
     updatePageSize()
-    // 仅在尺寸真正变化时重新排版
     if (width.value !== oldWidth || height.value !== oldHeight) {
       reInit()
     }
   }, 300)
 }
 
-// 在 onMounted 中初始化尺寸并添加监听
-onMounted(async () => {
-  updatePageSize()           // ★ 确保初始调用
-  
-  startClock()
-  await nextTick()
-  try {
-    const flip = await initFlip()
-    if (flip) {
-      bindFlipEvent(flip)
-      statusMsg.value = ''
-    } else {
-      statusMsg.value = '暂无内容'
-    }
-  } catch (e) {
-    console.error('初始化翻页失败:', e)
-    statusMsg.value = '加载失败，请重试'
-  }
-    flipContainerRef.value?.addEventListener('touchend', onMouseUp)
-  flipContainerRef.value?.addEventListener('mouseup', onMouseUp)
-  document.addEventListener('keydown', onKeyDown)
-  window.addEventListener('resize', handleResize)   // ★ 添加 resize 监听
-})
 // 翻页核心
 const {
   currentPage,
@@ -147,6 +122,7 @@ const { isCurrentPageBookmarked, getCurrentPageText, removeCurrentBookmark } = u
 
 // 选中批注
 const {
+  initSelectionListener,
   showCommentCard,
   commentCardStyle,
   displayedComment,
@@ -203,12 +179,10 @@ function highlightOnPage(text, targetIndex) {
   }
 }
 
-// 将高亮函数注入到 flipToPage 调用中（侧边栏跳转时使用）
 function handleSidebarFlip(pageIndex, quote) {
   flipToPage(pageIndex, quote, highlightOnPage)
 }
 
-// 绑定翻页事件以更新阅读统计
 function bindFlipEvent(flip) {
   if (!flip) return
   flip.on('flip', (e) => {
@@ -246,7 +220,7 @@ watch(() => props.reader.fontSize.value, (v) => {
 watch(() => props.reader.fullText.value, () => reInit())
 
 onMounted(async () => {
-    updatePageSize() // 初始尺寸
+  updatePageSize()
   startClock()
   await nextTick()
   try {
@@ -261,18 +235,23 @@ onMounted(async () => {
     console.error('初始化翻页失败:', e)
     statusMsg.value = '加载失败，请重试'
   }
+
+  // 启动选区监听（移动端依赖它）
+  initSelectionListener()
+
+  // 桌面端保留 mouseup 监听，移动端不冲突
   flipContainerRef.value?.addEventListener('mouseup', onMouseUp)
   document.addEventListener('keydown', onKeyDown)
   window.addEventListener('resize', handleResize)
 
   window.onerror = (message, source, lineno, colno, error) => {
-  console.error('全局错误:', message, source, lineno)
-  // 避免白屏，尝试恢复
-  statusMsg.value = '加载异常，请刷新页面'
-}
+    console.error('全局错误:', message, source, lineno)
+    statusMsg.value = '加载异常，请刷新页面'
+  }
 })
+
 onBeforeUnmount(() => {
-    window.removeEventListener('resize', handleResize)
+  window.removeEventListener('resize', handleResize)
   flipContainerRef.value?.removeEventListener('mouseup', onMouseUp)
   document.removeEventListener('keydown', onKeyDown)
   destroyFlip()
@@ -280,7 +259,7 @@ onBeforeUnmount(() => {
 })
 
 defineExpose({
-  flipToPage: handleSidebarFlip, // 侧边栏跳转使用带高亮的版本
+  flipToPage: handleSidebarFlip,
   flipToPhysicalPage,
   jumpToChapter,
   currentPage,
@@ -319,43 +298,37 @@ defineExpose({
   position: absolute;
   top: 0;
   bottom: 0;
-  width: 8%;           /* 两侧各占 25% 宽度 */
-  z-index: 10;          /* 高于内容，低于卡片 */
+  width: 8%;
+  z-index: 10;
   cursor: pointer;
-  /* 调试时可临时加背景色查看区域：background: rgba(255,0,0,0.1); */
 }
-.flip-tap-area.left {
-  left: 0;
-}
-.flip-tap-area.right {
-  right: 0;
-}
+.flip-tap-area.left { left: 0; }
+.flip-tap-area.right { right: 0; }
 
 .action-menu {
-  position: fixed;          /* 固定定位，不受容器限制 */
-  z-index: 99999;           /* 确保最顶层 */
+  position: fixed;
+  z-index: 99999;
   background: #fff;
   border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
   padding: 4px;
   display: flex;
   flex-direction: column;
-  pointer-events: auto !important;  /* 强制可接收事件 */
+  pointer-events: auto !important;
 }
 .menu-item {
   display: flex;
   align-items: center;
   gap: 8px;
   padding: 8px 12px;
-  cursor: pointer !important;       /* 强制手型 */
+  cursor: pointer !important;
   pointer-events: auto !important;
   border-radius: 6px;
   font-size: 0.9rem;
   transition: background 0.2s;
 }
-.menu-item:hover {
-  background: #f1f5f9;
-}
+.menu-item:hover { background: #f1f5f9; }
+
 /* 强制批注列表横向显示 */
 .annotation-item,
 .annotation-item * {
@@ -365,6 +338,10 @@ defineExpose({
 
 /* ========== 移动端适配 ========== */
 @media (max-width: 768px) {
+  .flip-page {
+    -webkit-user-select: auto !important;
+    user-select: auto !important;
+  }
   .three-reader {
     width: 100% !important;
     height: 100% !important;
@@ -373,16 +350,14 @@ defineExpose({
     border-radius: 0 !important;
     background: #fafafa;
   }
-
   .footer-info {
     bottom: 12px;
     left: 16px;
     right: 16px;
     font-size: 10px;
   }
-
   .flip-tap-area {
-    width: 8%;
+    width: 10%;
   }
 }
 </style>
