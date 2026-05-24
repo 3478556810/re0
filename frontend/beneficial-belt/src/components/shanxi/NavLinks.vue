@@ -55,9 +55,5 @@ onUnmounted(() => {
   border-bottom-color: #0066cc;
 }
 
-@media (max-width: 768px) {
-  .nav-links {
-    display: none;
-  }
-}
+
 </style>

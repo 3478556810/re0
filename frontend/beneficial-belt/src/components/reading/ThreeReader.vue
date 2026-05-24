@@ -75,7 +75,7 @@ const height = ref(700)
 function updatePageSize() {
   const isMobile = window.innerWidth <= 768
   if (isMobile) {
-    width.value = Math.floor(window.innerWidth * 0.92)
+    width.value = Math.floor(window.innerWidth * 1)
     height.value = Math.floor(window.innerHeight * 0.85)
   } else {
     width.value = 550
@@ -87,10 +87,39 @@ let resizeTimer
 const handleResize = () => {
   clearTimeout(resizeTimer)
   resizeTimer = setTimeout(() => {
+    const oldWidth = width.value
+    const oldHeight = height.value
     updatePageSize()
-    reInit() // 尺寸变化后重新排版
+    // 仅在尺寸真正变化时重新排版
+    if (width.value !== oldWidth || height.value !== oldHeight) {
+      reInit()
+    }
   }, 300)
 }
+
+// 在 onMounted 中初始化尺寸并添加监听
+onMounted(async () => {
+  updatePageSize()           // ★ 确保初始调用
+  
+  startClock()
+  await nextTick()
+  try {
+    const flip = await initFlip()
+    if (flip) {
+      bindFlipEvent(flip)
+      statusMsg.value = ''
+    } else {
+      statusMsg.value = '暂无内容'
+    }
+  } catch (e) {
+    console.error('初始化翻页失败:', e)
+    statusMsg.value = '加载失败，请重试'
+  }
+    flipContainerRef.value?.addEventListener('touchend', onMouseUp)
+  flipContainerRef.value?.addEventListener('mouseup', onMouseUp)
+  document.addEventListener('keydown', onKeyDown)
+  window.addEventListener('resize', handleResize)   // ★ 添加 resize 监听
+})
 // 翻页核心
 const {
   currentPage,
@@ -235,6 +264,12 @@ onMounted(async () => {
   flipContainerRef.value?.addEventListener('mouseup', onMouseUp)
   document.addEventListener('keydown', onKeyDown)
   window.addEventListener('resize', handleResize)
+
+  window.onerror = (message, source, lineno, colno, error) => {
+  console.error('全局错误:', message, source, lineno)
+  // 避免白屏，尝试恢复
+  statusMsg.value = '加载异常，请刷新页面'
+}
 })
 onBeforeUnmount(() => {
     window.removeEventListener('resize', handleResize)
@@ -347,7 +382,7 @@ defineExpose({
   }
 
   .flip-tap-area {
-    width: 15%;
+    width: 8%;
   }
 }
 </style>

@@ -9,7 +9,7 @@
 
 
         <button class="tb-btn" @click="back">← 书架</button>
-        <span class="tb-title">{{ reader.title.value }}</span>
+        
         <div class="tb-actions">
 
 
@@ -112,8 +112,7 @@ import SidePanel from './SidePanel.vue'
 import NotesPanel from './NotesPanel.vue'
 
 
-const isMobile = ref(window.innerWidth <= 768)
-const showMobileSidebar = ref(false)
+
 const activeMobilePanel = ref(null) // 'notes' | 'sidebar' | null
 
 const reader = useReader()
@@ -121,16 +120,37 @@ const threeReaderRef = ref(null)
 const showOutline = ref(false)
 const outline = ref([])
 const outlineTab = ref('outline')
+let panelTimer = null
 function openMobilePanel(type) {
-  activeMobilePanel.value = activeMobilePanel.value === type ? null : type
+  if (panelTimer) return
+  panelTimer = setTimeout(() => {
+    activeMobilePanel.value = activeMobilePanel.value === type ? null : type
+    panelTimer = null
+  }, 100)
 }
 
+// ============ 移动端检测（顶层执行） ============
+const isMobile = ref(window.innerWidth <= 768)
+let mediaQuery = null
 
-const handleResizeForMobile = () => {
-  isMobile.value = window.innerWidth <= 768
-}
-window.addEventListener('resize', handleResizeForMobile)
-onBeforeUnmount(() => window.removeEventListener('resize', handleResizeForMobile))
+// 在组件挂载时添加监听
+onMounted(() => {
+  mediaQuery = window.matchMedia('(max-width: 768px)')
+  isMobile.value = mediaQuery.matches
+  const handler = (e) => { isMobile.value = e.matches }
+  mediaQuery.addEventListener('change', handler)
+  
+  // 存储 handler 引用，以便移除
+  mediaQuery._handler = handler
+})
+
+// 在组件卸载时移除监听
+onBeforeUnmount(() => {
+  if (mediaQuery && mediaQuery._handler) {
+    mediaQuery.removeEventListener('change', mediaQuery._handler)
+  }
+})
+
 
 function parseOutline(fullText) {
   const lines = fullText.split('\n')
