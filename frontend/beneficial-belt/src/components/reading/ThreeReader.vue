@@ -252,7 +252,8 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
-  flipContainerRef.value?.removeEventListener('mouseup', onMouseUp)
+ flipContainerRef.value?.removeEventListener('mouseup', onMouseUp)
+  removeSelectionListener() // 移除选区监听
   document.removeEventListener('keydown', onKeyDown)
   destroyFlip()
   destroyStats()
