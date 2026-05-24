@@ -13,6 +13,7 @@
   },
   "dependencies": {
     "@astrojs/vue": "^6.0.1",
+    "@chenglou/pretext": "^0.0.7",
     "@iconify/vue": "^5.0.1",
     "@noction/vue-bezier": "^2.0.3",
     "@pixiv/three-vrm": "^3.5.3",
