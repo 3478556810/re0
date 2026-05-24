@@ -5,5 +5,8 @@
     "pagedjs": "^0.4.3",
     "turn.js": "^1.0.5",
     "vue-pdf": "^4.3.0"
+  },
+  "devDependencies": {
+    "@iconify-json/ph": "^1.2.2"
   }
 }

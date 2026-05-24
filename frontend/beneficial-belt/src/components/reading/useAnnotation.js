@@ -73,16 +73,16 @@ export function useAnnotation(flipContainerRef, currentPage) {
     }
   }
 
-  function showResultCard(text, range, resultText) {
+  function showResultCard(text, range, resultText, save = true) {
     const containerRect = flipContainerRef.value.getBoundingClientRect()
     const rect = range.getBoundingClientRect()
-    const cardWidth = 240
+    const cardWidth = Math.min(280, containerRect.width - 32)
     let left = rect.left - containerRect.left + rect.width / 2 - cardWidth / 2
     left = Math.max(8, Math.min(left, containerRect.width - cardWidth - 8))
     const top = rect.bottom - containerRect.top + 8
     commentCardStyle.value = {
       left: `${left}px`,
-      top: `${Math.min(top, containerRect.height - 120)}px`,
+      top: `${Math.min(top, containerRect.height - 150)}px`,
       maxWidth: `${cardWidth}px`
     }
     showCommentCard.value = true
@@ -90,13 +90,15 @@ export function useAnnotation(flipContainerRef, currentPage) {
     commentTyping.value = true
     typewrite(resultText)
 
-    annotations.value.push({
-      text: selectedText.value,
-      comment: resultText,
-      page: currentPage.value,
-      time: Date.now()
-    })
-    saveAnnotations()
+    if (save) {
+      annotations.value.push({
+        text: selectedText.value || text,
+        comment: resultText,
+        page: currentPage.value,
+        time: Date.now()
+      })
+      saveAnnotations()
+    }
   }
 
   function closeCard() {
@@ -105,28 +107,25 @@ export function useAnnotation(flipContainerRef, currentPage) {
     commentTyping.value = false
   }
 
-  // 关闭菜单，但不删除系统选区（保留蓝色高亮）
   function closeActionMenu() {
     showActionMenu.value = false
     if (outsideClickListener) {
       document.removeEventListener('mousedown', outsideClickListener)
       outsideClickListener = null
     }
-    // 不再调用 removeAllRanges，保留高亮
+    // 不清除选区，保留高亮
   }
 
-  // 批注：用自定义高亮替换系统选区
   async function chooseComment() {
     const text = selectedText.value
     const range = selectedRange.value
     if (!text || !range) return
     closeActionMenu()
-    highlightText(text, range)  // 这里会清除系统选区并插入自己的高亮
+    highlightText(text, range)
     const comment = await generateComment(text)
-    showResultCard(text, range, comment)
+    showResultCard(text, range, comment, true)
   }
 
-  // 搜索：不改变高亮，触发侧边栏搜索
   function chooseSearch() {
     const text = selectedText.value
     if (!text) return
@@ -134,15 +133,13 @@ export function useAnnotation(flipContainerRef, currentPage) {
     window.dispatchEvent(new CustomEvent('search-text', { detail: { text } }))
   }
 
-  // 鼠标抬起事件：弹出选择菜单，保留系统高亮，阻止浏览器默认菜单
   function onMouseUp(event) {
-    event.preventDefault()   // 阻止浏览器默认右键菜单（或划词菜单）
-    event.stopPropagation()
-
+    // 桌面端专用，移动端不要调用此函数
     const selection = window.getSelection()
     const text = selection.toString().trim()
     if (text.length === 0) return
 
+    event.stopPropagation()
     const range = selection.getRangeAt(0).cloneRange()
     selectedText.value = text
     selectedRange.value = range
@@ -164,20 +161,14 @@ export function useAnnotation(flipContainerRef, currentPage) {
     }
     showActionMenu.value = true
 
-    // ★ 不清除选区！保留浏览器蓝色高亮
-
-    // 外部点击关闭菜单（不清除选区）
-    if (outsideClickListener) {
-      document.removeEventListener('mousedown', outsideClickListener)
-    }
+    // 不清除选区，保留蓝色高亮
+    if (outsideClickListener) document.removeEventListener('mousedown', outsideClickListener)
     outsideClickListener = (e) => {
       if (!e.target.closest('.action-menu')) {
         closeActionMenu()
       }
     }
-    setTimeout(() => {
-      document.addEventListener('mousedown', outsideClickListener)
-    }, 100)
+    setTimeout(() => document.addEventListener('mousedown', outsideClickListener), 100)
   }
 
   return {
@@ -191,6 +182,11 @@ export function useAnnotation(flipContainerRef, currentPage) {
     onMouseUp,
     closeCard,
     chooseComment,
-    chooseSearch
+    chooseSearch,
+    // 移动端需要的函数
+    highlightText,
+    generateComment,
+    showResultCard,
+    closeCard
   }
 }
