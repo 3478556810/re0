@@ -71,29 +71,24 @@
     </Teleport>
   </div>
 </template>
-
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import { Icon } from '@iconify/vue'
 import EmotionGlow from './EmotionGlow.vue'
 import { usePageFlip } from './usePageFlip.js'
 import { useReadingStats } from './useReadingStats.js'
 import { useBookmarks } from './useBookmarks.js'
 import { useAnnotation } from './useAnnotation.js'
+import { useMobileReader } from './useMobileReader.js'
 
 const props = defineProps({ reader: Object })
 const flipContainerRef = ref(null)
 const statusMsg = ref('正在准备...')
 const progressPercent = ref(0)
 let currentFontSize = null
-const showToolbar = ref(true)
 const isMobile = ref(window.innerWidth <= 768)
 const width = ref(550)
 const height = ref(700)
-
-// 移动端页面数据
-const htmlPages = ref([])           // 所有页面 HTML（含封面/底页）
-const mobilePageIndex = ref(0)      // 当前页索引
 
 function updatePageSize() {
   isMobile.value = window.innerWidth <= 768
@@ -119,70 +114,116 @@ const handleResize = () => {
   }, 300)
 }
 
-// 桌面端：引入 usePageFlip（仅桌面端使用）
+// 桌面端翻页引擎
 const {
-  currentPage,
-  totalPages,
-  pageFlip,
-  initFlip: desktopInitFlip,
-  destroyFlip,
-  flipToPage,
-  flipToPhysicalPage,
-  flipToCoverAnimated,
-  flipPrev,
-  flipNext,jumpToChapter: desktopJumpToChapter,  // 桌面端跳转
+  currentPage, totalPages, pageFlip, initFlip: desktopInitFlip, destroyFlip,
+  flipToPage, flipToPhysicalPage, jumpToChapter: desktopJumpToChapter,
+  flipToCoverAnimated, flipPrev, flipNext,
 } = usePageFlip(flipContainerRef, props.reader, width, height, statusMsg, progressPercent)
-function jumpToChapter(title) {
-  if (isMobile.value) {
-    mobileJumpToChapter(title)
-  } else {
-    desktopJumpToChapter(title)
-  }
-}
-// 移动端翻页方法
-function mobileFlipPrev() {
-  if (mobilePageIndex.value > 0) {
-    mobilePageIndex.value--
-    currentPage.value = mobilePageIndex.value
-  }
-}
 
-function mobileJumpToChapter(title) {
-  // 跳过封面(0)和封底(最后)，只搜索正文页
-  for (let i = 1; i < htmlPages.value.length - 1; i++) {
-    if (htmlPages.value[i].includes(title)) {
-      mobilePageIndex.value = i
-      currentPage.value = i
-      break
-    }
-  }
-}
-function mobileFlipNext() {
-  if (mobilePageIndex.value < htmlPages.value.length - 1) {
-    mobilePageIndex.value++
-    currentPage.value = mobilePageIndex.value
-  }
-}
+// 移动端模块
+const mobile = useMobileReader(
+  flipContainerRef, props.reader, statusMsg, progressPercent,
+  totalPages, currentPage
+)
+const {
+  htmlPages, mobilePageIndex, mobileSelectedText, mobileSelectedRange, mobileSelectionStyle,
+  mobileFlipPrev, mobileFlipNext, onMobileTouchEnd,
+  handleMobileComment, handleMobileSearch, initMobileView
+} = mobile
 
+// 阅读统计
 const textProvider = () => props.reader.fullText.value || ''
 const stats = useReadingStats(textProvider, currentPage, totalPages, flipContainerRef)
 const { currentTime, remainingTime, markPageEnter, recordPageTurn, startClock, destroy: destroyStats } = stats
 
+// 书签
 const { isCurrentPageBookmarked, getCurrentPageText, removeCurrentBookmark } = useBookmarks(
   props.reader, currentPage, flipContainerRef, pageFlip
 )
 
+// 桌面端菜单与批注
 const {
   showCommentCard, commentCardStyle, displayedComment, commentTyping,
   showActionMenu, actionMenuStyle, onMouseUp, closeCard, chooseComment, chooseSearch,
+  highlightText, generateComment, showResultCard
 } = useAnnotation(flipContainerRef, currentPage)
 
-// 高亮（桌面端）
-function highlightOnPage(text, targetIndex) {
-  // 保持不变...
+// 绑定移动端按钮事件
+mobile.handleMobileComment = async () => {
+  const text = mobileSelectedText.value
+  const range = mobileSelectedRange.value
+  if (!text || !range) return
+  mobileSelectedText.value = ''
+  closeCard()
+  highlightText(text, range)
+  const comment = await generateComment(text)
+  showResultCard(text, range, comment, true)
+}
+mobile.handleMobileSearch = async () => {
+  const text = mobileSelectedText.value
+  const range = mobileSelectedRange.value
+  if (!text || !range) return
+  mobileSelectedText.value = ''
+  closeCard()
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: `帮我搜索一下“${text}”` })
+    })
+    const data = await response.json()
+    const reply = data.reply || data.message || data.content || '暂无搜索结果。'
+    showResultCard(text, range, reply, false)
+  } catch (e) {
+    showResultCard(text, range, '搜索失败，请重试。', false)
+  }
 }
 
-// 桌面端跳转 + 高亮
+// 桌面端高亮
+function highlightOnPage(text, targetIndex) {
+  if (!flipContainerRef.value || !text) return
+  const pages = flipContainerRef.value.querySelectorAll('.flip-page')
+  if (targetIndex >= pages.length) return
+  const page = pages[targetIndex]
+  if (!page?.textContent.includes(text)) return
+  if (page.querySelector(`span.shanxi-highlight[data-quote="${text}"]`)) return
+
+  const innerDiv = page.querySelector('div:first-child')
+  if (!innerDiv) return
+
+  const walker = document.createTreeWalker(innerDiv, NodeFilter.SHOW_TEXT)
+  let node
+  while ((node = walker.nextNode())) {
+    const idx = node.textContent.indexOf(text)
+    if (idx !== -1) {
+      const before = document.createTextNode(node.textContent.slice(0, idx))
+      const after = document.createTextNode(node.textContent.slice(idx + text.length))
+      const span = document.createElement('span')
+      span.className = 'shanxi-highlight'
+      span.setAttribute('data-quote', text)
+      span.textContent = text
+      span.title = '杉汐批：此句妙极。'
+      Object.assign(span.style, {
+        outline: '2px solid rgba(180,80,50,0.6)',
+        outlineOffset: '1px',
+        borderRadius: '6px',
+        boxShadow: '0 0 0 3px rgba(180,80,50,0.2)',
+        display: 'inline',
+        lineHeight: 'inherit',
+        padding: '0',
+        margin: '0'
+      })
+      const parent = node.parentNode
+      parent.insertBefore(before, node)
+      parent.insertBefore(span, node)
+      parent.insertBefore(after, node)
+      parent.removeChild(node)
+      break
+    }
+  }
+}
+
 function handleSidebarFlip(pageIndex, quote) {
   flipToPage(pageIndex, quote, highlightOnPage)
 }
@@ -201,29 +242,23 @@ function onKeyDown(e) {
   else if (e.key === 'ArrowLeft') pageFlip.flipPrev()
 }
 
-// 重写跳转函数，兼容移动端
-function universalFlipToPage(pageIndex, highlightText) {
-  if (isMobile.value) {
-    mobilePageIndex.value = pageIndex
-    currentPage.value = pageIndex
-    if (highlightText) {
-      nextTick(() => highlightOnMobilePage(highlightText))
+// 移动端章节跳转
+function mobileJumpToChapter(title) {
+  for (let i = 1; i < htmlPages.value.length - 1; i++) {
+    if (htmlPages.value[i].includes(title)) {
+      mobilePageIndex.value = i
+      currentPage.value = i
+      break
     }
-  } else {
-    handleSidebarFlip(pageIndex, highlightText)
   }
 }
 
-function highlightOnMobilePage(text) {
-  const container = flipContainerRef.value
-  if (!container || !text) return
-  const pageDiv = container.querySelector('.mobile-page-view')
-  if (!pageDiv) return
-  const innerHTML = pageDiv.innerHTML
-  // 简单替换：将匹配文本包裹为高亮 span
-  const escaped = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
-  const regex = new RegExp(`(${escaped})`, 'g')
-  pageDiv.innerHTML = innerHTML.replace(regex, '<span class="shanxi-highlight" style="outline:2px solid rgba(180,80,50,0.6);outline-offset:1px;border-radius:6px;box-shadow:0 0 0 3px rgba(180,80,50,0.2);display:inline;line-height:inherit;padding:0;margin:0;">$1</span>')
+function jumpToChapter(title) {
+  if (isMobile.value) {
+    mobileJumpToChapter(title)
+  } else {
+    desktopJumpToChapter(title)
+  }
 }
 
 async function reInit() {
@@ -247,53 +282,6 @@ async function reInit() {
   }
 }
 
-// 移动端初始化：获取分页 HTML 并直接显示
-async function initMobileView() {
-  const text = props.reader.fullText.value || ''
-  const fontSize = props.reader.fontSize.value
-  const bookId = props.reader.title.value || 'unknown'
-
-  // ★ 使用容器实际尺寸，确保分页准确
-  await nextTick()
-  const w = flipContainerRef.value.clientWidth
-  const h = flipContainerRef.value.clientHeight
-  if (w === 0 || h === 0) {
-    setTimeout(initMobileView, 100)
-    return
-  }
-
-  statusMsg.value = '正在排版... 0%'
-  progressPercent.value = 0
-
-  const { exactPaginate } = await import('./ExactPaginator.js')
-  const bodyPages = await exactPaginate(text, fontSize, w, h, (pct) => {
-    progressPercent.value = pct
-  })
-
-  const coverHTML = createCoverHTML(props.reader.title.value)
-  const backHTML = createBackHTML()
-  htmlPages.value = [coverHTML, ...bodyPages, backHTML]
-  totalPages.value = htmlPages.value.length
-  mobilePageIndex.value = 1
-  currentPage.value = 1
-  statusMsg.value = ''
-  progressPercent.value = 0
-}
-
-// 需要从 usePageFlip 中导出封面/底页生成函数，这里临时实现
-function escapeHtml(str) {
-  const div = document.createElement('div')
-  div.textContent = str
-  return div.innerHTML
-}
-function createCoverHTML(title) {
-  const safe = escapeHtml(title)
-  return `<div style="width:100%;height:100%;background:linear-gradient(135deg,#1e2a3a,#2c3e50);display:flex;flex-direction:column;justify-content:center;align-items:center;color:#e8d5b7;font-family:Georgia,serif;"><h1>${safe}</h1><p>杉汐注</p></div>`
-}
-function createBackHTML() {
-  return `<div style="width:100%;height:100%;background:linear-gradient(135deg,#1e2a3a,#2c3e50);display:flex;justify-content:center;align-items:center;color:#e8d5b7;">封底</div>`
-}
-
 watch(() => props.reader.fontSize.value, (v) => {
   if (v !== currentFontSize) reInit()
 })
@@ -304,11 +292,11 @@ onMounted(async () => {
   updatePageSize()
   startClock()
   await nextTick()
+
   if (isMobile.value) {
-     
+    flipContainerRef.value?.addEventListener('touchend', onMobileTouchEnd)
     await initMobileView()
   } else {
-  
     try {
       const flip = await desktopInitFlip()
       if (flip) {
@@ -321,25 +309,27 @@ onMounted(async () => {
       console.error('初始化翻页失败:', e)
       statusMsg.value = '加载失败，请重试'
     }
+    flipContainerRef.value?.addEventListener('mouseup', onMouseUp)
   }
 
-  flipContainerRef.value?.addEventListener('mouseup', onMouseUp)
-  flipContainerRef.value?.addEventListener('touchend', onMouseUp)
   document.addEventListener('keydown', onKeyDown)
   window.addEventListener('resize', handleResize)
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
-  flipContainerRef.value?.removeEventListener('mouseup', onMouseUp)
-  flipContainerRef.value?.removeEventListener('touchend', onMouseUp)
+  if (!isMobile.value) {
+    flipContainerRef.value?.removeEventListener('mouseup', onMouseUp)
+  } else {
+    flipContainerRef.value?.removeEventListener('touchend', onMobileTouchEnd)
+  }
   document.removeEventListener('keydown', onKeyDown)
   destroyFlip()
   destroyStats()
 })
 
 defineExpose({
-  flipToPage: universalFlipToPage,
+  flipToPage: handleSidebarFlip,
   flipToPhysicalPage,
   jumpToChapter,
   currentPage,
@@ -347,6 +337,7 @@ defineExpose({
   flipToCoverAnimated,
 })
 </script>
+
 
 <style src="./ThreeReader.css"></style>
 <style scoped>
