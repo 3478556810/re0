@@ -230,7 +230,7 @@ onMounted(async () => {
     console.error('初始化翻页失败:', e)
     statusMsg.value = '加载失败，请重试'
   }
-
+flipContainerRef.value?.addEventListener('touchend', onMouseUp)
 
   flipContainerRef.value?.addEventListener('mouseup', onMouseUp)
  
