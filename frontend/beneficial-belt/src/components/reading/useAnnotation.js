@@ -105,25 +105,28 @@ export function useAnnotation(flipContainerRef, currentPage) {
     commentTyping.value = false
   }
 
+  // 关闭菜单，但不删除系统选区（保留蓝色高亮）
   function closeActionMenu() {
     showActionMenu.value = false
     if (outsideClickListener) {
       document.removeEventListener('mousedown', outsideClickListener)
       outsideClickListener = null
     }
-    window.getSelection()?.removeAllRanges()
+    // 不再调用 removeAllRanges，保留高亮
   }
 
+  // 批注：用自定义高亮替换系统选区
   async function chooseComment() {
     const text = selectedText.value
     const range = selectedRange.value
     if (!text || !range) return
     closeActionMenu()
-    highlightText(text, range)
+    highlightText(text, range)  // 这里会清除系统选区并插入自己的高亮
     const comment = await generateComment(text)
     showResultCard(text, range, comment)
   }
 
+  // 搜索：不改变高亮，触发侧边栏搜索
   function chooseSearch() {
     const text = selectedText.value
     if (!text) return
@@ -131,18 +134,19 @@ export function useAnnotation(flipContainerRef, currentPage) {
     window.dispatchEvent(new CustomEvent('search-text', { detail: { text } }))
   }
 
+  // 鼠标抬起事件：弹出选择菜单，保留系统高亮，阻止浏览器默认菜单
   function onMouseUp(event) {
+    event.preventDefault()   // 阻止浏览器默认右键菜单（或划词菜单）
+    event.stopPropagation()
+
     const selection = window.getSelection()
     const text = selection.toString().trim()
     if (text.length === 0) return
 
-    // 防止翻页事件
-    event.stopPropagation()
     const range = selection.getRangeAt(0).cloneRange()
     selectedText.value = text
     selectedRange.value = range
 
-    // 使用视口坐标
     const rect = range.getBoundingClientRect()
     const menuWidth = 140
     let left = rect.left + rect.width / 2 - menuWidth / 2
@@ -160,12 +164,9 @@ export function useAnnotation(flipContainerRef, currentPage) {
     }
     showActionMenu.value = true
 
-    // 延迟清除选区，保持高亮直到菜单显示
-    setTimeout(() => {
-      window.getSelection()?.removeAllRanges()
-    }, 0)
+    // ★ 不清除选区！保留浏览器蓝色高亮
 
-    // 外部点击关闭
+    // 外部点击关闭菜单（不清除选区）
     if (outsideClickListener) {
       document.removeEventListener('mousedown', outsideClickListener)
     }
@@ -176,7 +177,7 @@ export function useAnnotation(flipContainerRef, currentPage) {
     }
     setTimeout(() => {
       document.addEventListener('mousedown', outsideClickListener)
-    }, 0)
+    }, 100)
   }
 
   return {
