@@ -20,7 +20,7 @@
       </button>
     </div>
 
-    <!-- 左右翻页点击区域（桌面端用） -->
+    <!-- 左右翻页点击区域 -->
     <div class="flip-tap-area left" @click.stop="flipPrev"></div>
     <div class="flip-tap-area right" @click.stop="flipNext"></div>
 
@@ -33,13 +33,14 @@
       </div>
     </div>
 
-    <!-- 选择菜单：批注 or 搜索 -->
+    <!-- 选择菜单 -->
     <div
       v-if="showActionMenu"
       class="action-menu"
       :style="actionMenuStyle"
       @click.stop
       @mousedown.prevent
+      @touchstart.prevent
     >
       <div class="menu-item" @click="chooseComment">
         <Icon icon="ph:pen" width="16" />
@@ -95,7 +96,6 @@ const handleResize = () => {
   }, 300)
 }
 
-// 翻页核心
 const {
   currentPage,
   totalPages,
@@ -108,21 +108,17 @@ const {
   flipToCoverAnimated,
   flipPrev,
   flipNext,
-} = usePageFlip(flipContainerRef, props.reader, width, height)
+} = usePageFlip(flipContainerRef, props.reader, width, height, statusMsg, progressPercent)
 
-// 阅读统计
 const textProvider = () => props.reader.fullText.value || ''
 const stats = useReadingStats(textProvider, currentPage, totalPages, flipContainerRef)
 const { currentTime, remainingTime, markPageEnter, recordPageTurn, startClock, destroy: destroyStats } = stats
 
-// 书签
 const { isCurrentPageBookmarked, getCurrentPageText, removeCurrentBookmark } = useBookmarks(
   props.reader, currentPage, flipContainerRef, pageFlip
 )
 
-// 选中批注
 const {
-  initSelectionListener,
   showCommentCard,
   commentCardStyle,
   displayedComment,
@@ -135,7 +131,6 @@ const {
   chooseSearch,
 } = useAnnotation(flipContainerRef, currentPage)
 
-// 高亮函数（内部实现）
 function highlightOnPage(text, targetIndex) {
   if (!flipContainerRef.value || !text) return
   const pages = flipContainerRef.value.querySelectorAll('.flip-page')
@@ -236,24 +231,25 @@ onMounted(async () => {
     statusMsg.value = '加载失败，请重试'
   }
 
-  // 启动选区监听（移动端依赖它）
-  initSelectionListener()
 
-  // 桌面端保留 mouseup 监听，移动端不冲突
   flipContainerRef.value?.addEventListener('mouseup', onMouseUp)
+  flipContainerRef.value?.addEventListener('touchend', onMouseUp)
+  flipContainerRef.value?.addEventListener('contextmenu', e => e.preventDefault())
+  
   document.addEventListener('keydown', onKeyDown)
   window.addEventListener('resize', handleResize)
 
-  window.onerror = (message, source, lineno, colno, error) => {
-    console.error('全局错误:', message, source, lineno)
+  window.onerror = (message) => {
+    console.error('全局错误:', message)
     statusMsg.value = '加载异常，请刷新页面'
   }
 })
 
 onBeforeUnmount(() => {
   window.removeEventListener('resize', handleResize)
- flipContainerRef.value?.removeEventListener('mouseup', onMouseUp)
-  removeSelectionListener() // 移除选区监听
+  flipContainerRef.value?.removeEventListener('mouseup', onMouseUp)
+  flipContainerRef.value?.removeEventListener('touchend', onMouseUp)
+ 
   document.removeEventListener('keydown', onKeyDown)
   destroyFlip()
   destroyStats()
@@ -284,7 +280,6 @@ defineExpose({
 .footer-info .time { text-align: left; flex: 1; }
 .footer-info .page-num { text-align: center; flex: 1; }
 .footer-info .remain { text-align: right; flex: 1; }
-/* 批注卡片 */
 .comment-card {
   position: absolute; z-index: 50; background: #f7e9d0; border: 1px solid #b8977a; border-radius: 8px;
   padding: 10px 14px; box-shadow: 2px 2px 12px rgba(0,0,0,0.15);
@@ -294,7 +289,6 @@ defineExpose({
 .comment-card .typing-cursor { color: #b8977a; animation: blink 0.8s infinite; }
 @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
 .close-card { position: absolute; top: 4px; right: 6px; background: transparent; border: none; cursor: pointer; color: #8b5e3c; padding: 2px; }
-/* 左右点击翻页区域 */
 .flip-tap-area {
   position: absolute;
   top: 0;
@@ -305,7 +299,6 @@ defineExpose({
 }
 .flip-tap-area.left { left: 0; }
 .flip-tap-area.right { right: 0; }
-
 .action-menu {
   position: fixed;
   z-index: 99999;
@@ -330,14 +323,12 @@ defineExpose({
 }
 .menu-item:hover { background: #f1f5f9; }
 
-/* 强制批注列表横向显示 */
 .annotation-item,
 .annotation-item * {
   writing-mode: horizontal-tb !important;
   text-orientation: mixed !important;
 }
 
-/* ========== 移动端适配 ========== */
 @media (max-width: 768px) {
   .flip-page {
     -webkit-user-select: auto !important;

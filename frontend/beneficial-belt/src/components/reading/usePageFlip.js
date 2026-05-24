@@ -3,8 +3,7 @@ import { PageFlip } from 'page-flip'
 import { exactPaginate } from './ExactPaginator.js'
 import { getCachedPages, setCachedPages } from './cachePagination.js'
 
-export function usePageFlip(flipContainerRef, reader, width, height) {
-  
+export function usePageFlip(flipContainerRef, reader, width, height, statusMsg, progressPercent) {
   const currentPage = ref(0)
   const totalPages = ref(0)
   let pageFlip = null
@@ -54,7 +53,15 @@ export function usePageFlip(flipContainerRef, reader, width, height) {
       let htmlPages = await getCachedPages(bookId, fontSize, w, h)
 
       if (!htmlPages) {
-        const bodyPages = await exactPaginate(text, fontSize, w, h, () => {})
+        // ★ 使用传入的状态更新进度
+        statusMsg.value = '正在精确排版... 0%'
+        progressPercent.value = 0
+
+        const bodyPages = await exactPaginate(text, fontSize, w, h, (pct) => {
+          statusMsg.value = `正在精确排版... ${pct}%`
+          progressPercent.value = pct
+        })
+
         if (id !== taskId) return
         if (!bodyPages || bodyPages.length === 0) {
           console.warn('分页结果为空')
@@ -97,7 +104,7 @@ export function usePageFlip(flipContainerRef, reader, width, height) {
       pageFlip.loadFromHTML(pageElements)
       totalPages.value = Math.max(0, htmlPages.length - 2)
 
-      return pageFlip // 返回实例，供外部绑定事件
+      return pageFlip
     } catch (err) {
       console.error('分页失败:', err)
       throw err
@@ -176,14 +183,13 @@ export function usePageFlip(flipContainerRef, reader, width, height) {
     await new Promise(r => setTimeout(r, COVER_PAUSE))
   }
 
-  // 左右翻页快捷方法
   function flipPrev() { if (pageFlip) pageFlip.flipPrev() }
   function flipNext() { if (pageFlip) pageFlip.flipNext() }
 
   return {
     currentPage,
     totalPages,
-    pageFlip,  // 暴露实例
+    pageFlip,
     initFlip,
     destroyFlip,
     flipToPage,
