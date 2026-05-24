@@ -151,10 +151,14 @@ export function useAnnotation(flipContainerRef, currentPage) {
   }
 
   function onMouseUp(event) {
+    const selection = window.getSelection()
+  const text = selection.toString().trim()
+
+  // ★ 没有选中文字时，不干扰正常翻页
+  if (text.length === 0) return
     event.preventDefault()
     event.stopPropagation()
-    const selection = window.getSelection()
-    const text = selection.toString().trim()
+
     if (text.length === 0) return
 
     // ★ 保存选区信息，但不修改 DOM

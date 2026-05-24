@@ -175,6 +175,7 @@ export function usePageFlip(flipContainerRef, reader, width, height, statusMsg, 
       if (id !== taskId || !flipContainerRef.value) return
 
       pageFlip = new PageFlip(flipContainerRef.value, {
+        useMouseEvents: true,  
         width: w, height: h,
         size: 'fixed', autoSize: false,
         usePortrait: true, showCover: true,
@@ -238,7 +239,7 @@ export function usePageFlip(flipContainerRef, reader, width, height, statusMsg, 
   async function flipToCoverAnimated() {
     if (!pageFlip) return
     const STEP_DELAY = 120
-    const COVER_PAUSE = 1500   // ★ 封面停留 1.5 秒
+    const COVER_PAUSE = 800   // ★ 封面停留 1.5 秒
     const current = pageFlip.getCurrentPageIndex()
 
     if (current === 0) {

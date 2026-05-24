@@ -233,7 +233,7 @@ onMounted(async () => {
 
 
   flipContainerRef.value?.addEventListener('mouseup', onMouseUp)
-  flipContainerRef.value?.addEventListener('touchend', onMouseUp)
+ 
   flipContainerRef.value?.addEventListener('contextmenu', e => e.preventDefault())
   
   document.addEventListener('keydown', onKeyDown)
