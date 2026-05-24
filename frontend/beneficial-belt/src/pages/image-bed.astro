@@ -2,10 +2,13 @@
 import NavBar from '../components/NavBar.astro';
 import ChatWidget from '../components/shanxi/ChatWidget.vue';
 import ImageGallery from '../components/image-bed/ImageGallery.vue';
+import AuthGuard from '../components/AuthGuard.astro';
+
 ---
 
 <html>
   <head>
+    <AuthGuard />
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>图床 | 杉汐的星尘核心</title>

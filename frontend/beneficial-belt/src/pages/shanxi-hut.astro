@@ -1,10 +1,12 @@
 ﻿---
 import NavBar from '../components/NavBar.astro';
 import HutCards from '../components/hut/HutCards.vue';
+import AuthGuard from '../components/AuthGuard.astro';
 ---
 
 <html>
   <head>
+<AuthGuard /> 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>杉汐的小屋 | 应用场景</title>

@@ -4,11 +4,13 @@ import ChatWidget from "../components/shanxi/ChatWidget.vue";
 import ThemeProvider from "../components/ThemeProvider.vue";
 import MusicPlayer from "../components/MusicPlayer.vue";
 import ShanxiHome from '../components/shanxi/ShanxiHome.vue'
+import AuthGuard from '../components/AuthGuard.astro';
 ---
 
 <!doctype html>
 <html lang="zh-CN">
   <head>
+    <AuthGuard /> 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>杉汐的星尘核心</title>

@@ -109,46 +109,6 @@ export function useAnnotation(flipContainerRef, currentPage) {
     showActionMenu.value = false
   }
 
-  // ★ 核心：监听选区变化，弹出/关闭菜单
-  function initSelectionListener() {
-    if (selectionListener) return
-    selectionListener = () => {
-      const selection = window.getSelection()
-      const text = selection?.toString().trim()
-
-      if (!text || text.length === 0) {
-        if (showActionMenu.value) closeActionMenu()
-        return
-      }
-
-      const range = selection.getRangeAt(0).cloneRange()
-      selectedText.value = text
-      selectedRange.value = range
-
-      const containerRect = flipContainerRef.value.getBoundingClientRect()
-      const rect = range.getBoundingClientRect()
-      const menuWidth = 140
-      let left = rect.left - containerRect.left + rect.width / 2 - menuWidth / 2
-      left = Math.max(8, Math.min(left, containerRect.width - menuWidth - 8))
-      const top = rect.bottom - containerRect.top + 8
-
-      actionMenuStyle.value = {
-        left: `${left}px`,
-        top: `${Math.min(top, containerRect.height - 60)}px`,
-        width: `${menuWidth}px`
-      }
-      showActionMenu.value = true
-    }
-    document.addEventListener('selectionchange', selectionListener)
-  }
-
-  function removeSelectionListener() {
-    if (selectionListener) {
-      document.removeEventListener('selectionchange', selectionListener)
-      selectionListener = null
-    }
-  }
-
   async function chooseComment() {
     const text = selectedText.value
     const range = selectedRange.value
@@ -168,7 +128,53 @@ export function useAnnotation(flipContainerRef, currentPage) {
     window.getSelection()?.removeAllRanges()
   }
 
-  // 不再自动调用 initSelectionListener，由组件主动调用
+  // 鼠标抬起事件：弹出选择菜单（阻止浏览器默认菜单）
+  function onMouseUp(event) {
+    event.preventDefault()
+    const selection = window.getSelection()
+    const text = selection.toString().trim()
+    if (text.length === 0) return
+
+    const range = selection.getRangeAt(0).cloneRange()
+    selectedText.value = text
+    selectedRange.value = range
+
+    const containerRect = flipContainerRef.value.getBoundingClientRect()
+    const rect = range.getBoundingClientRect()
+    const menuWidth = 140
+    let left = rect.left - containerRect.left + rect.width / 2 - menuWidth / 2
+    left = Math.max(8, Math.min(left, containerRect.width - menuWidth - 8))
+    const top = rect.bottom - containerRect.top + 8
+
+    actionMenuStyle.value = {
+      left: `${left}px`,
+      top: `${Math.min(top, containerRect.height - 60)}px`,
+      width: `${menuWidth}px`
+    }
+    showActionMenu.value = true
+  }
+
+  // 选区变化监听（用于关闭菜单）
+  function initSelectionListener() {
+    if (selectionListener) return
+    selectionListener = () => {
+      const selection = window.getSelection()
+      const text = selection?.toString().trim()
+      if (!text || text.length === 0) {
+        if (showActionMenu.value) {
+          closeActionMenu()
+        }
+      }
+    }
+    document.addEventListener('selectionchange', selectionListener)
+  }
+
+  function removeSelectionListener() {
+    if (selectionListener) {
+      document.removeEventListener('selectionchange', selectionListener)
+      selectionListener = null
+    }
+  }
 
   return {
     showCommentCard,
@@ -178,10 +184,11 @@ export function useAnnotation(flipContainerRef, currentPage) {
     annotations,
     showActionMenu,
     actionMenuStyle,
+    onMouseUp,
     closeCard,
     chooseComment,
     chooseSearch,
-    initSelectionListener,   // ★ 暴露启动函数
+    initSelectionListener,
     removeSelectionListener
   }
 }
