@@ -15,23 +15,23 @@
 
     <div class="annotations-section">
       <h4>杉汐的痕迹</h4>
-      <div v-for="(item, idx) in dynamicAnnotations" :key="idx" class="annotation-wrapper">
-        <div
-          class="annotation-item"
-          :class="{ swiped: swipedIndex === idx }"
-          @click="handleAnnotationClick(item, idx)"
-        >
-          <div class="anno-content">
-            <Icon icon="ph:chat-centered-text" width="16" />
-            <span class="text">{{ item.comment }}</span>
-            <span class="quote">“{{ item.text }}”</span>
-            <span class="page">p.{{ item.page }}</span>
-          </div>
-        </div>
-        <div class="delete-btn" @click.stop="deleteAnnotation(idx)">
-          <Icon icon="ph:trash" width="18" />
-        </div>
-      </div>
+     <div v-for="(item, idx) in dynamicAnnotations" :key="idx" class="annotation-wrapper">
+  <div
+    class="annotation-item"
+    :class="{ swiped: swipedIndex === idx }"
+    @click="handleAnnotationClick(item, idx)"
+  >
+    <div class="anno-content">
+      <!-- ★ 原文在上 -->
+      <div class="quote-text">“{{ item.text }}”</div>
+      <!-- ★ 批注在下 -->
+      <div class="comment-text">{{ item.comment }}</div>
+    </div>
+    <div class="delete-btn" @click.stop="deleteAnnotation(idx)">
+      <Icon icon="ph:trash" width="18" />
+    </div>
+  </div>
+</div>
       <div v-if="dynamicAnnotations.length === 0" class="outline-empty">暂无批注，选中文本即可生成</div>
     </div>
   </div>
@@ -160,13 +160,66 @@ onBeforeUnmount(() => {
 @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
 
 .annotation-wrapper { position: relative; overflow: hidden; margin-bottom: 6px; border-radius: 8px; }
-.annotation-item { display: flex; align-items: center; transition: transform 0.25s ease; transform: translateX(0); padding: 8px 0; background: #fff; cursor: pointer; position: relative; z-index: 2; }
+
+.annotation-item {
+  display: flex;
+  align-items: center;
+  transition: transform 0.25s ease;
+  transform: translateX(0);
+  padding: 10px 12px;
+  background: #fff;
+  cursor: pointer;
+  position: relative;
+  z-index: 2;
+  writing-mode: horizontal-tb !important; /* 强制横排 */
+}
 .annotation-item.swiped { transform: translateX(-36px); }
-.anno-content { flex: 1; display: flex; align-items: center; gap: 6px; min-width: 0; padding-right: 8px; }
-.delete-btn { position: absolute; right: -36px; top: 0; bottom: 0; width: 36px; display: flex; align-items: center; justify-content: center; background: #fee2e2; color: #ef4444; cursor: pointer; border-radius: 0 8px 8px 0; transition: right 0.25s ease; z-index: 1; }
+
+.anno-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;  /* 原文在上，批注在下 */
+  gap: 4px;
+  min-width: 0;
+  padding-right: 8px;
+}
+
+.quote-text {
+  font-size: 0.85rem;
+  color: #64748b;
+  font-style: italic;
+  line-height: 1.5;
+  word-break: break-word;      /* 允许长文本换行 */
+  white-space: normal;         /* 移除 nowrap */
+  overflow: visible;           /* 允许完整显示 */
+  writing-mode: horizontal-tb !important;
+}
+
+.comment-text {
+  font-size: 0.85rem;
+  color: #334155;
+  line-height: 1.5;
+  word-break: break-word;
+  writing-mode: horizontal-tb !important;
+}
+
+.delete-btn {
+  position: absolute;
+  right: -36px;
+  top: 0;
+  bottom: 0;
+  width: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fee2e2;
+  color: #ef4444;
+  cursor: pointer;
+  border-radius: 0 8px 8px 0;
+  transition: right 0.25s ease;
+  z-index: 1;
+}
 .annotation-item.swiped ~ .delete-btn { right: 0; }
-.text { flex: 1; font-size: 0.85rem; color: #334155; }
-.quote { font-size: 0.8rem; color: #64748b; font-style: italic; margin-right: 4px; }
-.page { font-size: 0.75rem; color: #94a3b8; flex-shrink: 0; }
+
 .outline-empty { padding: 20px; text-align: center; color: var(--text-secondary); }
 </style>

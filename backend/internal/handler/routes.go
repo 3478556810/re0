@@ -67,10 +67,8 @@ func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore) {
 	})
 
 	// 聊天接口（限流）
-	limiter := middleware.NewRateLimiter()
-	r.POST("/api/chat", limiter.Limit(), func(c *gin.Context) {
-		HandleChat(c, memoryStore)
-	})
+
+	r.POST("/api/chat", func(c *gin.Context) { HandleChat(c, memoryStore) })
 
 	// 博客接口
 	r.GET("/api/posts", GetPosts)
