@@ -13,7 +13,7 @@ import ReaderView from '../components/reading/ReaderView.vue';
     </style>
   </head>
   <body>
-    <NavBar />
+  
     <main class="reader-page">
       <ReaderView client:only="vue" />
     </main>
@@ -31,8 +31,13 @@ import ReaderView from '../components/reading/ReaderView.vue';
   width: 100%;
   margin: 0 auto;
   padding: 0 16px;
-  height: calc(100vh - 60px);
+  height: 100vh;
   box-sizing: border-box;
   overflow: hidden;
+}
+
+body {
+  margin: 0;
+  padding: 0;
 }
 </style>
