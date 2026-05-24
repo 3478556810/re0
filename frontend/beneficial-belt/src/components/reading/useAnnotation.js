@@ -12,11 +12,11 @@ export function useAnnotation(flipContainerRef, currentPage) {
   const showActionMenu = ref(false)
   const actionMenuStyle = ref({})
   const selectedText = ref('')
-  const selectedRange = ref(null)   // ★ 保留选区，供批注时使用
+  const selectedRange = ref(null)
 
   const annotations = ref(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'))
 
-  let selectionListener = null
+  let outsideClickListener = null
 
   function saveAnnotations() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(annotations.value))
@@ -105,39 +105,21 @@ export function useAnnotation(flipContainerRef, currentPage) {
     commentTyping.value = false
   }
 
-  // 选区变化监听：取消选中时自动关闭菜单
-  function startSelectionListener() {
-    if (selectionListener) return
-    selectionListener = () => {
-      const selection = window.getSelection()
-      if (!selection || selection.toString().trim().length === 0) {
-        showActionMenu.value = false
-      }
+  function closeActionMenu() {
+    showActionMenu.value = false
+    if (outsideClickListener) {
+      document.removeEventListener('mousedown', outsideClickListener)
+      outsideClickListener = null
     }
-    document.addEventListener('selectionchange', selectionListener)
-  }
-
-  function stopSelectionListener() {
-    if (selectionListener) {
-      document.removeEventListener('selectionchange', selectionListener)
-      selectionListener = null
-    }
+    window.getSelection()?.removeAllRanges()
   }
 
   async function chooseComment() {
     const text = selectedText.value
     const range = selectedRange.value
     if (!text || !range) return
-
-    showActionMenu.value = false
-
-    // 执行圈点
+    closeActionMenu()
     highlightText(text, range)
-
-    // 清除原生选区，保留圈点
-    window.getSelection()?.removeAllRanges()
-
-    // 生成批注
     const comment = await generateComment(text)
     showResultCard(text, range, comment)
   }
@@ -145,44 +127,52 @@ export function useAnnotation(flipContainerRef, currentPage) {
   function chooseSearch() {
     const text = selectedText.value
     if (!text) return
-    showActionMenu.value = false
+    closeActionMenu()
     window.dispatchEvent(new CustomEvent('search-text', { detail: { text } }))
-    // 不清除选区，让用户可以继续看到高亮（原生）
   }
 
   function onMouseUp(event) {
     const selection = window.getSelection()
-  const text = selection.toString().trim()
-
-  // ★ 没有选中文字时，不干扰正常翻页
-  if (text.length === 0) return
-    event.preventDefault()
-    event.stopPropagation()
-
+    const text = selection.toString().trim()
     if (text.length === 0) return
 
-    // ★ 保存选区信息，但不修改 DOM
+    event.stopPropagation()
     const range = selection.getRangeAt(0).cloneRange()
     selectedText.value = text
     selectedRange.value = range
 
-    // 计算菜单位置
-    const containerRect = flipContainerRef.value.getBoundingClientRect()
     const rect = range.getBoundingClientRect()
     const menuWidth = 140
-    let left = rect.left - containerRect.left + rect.width / 2 - menuWidth / 2
-    left = Math.max(8, Math.min(left, containerRect.width - menuWidth - 8))
-    const top = rect.bottom - containerRect.top + 8
+    let left = rect.left + rect.width / 2 - menuWidth / 2
+    left = Math.max(8, Math.min(left, window.innerWidth - menuWidth - 8))
+    let top = rect.bottom + 8
+    if (top + 60 > window.innerHeight) {
+      top = rect.top - 60
+    }
 
     actionMenuStyle.value = {
+      position: 'fixed',
       left: `${left}px`,
-      top: `${Math.min(top, containerRect.height - 60)}px`,
+      top: `${top}px`,
       width: `${menuWidth}px`
     }
     showActionMenu.value = true
 
-    // 开始监听选区变化，用于自动关闭菜单
-    startSelectionListener()
+    // 立即清除选区，防止浏览器弹出自己的菜单
+    window.getSelection()?.removeAllRanges()
+
+    // 移除旧的外部点击监听
+    if (outsideClickListener) {
+      document.removeEventListener('mousedown', outsideClickListener)
+    }
+    outsideClickListener = (e) => {
+      if (!e.target.closest('.action-menu')) {
+        closeActionMenu()
+      }
+    }
+    setTimeout(() => {
+      document.addEventListener('mousedown', outsideClickListener)
+    }, 0)
   }
 
   return {
