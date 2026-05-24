@@ -305,8 +305,10 @@ onMounted(async () => {
   startClock()
   await nextTick()
   if (isMobile.value) {
+     
     await initMobileView()
   } else {
+  
     try {
       const flip = await desktopInitFlip()
       if (flip) {
