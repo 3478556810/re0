@@ -128,17 +128,33 @@ const {
   destroyFlip,
   flipToPage,
   flipToPhysicalPage,
-  jumpToChapter,
   flipToCoverAnimated,
   flipPrev,
-  flipNext,
+  flipNext,jumpToChapter: desktopJumpToChapter,  // 桌面端跳转
 } = usePageFlip(flipContainerRef, props.reader, width, height, statusMsg, progressPercent)
-
+function jumpToChapter(title) {
+  if (isMobile.value) {
+    mobileJumpToChapter(title)
+  } else {
+    desktopJumpToChapter(title)
+  }
+}
 // 移动端翻页方法
 function mobileFlipPrev() {
   if (mobilePageIndex.value > 0) {
     mobilePageIndex.value--
     currentPage.value = mobilePageIndex.value
+  }
+}
+
+function mobileJumpToChapter(title) {
+  // 跳过封面(0)和封底(最后)，只搜索正文页
+  for (let i = 1; i < htmlPages.value.length - 1; i++) {
+    if (htmlPages.value[i].includes(title)) {
+      mobilePageIndex.value = i
+      currentPage.value = i
+      break
+    }
   }
 }
 function mobileFlipNext() {
