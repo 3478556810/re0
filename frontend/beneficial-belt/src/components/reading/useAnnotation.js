@@ -17,7 +17,6 @@ export function useAnnotation(flipContainerRef, currentPage) {
   const annotations = ref(JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'))
 
   let selectionListener = null
-  let clickOutsideHandler = null
 
   function saveAnnotations() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(annotations.value))
@@ -108,17 +107,37 @@ export function useAnnotation(flipContainerRef, currentPage) {
 
   function closeActionMenu() {
     showActionMenu.value = false
-    removeSelectionListener()
-    removeClickOutsideListener()
   }
 
-  function addSelectionListener() {
+  // ★ 核心：监听选区变化，弹出/关闭菜单
+  function initSelectionListener() {
     if (selectionListener) return
     selectionListener = () => {
       const selection = window.getSelection()
-      if (!selection || selection.toString().trim().length === 0) {
-        closeActionMenu()
+      const text = selection?.toString().trim()
+
+      if (!text || text.length === 0) {
+        if (showActionMenu.value) closeActionMenu()
+        return
       }
+
+      const range = selection.getRangeAt(0).cloneRange()
+      selectedText.value = text
+      selectedRange.value = range
+
+      const containerRect = flipContainerRef.value.getBoundingClientRect()
+      const rect = range.getBoundingClientRect()
+      const menuWidth = 140
+      let left = rect.left - containerRect.left + rect.width / 2 - menuWidth / 2
+      left = Math.max(8, Math.min(left, containerRect.width - menuWidth - 8))
+      const top = rect.bottom - containerRect.top + 8
+
+      actionMenuStyle.value = {
+        left: `${left}px`,
+        top: `${Math.min(top, containerRect.height - 60)}px`,
+        width: `${menuWidth}px`
+      }
+      showActionMenu.value = true
     }
     document.addEventListener('selectionchange', selectionListener)
   }
@@ -130,71 +149,26 @@ export function useAnnotation(flipContainerRef, currentPage) {
     }
   }
 
-  function addClickOutsideListener() {
-    if (clickOutsideHandler) return
-    clickOutsideHandler = (event) => {
-      const menu = document.querySelector('.action-menu')
-      if (menu && !menu.contains(event.target)) {
-        closeActionMenu()
-      }
-    }
-    document.addEventListener('mousedown', clickOutsideHandler, true)
-  }
-
-  function removeClickOutsideListener() {
-    if (clickOutsideHandler) {
-      document.removeEventListener('mousedown', clickOutsideHandler, true)
-      clickOutsideHandler = null
-    }
-  }
-
   async function chooseComment() {
     const text = selectedText.value
     const range = selectedRange.value
     if (!text || !range) return
-    closeActionMenu()
+    showActionMenu.value = false
     highlightText(text, range)
     const comment = await generateComment(text)
     showResultCard(text, range, comment)
+    window.getSelection()?.removeAllRanges()
   }
 
   function chooseSearch() {
     const text = selectedText.value
     if (!text) return
-    closeActionMenu()
+    showActionMenu.value = false
     window.dispatchEvent(new CustomEvent('search-text', { detail: { text } }))
+    window.getSelection()?.removeAllRanges()
   }
 
-  function onMouseUp(event) {
-    event.preventDefault()
-    const selection = window.getSelection()
-    const text = selection.toString().trim()
-    if (text.length === 0) return
-
-    const range = selection.getRangeAt(0).cloneRange()
-    selectedText.value = text
-    selectedRange.value = range
-
-    const containerRect = flipContainerRef.value.getBoundingClientRect()
-    const rect = range.getBoundingClientRect()
-    const menuWidth = 140
-    let left = rect.left - containerRect.left + rect.width / 2 - menuWidth / 2
-    left = Math.max(8, Math.min(left, containerRect.width - menuWidth - 8))
-    const top = rect.bottom - containerRect.top + 8
-
-    actionMenuStyle.value = {
-      left: `${left}px`,
-      top: `${Math.min(top, containerRect.height - 60)}px`,
-      width: `${menuWidth}px`
-    }
-    showActionMenu.value = true
-
-    // 延迟添加选区监听，避免因浏览器自身的选区变化而立即关闭菜单
-    setTimeout(() => {
-      addSelectionListener()
-      addClickOutsideListener()
-    }, 200)
-  }
+  // 不再自动调用 initSelectionListener，由组件主动调用
 
   return {
     showCommentCard,
@@ -204,9 +178,10 @@ export function useAnnotation(flipContainerRef, currentPage) {
     annotations,
     showActionMenu,
     actionMenuStyle,
-    onMouseUp,
     closeCard,
     chooseComment,
-    chooseSearch
+    chooseSearch,
+    initSelectionListener,   // ★ 暴露启动函数
+    removeSelectionListener
   }
 }

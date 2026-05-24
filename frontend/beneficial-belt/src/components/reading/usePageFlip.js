@@ -149,8 +149,8 @@ export function usePageFlip(flipContainerRef, reader, width, height) {
 
   async function flipToCoverAnimated() {
     if (!pageFlip) return
-    const STEP_DELAY = 180
-    const COVER_PAUSE = 1000
+    const STEP_DELAY = 120
+    const COVER_PAUSE = 500
     const current = pageFlip.getCurrentPageIndex()
 
     if (current === 0) {
@@ -158,12 +158,12 @@ export function usePageFlip(flipContainerRef, reader, width, height) {
       return
     }
 
-    if (current > 5) {
+    if (current > 3) {
       pageFlip.turnToPage?.(5) ?? pageFlip.flip?.(5)
       await new Promise(r => requestAnimationFrame(r))
     }
 
-    for (let i = 0; i < 5; i++) {
+    for (let i = 0; i < 3; i++) {
       if (pageFlip.getCurrentPageIndex() <= 0) break
       pageFlip.flipPrev()
       await new Promise(resolve => {
