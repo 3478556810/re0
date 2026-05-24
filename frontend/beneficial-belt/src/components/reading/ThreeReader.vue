@@ -72,7 +72,25 @@ let currentFontSize = null
 
 const width = ref(550)
 const height = ref(700)
+function updatePageSize() {
+  const isMobile = window.innerWidth <= 768
+  if (isMobile) {
+    width.value = Math.floor(window.innerWidth * 0.92)
+    height.value = Math.floor(window.innerHeight * 0.85)
+  } else {
+    width.value = 550
+    height.value = 700
+  }
+}
 
+let resizeTimer
+const handleResize = () => {
+  clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(() => {
+    updatePageSize()
+    reInit() // 尺寸变化后重新排版
+  }, 300)
+}
 // 翻页核心
 const {
   currentPage,
@@ -199,6 +217,7 @@ watch(() => props.reader.fontSize.value, (v) => {
 watch(() => props.reader.fullText.value, () => reInit())
 
 onMounted(async () => {
+    updatePageSize() // 初始尺寸
   startClock()
   await nextTick()
   try {
@@ -215,8 +234,10 @@ onMounted(async () => {
   }
   flipContainerRef.value?.addEventListener('mouseup', onMouseUp)
   document.addEventListener('keydown', onKeyDown)
+  window.addEventListener('resize', handleResize)
 })
 onBeforeUnmount(() => {
+    window.removeEventListener('resize', handleResize)
   flipContainerRef.value?.removeEventListener('mouseup', onMouseUp)
   document.removeEventListener('keydown', onKeyDown)
   destroyFlip()
@@ -305,5 +326,28 @@ defineExpose({
 .annotation-item * {
   writing-mode: horizontal-tb !important;
   text-orientation: mixed !important;
+}
+
+/* ========== 移动端适配 ========== */
+@media (max-width: 768px) {
+  .three-reader {
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+    background: #fafafa;
+  }
+
+  .footer-info {
+    bottom: 12px;
+    left: 16px;
+    right: 16px;
+    font-size: 10px;
+  }
+
+  .flip-tap-area {
+    width: 15%;
+  }
 }
 </style>
