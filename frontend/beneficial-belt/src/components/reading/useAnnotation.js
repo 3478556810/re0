@@ -136,11 +136,13 @@ export function useAnnotation(flipContainerRef, currentPage) {
     const text = selection.toString().trim()
     if (text.length === 0) return
 
+    // 防止翻页事件
     event.stopPropagation()
     const range = selection.getRangeAt(0).cloneRange()
     selectedText.value = text
     selectedRange.value = range
 
+    // 使用视口坐标
     const rect = range.getBoundingClientRect()
     const menuWidth = 140
     let left = rect.left + rect.width / 2 - menuWidth / 2
@@ -158,10 +160,12 @@ export function useAnnotation(flipContainerRef, currentPage) {
     }
     showActionMenu.value = true
 
-    // 立即清除选区，防止浏览器弹出自己的菜单
-    window.getSelection()?.removeAllRanges()
+    // 延迟清除选区，保持高亮直到菜单显示
+    setTimeout(() => {
+      window.getSelection()?.removeAllRanges()
+    }, 0)
 
-    // 移除旧的外部点击监听
+    // 外部点击关闭
     if (outsideClickListener) {
       document.removeEventListener('mousedown', outsideClickListener)
     }

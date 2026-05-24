@@ -4,7 +4,7 @@
     <div v-else-if="reader.error.value" class="status-msg error">{{ reader.error.value }}</div>
 
     <template v-else>
-      <div class="toolbar"  :class="{ 'mobile-hidden': isMobile && !showToolbar }" @dblclick="showToolbar = !showToolbar">
+      <div class="toolbar"  >
 
 
 
