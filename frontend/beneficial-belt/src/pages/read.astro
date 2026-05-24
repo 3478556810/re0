@@ -21,21 +21,20 @@ import ReaderView from '../components/reading/ReaderView.vue';
 </html>
 
 <style>
-    html, body {
-    height: 100%;
-    margin: 0;
-    overflow: hidden;
-  }
-.reader-page {
- max-width: 100%;  /* 足够容纳 550px 卡片 + 240px 侧边栏 + 间距 */
-  width: 100%;
-  margin: 0 auto;
-  padding: 0 16px;
-  height: 100vh;
-  box-sizing: border-box;
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
 }
-
+.reader-page {
+  width: 100%;
+  height: 100vh;
+  padding: 0;
+  margin: 0;
+  overflow: hidden;
+  max-width: 100%;
+}
 body {
   margin: 0;
   padding: 0;

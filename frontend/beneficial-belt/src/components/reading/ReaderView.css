@@ -22,33 +22,33 @@
   padding: 4px 10px; border-radius: 6px; cursor: pointer;
 }
 
-/* ========== 主体区域：三列，确保不遮挡 ========== */
+/* ========== 主体区域：三列 ========== */
 .reader-body {
   display: flex;
   flex: 1;
   min-height: 0;
   overflow: hidden;
   padding: 0;
-  gap: 16px;                /* ★ 增加列间距，防止重叠 */
+  gap: 16px;
 }
 
-/* 左侧空白占位，与右侧面板等宽 */
+/* 左侧空白占位 */
 .left-spacer {
   width: 460px;
   flex-shrink: 0;
 }
 
-/* 书页卡片：不再贪婪伸缩，限制最大宽度，留出右侧安全距离 */
+/* 书页卡片 */
 .reader-card {
-  flex: 0 1 auto;           /* ★ 不强行扩展，只占据内容所需空间 */
-  max-width: 550px;         /* 确保不会超过书页本身宽度 */
+  flex: 0 1 auto;
+  max-width: 550px;
   min-width: 0;
   margin: 8px 0;
   display: flex;
   justify-content: center;
   align-items: flex-start;
   position: relative;
-  z-index: 1;              /* 稍低的层级，让右侧面板可以覆盖溢出 */
+  z-index: 1;
 }
 
 /* 书页固定尺寸 */
@@ -61,7 +61,7 @@
   box-shadow: 0 8px 30px rgba(0,0,0,0.08);
 }
 
-/* 右侧面板容器（笔记上，侧边栏下） */
+/* 右侧面板容器 */
 .right-panels {
   width: 460px;
   flex-shrink: 0;
@@ -71,10 +71,10 @@
   gap: 12px;
   min-height: 0;
   position: relative;
-  z-index: 2;              /* ★ 高于书页，确保不被遮挡 */
+  z-index: 2;
 }
 
-/* 笔记与侧边栏等宽，禁止横向滚动 */
+/* 笔记与侧边栏 */
 .notes-panel,
 .side-panel {
   flex: 1;
@@ -96,17 +96,8 @@
   padding: 24px 32px;
   box-sizing: border-box;
 }
-.reader-scroller,
-.reader-scroller *,
-.dynamic-scroller-item,
-.dynamic-scroller-item *,
-.vue-recycle-scroller__item-view,
-.vue-recycle-scroller__item-view * {
-  color: inherit !important;
-}
-.text-block { color: var(--text-primary, #0f172a); }
 
-/* 目录浮层保持不变 */
+/* 目录浮层 */
 .outline-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); z-index: 20; display: flex; justify-content: center; align-items: center; }
 .outline-panel { background: #fff; width: 90%; max-width: 400px; max-height: 70vh; border-radius: 12px; overflow: hidden; display: flex; flex-direction: column; }
 .outline-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
@@ -127,49 +118,69 @@
 .bm-page { color: var(--text-secondary); font-size: 0.8rem; }
 
 /* ========== 移动端适配 ========== */
+/* ========== 移动端适配 ========== */
+/* ========== 移动端适配 ========== */
+/* ========== 移动端适配 ========== */
 @media (max-width: 768px) {
-  /* 隐藏左侧读书笔记和右侧侧边栏 */
+  /* 根容器全屏 */
+  .reader-root {
+    height: 100vh;
+  }
+
+  /* 隐藏左右面板 */
+  .left-spacer,
+  .right-panels,
   .notes-panel,
   .side-panel {
     display: none !important;
   }
 
-  /* 移除左右空白占位 */
-  .left-spacer,
-  .right-panels {
-    display: none !important;
-  }
-
-  /* 阅读器主体区域：只留书页居中 */
+  /* 主体区域填满 */
   .reader-body {
-    justify-content: center;
-    gap: 0;
-  }
-
-  /* 书页卡片：取消固定宽度，使用 flex 居中，并撑满可用高度 */
-  .reader-card {
-    width: 100%;
-    max-width: 100%;
-    margin: 0;
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 100%;
+    padding: 0 !important;
+    margin: 0 !important;
+    gap: 0 !important;
   }
 
-  /* 3D 翻书容器：去掉固定尺寸，由 JS 动态设置 */
+  /* 书页外层卡片：清空所有可能产生留白的属性 */
+  .reader-card {
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    flex: 1 1 auto !important;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+
+  /* 3D 容器填满 */
   .three-reader-wrapper {
     width: 100% !important;
     height: 100% !important;
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: transparent !important;
   }
 
-  /* 工具栏：缩小内边距，换行或缩小按钮 */
+  /* 工具栏紧凑 */
   .toolbar {
     padding: 8px 12px;
-    flex-wrap: wrap;
+    flex-shrink: 0;
   }
   .tb-title {
     font-size: 0.9rem;
@@ -186,11 +197,46 @@
     gap: 4px;
   }
 
-  /* 页脚信息：缩小字体，调整位置 */
-  .footer-info {
-    font-size: 10px;
-    bottom: 4px;
-    left: 12px;
-    right: 12px;
+  /* 移动端面板浮层 */
+  .mobile-panel-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.2);
+    z-index: 90;
+    display: flex;
+    justify-content: center;
+  }
+  .mobile-panel {
+    background: #fff;
+    width: 100%;
+    height: calc(100vh - 60px);
+    margin-top: 60px;
+    border-radius: 0 0 16px 16px;
+    overflow-y: auto;
+    box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  }
+  .mobile-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    border-bottom: 1px solid #e2e8f0;
+    font-weight: 600;
+  }
+  .mobile-panel-content {
+    padding: 8px;
+  }
+
+  .slide-down-enter-active,
+  .slide-down-leave-active {
+    transition: transform 0.3s ease;
+  }
+  .slide-down-enter-from,
+  .slide-down-leave-to {
+    transform: translateY(-100%);
   }
 }
+
