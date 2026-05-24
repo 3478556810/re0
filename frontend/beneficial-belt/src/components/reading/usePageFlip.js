@@ -8,6 +8,7 @@ export function usePageFlip(flipContainerRef, reader, width, height, statusMsg, 
   const totalPages = ref(0)
   let pageFlip = null
   let taskId = 0
+  let worker = null
 
   function escapeHtml(str) {
     const div = document.createElement('div')
@@ -25,6 +26,10 @@ export function usePageFlip(flipContainerRef, reader, width, height, statusMsg, 
   }
 
   function destroyFlip() {
+    if (worker) {
+      worker.terminate()
+      worker = null
+    }
     if (pageFlip) {
       try { pageFlip.off('flip'); pageFlip.destroy() } catch (e) {}
       pageFlip = null
@@ -33,6 +38,89 @@ export function usePageFlip(flipContainerRef, reader, width, height, statusMsg, 
       const pages = flipContainerRef.value.querySelectorAll('.flip-page')
       pages.forEach(p => p.remove())
     }
+  }
+
+  // 带超时的 Worker 分页，失败则回退到主线程分片
+  async function paginateInWorker(text, fontSize, w, h, bookId, onProgress) {
+    return new Promise((resolve, reject) => {
+      if (worker) {
+        worker.terminate()
+        worker = null
+      }
+
+      try {
+        worker = new Worker(
+          new URL('./pagination.worker.js', import.meta.url),
+          { type: 'module' }
+        )
+      } catch (e) {
+        console.warn('Worker 创建失败，回退到主线程分页')
+        resolve(paginateInChunks(text, fontSize, w, h, onProgress))
+        return
+      }
+
+      let timeoutId = setTimeout(() => {
+        console.warn('Worker 超时，回退到主线程分页')
+        worker.terminate()
+        worker = null
+        resolve(paginateInChunks(text, fontSize, w, h, onProgress))
+      }, 30000) // 30秒超时
+
+      worker.onmessage = (e) => {
+        clearTimeout(timeoutId)
+        const { type, percent, pages, message } = e.data
+        if (type === 'progress') {
+          onProgress(percent, `正在精确排版... ${percent}%`)
+        } else if (type === 'result') {
+          resolve(pages)
+          worker.terminate()
+          worker = null
+        } else if (type === 'error') {
+          reject(new Error(message))
+          worker.terminate()
+          worker = null
+        }
+      }
+
+      worker.onerror = (err) => {
+        clearTimeout(timeoutId)
+        console.error('Worker 出错:', err)
+        worker.terminate()
+        worker = null
+        // 回退到主线程
+        resolve(paginateInChunks(text, fontSize, w, h, onProgress))
+      }
+
+      worker.postMessage({ text, fontSize, pageWidth: w, pageHeight: h })
+    })
+  }
+
+  // 主线程分片分页（回退方案）
+  async function paginateInChunks(text, fontSize, pageWidth, pageHeight, onProgress) {
+    const paragraphs = text.split('\n')
+    const total = paragraphs.length
+    let bodyPages = []
+
+    const CHUNK_SIZE = 300
+    let chunkIndex = 0
+    while (chunkIndex * CHUNK_SIZE < total) {
+      const start = chunkIndex * CHUNK_SIZE
+      const end = Math.min(start + CHUNK_SIZE, total)
+      const chunkText = paragraphs.slice(start, end).join('\n')
+
+      const chunkPages = await exactPaginate(chunkText, fontSize, pageWidth, pageHeight, () => {})
+
+      bodyPages = bodyPages.concat(chunkPages)
+
+      const progress = Math.floor((end / total) * 90)
+      onProgress(progress, `正在精确排版... ${progress}%`)
+
+      await new Promise(resolve => setTimeout(resolve, 0))
+      chunkIndex++
+    }
+
+    onProgress(100, '排版完成')
+    return bodyPages
   }
 
   async function initFlip() {
@@ -53,12 +141,11 @@ export function usePageFlip(flipContainerRef, reader, width, height, statusMsg, 
       let htmlPages = await getCachedPages(bookId, fontSize, w, h)
 
       if (!htmlPages) {
-        // ★ 使用传入的状态更新进度
         statusMsg.value = '正在精确排版... 0%'
         progressPercent.value = 0
 
-        const bodyPages = await exactPaginate(text, fontSize, w, h, (pct) => {
-          statusMsg.value = `正在精确排版... ${pct}%`
+        const bodyPages = await paginateInWorker(text, fontSize, w, h, bookId, (pct, msg) => {
+          statusMsg.value = msg
           progressPercent.value = pct
         })
 
@@ -88,18 +175,12 @@ export function usePageFlip(flipContainerRef, reader, width, height, statusMsg, 
       if (id !== taskId || !flipContainerRef.value) return
 
       pageFlip = new PageFlip(flipContainerRef.value, {
-        width: w,
-        height: h,
-        size: 'fixed',
-        autoSize: false,
-        usePortrait: true,
-        showCover: true,
-        maxShadowOpacity: 0.1,
-        flippingTime: 400,
-        swipeDistance: 30,
-        useMouseEvents: false,
-        mobileScrollSupport: false,
-        renderWhileFlipping: false,
+        width: w, height: h,
+        size: 'fixed', autoSize: false,
+        usePortrait: true, showCover: true,
+        maxShadowOpacity: 0.1, flippingTime: 400,
+        swipeDistance: 30, useMouseEvents: false,
+        mobileScrollSupport: false, renderWhileFlipping: false,
       })
       pageFlip.loadFromHTML(pageElements)
       totalPages.value = Math.max(0, htmlPages.length - 2)
@@ -157,7 +238,7 @@ export function usePageFlip(flipContainerRef, reader, width, height, statusMsg, 
   async function flipToCoverAnimated() {
     if (!pageFlip) return
     const STEP_DELAY = 120
-    const COVER_PAUSE = 500
+    const COVER_PAUSE = 1500   // ★ 封面停留 1.5 秒
     const current = pageFlip.getCurrentPageIndex()
 
     if (current === 0) {
@@ -187,16 +268,8 @@ export function usePageFlip(flipContainerRef, reader, width, height, statusMsg, 
   function flipNext() { if (pageFlip) pageFlip.flipNext() }
 
   return {
-    currentPage,
-    totalPages,
-    pageFlip,
-    initFlip,
-    destroyFlip,
-    flipToPage,
-    flipToPhysicalPage,
-    jumpToChapter,
-    flipToCoverAnimated,
-    flipPrev,
-    flipNext,
+    currentPage, totalPages, pageFlip, initFlip, destroyFlip,
+    flipToPage, flipToPhysicalPage, jumpToChapter,
+    flipToCoverAnimated, flipPrev, flipNext,
   }
 }
