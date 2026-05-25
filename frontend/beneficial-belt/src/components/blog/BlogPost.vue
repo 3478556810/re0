@@ -76,13 +76,23 @@ onMounted(async () => {
 </script>
 
 <style scoped>
+/* 强制允许滚动（覆盖全局锁定） */
+:global(html), :global(body) {
+  overflow: auto !important;
+  height: auto !important;
+  -webkit-overflow-scrolling: touch;
+}
+
 .blog-container {
   max-width: 860px;
   margin: 0 auto;
   padding: 2rem 1.5rem;
-  min-height: 70vh;
+  min-height: 100vh;          /* 确保内容超出时有滚动空间 */
+  overflow-y: auto;           /* 允许垂直滚动 */
+  -webkit-overflow-scrolling: touch; /* 移动端平滑滚动 */
 }
 
+/* 其余原有样式保持不变 */
 .status-message {
   text-align: center;
   padding: 4rem 2rem;
