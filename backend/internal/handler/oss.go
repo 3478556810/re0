@@ -2,7 +2,6 @@ package handler
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -416,43 +415,9 @@ func RandomImageWithAI(c *gin.Context) {
 	selected := records[rand.Intn(len(records))]
 	imageURL := fmt.Sprintf("/api/images/view?rel_path=%s", selected.RelPath)
 
-	// 获取图片二进制数据（用于 base64）
-	var imageBase64 string
-	// 优先本地读取
-	if data, err := os.ReadFile(selected.LocalPath); err == nil {
-		imageBase64 = base64.StdEncoding.EncodeToString(data)
-	} else {
-		// 本地不存在则从 OSS 读取
-		client, err := oss.New(
-			os.Getenv("OSS_ENDPOINT"),
-			os.Getenv("OSS_ACCESS_KEY_ID"),
-			os.Getenv("OSS_ACCESS_KEY_SECRET"),
-		)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "OSS初始化失败"})
-			return
-		}
-		bucket, err := client.Bucket(os.Getenv("OSS_BUCKET_NAME"))
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Bucket访问失败"})
-			return
-		}
-		body, err := bucket.GetObject(selected.RelPath)
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "读取图片失败"})
-			return
-		}
-		defer body.Close()
-		data, _ := io.ReadAll(body)
-		imageBase64 = base64.StdEncoding.EncodeToString(data)
-	}
-
 	// 调用 AI 分析图片（复用你的 AnalyzeImage 函数）
-	question := "你是约稿作家被拜托写下海文章，请用细节露骨的话描述这张图片，字数200字左右。"
-	aiComment, err := AnalyzeImage(imageBase64, question)
-	if err != nil || aiComment == "" {
-		aiComment = "一张美好的图片" // fallback
-	}
+	question := "请模仿柳永的风格写一首青词"
+	aiComment := askDeepSeekSimple(question)
 
 	// 缓存到 Redis（有效期至次日零点）
 	if redisEnabled {
