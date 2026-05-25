@@ -3,14 +3,21 @@ package handler
 import (
 	"backend/internal/middleware"
 	"context"
+	"fmt"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
-func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore) {
-	r.DELETE("/api/images", DeleteImage)
+func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore, sessionStore *SessionStore) {
+	r.GET("/api/sessions/:id", func(c *gin.Context) {
+		id := c.Param("id")
+		history := sessionStore.Get(id)
+		c.JSON(200, history)
+	})
+
+	r.DELETE("/api/images/remove", DeleteImage)
 	r.POST("/api/upload", UploadToOSS)
 
 	r.GET("/api/images", ListImages)
@@ -68,9 +75,19 @@ func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore) {
 	r.GET("/api/images/random", RandomImageWithAI)
 	r.DELETE("/api/tags", DeleteTag)
 
+	r.GET("/api/sessions", func(c *gin.Context) {
+		sessions := sessionStore.List()
+		c.JSON(200, sessions)
+	})
+
+	r.POST("/api/sessions", func(c *gin.Context) {
+		id := fmt.Sprintf("sess_%d", time.Now().UnixNano())
+		c.JSON(200, gin.H{"session_id": id})
+	})
+
 	// 聊天接口（限流）
 
-	r.POST("/api/chat", func(c *gin.Context) { HandleChat(c, memoryStore) })
+	r.POST("/api/chat", func(c *gin.Context) { HandleChat(c, memoryStore, sessionStore) })
 
 	// 博客接口
 	r.GET("/api/posts", GetPosts)

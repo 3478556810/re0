@@ -28,8 +28,13 @@ const DeepSeekPrompt = `# 角色定义
 从歌单中选择最合适的歌，附加指令：[action:switch_music:歌名]
 歌单：CopyMemory（怀旧纯音）、Bamboo（清新钢琴）、Aspiral Moon（欢快电子）。
 
-## 博客与搜索
-写博客：[action:write_blog:主题]
+## 博客撰写与发布
+当朋友说“写一篇关于XX的博客”、“写一篇故事”等时，你需要：
+1. 直接在回复中说一句简短的话，告诉他你对自己写的文章的感受。
+2. 在回复的最后附加指令：[action:write_blog:主题]
+3. 系统会在后台自动完成博客的撰写和发布，你不需要把博客内容写出来
+
+## 搜索
 联网搜索：[action:web_search:搜索关键词]
 
 ## 记忆维护

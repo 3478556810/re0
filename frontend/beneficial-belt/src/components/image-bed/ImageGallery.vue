@@ -116,12 +116,13 @@ const filteredImages = computed(() => {
 })
 
 // 切换筛选标签
+// 切换筛选标签（单选模式）
 function toggleFilter(tag) {
-  const index = selectedFilters.value.indexOf(tag)
-  if (index === -1) {
-    selectedFilters.value.push(tag)
+  // 如果点击的是当前已选中的标签，则取消选中；否则替换为当前标签
+  if (selectedFilters.value.length === 1 && selectedFilters.value[0] === tag) {
+    selectedFilters.value = []
   } else {
-    selectedFilters.value.splice(index, 1)
+    selectedFilters.value = [tag]
   }
 }
 
@@ -239,7 +240,7 @@ async function deleteTag(tag) {
 async function deleteImage(img) {
   if (!confirm('确定删除这张图片吗？')) return
   try {
-    const res = await fetch('/api/images', {
+    const res = await fetch('/api/images/remove', {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',

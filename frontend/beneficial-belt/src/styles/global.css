@@ -359,7 +359,7 @@ body {
 /* 强制 html, body 全屏无滚动 */
 html, body {
   height: 100%;
-  overflow: hidden;
+  /* overflow: hidden; */
   margin: 0;
   padding: 0;
 }
@@ -435,7 +435,16 @@ html, body {
 }
 
 /* 如果仍然出现滚动条，可让 body 强制隐藏 */
-body {
-  overflow: hidden;
-  padding-top: 0;
-}
+
+ body {
+    overflow: hidden !important;
+    height: 100vh;
+  }
+  .app-container {
+    height: 100vh;
+    overflow: hidden;
+  }
+  .content {
+    overflow-y: auto;
+    flex: 1;
+  }
