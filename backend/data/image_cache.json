@@ -27,15 +27,6 @@
     "created_at": "2026-05-25T18:41:25+08:00"
   },
   {
-    "rel_path": "img/1779705686745109300.png",
-    "local_path": "data\\images\\img\\1779705686745109300.png",
-    "tags": [
-      "MS"
-    ],
-    "size": 1247448,
-    "created_at": "2026-05-25T18:41:30+08:00"
-  },
-  {
     "rel_path": "img/1779705688961358000.png",
     "local_path": "data\\images\\img\\1779705688961358000.png",
     "tags": [
@@ -52,15 +43,6 @@
     ],
     "size": 1096546,
     "created_at": "2026-05-25T18:57:37+08:00"
-  },
-  {
-    "rel_path": "img/1779706660537339700.png",
-    "local_path": "data\\images\\img\\1779706660537339700.png",
-    "tags": [
-      "MS"
-    ],
-    "size": 1227636,
-    "created_at": "2026-05-25T18:57:43+08:00"
   },
   {
     "rel_path": "img/1779706663027960100.png",
@@ -81,15 +63,6 @@
     "created_at": "2026-05-25T19:04:28+08:00"
   },
   {
-    "rel_path": "img/1779707089320929200.png",
-    "local_path": "data\\images\\img\\1779707089320929200.png",
-    "tags": [
-      "MS"
-    ],
-    "size": 1304476,
-    "created_at": "2026-05-25T19:04:53+08:00"
-  },
-  {
     "rel_path": "img/1779707759421828700.png",
     "local_path": "data\\images\\img\\1779707759421828700.png",
     "tags": [
@@ -106,57 +79,5 @@
     ],
     "size": 1241009,
     "created_at": "2026-05-25T19:16:05+08:00"
-  },
-  {
-    "rel_path": "img/1779708694822210200.png",
-    "local_path": "data\\images\\img\\1779708694822210200.png",
-    "tags": [
-      "Sexy"
-    ],
-    "size": 1364380,
-    "created_at": "2026-05-25T19:31:38+08:00"
-  },
-  {
-    "rel_path": "img/1779708698170818500.png",
-    "local_path": "data\\images\\img\\1779708698170818500.png",
-    "tags": [
-      "Sexy"
-    ],
-    "size": 1197889,
-    "created_at": "2026-05-25T19:31:41+08:00"
-  },
-  {
-    "rel_path": "img/1779709158474065400.png",
-    "local_path": "data\\images\\img\\1779709158474065400.png",
-    "tags": [
-      "Sexy"
-    ],
-    "size": 1242298,
-    "created_at": "2026-05-25T19:39:24+08:00"
-  },
-  {
-    "rel_path": "img/1779709161841302000.png",
-    "local_path": "data\\images\\img\\1779709161841302000.png",
-    "tags": [
-      "Sexy"
-    ],
-    "size": 1318978,
-    "created_at": "2026-05-25T19:39:28+08:00"
-  },
-  {
-    "rel_path": "img/1779709164763271700.png",
-    "local_path": "data\\images\\img\\1779709164763271700.png",
-    "tags": [
-      "Sexy"
-    ],
-    "size": 1136231,
-    "created_at": "2026-05-25T19:39:30+08:00"
-  },
-  {
-    "rel_path": "img/1779712747882785100.png",
-    "local_path": "data\\images\\img\\1779712747882785100.png",
-    "tags": [],
-    "size": 1299728,
-    "created_at": "2026-05-25T20:39:11+08:00"
   }
 ]

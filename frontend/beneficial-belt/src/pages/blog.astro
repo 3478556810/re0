@@ -1,31 +1,97 @@
 ﻿---
 import NavBar from '../components/NavBar.astro';
-import ChatWidget from '../components/shanxi/ChatWidget.vue';
+
 import PostList from '../components/blog/PostList.vue';
 import AuthGuard from '../components/AuthGuard.astro';
 ---
 
-<html>
+<!doctype html>
+<html lang="zh-CN">
   <head>
     <AuthGuard />
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
     <title>杉汐的日记本 | 杉汐的星尘核心</title>
     <style>
-      @import "/src/styles/global.css";
+      /* ========== 白蓝极简重置 ========== */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      /* 强制解除滚动锁定 */
+      html, body {
+        height: auto !important;
+        min-height: 100%;
+        overflow: auto !important;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      body {
+        background: #ffffff;
+        font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        color: #0f172a;
+        line-height: 1.5;
+      }
+
+      /* 主容器：自然滚动 */
+      .blog-container {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 4rem;
+        min-height: 100vh;
+        background: #ffffff;
+      }
+
+      /* 头部样式 */
+      .blog-header {
+        text-align: center;
+        margin-bottom: 3rem;
+      }
+
+      .blog-header h1 {
+        font-size: 2.2rem;
+        font-weight: 600;
+        color: #2563eb;
+        letter-spacing: -0.3px;
+        margin-bottom: 0.5rem;
+      }
+
+      .blog-header p {
+        font-size: 1rem;
+        color: #475467;
+        max-width: 500px;
+        margin: 0 auto;
+      }
+
+      /* 文章列表容器（PostList 组件将在此渲染） */
+      .post-list-wrapper {
+        width: 100%;
+      }
+
+      /* 响应式调整 */
+      @media (max-width: 640px) {
+        .blog-container {
+          padding: 1.2rem 1rem 2.5rem;
+        }
+        .blog-header h1 {
+          font-size: 1.8rem;
+        }
+      }
     </style>
   </head>
   <body>
     <NavBar />
-    <ChatWidget client:only="vue" />
-
     <div class="blog-container">
       <div class="blog-header">
         <h1>杉汐的日记本</h1>
         <p>她在这里记录自己的思考、成长，和与朋友的故事。</p>
       </div>
-      <!-- 手动发布编辑器已暂时隐藏 -->
-      <PostList client:only="vue" />
+      <!-- PostList 组件自带滚动和内部样式，不再受全局影响 -->
+      <div class="post-list-wrapper">
+        <PostList client:only="vue" />
+      </div>
     </div>
   </body>
 </html>
