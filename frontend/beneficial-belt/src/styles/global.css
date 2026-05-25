@@ -351,3 +351,91 @@ body {
   z-index: 100;
   /* 你已有的其他样式 */
 }
+
+/* ========================================
+   修复主页布局：今日一图 + 轮播图 无滚动条
+   ======================================== */
+
+/* 强制 html, body 全屏无滚动 */
+html, body {
+  height: 100%;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+}
+
+/* 应用容器占满全屏，垂直 flex */
+.app-container {
+  height: 100vh;
+  max-width: none;
+  margin: 0;
+  padding: 0 100px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* 内容区域：自动撑满，内部不再滚动（确保所有内容可见） */
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;  /* 垂直居中，避免顶部拥挤 */
+  align-items: center;
+  gap: 12px;
+  overflow: visible;        /* 不允许滚动 */
+  padding: 12px 20px;
+  min-height: 0;            /* 允许flex收缩 */
+}
+
+/* 强制缩小今日一图卡片（覆盖 DailyImage 内部样式） */
+.daily-card {
+  max-width: 480px !important;
+  padding: 12px 16px !important;
+  margin: 4px auto !important;
+}
+.daily-card .daily-header {
+  margin-bottom: 8px !important;
+}
+.daily-card .image-wrapper img {
+  max-height: 140px !important;   /* 大幅降低图片高度 */
+  object-fit: contain;
+}
+.daily-card .comment {
+  padding: 10px !important;
+  font-size: 0.8rem !important;
+}
+
+/* 强制缩小轮播图区域 */
+.gallery-section {
+  margin: 8px auto 0 auto !important;
+  max-width: 900px;
+}
+.gallery-section .gallery-card {
+  width: 120px !important;
+}
+.gallery-section .card-image {
+  height: 120px !important;
+}
+.gallery-section .nav-btn {
+  width: 28px !important;
+  height: 28px !important;
+}
+.gallery-section .carousel-track {
+  gap: 10px !important;
+}
+.gallery-section .dots {
+  margin-top: 8px !important;
+}
+
+/* 隐藏原有的技能云（确保不占用空间） */
+.skill-cloud {
+  display: none !important;
+}
+
+/* 如果仍然出现滚动条，可让 body 强制隐藏 */
+body {
+  overflow: hidden;
+  padding-top: 0;
+}

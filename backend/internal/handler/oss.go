@@ -1,9 +1,12 @@
 package handler
 
 import (
+	"context"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"io"
+	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -335,4 +338,138 @@ func DeleteImage(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "删除成功"})
+}
+
+// DeleteTag 删除指定标签（从所有图片的 tags 数组中移除）
+func DeleteTag(c *gin.Context) {
+	var req struct {
+		Tag string `json:"tag"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil || req.Tag == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "无效标签"})
+		return
+	}
+
+	mu.Lock()
+	defer mu.Unlock()
+	records := loadCacheNoLock()
+	changed := false
+
+	for i := range records {
+		newTags := make([]string, 0, len(records[i].Tags))
+		for _, t := range records[i].Tags {
+			if t != req.Tag {
+				newTags = append(newTags, t)
+			}
+		}
+		if len(newTags) != len(records[i].Tags) {
+			records[i].Tags = newTags
+			changed = true
+		}
+	}
+
+	if !changed {
+		c.JSON(http.StatusNotFound, gin.H{"error": "标签不存在"})
+		return
+	}
+
+	if err := saveCacheNoLock(records); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "保存失败"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"status": "ok"})
+}
+
+// RandomImageWithAI 随机返回一张图片及其 AI 评价（按日期缓存）
+func RandomImageWithAI(c *gin.Context) {
+	force := c.Query("force") == "true"
+	date := time.Now().Format("2006-01-02")
+	cacheKey := fmt.Sprintf("daily_ai:%s", date)
+
+	// 尝试从 Redis 读取缓存（如果启用了 Redis）
+	if !force && redisEnabled {
+		val, err := redisClient.Get(context.Background(), cacheKey).Result()
+		if err == nil {
+			var cached struct {
+				ImageURL string `json:"imageUrl"`
+				Comment  string `json:"comment"`
+			}
+			if json.Unmarshal([]byte(val), &cached) == nil {
+				c.JSON(http.StatusOK, gin.H{
+					"imageUrl": cached.ImageURL,
+					"comment":  cached.Comment,
+				})
+				return
+			}
+		}
+	}
+
+	// 获取所有图片记录
+	records := loadCache()
+	if len(records) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "暂无图片"})
+		return
+	}
+
+	// 随机选一张
+	rand.Seed(time.Now().UnixNano())
+	selected := records[rand.Intn(len(records))]
+	imageURL := fmt.Sprintf("/api/images/view?rel_path=%s", selected.RelPath)
+
+	// 获取图片二进制数据（用于 base64）
+	var imageBase64 string
+	// 优先本地读取
+	if data, err := os.ReadFile(selected.LocalPath); err == nil {
+		imageBase64 = base64.StdEncoding.EncodeToString(data)
+	} else {
+		// 本地不存在则从 OSS 读取
+		client, err := oss.New(
+			os.Getenv("OSS_ENDPOINT"),
+			os.Getenv("OSS_ACCESS_KEY_ID"),
+			os.Getenv("OSS_ACCESS_KEY_SECRET"),
+		)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "OSS初始化失败"})
+			return
+		}
+		bucket, err := client.Bucket(os.Getenv("OSS_BUCKET_NAME"))
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Bucket访问失败"})
+			return
+		}
+		body, err := bucket.GetObject(selected.RelPath)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "读取图片失败"})
+			return
+		}
+		defer body.Close()
+		data, _ := io.ReadAll(body)
+		imageBase64 = base64.StdEncoding.EncodeToString(data)
+	}
+
+	// 调用 AI 分析图片（复用你的 AnalyzeImage 函数）
+	question := "你是约稿作家被拜托写下海文章，请用细节露骨的话描述这张图片，字数200字左右。"
+	aiComment, err := AnalyzeImage(imageBase64, question)
+	if err != nil || aiComment == "" {
+		aiComment = "一张美好的图片" // fallback
+	}
+
+	// 缓存到 Redis（有效期至次日零点）
+	if redisEnabled {
+		cacheData := struct {
+			ImageURL string `json:"imageUrl"`
+			Comment  string `json:"comment"`
+		}{ImageURL: imageURL, Comment: aiComment}
+		data, _ := json.Marshal(cacheData)
+		// 设置过期时间为第二天凌晨 0 点
+		tomorrow := time.Now().Add(24 * time.Hour)
+		nextMidnight := time.Date(tomorrow.Year(), tomorrow.Month(), tomorrow.Day(), 0, 0, 0, 0, tomorrow.Location())
+		ttl := nextMidnight.Sub(time.Now())
+		redisClient.Set(context.Background(), cacheKey, data, ttl)
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"imageUrl": imageURL,
+		"comment":  aiComment,
+	})
 }

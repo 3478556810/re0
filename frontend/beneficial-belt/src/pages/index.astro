@@ -5,6 +5,8 @@ import ThemeProvider from "../components/ThemeProvider.vue";
 import MusicPlayer from "../components/MusicPlayer.vue";
 import ShanxiHome from '../components/shanxi/ShanxiHome.vue'
 import AuthGuard from '../components/AuthGuard.astro';
+import DailyImage from '../components/DailyImage.vue';
+import RandomGallery from '../components/RandomGallery.vue';
 ---
 
 <!doctype html>
@@ -16,26 +18,19 @@ import AuthGuard from '../components/AuthGuard.astro';
     <title>杉汐的星尘核心</title>
     <style>
       @import "/src/styles/global.css";
-      </style>
-  
+      
+    </style>
   </head>
   <body>
     <ThemeProvider client:only="vue">
-  
-
       <div class="app-container">
         <NavBar />
         <div class="content">
-          
-
-         <ShanxiHome client:only="vue"/>
-          <div class="skill-cloud">
-            <span class="skill-tag">Java</span><span class="skill-tag">Go</span><span class="skill-tag">Astro</span><span class="skill-tag">Vue.js</span>
-            <span class="skill-tag">Redis</span><span class="skill-tag">Docker</span><span class="skill-tag">MySQL</span>
-            <span class="skill-tag">Spring Cloud</span><span class="skill-tag">DeepSeek</span><span class="skill-tag">UML</span>
-          </div>
+          <!-- 可选的 ShanxiHome 如果启用请取消注释 -->
+          <!-- <ShanxiHome client:only="vue" /> -->
+          <DailyImage client:only="vue" />
+          <RandomGallery client:only="vue" />
         </div>
-
         <ChatWidget client:only="vue" />
         <MusicPlayer client:only="vue" />
       </div>
