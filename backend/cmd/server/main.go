@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -46,10 +47,23 @@ func main() {
 	memoryStore := handler.NewMemoryStore(memoryPath)
 
 	// 注册路由
-	handler.RegisterRoutes(r, memoryStore)
+	homeDir, _ := os.UserHomeDir()
+	sessionPath := filepath.Join(homeDir, "shanxi_data", "sessions.json")
+	sessionStore := handler.NewSessionStore(sessionPath)
+	// 启动后台协程，每5分钟自动保存一次
+	go func() {
+		for {
+			time.Sleep(1 * time.Minute)
+			sessionStore.SaveToFile("/root/shanxi_data/sessions.json")
+		}
+	}()
+
+	// handler.RegisterRoutes 需要支持传入 sessionStore（或通过全局变量访问）
 
 	// 启动杉汐的记忆自动清理（每天20:00执行）
 	//memoryStore.StartMemoryCleaner()
+	// 动态获取用户目录，自动适配 Windows/Linux
 
+	handler.RegisterRoutes(r, memoryStore, sessionStore)
 	r.Run(":8080")
 }

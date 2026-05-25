@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"backend/internal/ai"
 
@@ -40,8 +41,9 @@ type ChatResponse struct {
 }
 
 type DSMessage struct {
-	Role    string `json:"role"`
-	Content string `json:"content"`
+	Role      string    `json:"role"`
+	Content   string    `json:"content"`
+	Timestamp time.Time `json:"timestamp"`
 }
 
 type DSReq struct {
@@ -61,8 +63,6 @@ type DSResp struct {
 		TotalTokens int `json:"total_tokens"`
 	} `json:"usage"`
 }
-
-var sessionStore = NewSessionStore()
 
 // ========== 辅助函数 ==========
 
@@ -137,7 +137,7 @@ func buildSystemPrompt(req ChatRequest, c *gin.Context, memoryStore *MemoryStore
 
 // ========== 核心处理函数 ==========
 
-func HandleChat(c *gin.Context, memoryStore *MemoryStore) {
+func HandleChat(c *gin.Context, memoryStore *MemoryStore, sessionStore *SessionStore) {
 	// 1. 解析请求
 	var req ChatRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -159,7 +159,7 @@ func HandleChat(c *gin.Context, memoryStore *MemoryStore) {
 
 	// 4. 调用模型
 	reply, tokenUsage, latency := askDeepSeekWithMessages(messages, req.Temperature, req.TopP, req.MaxTokens, req.ReasoningEffort)
-
+	fmt.Printf("🤖 AI原始回复: %q (长度: %d)\n", reply, len(reply))
 	// 更新会话历史
 	sessionStore.Append(req.SessionID, DSMessage{Role: "user", Content: req.Message})
 	sessionStore.Append(req.SessionID, DSMessage{Role: "assistant", Content: reply})
