@@ -94,4 +94,16 @@ function getExcerpt(content) {
   color: var(--text-secondary);
   line-height: 1.6;
 }
+
+/* 强制允许滚动（如果被全局锁住） */
+:global(html), :global(body) {
+  overflow: auto !important;
+  height: auto !important;
+}
+
+.post-list {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;  /* 改善移动端滚动惯性 */
+  max-height: 100vh;
+}
 </style>
