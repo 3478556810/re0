@@ -65,6 +65,8 @@ func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore) {
 		}
 		c.Data(http.StatusOK, "audio/wav", audio)
 	})
+	r.GET("/api/images/random", RandomImageWithAI)
+	r.DELETE("/api/tags", DeleteTag)
 
 	// 聊天接口（限流）
 

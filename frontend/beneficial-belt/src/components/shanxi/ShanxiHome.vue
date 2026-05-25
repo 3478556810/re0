@@ -36,7 +36,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { Icon } from '@iconify/vue'
-import ShanxiRoom3D from './ShanxiRoom3D.vue'
+import ShanxiRoom3D from '../../pages/ShanxiRoom3D.vue'
 const backendStatus = ref('活跃中')
 onMounted(() => {
   const states = ['活跃中', '发呆', '休眠', '忙碌']

@@ -1,20 +1,36 @@
 <template>
   <div class="cards-grid">
+    <!-- 阅读小屋卡片 -->
     <div class="tool-card" @click="goReading">
-   <div class="card-icon"><Icon icon="ph:books-duotone" width="32" color="var(--primary)" /></div>
+      <div class="card-icon"><Icon icon="ph:books-duotone" width="32" color="var(--primary)" /></div>
       <div class="card-content">
         <h3>阅读小屋</h3>
         <p>上传一本书，杉汐陪你一起读，随时讨论书中内容，还能为你朗读。</p>
       </div>
       <button class="card-btn" @click.stop="goReading">开启</button>
     </div>
+
+    <!-- 3D 小屋卡片（新增） -->
+    <div class="tool-card" @click="go3DRoom">
+      <div class="card-icon"><Icon icon="ph:cube-duotone" width="32" color="var(--primary)" /></div>
+      <div class="card-content">
+        <h3>3D 小屋</h3>
+        <p>走进杉汐的立体世界，自由探索，与她共处一室，体验沉浸式陪伴。</p>
+      </div>
+      <button class="card-btn" @click.stop="go3DRoom">进入</button>
+    </div>
   </div>
 </template>
 
 <script setup>
 import { Icon } from '@iconify/vue';
+
 const goReading = () => {
   window.location.href = '/reading-hut';
+};
+
+const go3DRoom = () => {
+  window.location.href = '/shanxi-room';
 };
 </script>
 
