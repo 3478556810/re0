@@ -112,6 +112,15 @@ import { useImageUpload } from './composables/useImageUpload.js'
 import { useVoicePlay } from './composables/useVoicePlay.js'
 import { useStatusPolling } from './composables/useStatusPolling.js'
 
+
+
+const props = defineProps({
+    sessionId: { type: String, default: '' }
+})
+
+// 如果父组件没传 sessionId，自己生成一个
+const currentSessionId = computed(() => props.sessionId || Date.now().toString(36))
+
 /* ========== 基础状态 ========== */
 const isOpen = ref(false)
 const isExpanded = ref(false)
@@ -206,6 +215,26 @@ const statusDotColor = computed(() => {
 
 /* ========== 自动滚动 ========== */
 const messagesContainer = ref(null)
+// 加载当前会话的历史消息
+
+
+onMounted(async () => {
+  const sid = sessionId.value // 来自 useSession
+  if (!sid) return
+  try {
+    const res = await fetch(`/api/sessions/${sid}`)
+    if (res.ok) {
+      const history = await res.json()
+      if (Array.isArray(history) && history.length > 0) {
+        messages.value = history.map(m => ({
+          id: msgId++,
+          content: m.content,
+          sender: m.role, // 注意：后端的字段是 'role'，不是 'sender'
+        }))
+      }
+    }
+  } catch(e) {}
+})
 watch(messages, () => {
   nextTick(() => {
     if (messagesContainer.value) {
