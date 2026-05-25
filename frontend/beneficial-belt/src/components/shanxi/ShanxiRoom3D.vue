@@ -1,121 +1,78 @@
 <template>
-  <TresCanvas :shadows="true" window-size>
-    <TresPerspectiveCamera ref="cameraRef" :position="[3, 2.5, 4]" />
+  <TresCanvas window-size>
+    <TresPerspectiveCamera :position="[0, 2, 5]" :lookAt="[0, 1, 0]" />
 
-    <TresAmbientLight :intensity="0.8" color="#fff5ee" />
-    <TresDirectionalLight :position="[2, 5, 3]" :intensity="1.2" color="#fffaf0" cast-shadow />
-    <TresPointLight :position="[2, 1.8, 1.5]" :intensity="lampIntensity" :color="lampColor" cast-shadow />
+    <!-- 环境光 + 方向光 -->
+    <TresAmbientLight :intensity="1" />
+    <TresDirectionalLight :position="[3, 5, 2]" :intensity="1.5" />
 
-    <RoomStructure />
-    <Desk />
-    <Bed />
-    <Bookshelf />
-    <Window />
+    <!-- 白色方块占位（确认场景渲染正常） -->
+    <TresMesh :position="[0, 0.5, 0]">
+      <TresBoxGeometry :args="[0.5, 0.5, 0.5]" />
+      <TresMeshStandardMaterial color="white" />
+    </TresMesh>
 
-    <ShanxiVRM ref="shanxiRef" :position="[0, 0, 0]" :scale="1" />
+    <!-- 杉汐模型 -->
+    <primitive v-if="model" :object="model" />
   </TresCanvas>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-import * as THREE from 'three'
+import { shallowRef, onMounted } from 'vue'
 import { TresCanvas } from '@tresjs/core'
-import RoomStructure from './three/RoomStructure.vue'
-import Desk from './three/Desk.vue'
-import Bed from './three/Bed.vue'
-import Bookshelf from './three/Bookshelf.vue'
-import Window from './three/Window.vue'
-import ShanxiVRM from './three/ShanxiVRM.vue'
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js'
+import * as THREE from 'three'
 
-const props = defineProps({
-  status: { type: String, default: '活跃中' },
-  isNight: { type: Boolean, default: false }
-})
-
-const lampIntensity = computed(() => props.isNight ? 1.8 : 1.2)
-const lampColor = computed(() => props.isNight ? '#aaccff' : '#ffe4b5')
-
-const shanxiRef = ref(null)
-const cameraRef = ref(null)
-
-// 摄像机参数
-const cameraYaw = ref(0)      // 水平旋转角度（弧度）
-const cameraPitch = ref(0.3)  // 俯仰角度（弧度，0.3 略俯视）
-const distance = 3.0          // 摄像机距离
-const height = 1.8            // 摄像机相对角色的高度
-
-// 鼠标控制相关
-let isPointerLocked = false
-const MOUSE_SENSITIVITY = 0.0005
-
-// 动画循环ID
-let animFrameId = null
-
-function onMouseMove(e) {
-  if (!isPointerLocked) return
-  cameraYaw.value -= e.movementX * MOUSE_SENSITIVITY
-  cameraPitch.value += e.movementY * MOUSE_SENSITIVITY
-  // 限制俯仰角度
-  cameraPitch.value = Math.max(-Math.PI / 3, Math.min(Math.PI / 2.5, cameraPitch.value))
-}
-
-function onPointerLockChange() {
-  isPointerLocked = document.pointerLockElement !== null
-}
-
-function onClickCanvas() {
-  const canvas = document.querySelector('canvas')
-  if (canvas) canvas.requestPointerLock()
-}
-
-// 摄像机跟随与旋转更新
-function updateCamera() {
-  const model = shanxiRef.value?.modelRef
-  if (!model || !cameraRef.value) {
-    animFrameId = requestAnimationFrame(updateCamera)
-    return
-  }
-
-  // 根据 Yaw/Pitch 计算摄像机在角色身后的偏移
-  const yaw = cameraYaw.value
-  const pitch = cameraPitch.value
-
-  // 计算摄像机世界位置：从角色位置出发，先绕 Y 轴旋转 Yaw，再绕 X 轴旋转 Pitch
-  const offset = new THREE.Vector3(0, 0, distance)  // 初始在角色后方（Z轴正方向？注意角色面朝 +Z）
-  // 应用俯仰（绕局部X轴）
- 
-  // 应用水平旋转（绕世界Y轴）
-  const yawQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yaw)
-  offset.applyQuaternion(yawQuat)
-
-
-   const pitchQuat = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), pitch)
-  offset.applyQuaternion(pitchQuat)
-  // 摄像机目标位置 = 角色位置 + 偏移 + 高度
-  const targetPos = model.position.clone().add(offset).add(new THREE.Vector3(0, height, 0))
-
-  // 平滑移动
-  cameraRef.value.position.lerp(targetPos, 0.1)
-
-  // 注视角色腰部
-  const lookTarget = model.position.clone().add(new THREE.Vector3(0, 0.8, 0))
-  cameraRef.value.lookAt(lookTarget)
-
-  animFrameId = requestAnimationFrame(updateCamera)
-}
+const model = shallowRef(null)
 
 onMounted(() => {
-  document.addEventListener('mousemove', onMouseMove)
-  document.addEventListener('pointerlockchange', onPointerLockChange)
-  document.addEventListener('click', onClickCanvas)
+  const loader = new GLTFLoader()
+  loader.load('/models/shanxi_animated.glb', (gltf) => {
+    const scene = gltf.scene  // 先定义 scene
 
-  updateCamera()
-})
+    // 检查网格数量
+    let meshCount = 0
+    scene.traverse((node) => {
+      if (node.isMesh) {
+        meshCount++
+        console.log('网格:', node.name, '顶点:', node.geometry?.attributes?.position?.count)
+      }
+    })
+    console.log('网格总数:', meshCount)
+    if (meshCount === 0) {
+      console.warn('⚠️ 模型中没有任何网格！请回到 Blender 重新导出，确保包含身体网格。')
+      // 我们仍然显示场景，但可能为空
+    }
 
-onUnmounted(() => {
-  document.removeEventListener('mousemove', onMouseMove)
-  document.removeEventListener('pointerlockchange', onPointerLockChange)
-  document.removeEventListener('click', onClickCanvas)
-  if (animFrameId) cancelAnimationFrame(animFrameId)
+    // 包围盒计算与缩放
+    const box = new THREE.Box3().setFromObject(scene)
+    const center = box.getCenter(new THREE.Vector3())
+    const size = box.getSize(new THREE.Vector3())
+    const maxDim = Math.max(size.x, size.y, size.z)
+    console.log('包围盒中心:', center, '尺寸:', size, '最大维度:', maxDim)
+
+    // 重置变换并缩放
+    scene.position.set(0, 0, 0)
+    scene.rotation.set(0, 0, 0)
+    scene.scale.set(1, 1, 1)
+
+    if (maxDim > 0 && maxDim < 1) {
+      const factor = 2 / maxDim
+      scene.scale.set(factor, factor, factor)
+      console.log('缩放因子:', factor)
+    }
+
+    model.value = scene
+
+    // 播放动画
+    if (gltf.animations.length > 0) {
+      const mixer = new THREE.AnimationMixer(scene)
+      const clip = gltf.animations[0]
+      mixer.clipAction(clip).play()
+      console.log('动画播放:', clip.name)
+    }
+  }, undefined, (error) => {
+    console.error('模型加载失败:', error)
+  })
 })
 </script>

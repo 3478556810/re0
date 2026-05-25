@@ -16,17 +16,29 @@
       </button>
     </div>
 
-    <!-- 标签筛选栏（多选 OR 逻辑） -->
+    <!-- 标签筛选栏（每个标签右侧加删除按钮） -->
     <div class="filter-bar" v-if="allTags.length">
       <span class="filter-label">筛选标签：</span>
       <div class="filter-tags">
-        <button
+        <div
           v-for="tag in allTags"
           :key="tag"
-          class="filter-tag"
-          :class="{ active: selectedFilters.includes(tag) }"
-          @click="toggleFilter(tag)"
-        >{{ tag }}</button>
+          class="filter-tag-wrapper"
+        >
+          <button
+            class="filter-tag"
+            :class="{ active: selectedFilters.includes(tag) }"
+            @click="toggleFilter(tag)"
+          >{{ tag }}</button>
+          <button
+            v-if="isLoggedIn"
+            class="delete-tag-btn"
+            @click.stop="deleteTag(tag)"
+            title="删除此标签（会从所有图片中移除）"
+          >
+            <Icon icon="mdi:close" width="14" />
+          </button>
+        </div>
       </div>
       <button v-if="selectedFilters.length" class="clear-filter" @click="clearFilters">清除</button>
     </div>
@@ -82,7 +94,7 @@ import { Icon } from '@iconify/vue'
 
 const isLoggedIn = ref(!!localStorage.getItem('token'))
 const images = ref([])
-const selectedFilters = ref([])   // 选中的标签数组（OR 逻辑）
+const selectedFilters = ref([])   // 选中的标签数组（AND 逻辑）
 const fileInput = ref(null)
 
 // 获取所有标签
@@ -94,12 +106,12 @@ const allTags = computed(() => {
   return Array.from(tags).sort()
 })
 
-// 筛选后的图片（OR：包含任意选中标签）
+// 筛选后的图片（AND：必须包含所有选中标签）
 const filteredImages = computed(() => {
   if (selectedFilters.value.length === 0) return images.value
   return images.value.filter(img => {
     if (!img.tags || img.tags.length === 0) return false
-    return selectedFilters.value.some(filterTag => img.tags.includes(filterTag))
+    return selectedFilters.value.every(filterTag => img.tags.includes(filterTag))
   })
 })
 
@@ -129,12 +141,15 @@ async function handleUpload(event) {
         headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
         body: formData
       })
-      if (res.ok) await loadImages()
+      if (res.ok) {
+        // 延迟 500ms 再刷新，确保后端缓存已更新
+        await new Promise(resolve => setTimeout(resolve, 500))
+        await loadImages()
+      }
     } catch (e) { console.error('上传失败:', e) }
   }
   fileInput.value.value = ''
 }
-
 async function loadImages() {
   try {
     const res = await fetch('/api/images')
@@ -161,7 +176,7 @@ async function addTag(img, inputValue) {
   img.newTagInput = ''
 }
 
-// 删除标签
+// 删除单张图片上的某个标签
 async function removeTag(img, tagToRemove) {
   const newTags = (img.tags || []).filter(t => t !== tagToRemove)
   await updateTags(img, newTags)
@@ -185,6 +200,39 @@ async function updateTags(img, newTags) {
     }
   } catch (err) {
     console.error('标签更新异常', err)
+  }
+}
+
+// ========== 新增：彻底删除某个标签（从所有图片中移除） ==========
+async function deleteTag(tag) {
+  if (!confirm(`确定要删除标签「${tag}」吗？\n此操作会从所有图片中移除该标签，不可撤销。`)) {
+    return
+  }
+  try {
+    // 需要后端提供接口：DELETE /api/tags 或 POST /api/tags/delete
+    // 请求体：{ tag: "标签名" }
+    const res = await fetch('/api/tags', {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      },
+      body: JSON.stringify({ tag })
+    })
+    if (res.ok) {
+      // 删除成功后重新加载图片列表（标签自然消失）
+      await loadImages()
+      // 同时清除筛选列表中可能包含的该标签
+      if (selectedFilters.value.includes(tag)) {
+        selectedFilters.value = selectedFilters.value.filter(t => t !== tag)
+      }
+    } else {
+      const err = await res.json()
+      alert('删除标签失败：' + (err.error || '未知错误'))
+    }
+  } catch (e) {
+    console.error('删除标签请求异常', e)
+    alert('删除标签失败，请检查网络')
   }
 }
 
@@ -225,13 +273,23 @@ onMounted(() => {
 </script>
 
 <style scoped>
-/* 样式基本沿用原来，新增标签列表样式 */
 .gallery-container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 80px 20px 40px 20px;   /* 顶部留出导航栏空间（70+10缓冲） */
+  overflow-y: auto;
+  height: 100%;
+  box-sizing: border-box;
 }
-.upload-area { margin-bottom: 30px; text-align: center; }
+
+/* 确保上传区域不被遮挡 */
+.upload-area {
+  margin-bottom: 30px;
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+
 .upload-btn {
   display: inline-flex;
   align-items: center;
@@ -244,6 +302,7 @@ onMounted(() => {
   font-size: 15px;
   cursor: pointer;
 }
+
 .filter-bar {
   display: flex;
   align-items: center;
@@ -251,25 +310,61 @@ onMounted(() => {
   margin-bottom: 24px;
   flex-wrap: wrap;
 }
-.filter-label { font-size: 14px; color: #666; }
+
+.filter-label {
+  font-size: 14px;
+  color: #666;
+}
+
 .filter-tags {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+  align-items: center;
 }
-.filter-tag {
-  padding: 6px 16px;
-  border-radius: 20px;
-  border: 1px solid #ccc;
+
+.filter-tag-wrapper {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   background: white;
-  cursor: pointer;
+  border-radius: 24px;
+  border: 1px solid #ccc;
+  padding: 2px 4px 2px 12px;
+}
+
+.filter-tag {
+  background: transparent;
+  border: none;
+  padding: 4px 0;
   font-size: 13px;
+  cursor: pointer;
+  color: #475467;
 }
+
 .filter-tag.active {
-  background: #2563eb;
-  color: white;
-  border-color: #2563eb;
+  color: #2563eb;
+  font-weight: 500;
 }
+
+.delete-tag-btn {
+  background: transparent;
+  border: none;
+  padding: 2px 4px;
+  cursor: pointer;
+  border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #999;
+  transition: all 0.2s;
+}
+
+.delete-tag-btn:hover {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
 .clear-filter {
   background: none;
   border: none;
@@ -277,25 +372,32 @@ onMounted(() => {
   cursor: pointer;
   font-size: 13px;
 }
+
 .masonry {
   columns: 3 300px;
   column-gap: 16px;
 }
+
 .masonry-item {
   break-inside: avoid;
-  margin-bottom: 16px;
+  margin-bottom: 24px;           /* 增大底部边距，避免标签被截断 */
   border-radius: 12px;
   background: #fff;
   box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  overflow: visible;             /* 确保标签区域不被裁剪 */
 }
+
 .image-wrapper {
   position: relative;
+  overflow: hidden;              /* 仅图片区域溢出隐藏，不影响下面标签 */
+  border-radius: 12px 12px 0 0;
 }
+
 .image-wrapper img {
   width: 100%;
   display: block;
-  border-radius: 12px 12px 0 0;
 }
+
 .image-overlay {
   position: absolute;
   top: 0;
@@ -311,9 +413,11 @@ onMounted(() => {
   transition: opacity 0.2s;
   border-radius: 12px 12px 0 0;
 }
+
 .image-wrapper:hover .image-overlay {
   opacity: 1;
 }
+
 .overlay-btn {
   background: white;
   border: none;
@@ -326,17 +430,24 @@ onMounted(() => {
   cursor: pointer;
   color: #333;
 }
-.delete-btn { color: #dc2626; }
+
+.delete-btn {
+  color: #dc2626;
+}
+
 .tags-edit {
   padding: 12px;
   border-top: 1px solid #eee;
+  background: white;            /* 确保底色一致 */
 }
+
 .tag-list {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
 }
+
 .tag-badge {
   background: #eef2ff;
   color: #1d4ed8;
@@ -347,13 +458,18 @@ onMounted(() => {
   align-items: center;
   gap: 6px;
 }
+
 .remove-tag {
   cursor: pointer;
   font-weight: bold;
   font-size: 14px;
   color: #666;
 }
-.remove-tag:hover { color: #dc2626; }
+
+.remove-tag:hover {
+  color: #dc2626;
+}
+
 .tag-input-small {
   border: 1px solid #ddd;
   border-radius: 16px;
@@ -362,6 +478,14 @@ onMounted(() => {
   width: 100px;
   outline: none;
 }
-.tag-input-small:focus { border-color: #2563eb; }
-.empty-state { text-align: center; padding: 80px; color: #999; }
+
+.tag-input-small:focus {
+  border-color: #2563eb;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 80px;
+  color: #999;
+}
 </style>
