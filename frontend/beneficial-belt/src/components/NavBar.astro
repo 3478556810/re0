@@ -41,26 +41,42 @@ import NavLinks from './shanxi/NavLinks.vue';
 </nav>
 
 <script>
-  // 移动端侧边栏交互
-  const menuBtn = document.getElementById('mobile-menu-btn');
-  const sidebar = document.getElementById('mobile-sidebar');
-  const closeBtn = document.getElementById('sidebar-close');
+  function initSidebar() {
+    const menuBtn = document.getElementById('mobile-menu-btn');
+    const sidebar = document.getElementById('mobile-sidebar');
+    const closeBtn = document.getElementById('sidebar-close');
 
-  menuBtn?.addEventListener('click', () => {
-    sidebar?.classList.add('open');
-  });
+    if (!menuBtn || !sidebar || !closeBtn) {
+      setTimeout(initSidebar, 100);
+      return;
+    }
 
-  closeBtn?.addEventListener('click', () => {
-    sidebar?.classList.remove('open');
-  });
+    function openHandler(e: Event) {
+      e.preventDefault();
+      sidebar!.classList.add('open');
+    }
+    function closeHandler(e: Event) {
+      e.preventDefault();
+      sidebar!.classList.remove('open');
+    }
+    function overlayHandler(e: Event) {
+      if (e.target === sidebar!) sidebar!.classList.remove('open');
+    }
 
-  // 点击覆盖层外部关闭（可选）
-  sidebar?.addEventListener('click', (e) => {
-    if (e.target === sidebar) sidebar.classList.remove('open');
-  });
+    menuBtn.addEventListener('click', openHandler);
+    closeBtn.addEventListener('click', closeHandler);
+    sidebar.addEventListener('click', overlayHandler);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initSidebar);
+  } else {
+    initSidebar();
+  }
 </script>
 
 <style>
+  /* 此处保持你原来的所有样式不变，为节省篇幅省略，请务必保留你的原有样式 */
   .navbar {
     position: fixed;
     top: 0;
@@ -91,12 +107,10 @@ import NavLinks from './shanxi/NavLinks.vue';
     letter-spacing: -0.3px;
   }
 
-  /* 桌面端默认显示，移动端隐藏 */
   .desktop-only {
     display: block;
   }
 
-  /* 移动端汉堡按钮默认隐藏 */
   .mobile-menu-btn {
     display: none;
     flex-direction: column;
@@ -116,7 +130,6 @@ import NavLinks from './shanxi/NavLinks.vue';
     border-radius: 1px;
   }
 
-  /* 侧边栏样式 */
   .mobile-sidebar {
     position: fixed;
     top: 0;
@@ -173,16 +186,13 @@ import NavLinks from './shanxi/NavLinks.vue';
     margin-top: 32px;
   }
 
-  /* 移动端适配 */
   @media (max-width: 768px) {
     .desktop-only {
       display: none !important;
     }
-
     .mobile-menu-btn {
       display: flex;
     }
-
     .nav-content {
       padding: 0 16px;
     }

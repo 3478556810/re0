@@ -727,3 +727,40 @@
 .header-name {
   color: #0f172a;
 }
+
+/* 白蓝极简悬浮按钮（右侧居中） */
+.chat-toggle-button {
+  position: fixed;
+  top: 50%;
+  right: 24px;
+  transform: translateY(-50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background: #2563eb;
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 1000;
+}
+.chat-toggle-button:hover {
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+}
+.chat-toggle-button .iconify {
+  width: 28px;
+  height: 28px;
+  color: white;
+}
+
+/* 确保原有 .chat-window 位置不受影响（保持右下角） */
+.chat-window {
+  bottom: 60px;
+  right: 80px;
+  top: auto;
+  left: auto;
+  transform: none;
+}
