@@ -32,7 +32,8 @@ import AuthGuard from '../components/AuthGuard.astro';
 }
   .hut-container {
 
-    
+      min-height: 100vh;  /* 保证内容够长时可以滚动 */
+  overflow: visible;  /* 确保不隐藏溢出内容 */
     max-width: 800px;
     margin: 40px auto;
     padding: 0 20px;
