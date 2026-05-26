@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>VRM 混合动画（躯干Mixamo + 四肢程序化）</title>
+  <style>body { margin: 0; overflow: hidden; background: #000; }</style>
+</head>
+<body>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "/node_modules/three/build/three.module.js",
+        "three/addons/": "/node_modules/three/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+    import { FBXLoader } from 'three/addons/loaders/FBXLoader.js';
+    import { VRMLoaderPlugin } from 'https://cdn.jsdelivr.net/npm/@pixiv/three-vrm@3/+esm';
+
+    // 只保留躯干骨骼，用于Mixamo动画
+    const TORSO_BONES = new Set([
+      'J_Bip_C_Hips', 'J_Bip_C_Spine', 'J_Bip_C_Chest', 'J_Bip_C_UpperChest',
+      'J_Bip_C_Neck', 'J_Bip_C_Head',
+    ]);
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#333');
+    const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 100);
+    camera.position.set(0, 2, 4);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(innerWidth, innerHeight);
+    document.body.appendChild(renderer.domElement);
+    scene.add(new THREE.AmbientLight(0xffffff, 1.5));
+    scene.add(new THREE.DirectionalLight(0xffe8d0, 1.2).translateZ(3));
+
+    const gltfLoader = new GLTFLoader();
+    gltfLoader.register(parser => new VRMLoaderPlugin(parser));
+    gltfLoader.load('/models/shanxi.vrm', (gltf) => {
+      const vrm = gltf.userData.vrm;
+      if (!vrm) return console.error('VRM 数据为空');
+      const model = vrm.scene;
+      model.position.set(0, 0, 0);
+      scene.add(model);
+
+      // 开启自动同步，让程序化动画也能驱动归一化骨骼
+      if (vrm.humanoid) vrm.humanoid.autoUpdateHumanBones = true;
+      const mixer = new THREE.AnimationMixer(model);
+
+      let walkTime = 0;
+
+      const fbxLoader = new FBXLoader();
+      fbxLoader.load('/animation/Walking.fbx', (fbx) => {
+        const originalClip = (fbx.animations || [])[0];
+        if (!originalClip) return console.warn('FBX 中无动画');
+
+        // 只提取躯干骨骼轨道
+        const torsoTracks = [];
+        for (const track of originalClip.tracks) {
+          const [boneName, property] = track.name.split('.');
+          if (property === 'position' && boneName === 'J_Bip_C_Hips') continue;
+          if (TORSO_BONES.has(boneName)) {
+            torsoTracks.push(track.clone());
+          }
+        }
+
+        if (torsoTracks.length > 0) {
+          const torsoClip = new THREE.AnimationClip('torso', originalClip.duration, torsoTracks);
+          const action = mixer.clipAction(torsoClip);
+          action.setLoop(THREE.LoopRepeat);
+          action.play();
+          console.log('躯干动画已播放，轨道数:', torsoTracks.length);
+        }
+      });
+
+      const clock = new THREE.Clock();
+      function animate() {
+        requestAnimationFrame(animate);
+        const delta = Math.min(clock.getDelta(), 0.1);
+        
+        // 更新Mixamo躯干动画
+        mixer.update(delta);
+        
+        // 程序化四肢摆动（与走路节奏同步）
+        walkTime += delta * 8;
+        const swing = Math.sin(walkTime) * 0.6;
+        const humanoid = vrm.humanoid;
+        if (humanoid) {
+          // 手臂：自然下垂 + 轻微前后摆动
+          const leftArm = humanoid.getNormalizedBoneNode('leftUpperArm');
+          const rightArm = humanoid.getNormalizedBoneNode('rightUpperArm');
+          if (leftArm) leftArm.rotation.set(-swing, 0, Math.PI / 2);
+          if (rightArm) rightArm.rotation.set(swing, 0, -Math.PI / 2);
+          
+          // 腿部：前后摆动
+          const leftLeg = humanoid.getNormalizedBoneNode('leftUpperLeg');
+          const rightLeg = humanoid.getNormalizedBoneNode('rightUpperLeg');
+          if (leftLeg) leftLeg.rotation.x = swing;
+          if (rightLeg) rightLeg.rotation.x = -swing;
+        }
+        
+        // 更新VRM物理
+        if (vrm.update) vrm.update(delta);
+        renderer.render(scene, camera);
+      }
+      animate();
+    });
+  </script>
+</body>
+</html>
