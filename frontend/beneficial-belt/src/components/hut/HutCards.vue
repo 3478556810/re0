@@ -1,6 +1,36 @@
 <template>
   <div class="cards-grid">
-    <!-- 阅读小屋卡片 -->
+    <!-- 项目一：多模态 RAG 知识库 -->
+    <div class="tool-card" @click="goRag">
+      <div class="card-icon"><Icon icon="ph:database-duotone" width="32" color="var(--primary)" /></div>
+      <div class="card-content">
+        <h3>多模态 RAG 知识库</h3>
+        <p>混合检索（向量+关键词）+ 长期记忆，支持文档问答与智能召回。</p>
+      </div>
+      <button class="card-btn" @click.stop="goRag">了解</button>
+    </div>
+
+    <!-- 项目二：全栈脚手架 CLI -->
+    <div class="tool-card" @click="goCli">
+      <div class="card-icon"><Icon icon="ph:terminal-duotone" width="32" color="var(--primary)" /></div>
+      <div class="card-content">
+        <h3>全栈脚手架 CLI</h3>
+        <p>一键生成前后端一体化项目骨架，集成 Gin + Vue3 模板与常用中间件。</p>
+      </div>
+      <button class="card-btn" @click.stop="goCli">了解</button>
+    </div>
+
+    <!-- 项目三：Prism 自研数据引擎 -->
+    <div class="tool-card" @click="goPrism">
+      <div class="card-icon"><Icon icon="ph:cube-transparent-duotone" width="32" color="var(--primary)" /></div>
+      <div class="card-content">
+        <h3>Prism 数据引擎</h3>
+        <p>嵌入式混合存储引擎，支持 KV、文档、向量模型，替代 JSON 文件，性能提升百倍。</p>
+      </div>
+      <button class="card-btn" @click.stop="goPrism">了解</button>
+    </div>
+
+    <!-- 阅读小屋（原样保留，放在最后） -->
     <div class="tool-card" @click="goReading">
       <div class="card-icon"><Icon icon="ph:books-duotone" width="32" color="var(--primary)" /></div>
       <div class="card-content">
@@ -9,28 +39,42 @@
       </div>
       <button class="card-btn" @click.stop="goReading">开启</button>
     </div>
-
-    <!-- 3D 小屋卡片（新增） -->
-    <div class="tool-card" @click="go3DRoom">
-      <div class="card-icon"><Icon icon="ph:cube-duotone" width="32" color="var(--primary)" /></div>
-      <div class="card-content">
-        <h3>3D 小屋</h3>
-        <p>走进杉汐的立体世界，自由探索，与她共处一室，体验沉浸式陪伴。</p>
-      </div>
-      <button class="card-btn" @click.stop="go3DRoom">进入</button>
-    </div>
   </div>
 </template>
 
 <script setup>
 import { Icon } from '@iconify/vue';
 
-const goReading = () => {
-  window.location.href = '/reading-hut';
-};
+const STORAGE_KEY = 'recent_hut';
 
-const go3DRoom = () => {
-  window.location.href = '/shanxi-room';
+function saveRecent(title, link, icon) {
+  const data = {
+    title,
+    link,
+    icon,
+    timestamp: Date.now(),
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  console.log('[HutCards] 已写入最近使用:', title);
+  // 可选：同时派发同页面事件，便于当前页面内的 RecentHutCard 立即更新（如果有）
+  window.dispatchEvent(new CustomEvent('recent-hut-update', { detail: data }));
+}
+
+const goRag = () => {
+  saveRecent('多模态 RAG 知识库', 'https://github.com/your-repo/rag-kb', 'ph:database-duotone');
+  window.open('https://github.com/your-repo/rag-kb', '_blank');
+};
+const goCli = () => {
+  saveRecent('全栈脚手架 CLI', 'https://github.com/your-repo/fullstack-scaffold', 'ph:terminal-duotone');
+  window.open('https://github.com/your-repo/fullstack-scaffold', '_blank');
+};
+const goPrism = () => {
+  saveRecent('Prism 自研数据引擎', 'https://github.com/your-repo/prism-engine', 'ph:cube-transparent-duotone');
+  window.open('https://github.com/your-repo/prism-engine', '_blank');
+};
+const goReading = () => {
+  saveRecent('阅读小屋', '/reading-hut', 'ph:books-duotone');
+  window.location.href = '/reading-hut';
 };
 </script>
 

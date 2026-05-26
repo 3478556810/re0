@@ -1,14 +1,8 @@
 <template>
   <div>
-    <!-- 悬浮按钮（保留情绪光晕） -->
-    <div class="chat-toggle-button" v-if="!isOpen" @click="toggleChat">
-      <div class="toggle-light-pulse">
-        <LightPulse />
-      </div>
-      <div class="toggle-icon">
-        <div class="star-core"></div>
-      </div>
-    </div>
+   <div class="chat-toggle-button" v-if="!isOpen" @click="toggleChat">
+  <Icon icon="mdi:chat" width="28" color="white" />
+</div>
 
     <!-- 聊天窗口 -->
     <div class="chat-window" :class="{ expanded: isExpanded }" :style="{ display: isOpen ? 'flex' : 'none' }">
