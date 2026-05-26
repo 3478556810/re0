@@ -39,6 +39,16 @@
       </div>
       <button class="card-btn" @click.stop="goReading">开启</button>
     </div>
+
+<!-- 杉汐的3D房间 -->
+<div class="tool-card" @click="goRoom3D">
+  <div class="card-icon"><Icon icon="ph:cube-focus-duotone" width="32" color="var(--primary)" /></div>
+  <div class="card-content">
+    <h3>杉汐的3D房间</h3>
+    <p>实时3D渲染的数字生命空间，杉汐在这里等你，会呼吸，会行走，会与你互动。</p>
+  </div>
+  <button class="card-btn" @click.stop="goRoom3D">进入</button>
+</div>
   </div>
 </template>
 
@@ -75,6 +85,11 @@ const goPrism = () => {
 const goReading = () => {
   saveRecent('阅读小屋', '/reading-hut', 'ph:books-duotone');
   window.location.href = '/reading-hut';
+};
+
+const goRoom3D = () => {
+  saveRecent('杉汐的3D房间', '/shanxi-room', 'ph:cube-focus-duotone');
+  window.location.href = '/shanxi-room';
 };
 </script>
 
