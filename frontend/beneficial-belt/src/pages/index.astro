@@ -2,11 +2,10 @@
 import NavBar from "../components/NavBar.astro";
 import ChatWidget from "../components/shanxi/ChatWidget.vue";
 import ThemeProvider from "../components/ThemeProvider.vue";
-import MusicPlayer from "../components/MusicPlayer.vue";
-import ShanxiHome from '../components/shanxi/ShanxiHome.vue'
-import AuthGuard from '../components/AuthGuard.astro';
+import AuthGuard from "../components/AuthGuard.astro";
 import DailyImage from '../components/DailyImage.vue';
 import RandomGallery from '../components/RandomGallery.vue';
+import RecentHutCard from '../components/RecentHutCard.vue';
 ---
 
 <!doctype html>
@@ -14,25 +13,106 @@ import RandomGallery from '../components/RandomGallery.vue';
   <head>
     <AuthGuard /> 
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>杉汐的星尘核心</title>
     <style>
-      @import "/src/styles/global.css";
-      
+      /* 全局重置 */
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html, body {
+        height: 100%;
+        overflow-x: hidden;
+        background: #ffffff;
+        font-family: 'Inter', system-ui, sans-serif;
+      }
+
+      body {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .navbar {
+        flex-shrink: 0;
+      }
+
+      /* 默认样式：电脑端（宽度 > 768px） */
+      .app-container {
+        flex: 1;
+        overflow-y: auto;
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 80px 24px 40px 24px;
+      }
+
+      .main-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 32px;
+        margin-bottom: 32px;
+      }
+
+      .left-col {
+        min-width: 0;
+      }
+
+      .right-col {
+        display: flex;
+        flex-direction: column;
+        gap: 24px;
+        width: 100%;
+      }
+
+      .right-col > * {
+        width: 100%;
+      }
+
+      /* ========== 手机端适配（宽度 ≤ 768px） ========== */
+    /* 手机端适配（宽度 ≤ 768px） */
+  @media (max-width: 768px) {
+    .app-container {
+      padding: 16px !important;
+    }
+    .main-grid {
+      display: block !important;   /* 彻底改为块级，两列自然上下排列 */
+    }
+    .left-col, .right-col {
+      width: 100% !important;
+      margin-bottom: 24px;
+    }
+    .right-col {
+      display: block !important;    /* 确保右侧内容块级显示 */
+      overflow-x: hidden;          /* 防止溢出 */
+    }
+    /* 额外确保轮播图组件内部不溢出 */
+    .right-col .scroll-container,
+    .right-col .carousel-track-wrapper {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
     </style>
   </head>
   <body>
+    <NavBar />
+
     <ThemeProvider client:only="vue">
       <div class="app-container">
-        <NavBar />
-        <div class="content">
-          <!-- 可选的 ShanxiHome 如果启用请取消注释 -->
-          <!-- <ShanxiHome client:only="vue" /> -->
-          <DailyImage client:only="vue" />
-          <RandomGallery client:only="vue" />
+        <div class="main-grid">
+          <div class="left-col">
+            <DailyImage client:only="vue" />
+          </div>
+          <div class="right-col">
+            <RecentHutCard client:only="vue" />
+            <RandomGallery client:only="vue" />
+          </div>
         </div>
-       
-        <MusicPlayer client:only="vue" />
+        <ChatWidget client:only="vue" sessionId="" />
       </div>
     </ThemeProvider>
   </body>

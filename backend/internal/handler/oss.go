@@ -416,7 +416,7 @@ func RandomImageWithAI(c *gin.Context) {
 	imageURL := fmt.Sprintf("/api/images/view?rel_path=%s", selected.RelPath)
 
 	// 调用 AI 分析图片（复用你的 AnalyzeImage 函数）
-	question := "请模仿柳永的风格写一首青词"
+	question := "请模仿柳永的风格写一首青词,50字内"
 	aiComment := askDeepSeekSimple(question)
 
 	// 缓存到 Redis（有效期至次日零点）
