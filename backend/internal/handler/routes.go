@@ -11,10 +11,16 @@ import (
 )
 
 func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore, sessionStore *SessionStore) {
+
 	r.GET("/api/sessions/:id", func(c *gin.Context) {
 		id := c.Param("id")
 		history := sessionStore.Get(id)
 		c.JSON(200, history)
+	})
+
+	// 在 RegisterRoutes 函数内添加
+	r.GET("/api/all-messages", func(c *gin.Context) {
+		GetAllMessages(c, sessionStore)
 	})
 
 	r.DELETE("/api/images/remove", DeleteImage)

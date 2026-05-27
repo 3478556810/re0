@@ -1,8 +1,8 @@
 <template>
   <div>
-   <div class="chat-toggle-button" v-if="!isOpen" @click="toggleChat">
-  <Icon icon="mdi:chat" width="28" color="white" />
-</div>
+    <div class="chat-toggle-button" v-if="!isOpen" @click="toggleChat">
+      <Icon icon="mdi:chat" width="28" color="white" />
+    </div>
 
     <!-- 聊天窗口 -->
     <div class="chat-window" :class="{ expanded: isExpanded }" :style="{ display: isOpen ? 'flex' : 'none' }">
@@ -31,23 +31,27 @@
         <div v-if="messages.length === 0 && !welcomeLoading" class="message bot">{{ welcomeMessage }}</div>
         <div v-if="messages.length === 0 && welcomeLoading" class="message bot" style="opacity:0.6">杉汐正在想起你...</div>
 
-        <div v-for="msg in messages" :key="msg.id" class="message-row" :class="msg.sender">
-  <!-- 图片消息：直接展示图片卡片 -->
-  <div v-if="msg.type === 'image'" class="image-card">
-    <img :src="msg.image" style="max-width: 240px; border-radius: 12px;" />
-  </div>
-  <!-- 普通文字消息：动态绑定样式类，区分用户和杉汐 -->
-  <div v-else class="message" :class="msg.sender">
-    {{ msg.content }}
-    <!-- 语音按钮：只给杉汐的消息 -->
-    <button v-if="isLoggedIn && msg.sender === 'bot'" class="ds-btn ds-btn-msg" @click="playVoice(msg.content)" title="播放语音">
-      <Icon icon="mdi:microphone" width="14" color="#666" />
-    </button>
-  </div>
-</div>
+        <!-- 使用 groupedMessages 渲染消息和时间标签 -->
+        <template v-for="item in groupedMessages" :key="item.id || `time-${item.timestamp}`">
+          <!-- 时间标签 -->
+          <div v-if="item.type === 'time'" class="chat-time">{{ formatChatTime(item.timestamp) }}</div>
+          <!-- 普通消息 -->
+          <div v-else-if="item.type === 'message'" class="message-row" :class="item.sender">
+            <div v-if="item.type === 'image'" class="image-card">
+              <img :src="item.image" style="max-width: 240px; border-radius: 12px;" />
+            </div>
+            <div v-else class="message" :class="item.sender">
+              {{ item.content }}
+              <!-- 语音按钮：只给杉汐的消息 -->
+              <button v-if="isLoggedIn && item.sender === 'bot'" class="ds-btn ds-btn-msg" @click="playVoice(item.content)" title="播放语音">
+                <Icon icon="mdi:microphone" width="14" color="#666" />
+              </button>
+            </div>
+          </div>
+        </template>
       </div>
 
-      <!-- 输入区域 -->
+      <!-- 输入区域（保持不变） -->
       <div class="chat-input-area">
         <input type="file" accept="image/*" ref="imageInput" style="display:none" v-if="isLoggedIn"
           @change="handleImageUpload" />
@@ -64,6 +68,7 @@
       <details class="debug-panel" v-if="isLoggedIn">
         <summary>调试参数</summary>
         <div class="debug-controls">
+          <!-- 调试控件保持不变 -->
           <label>T: <input type="range" min="0" max="2" step="0.1" v-model.number="debugTemp" @change="updateParams" />
             <span>{{ debugTemp }}</span>
           </label>
@@ -73,8 +78,7 @@
           </label>
           <label>MaxTokens: <input type="number" v-model.number="debugMaxTokens" min="100" max="4096" step="100"
               @change="updateParams" /></label>
-          <label>
-            深度思考:
+          <label>深度思考:
             <select v-model="debugReasoning" @change="updateParams">
               <option value="">关闭</option>
               <option value="high">开启（高）</option>
@@ -92,12 +96,9 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, watch, nextTick, computed, onMounted } from 'vue'
-import LightPulse from './LightPulse.vue'
 import { Icon } from '@iconify/vue'
-import { useSession } from './composables/useSession.js'
 import { useEmotion } from './composables/useEmotion.js'
 import { useMemory } from './composables/useMemory.js'
 import { useWelcome } from './composables/useWelcome.js'
@@ -107,15 +108,48 @@ import { useVoicePlay } from './composables/useVoicePlay.js'
 import { useStatusPolling } from './composables/useStatusPolling.js'
 
 
+// 判断两条消息是否应该显示时间（超过5分钟或日期不同）
+function shouldShowTime(prevMsg, currentMsg) {
+  if (!prevMsg) return true // 第一条消息
+  const prevTime = new Date(prevMsg.timestamp)
+  const currTime = new Date(currentMsg.timestamp)
+  // 日期不同 或 时间差大于5分钟
+  if (prevTime.toDateString() !== currTime.toDateString()) return true
+  const diffMinutes = (currTime - prevTime) / (1000 * 60)
+  return diffMinutes > 5
+}
 
-const props = defineProps({
-    sessionId: { type: String, default: '' }
+// 处理消息列表，插入时间标签（作为独立项）
+const groupedMessages = computed(() => {
+  const result = []
+  for (let i = 0; i < messages.value.length; i++) {
+    const msg = messages.value[i]
+    const prevMsg = i > 0 ? messages.value[i-1] : null
+    if (shouldShowTime(prevMsg, msg)) {
+      result.push({ type: 'time', timestamp: msg.timestamp })
+    }
+    result.push({ type: 'message', ...msg })
+  }
+  return result
 })
+let msgId = 0
+function formatChatTime(timestamp) {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today.getTime() - 86400000)
+  const msgDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
 
-// 如果父组件没传 sessionId，自己生成一个
-const currentSessionId = computed(() => props.sessionId || Date.now().toString(36))
-
-/* ========== 基础状态 ========== */
+  if (msgDate.getTime() === today.getTime()) {
+    return `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`
+  } else if (msgDate.getTime() === yesterday.getTime()) {
+    return `昨天 ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`
+  } else {
+    return `${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`
+  }
+}
+// 基础状态
 const isOpen = ref(false)
 const isExpanded = ref(false)
 const toggleExpand = () => { isExpanded.value = !isExpanded.value }
@@ -123,22 +157,20 @@ const toggleChat = () => { isOpen.value = !isOpen.value }
 const userInput = ref('')
 const messages = ref([])
 
-/* ========== 登录状态 ========== */
+// 固定会话ID（仅用于发送新消息）
+const sessionId = ref(`global_chat_session`)
+
+// 登录状态
 const isLoggedIn = ref(!!localStorage.getItem('token'))
 
-/* ========== 调试参数（绑定到调试面板） ========== */
+// 调试参数（保留原样）
 const debugTemp = ref(localStorage.getItem('debugTemp') ? parseFloat(localStorage.getItem('debugTemp')) : 0.7)
 const debugTopP = ref(localStorage.getItem('debugTopP') ? parseFloat(localStorage.getItem('debugTopP')) : 0.9)
 const debugReasoning = ref(localStorage.getItem('debugReasoning') || '')
 const lastTokenUsage = ref('')
 const lastLatency = ref('')
 const debugMaxTokens = ref(localStorage.getItem('debugMaxTokens') ? parseInt(localStorage.getItem('debugMaxTokens')) : 2000)
-
 const balance = ref('')
-
-function previewImage(url) {
-  window.open(url, '_blank')
-}
 
 async function fetchBalance() {
   try {
@@ -155,13 +187,6 @@ async function fetchBalance() {
   } catch { }
 }
 
-// 在 onMounted 中调用一次
-onMounted(() => {
-  fetchBalance()
-  // ... 其他已有逻辑
-})
-
-// 每次修改参数时自动保存到 localStorage
 function updateParams() {
   localStorage.setItem('debugTemp', debugTemp.value)
   localStorage.setItem('debugTopP', debugTopP.value)
@@ -169,34 +194,32 @@ function updateParams() {
   localStorage.setItem('debugReasoning', debugReasoning.value)
 }
 
-/* ========== 外部模块 ========== */
-const { sessionId } = useSession()
-const { currentEmotion, updateEmotion } = useEmotion()
+// 外部模块
+const { updateEmotion } = useEmotion()
 const { saveMemory } = useMemory()
 const { welcomeMessage, welcomeLoading } = useWelcome()
 const { currentStatus } = useStatusPolling()
 
-/* ========== 聊天核心逻辑（发送消息） ========== */
+// 聊天核心逻辑
 const { sendMessage } = useChatLogic({
   messages,
   userInput,
   sessionId,
   updateEmotion,
   saveMemory,
-  lastTokenUsage,  // 必须传入
-  lastLatency      // 必须传入
+  lastTokenUsage,
+  lastLatency
 })
 
-/* ========== 图片上传 ========== */
+// 图片上传
 const { imageInput, handleImageUpload } = useImageUpload({
   messages,
   sessionId,
   saveMemory
 })
 
-/* ========== 语音播放 ========== */
+// 语音播放
 const { playVoice } = useVoicePlay()
-
 
 const statusDotColor = computed(() => {
   const status = currentStatus.value
@@ -207,28 +230,48 @@ const statusDotColor = computed(() => {
   return '#98a2b3'
 })
 
-/* ========== 自动滚动 ========== */
 const messagesContainer = ref(null)
-// 加载当前会话的历史消息
 
-
-onMounted(async () => {
-  const sid = sessionId.value // 来自 useSession
-  if (!sid) return
+// 加载所有会话的历史消息
+async function loadAllHistory() {
   try {
-    const res = await fetch(`/api/sessions/${sid}`)
+    const res = await fetch('/api/all-messages')
     if (res.ok) {
       const history = await res.json()
-      if (Array.isArray(history) && history.length > 0) {
-        messages.value = history.map(m => ({
-          id: msgId++,
-          content: m.content,
-          sender: m.role, // 注意：后端的字段是 'role'，不是 'sender'
-        }))
+      messages.value = history.map((item, idx) => ({
+        id: idx,
+        content: item.content,
+        sender: item.role,
+        timestamp: item.timestamp
+      }))
+      await nextTick()
+      if (messagesContainer.value) {
+        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
       }
     }
-  } catch(e) {}
-})
+  } catch (e) {
+    console.error('加载历史失败', e)
+  }
+}
+
+// 时间格式化（类似QQ）
+function formatTime(timestamp) {
+  if (!timestamp) return ''
+  const date = new Date(timestamp)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today.getTime() - 86400000)
+  const msgDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
+
+  if (msgDate.getTime() === today.getTime()) {
+    return `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`
+  } else if (msgDate.getTime() === yesterday.getTime()) {
+    return `昨天 ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`
+  } else {
+    return `${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`
+  }
+}
+
 watch(messages, () => {
   nextTick(() => {
     if (messagesContainer.value) {
@@ -236,6 +279,11 @@ watch(messages, () => {
     }
   })
 }, { deep: true })
+
+onMounted(async () => {
+  fetchBalance()
+  await loadAllHistory()
+})
 </script>
 
 <script>
@@ -244,4 +292,11 @@ export default {}
 
 <style scoped>
 @import '../../styles/shanxi/chat-widget.css';
+.chat-time {
+  text-align: center;
+  font-size: 10px;
+  color: #aaa;
+  margin: 8px 0;
+  background: none;
+}
 </style>
