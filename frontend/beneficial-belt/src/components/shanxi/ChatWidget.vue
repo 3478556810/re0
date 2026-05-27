@@ -32,23 +32,24 @@
         <div v-if="messages.length === 0 && welcomeLoading" class="message bot" style="opacity:0.6">杉汐正在想起你...</div>
 
         <!-- 使用 groupedMessages 渲染消息和时间标签 -->
-        <template v-for="item in groupedMessages" :key="item.id || `time-${item.timestamp}`">
-          <!-- 时间标签 -->
-          <div v-if="item.type === 'time'" class="chat-time">{{ formatChatTime(item.timestamp) }}</div>
-          <!-- 普通消息 -->
-          <div v-else-if="item.type === 'message'" class="message-row" :class="item.sender">
-            <div v-if="item.type === 'image'" class="image-card">
-              <img :src="item.image" style="max-width: 240px; border-radius: 12px;" />
-            </div>
-            <div v-else class="message" :class="item.sender">
-              {{ item.content }}
-              <!-- 语音按钮：只给杉汐的消息 -->
-              <button v-if="isLoggedIn && item.sender === 'bot'" class="ds-btn ds-btn-msg" @click="playVoice(item.content)" title="播放语音">
-                <Icon icon="mdi:microphone" width="14" color="#666" />
-              </button>
-            </div>
-          </div>
-        </template>
+       <template v-for="item in groupedMessages">
+  <!-- 时间标签 -->
+  <div v-if="item.type === 'time'" :key="`time-${item.timestamp}`" class="chat-time">
+    {{ formatChatTime(item.timestamp) }}
+  </div>
+  <!-- 普通消息 -->
+  <div v-else-if="item.type === 'message'" :key="item.id" class="message-row" :class="item.sender">
+    <div v-if="item.type === 'image'" class="image-card">
+      <img :src="item.image" style="max-width: 240px; border-radius: 12px;" />
+    </div>
+    <div v-else class="message" :class="item.sender">
+      {{ item.content }}
+      <button v-if="isLoggedIn && item.sender === 'bot'" class="ds-btn ds-btn-msg" @click="playVoice(item.content)" title="播放语音">
+        <Icon icon="mdi:microphone" width="14" color="#666" />
+      </button>
+    </div>
+  </div>
+</template>
       </div>
 
       <!-- 输入区域（保持不变） -->
