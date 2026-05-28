@@ -3,8 +3,6 @@ import NavBar from "../components/NavBar.astro";
 import ChatWidget from "../components/shanxi/ChatWidget.vue";
 import ThemeProvider from "../components/ThemeProvider.vue";
 import AuthGuard from "../components/AuthGuard.astro";
-import DailyImage from '../components/DailyImage.vue';
-import RandomGallery from '../components/RandomGallery.vue';
 import RecentHutCard from '../components/RecentHutCard.vue';
 ---
 
@@ -14,7 +12,7 @@ import RecentHutCard from '../components/RecentHutCard.vue';
     <AuthGuard /> 
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>杉汐的星尘核心</title>
+    <title>星尘核心</title>
     <style>
       /* 全局重置 */
       * {
@@ -26,8 +24,7 @@ import RecentHutCard from '../components/RecentHutCard.vue';
       html, body {
         height: 100%;
         overflow-x: hidden;
-        overflow: hidden !important;
-        background: #ffffff;
+        background: #f8fafc;
         font-family: 'Inter', system-ui, sans-serif;
       }
 
@@ -40,81 +37,62 @@ import RecentHutCard from '../components/RecentHutCard.vue';
         flex-shrink: 0;
       }
 
-      /* 默认样式：电脑端（宽度 > 768px） */
-      .app-container {
+      /* 主容器：全屏视觉 + 玻璃态卡片 */
+      .hero-container {
         flex: 1;
-        overflow-y: auto;
-        overflow-x: hidden;
-        width: 100%;
-        max-width: 1400px;
-        margin: 0 auto;
-        padding: 80px 24px 40px 24px;
-      }
-
-      .main-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 32px;
-        margin-bottom: 32px;
-      }
-
-      .left-col {
-        min-width: 0;
-      }
-
-      .right-col {
         display: flex;
-        flex-direction: column;
-        gap: 24px;
+        align-items: center;
+        justify-content: center;
+        padding: 2rem;
+        background: linear-gradient(135deg, #e6f0ff 0%, #ffffff 100%);
+        min-height: calc(100vh - 60px); /* 减去导航栏高度 */
+      }
+
+      .glass-card {
+        max-width: 500px;
+        width: 100%;
+        background: rgba(255, 255, 255, 0.7);
+        backdrop-filter: blur(12px);
+        border-radius: 32px;
+        padding: 2rem;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+      }
+
+      .glass-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+      }
+
+      /* 最近卡片内部样式（如果 RecentHutCard 已有样式，则不需要额外定义，但为了确保显示，加一些基础样式） */
+      .recent-wrapper {
         width: 100%;
       }
 
-      .right-col > * {
-        width: 100%;
+      /* 响应式 */
+      @media (max-width: 768px) {
+        .hero-container {
+          padding: 1rem;
+        }
+        .glass-card {
+          padding: 1.5rem;
+        }
       }
-
-      /* ========== 手机端适配（宽度 ≤ 768px） ========== */
-    /* 手机端适配（宽度 ≤ 768px） */
-  @media (max-width: 768px) {
-    .app-container {
-      padding: 16px !important;
-    }
-    .main-grid {
-      display: block !important;   /* 彻底改为块级，两列自然上下排列 */
-    }
-    .left-col, .right-col {
-      width: 100% !important;
-      margin-bottom: 24px;
-    }
-    .right-col {
-      display: block !important;    /* 确保右侧内容块级显示 */
-      overflow-x: hidden;          /* 防止溢出 */
-    }
-    /* 额外确保轮播图组件内部不溢出 */
-    .right-col .scroll-container,
-    .right-col .carousel-track-wrapper {
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-  }
     </style>
   </head>
   <body>
     <NavBar />
 
     <ThemeProvider client:only="vue">
-      <div class="app-container">
-        <div class="main-grid">
-          <div class="left-col">
-            <DailyImage client:only="vue" />
-          </div>
-          <div class="right-col">
+      <div class="hero-container">
+        <div class="glass-card">
+          <div class="recent-wrapper">
             <RecentHutCard client:only="vue" />
-            <RandomGallery client:only="vue" />
           </div>
         </div>
-        <ChatWidget client:only="vue" sessionId="" />
       </div>
+      <ChatWidget client:only="vue" sessionId="" />
     </ThemeProvider>
   </body>
 </html>
