@@ -31,28 +31,25 @@
         <div v-if="messages.length === 0 && !welcomeLoading" class="message bot">{{ welcomeMessage }}</div>
         <div v-if="messages.length === 0 && welcomeLoading" class="message bot" style="opacity:0.6">杉汐正在想起你...</div>
 
-        <!-- 使用 groupedMessages 渲染消息和时间标签 -->
-       <template v-for="item in groupedMessages">
-  <!-- 时间标签 -->
-  <div v-if="item.type === 'time'" :key="`time-${item.timestamp}`" class="chat-time">
-    {{ formatChatTime(item.timestamp) }}
-  </div>
-  <!-- 普通消息 -->
-  <div v-else-if="item.type === 'message'" :key="item.id" class="message-row" :class="item.sender">
-    <div v-if="item.type === 'image'" class="image-card">
-      <img :src="item.image" style="max-width: 240px; border-radius: 12px;" />
-    </div>
-    <div v-else class="message" :class="item.sender">
-      {{ item.content }}
-      <button v-if="isLoggedIn && item.sender === 'bot'" class="ds-btn ds-btn-msg" @click="playVoice(item.content)" title="播放语音">
-        <Icon icon="mdi:microphone" width="14" color="#666" />
-      </button>
-    </div>
-  </div>
-</template>
+        <template v-for="item in groupedMessages">
+          <div v-if="item.type === 'time'" :key="`time-${item.timestamp}`" class="chat-time">
+            {{ formatChatTime(item.timestamp) }}
+          </div>
+          <div v-else-if="item.type === 'message'" :key="item.id" class="message-row" :class="item.sender">
+            <div v-if="item.type === 'image'" class="image-card">
+              <img :src="item.image" style="max-width: 240px; border-radius: 12px;" />
+            </div>
+            <div v-else class="message" :class="item.sender">
+              {{ item.content }}
+              <button v-if="isLoggedIn && item.sender === 'bot'" class="ds-btn ds-btn-msg" @click="playVoice(item.content)" title="播放语音">
+                <Icon icon="mdi:microphone" width="14" color="#666" />
+              </button>
+            </div>
+          </div>
+        </template>
       </div>
 
-      <!-- 输入区域（保持不变） -->
+      <!-- 输入区域 -->
       <div class="chat-input-area">
         <input type="file" accept="image/*" ref="imageInput" style="display:none" v-if="isLoggedIn"
           @change="handleImageUpload" />
@@ -69,7 +66,6 @@
       <details class="debug-panel" v-if="isLoggedIn">
         <summary>调试参数</summary>
         <div class="debug-controls">
-          <!-- 调试控件保持不变 -->
           <label>T: <input type="range" min="0" max="2" step="0.1" v-model.number="debugTemp" @change="updateParams" />
             <span>{{ debugTemp }}</span>
           </label>
@@ -97,6 +93,7 @@
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, watch, nextTick, computed, onMounted } from 'vue'
 import { Icon } from '@iconify/vue'
@@ -108,53 +105,21 @@ import { useImageUpload } from './composables/useImageUpload.js'
 import { useVoicePlay } from './composables/useVoicePlay.js'
 import { useStatusPolling } from './composables/useStatusPolling.js'
 
-
-// 判断两条消息是否应该显示时间（超过5分钟或日期不同）
-function shouldShowTime(prevMsg, currentMsg) {
-  if (!prevMsg) return true // 第一条消息
-  const prevTime = new Date(prevMsg.timestamp)
-  const currTime = new Date(currentMsg.timestamp)
-  // 日期不同 或 时间差大于5分钟
-  if (prevTime.toDateString() !== currTime.toDateString()) return true
-  const diffMinutes = (currTime - prevTime) / (1000 * 60)
-  return diffMinutes > 5
-}
-
-// 处理消息列表，插入时间标签（作为独立项）
-const groupedMessages = computed(() => {
-  const result = []
-  for (let i = 0; i < messages.value.length; i++) {
-    const msg = messages.value[i]
-    const prevMsg = i > 0 ? messages.value[i-1] : null
-    if (shouldShowTime(prevMsg, msg)) {
-      result.push({ type: 'time', timestamp: msg.timestamp })
-    }
-    result.push({ type: 'message', ...msg })
-  }
-  return result
-})
 let msgId = 0
-function formatChatTime(timestamp) {
-  if (!timestamp) return ''
-  const date = new Date(timestamp)
-  const now = new Date()
-  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  const yesterday = new Date(today.getTime() - 86400000)
-  const msgDate = new Date(date.getFullYear(), date.getMonth(), date.getDate())
 
-  if (msgDate.getTime() === today.getTime()) {
-    return `${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`
-  } else if (msgDate.getTime() === yesterday.getTime()) {
-    return `昨天 ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`
-  } else {
-    return `${date.getMonth()+1}/${date.getDate()} ${date.getHours().toString().padStart(2,'0')}:${date.getMinutes().toString().padStart(2,'0')}`
-  }
-}
 // 基础状态
 const isOpen = ref(false)
 const isExpanded = ref(false)
 const toggleExpand = () => { isExpanded.value = !isExpanded.value }
-const toggleChat = () => { isOpen.value = !isOpen.value }
+const toggleChat = () => {
+  isOpen.value = !isOpen.value
+  if (isOpen.value) {
+    // 打开窗口后等待 DOM 更新再滚动
+    nextTick(() => scrollToBottom())
+    // 额外延迟确保动画完成
+    setTimeout(() => scrollToBottom(), 200)
+  }
+}
 const userInput = ref('')
 const messages = ref([])
 
@@ -164,7 +129,7 @@ const sessionId = ref(`global_chat_session`)
 // 登录状态
 const isLoggedIn = ref(!!localStorage.getItem('token'))
 
-// 调试参数（保留原样）
+// 调试参数
 const debugTemp = ref(localStorage.getItem('debugTemp') ? parseFloat(localStorage.getItem('debugTemp')) : 0.7)
 const debugTopP = ref(localStorage.getItem('debugTopP') ? parseFloat(localStorage.getItem('debugTopP')) : 0.9)
 const debugReasoning = ref(localStorage.getItem('debugReasoning') || '')
@@ -233,7 +198,29 @@ const statusDotColor = computed(() => {
 
 const messagesContainer = ref(null)
 
-// 加载所有会话的历史消息
+// 清洗消息内容
+function cleanContent(content) {
+  if (!content) return ''
+  return content.replace(/\[(action|emotion):[^\]]*\]/g, '')
+}
+
+// 强制滚动到底部（三重保险）
+function scrollToBottom() {
+  if (!messagesContainer.value) return
+  messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+  requestAnimationFrame(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+    }
+  })
+  setTimeout(() => {
+    if (messagesContainer.value) {
+      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+    }
+  }, 100)
+}
+
+// 加载所有历史消息
 async function loadAllHistory() {
   try {
     const res = await fetch('/api/all-messages')
@@ -241,22 +228,42 @@ async function loadAllHistory() {
       const history = await res.json()
       messages.value = history.map((item, idx) => ({
         id: idx,
-        content: item.content,
+        content: cleanContent(item.content),
         sender: item.role,
         timestamp: item.timestamp
       }))
       await nextTick()
-      if (messagesContainer.value) {
-        messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-      }
+      scrollToBottom()
     }
   } catch (e) {
     console.error('加载历史失败', e)
   }
 }
 
-// 时间格式化（类似QQ）
-function formatTime(timestamp) {
+// 时间分组逻辑
+function shouldShowTime(prevMsg, currentMsg) {
+  if (!prevMsg) return true
+  const prevTime = new Date(prevMsg.timestamp)
+  const currTime = new Date(currentMsg.timestamp)
+  if (prevTime.toDateString() !== currTime.toDateString()) return true
+  const diffMinutes = (currTime - prevTime) / (1000 * 60)
+  return diffMinutes > 5
+}
+
+const groupedMessages = computed(() => {
+  const result = []
+  for (let i = 0; i < messages.value.length; i++) {
+    const msg = messages.value[i]
+    const prevMsg = i > 0 ? messages.value[i-1] : null
+    if (shouldShowTime(prevMsg, msg)) {
+      result.push({ type: 'time', timestamp: msg.timestamp, id: `time-${i}` })
+    }
+    result.push({ type: 'message', ...msg })
+  }
+  return result
+})
+
+function formatChatTime(timestamp) {
   if (!timestamp) return ''
   const date = new Date(timestamp)
   const now = new Date()
@@ -273,13 +280,23 @@ function formatTime(timestamp) {
   }
 }
 
+// 监听消息变化（包括新增消息）并滚动到底部
 watch(messages, () => {
-  nextTick(() => {
-    if (messagesContainer.value) {
-      messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
-    }
-  })
+  scrollToBottom()
 }, { deep: true })
+
+// 监听新消息，清洗附加指令（可选，因为发送时已清洗，但保险）
+watch(messages, (newMsgs, oldMsgs) => {
+  if (newMsgs.length > (oldMsgs?.length || 0)) {
+    const last = newMsgs[newMsgs.length - 1]
+    if (last && last.content) {
+      const cleaned = cleanContent(last.content)
+      if (cleaned !== last.content) {
+        last.content = cleaned
+      }
+    }
+  }
+}, { deep: false })
 
 onMounted(async () => {
   fetchBalance()

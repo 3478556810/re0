@@ -11,7 +11,8 @@ import (
 )
 
 func RegisterRoutes(r *gin.Engine, memoryStore *MemoryStore, sessionStore *SessionStore) {
-
+	r.PATCH("/api/posts/:id", UpdatePostTags)
+	r.DELETE("/api/posts/:id", DeletePost)
 	r.GET("/api/sessions/:id", func(c *gin.Context) {
 		id := c.Param("id")
 		history := sessionStore.Get(id)
