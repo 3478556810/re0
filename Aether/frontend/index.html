@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aether — 智能知识库检索</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+        .result-card { transition: all 0.2s ease; }
+        .result-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.1); transform: translateY(-1px); }
+        .highlight { background-color: #fef3c7; padding: 0 2px; border-radius: 2px; }
+        .toggle-link { cursor: pointer; color: #3b82f6; font-size: 0.8rem; user-select: none; }
+        .toggle-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <div class="max-w-4xl mx-auto px-4 py-8">
+        <!-- Header -->
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-gray-800 mb-2">Aether</h1>
+            <p class="text-gray-500 text-lg">智能知识库 · 向量检索系统</p>
+        </header>
+
+        <!-- Search Box -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <div class="flex gap-3">
+                <input id="searchInput" type="text"
+                    class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-gray-700"
+                    placeholder="输入搜索关键词，如：Golang goroutine 调度..."
+                    onkeydown="if(event.key==='Enter') search()">
+                <button onclick="search()"
+                    class="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-medium">
+                    搜索
+                </button>
+            </div>
+            <div class="flex items-center gap-4 mt-4 text-sm text-gray-500">
+                <label class="flex items-center gap-2">
+                    <span>α (BM25权重):</span>
+                    <input id="alphaSlider" type="range" min="0" max="1" step="0.05" value="0.5"
+                        class="w-32 h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                    <span id="alphaValue">0.5</span>
+                </label>
+                <label class="flex items-center gap-2">
+                    <span>Top-K:</span>
+                    <select id="topKSelect" class="border border-gray-300 rounded px-2 py-1">
+                        <option value="5">5</option>
+                        <option value="10" selected>10</option>
+                        <option value="20">20</option>
+                        <option value="50">50</option>
+                    </select>
+                </label>
+            </div>
+        </div>
+
+        <!-- 上传区域 -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <h2 class="text-lg font-semibold text-gray-700 mb-3">📄 上传文档</h2>
+            <div class="flex flex-wrap items-center gap-4">
+                <input type="file" id="fileInput" accept=".txt,.md" class="text-sm text-gray-500">
+                <button onclick="uploadDocument()"
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition text-sm">
+                    上传
+                </button>
+            </div>
+            <div id="uploadStatus" class="mt-2 text-sm text-gray-500"></div>
+        </div>
+
+        <!-- Status / Error / Loading -->
+        <div id="statusMessage" class="text-center mb-4 text-gray-500 hidden"></div>
+        <div id="loadingIndicator" class="text-center mb-4 hidden">
+            <div class="inline-flex items-center gap-2 text-blue-600">
+                <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                <span>正在检索...</span>
+            </div>
+        </div>
+
+        <!-- Results -->
+        <div id="resultsContainer" class="space-y-4"></div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="text-center py-16 text-gray-400">
+            <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+            </svg>
+            <p class="text-lg">输入关键词开始搜索</p>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        const PREVIEW_LENGTH = 300;   // 预览字符数，可修改
+
+        document.getElementById('alphaSlider').addEventListener('input', function() {
+            document.getElementById('alphaValue').textContent = this.value;
+        });
+
+        async function search() {
+            const query = document.getElementById('searchInput').value.trim();
+            if (!query) return;
+
+            const topK = parseInt(document.getElementById('topKSelect').value);
+            const alpha = parseFloat(document.getElementById('alphaSlider').value);
+
+            document.getElementById('emptyState').classList.add('hidden');
+            document.getElementById('loadingIndicator').classList.remove('hidden');
+            document.getElementById('statusMessage').classList.add('hidden');
+            document.getElementById('resultsContainer').innerHTML = '';
+
+            try {
+                const url = `${API_BASE}/api/search?q=${encodeURIComponent(query)}&top_k=${topK}&alpha=${alpha}`;
+                const response = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
+                if (!response.ok) {
+                    const errText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errText}`);
+                }
+                const data = await response.json();
+                displayResults(data.results, query);
+            } catch (err) {
+                showStatus('error', `搜索失败: ${err.message}`);
+            } finally {
+                document.getElementById('loadingIndicator').classList.add('hidden');
+            }
+        }
+
+        async function uploadDocument() {
+            const fileInput = document.getElementById('fileInput');
+            const file = fileInput.files[0];
+            if (!file) {
+                document.getElementById('uploadStatus').innerHTML = '<span class="text-yellow-600">请先选择文件</span>';
+                return;
+            }
+            const formData = new FormData();
+            formData.append('file', file);
+            try {
+                const response = await fetch(`${API_BASE}/api/document/upload`, { method: 'POST', body: formData });
+                const result = await response.json();
+                if (response.ok) {
+                    document.getElementById('uploadStatus').innerHTML = `<span class="text-green-600">✅ ${result.message || '上传成功'}</span>`;
+                    fileInput.value = '';
+                } else {
+                    document.getElementById('uploadStatus').innerHTML = `<span class="text-red-600">❌ ${result.error || '上传失败'}</span>`;
+                }
+            } catch (err) {
+                document.getElementById('uploadStatus').innerHTML = `<span class="text-red-600">网络错误: ${err.message}</span>`;
+            }
+        }
+
+        // 生成高亮HTML（不截断）
+        function highlightFullText(text, query) {
+            if (!query) return escapeHtml(text);
+            const words = query.split(/\s+/).filter(w => w.length > 0);
+            let result = escapeHtml(text);
+            words.forEach(word => {
+                const regex = new RegExp(`(${escapeRegExp(word)})`, 'gi');
+                result = result.replace(regex, '<span class="highlight">$1</span>');
+            });
+            return result;
+        }
+
+        // 生成截断且高亮的预览（保证不切断标签）
+        function highlightPreview(text, query, maxLen = PREVIEW_LENGTH) {
+            if (!query) return escapeHtml(text).substring(0, maxLen) + (text.length > maxLen ? '…' : '');
+            let fullHtml = highlightFullText(text, query);
+            // 去除 HTML 标签以计算纯文本长度（粗略但足够）
+            let plainText = fullHtml.replace(/<[^>]*>/g, '');
+            if (plainText.length <= maxLen) return fullHtml;
+            // 需要截断到接近 maxLen 的位置，并保证标签闭合
+            let truncated = fullHtml;
+            let pos = 0;
+            let insideTag = false;
+            let tagBuffer = '';
+            let result = '';
+            for (let i = 0; i < fullHtml.length && pos < maxLen; i++) {
+                const ch = fullHtml[i];
+                if (ch === '<') {
+                    insideTag = true;
+                    tagBuffer = '<';
+                } else if (ch === '>') {
+                    insideTag = false;
+                    tagBuffer += '>';
+                    result += tagBuffer;
+                    tagBuffer = '';
+                    continue;
+                }
+                if (insideTag) {
+                    tagBuffer += ch;
+                } else {
+                    result += ch;
+                    pos++;
+                }
+            }
+            // 追加剩余未闭合标签（如果有）
+            if (tagBuffer) result += tagBuffer;
+            // 确保所有标签闭合（简单处理：如果结果中开启的span没闭合，补上）
+            let openSpan = (result.match(/<span[^>]*>/g) || []).length;
+            let closeSpan = (result.match(/<\/span>/g) || []).length;
+            if (openSpan > closeSpan) result += '</span>';
+            return result + '…';
+        }
+
+        function displayResults(results, query) {
+            const container = document.getElementById('resultsContainer');
+            container.innerHTML = '';
+
+            if (!results || results.length === 0) {
+                showStatus('info', '未找到相关结果，请尝试其他关键词');
+                return;
+            }
+
+            results.forEach((result) => {
+                if (result.score <= 0) return;   // 跳过零分结果
+                const score = (result.score * 100).toFixed(2);
+                const title = escapeHtml(result.title || '未知文档');
+                const rawContent = result.content || '';
+                // 生成预览和完整内容的高亮HTML
+                const previewHtml = highlightPreview(rawContent, query);
+                const fullHtml = highlightFullText(rawContent, query);
+
+                // 创建卡片容器
+                const card = document.createElement('div');
+                card.className = 'result-card bg-white rounded-lg border border-gray-200 p-5';
+
+                // 标题和分数
+                const headerDiv = document.createElement('div');
+                headerDiv.className = 'flex items-start justify-between mb-2';
+                headerDiv.innerHTML = `
+                    <h3 class="text-lg font-semibold text-gray-800">${title}</h3>
+                    <span class="text-sm font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded">${score}%</span>
+                `;
+
+                // 内容区域（动态切换）
+                const contentDiv = document.createElement('div');
+                contentDiv.className = 'text-gray-600 text-sm leading-relaxed mb-2';
+                // 存储两个版本的HTML
+                contentDiv.setAttribute('data-preview', previewHtml);
+                contentDiv.setAttribute('data-full', fullHtml);
+                contentDiv.innerHTML = previewHtml;
+
+                // 展开/收起链接
+                const toggleLink = document.createElement('div');
+                toggleLink.className = 'toggle-link mt-1';
+                toggleLink.textContent = '展开全文';
+                let expanded = false;
+
+                toggleLink.addEventListener('click', () => {
+                    if (!expanded) {
+                        contentDiv.innerHTML = fullHtml;
+                        toggleLink.textContent = '收起';
+                        expanded = true;
+                    } else {
+                        contentDiv.innerHTML = previewHtml;
+                        toggleLink.textContent = '展开全文';
+                        expanded = false;
+                    }
+                });
+
+                // 底部元信息
+                const metaDiv = document.createElement('div');
+                metaDiv.className = 'flex items-center gap-3 text-xs text-gray-400 mt-2';
+                metaDiv.innerHTML = `
+                    <span>文档ID: ${result.document_id}</span>
+                    <span>片段ID: ${result.chunk_id}</span>
+                    <span class="ml-auto">相似度: ${result.score.toFixed(4)}</span>
+                `;
+
+                card.appendChild(headerDiv);
+                card.appendChild(contentDiv);
+                card.appendChild(toggleLink);
+                card.appendChild(metaDiv);
+                container.appendChild(card);
+            });
+        }
+
+        function showStatus(type, message) {
+            const el = document.getElementById('statusMessage');
+            el.classList.remove('hidden', 'text-red-500', 'text-blue-500');
+            if (type === 'error') el.classList.add('text-red-500');
+            else if (type === 'info') el.classList.add('text-blue-500');
+            el.textContent = message;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function escapeRegExp(str) {
+            return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+    </script>
+</body>
+</html>
