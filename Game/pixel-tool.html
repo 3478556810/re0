@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>图床转像素 - 后宫角色生成器</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+        body {
+            background: #1e2a2a;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1000px;
+            width: 100%;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 32px;
+            border: 3px solid #c9a87b;
+            padding: 24px;
+            color: #ffd;
+        }
+        h1 {
+            font-size: 24px;
+            text-align: center;
+            margin-top: 0;
+        }
+        .flex-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+        }
+        .card {
+            background: #2a2a3a;
+            border-radius: 24px;
+            padding: 16px;
+            flex: 1;
+            min-width: 250px;
+        }
+        .card h3 {
+            margin-top: 0;
+        }
+        input, button {
+            background: #0a0a12;
+            border: 2px solid #b89a6a;
+            color: #ffd;
+            padding: 8px 12px;
+            font-family: monospace;
+            border-radius: 20px;
+            margin: 4px 0;
+            width: 100%;
+        }
+        button {
+            background: #3a3a5a;
+            cursor: pointer;
+            transition: 0.1s;
+        }
+        button:hover {
+            background: #5a5a7a;
+            transform: scale(0.98);
+        }
+        canvas {
+            image-rendering: crisp-edges;
+            image-rendering: pixelated;
+            background: #000;
+            border-radius: 16px;
+            margin-top: 12px;
+            width: 100%;
+            max-width: 200px;
+            align-self: center;
+        }
+        .preview-area {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .preview-item {
+            text-align: center;
+            background: #1e1e2a;
+            border-radius: 20px;
+            padding: 12px;
+        }
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+        }
+        .json-output {
+            background: #0a0a12;
+            border-radius: 16px;
+            padding: 12px;
+            font-size: 12px;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 300px;
+            overflow: auto;
+            margin-top: 16px;
+        }
+        .btn-small {
+            padding: 4px 8px;
+            font-size: 12px;
+            width: auto;
+            display: inline-block;
+            margin-right: 8px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎨 图床转像素 · 后宫角色生成器</h1>
+    <div class="flex-row">
+        <div class="card">
+            <h3>📷 图片来源</h3>
+            <input type="text" id="imageUrl" placeholder="图床图片URL (例如 /api/images/view?rel_path=xxx.jpg)" />
+            <button id="loadUrlBtn">从URL加载</button>
+            <label style="display:block; text-align:center; margin:8px 0">或</label>
+            <input type="file" id="fileInput" accept="image/*" />
+        </div>
+        <div class="card">
+            <h3>⚙️ 像素参数</h3>
+            <div class="slider-label"><span>像素块大小</span><span id="blockSizeVal">8</span></div>
+            <input type="range" id="blockSize" min="2" max="32" step="1" value="8">
+            <div class="slider-label"><span>颜色数量</span><span id="colorCountVal">32</span></div>
+            <input type="range" id="colorCount" min="4" max="128" step="4" value="32">
+            <button id="convertBtn">✨ 转换为像素风格</button>
+        </div>
+    </div>
+
+    <div class="preview-area">
+        <div class="preview-item">
+            <h3>原图</h3>
+            <canvas id="originalCanvas" width="200" height="200"></canvas>
+        </div>
+        <div class="preview-item">
+            <h3>像素化后</h3>
+            <canvas id="pixelCanvas" width="200" height="200"></canvas>
+            <button id="downloadPixelBtn" class="btn-small">💾 保存像素图</button>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+        <h3>👘 生成后宫角色配置 (JSON)</h3>
+        <input type="text" id="charName" placeholder="角色名称 (如: 莉娅)" value="像素精灵">
+        <input type="text" id="charDesc" placeholder="角色描述">
+        <button id="generateJsonBtn">⚙️ 生成角色JSON</button>
+        <div class="json-output" id="jsonOutput">
+            // 生成的JSON将显示在这里
+        </div>
+        <button id="copyJsonBtn" class="btn-small">📋 复制JSON</button>
+        <button id="saveToStorageBtn" class="btn-small">💾 保存到游戏 (localStorage)</button>
+    </div>
+</div>
+
+<script>
+    // DOM 元素
+    const imgUrlInput = document.getElementById('imageUrl');
+    const loadUrlBtn = document.getElementById('loadUrlBtn');
+    const fileInput = document.getElementById('fileInput');
+    const blockSizeSlider = document.getElementById('blockSize');
+    const blockSizeVal = document.getElementById('blockSizeVal');
+    const colorCountSlider = document.getElementById('colorCount');
+    const colorCountVal = document.getElementById('colorCountVal');
+    const convertBtn = document.getElementById('convertBtn');
+    const originalCanvas = document.getElementById('originalCanvas');
+    const pixelCanvas = document.getElementById('pixelCanvas');
+    const downloadPixelBtn = document.getElementById('downloadPixelBtn');
+    const charNameInput = document.getElementById('charName');
+    const charDescInput = document.getElementById('charDesc');
+    const generateJsonBtn = document.getElementById('generateJsonBtn');
+    const jsonOutput = document.getElementById('jsonOutput');
+    const copyJsonBtn = document.getElementById('copyJsonBtn');
+    const saveToStorageBtn = document.getElementById('saveToStorageBtn');
+
+    let originalImg = null;
+    let currentPixelBlob = null;
+
+    // 监听滑块
+    blockSizeSlider.addEventListener('input', () => {
+        blockSizeVal.innerText = blockSizeSlider.value;
+    });
+    colorCountSlider.addEventListener('input', () => {
+        colorCountVal.innerText = colorCountSlider.value;
+    });
+
+    // 加载图片
+    function loadImageFromURL(url) {
+        const img = new Image();
+        img.crossOrigin = 'Anonymous'; // 避免跨域问题（部分图床允许）
+        img.onload = () => {
+            originalImg = img;
+            drawOriginal(img);
+        };
+        img.onerror = () => alert('图片加载失败，请检查URL或跨域设置');
+        img.src = url;
+    }
+
+    function loadImageFromFile(file) {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                originalImg = img;
+                drawOriginal(img);
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function drawOriginal(img) {
+        const ctx = originalCanvas.getContext('2d');
+        originalCanvas.width = 200;
+        originalCanvas.height = 200;
+        ctx.drawImage(img, 0, 0, 200, 200);
+    }
+
+    // 像素化算法
+    function pixelate(img, blockSize, colorCount) {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const w = img.width, h = img.height;
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(img, 0, 0, w, h);
+        const imageData = ctx.getImageData(0, 0, w, h);
+        const data = imageData.data;
+
+        // 简化颜色：将RGB量化为 colorCount 种颜色（简单均匀量化）
+        const step = 256 / (Math.cbrt(colorCount) || 4);
+        for (let i = 0; i < data.length; i += 4) {
+            data[i] = Math.floor(data[i] / step) * step;
+            data[i+1] = Math.floor(data[i+1] / step) * step;
+            data[i+2] = Math.floor(data[i+2] / step) * step;
+        }
+        ctx.putImageData(imageData, 0, 0);
+
+        // 降采样（马赛克效果）
+        const smallCanvas = document.createElement('canvas');
+        const sctx = smallCanvas.getContext('2d');
+        const smallW = Math.ceil(w / blockSize);
+        const smallH = Math.ceil(h / blockSize);
+        smallCanvas.width = smallW;
+        smallCanvas.height = smallH;
+        sctx.drawImage(canvas, 0, 0, smallW, smallH);
+        // 放大回原始尺寸
+        const finalCanvas = document.createElement('canvas');
+        finalCanvas.width = w;
+        finalCanvas.height = h;
+        const fctx = finalCanvas.getContext('2d');
+        fctx.imageSmoothingEnabled = false;
+        fctx.drawImage(smallCanvas, 0, 0, w, h);
+        return finalCanvas;
+    }
+
+    async function convertToPixel() {
+        if (!originalImg) {
+            alert('请先加载图片');
+            return;
+        }
+        const blockSize = parseInt(blockSizeSlider.value);
+        const colorCount = parseInt(colorCountSlider.value);
+        const pixelCanvasResult = pixelate(originalImg, blockSize, colorCount);
+        // 显示到预览canvas (尺寸200x200)
+        const ctx = pixelCanvas.getContext('2d');
+        pixelCanvas.width = 200;
+        pixelCanvas.height = 200;
+        ctx.drawImage(pixelCanvasResult, 0, 0, 200, 200);
+        // 保存为blob用于下载
+        currentPixelBlob = await new Promise(resolve => pixelCanvasResult.toBlob(resolve, 'image/png'));
+    }
+
+    function downloadPixelImage() {
+        if (!currentPixelBlob) {
+            alert('请先转换像素风格');
+            return;
+        }
+        const url = URL.createObjectURL(currentPixelBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `pixel_${Date.now()}.png`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    // 生成角色JSON（适配游戏中的角色数据结构）
+    function generateCharacterJson() {
+        if (!currentPixelBlob) {
+            alert('请先转换像素风格，生成图片后再导出角色数据');
+            return;
+        }
+        const name = charNameInput.value.trim() || '无名';
+        const desc = charDescInput.value.trim() || '一位神秘的伙伴';
+        // 图片转为base64（用于预览/存储）
+        const reader = new FileReader();
+        reader.onload = () => {
+            const imageBase64 = reader.result;
+            const character = {
+                id: Date.now(),
+                name: name,
+                description: desc,
+                avatarBase64: imageBase64,   // 可直接用于<img src>
+                // 预设一些游戏属性，可后续修改
+                level: 1,
+                hp: 80,
+                maxHp: 80,
+                attack: 28,
+                defense: 12,
+                critRate: 5,
+                critDmg: 150,
+                fireBonus: 0,
+                trueDamage: 0,
+                element: 'normal',
+                favor: 0,
+                skills: ['普通攻击'],
+                equipment: {},
+                type: 'harem',
+            };
+            const jsonStr = JSON.stringify(character, null, 2);
+            jsonOutput.innerText = jsonStr;
+        };
+        reader.readAsDataURL(currentPixelBlob);
+    }
+
+    function copyJson() {
+        const text = jsonOutput.innerText;
+        if (!text || text.startsWith('//')) return;
+        navigator.clipboard.writeText(text);
+        alert('JSON已复制到剪贴板');
+    }
+
+    function saveToGameStorage() {
+        const text = jsonOutput.innerText;
+        if (!text || text.startsWith('//')) return;
+        try {
+            const character = JSON.parse(text);
+            // 读取现有后宫列表
+            let harem = JSON.parse(localStorage.getItem('harem_characters') || '[]');
+            harem.push(character);
+            localStorage.setItem('harem_characters', JSON.stringify(harem));
+            alert(`角色 ${character.name} 已保存到游戏后宫！`);
+        } catch(e) {
+            alert('保存失败，JSON无效');
+        }
+    }
+
+    // 事件绑定
+    loadUrlBtn.addEventListener('click', () => {
+        const url = imgUrlInput.value.trim();
+        if (url) loadImageFromURL(url);
+        else alert('请输入图片URL');
+    });
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) loadImageFromFile(e.target.files[0]);
+    });
+    convertBtn.addEventListener('click', convertToPixel);
+    downloadPixelBtn.addEventListener('click', downloadPixelImage);
+    generateJsonBtn.addEventListener('click', generateCharacterJson);
+    copyJsonBtn.addEventListener('click', copyJson);
+    saveToStorageBtn.addEventListener('click', saveToGameStorage);
+</script>
+</body>
+</html>
