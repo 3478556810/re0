@@ -18,6 +18,9 @@ func GetPosts(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	if posts == nil {
+		posts = []model.Post{}
+	}
 	c.JSON(http.StatusOK, posts)
 }
 

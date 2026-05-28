@@ -17,6 +17,7 @@ func InitDB() {
 	if err != nil {
 		log.Fatal("数据库连接失败: ", err)
 	}
+
 	DB.SetMaxOpenConns(10)
 	DB.SetMaxIdleConns(5)
 }
