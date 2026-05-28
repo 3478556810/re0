@@ -18,8 +18,9 @@ func generateBlogPost(topic string) string {
 			title = string([]rune(title)[:50]) + "..."
 		}
 		slug := time.Now().Format("2006-01-02-150405")
-		_, err := database.DB.Exec("INSERT INTO posts (title, slug, content) VALUES (?, ?, ?)",
-			title, slug, content)
+		// 插入时增加 tags 字段，默认值为 '["故事"]'
+		_, err := database.DB.Exec("INSERT INTO posts (title, slug, content, tags) VALUES (?, ?, ?, ?)",
+			title, slug, content, `["故事"]`)
 		if err != nil {
 			fmt.Printf("⚠️ 博客发布失败: %v\n", err)
 		} else {
