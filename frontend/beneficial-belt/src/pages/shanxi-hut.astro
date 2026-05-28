@@ -17,10 +17,7 @@ import AuthGuard from '../components/AuthGuard.astro';
   <body>
     <NavBar />
     <main class="hut-container">
-      <div class="hut-header">
-        <h1>杉汐的小屋</h1>
-        <p>杉汐的能力应用场景，每一个都是一次陪伴。</p>
-      </div>
+ 
       <HutCards client:only="vue" />
     </main>
   </body>
