@@ -34,15 +34,54 @@
       <button class="pixel-btn small danger" @click="deleteDungeon(id)">删除地下城</button>
     </div>
     <button class="pixel-btn small" @click="addDungeon">+ 添加地下城</button>
+
+    <!-- JSON 导入/导出 -->
+    <button class="pixel-btn small" @click="toggleImport">导入/导出</button>
+    <div v-if="showImport" class="import-area">
+      <textarea v-model="jsonText" class="pixel-textarea" rows="12" placeholder="粘贴地下城 JSON..."></textarea>
+      <div class="import-actions">
+        <button class="pixel-btn small" @click="importConfig">导入 JSON</button>
+        <button class="pixel-btn small" @click="exportConfig">导出 JSON</button>
+      </div>
+    </div>
+
     <button class="pixel-btn" @click="saveConfig"><Icon icon="mdi:content-save" /> 保存</button>
   </div>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 import { useGameStore } from '../../store/gameStore'
 import { Icon } from '@iconify/vue'
 
 const store = useGameStore()
+const showImport = ref(false)
+const jsonText = ref('')
+
+function toggleImport() {
+  showImport.value = !showImport.value
+  // 每次打开时自动填充当前配置的 JSON
+  if (showImport.value) {
+    jsonText.value = JSON.stringify(store.config.dungeonConfigs, null, 2)
+  }
+}
+
+function importConfig() {
+  try {
+    const parsed = JSON.parse(jsonText.value)
+    store.config.dungeonConfigs = parsed
+    store.save()
+    alert('地下城配置导入成功！')
+    showImport.value = false
+  } catch (e) {
+    alert('JSON 格式错误: ' + e.message)
+  }
+}
+
+function exportConfig() {
+  navigator.clipboard.writeText(jsonText.value)
+  alert('已复制到剪贴板')
+}
 
 // 把用户输入的字符串转成数组
 function updateFloorPool(dg, floor, value) {
@@ -81,4 +120,7 @@ h3 { font-size: 12px; margin-bottom: 12px; }
 .floor-config { margin-top: 10px; }
 .floor-row { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; font-size: 9px; }
 .danger { background: rgba(244,67,54,0.2) !important; border-color: #f44336 !important; }
+.import-area { margin-top: 10px; }
+.pixel-textarea { width: 100%; background: #1a2a3a; border: 1px solid #b89a6a; color: #ffd; padding: 10px; font-family: monospace; font-size: 10px; border-radius: 8px; resize: vertical; }
+.import-actions { display: flex; gap: 8px; margin-top: 8px; }
 </style>

@@ -51,7 +51,10 @@ function fallbackSpawnEnemy(template, playerLevel) {
 // 全局时间流逝
 let timeInterval
 onMounted(() => {
-  store.fixGhostEquipment()
+    window.addEventListener('beforeunload', () => {
+    store.save()
+  })
+  //store.fixGhostEquipment()
   timeInterval = setInterval(() => {
     store.advanceTime(1)
   }, 1000)
@@ -69,11 +72,30 @@ function onKeyDebug(e) {
   }
 }
 
+
+
+function onVictory(reward) {
+  // 所有奖励已在 BattleScene 中保存，这里只处理战斗状态
+  inBattle.value = false
+}
+
+
+function parseMonsterSkills(template) {
+  if (template.skillsText) {
+    try {
+      return JSON.parse(template.skillsText)
+    } catch (e) {
+      console.warn('怪物技能解析失败:', e)
+      return []
+    }
+  }
+  return []
+}
+
 function onStartBattle(monsterOrId) {
   let monster = null
 
   if (typeof monsterOrId === 'string') {
-    // 地下城传来的怪物 ID
     const builtin = {
       slime: { id: 'slime', name: '史莱姆', baseHp: 35, baseAtk: 10, baseDef: 6, levelRange: [1,3], material: { id: 'slime_gel', name: '史莱姆凝露' }, icon: 'mdi:blur' },
       goblin: { id: 'goblin', name: '哥布林', baseHp: 45, baseAtk: 16, baseDef: 10, levelRange: [2,5], material: { id: 'goblin_fang', name: '哥布林之牙' }, icon: 'mdi:alien' },
@@ -96,6 +118,8 @@ function onStartBattle(monsterOrId) {
       }
       monster.icon = template.icon || 'mdi:help-circle'
       if (template.isBoss) monster.isBoss = true
+      // 解析技能
+      monster.skills = parseMonsterSkills(template)
     } catch (e) {
       console.error('生成怪物失败', e)
       monster = fallbackSpawnEnemy(template, store.player.level)
@@ -103,6 +127,9 @@ function onStartBattle(monsterOrId) {
     }
   } else if (monsterOrId && typeof monsterOrId === 'object') {
     monster = monsterOrId
+    if (!monster.skills && monster.skillsText) {
+      monster.skills = parseMonsterSkills(monster)
+    }
   }
 
   if (!monster) {
@@ -110,16 +137,10 @@ function onStartBattle(monsterOrId) {
     return
   }
 
- currentEnemy.value = monster
-battleKey.value++   // 强制重新创建战斗组件
-inBattle.value = true
+  currentEnemy.value = monster
+  battleKey.value++
+  inBattle.value = true
 }
-
-function onVictory(reward) {
-  // 所有奖励已在 BattleScene 中保存，这里只处理战斗状态
-  inBattle.value = false
-}
-
 
 function onNextFloor() {
   if (!store.dungeon.active) {
@@ -131,7 +152,6 @@ function onNextFloor() {
   if (monsterId) {
     template = store.config.monsterTemplates.find(m => m.id === monsterId)
   }
-  // 后备内置表（带完整 levelRange）
   if (!template) {
     const builtin = {
       slime: { id: 'slime', name: '史莱姆', baseHp: 35, baseAtk: 10, baseDef: 6, levelRange: [1,3], material: { id: 'slime_gel', name: '史莱姆凝露' }, icon: 'mdi:blur' },
@@ -143,16 +163,17 @@ function onNextFloor() {
     }
     template = builtin[monsterId] || builtin.slime
   }
-  // 确保 levelRange 存在
   if (!template.levelRange) {
     template = { ...template, levelRange: [1, 5] }
   }
   const monster = spawnEnemy(template, store.player.level)
   monster.icon = template.icon || 'mdi:help-circle'
   if (template.isBoss) monster.isBoss = true
+  // 解析技能
+  monster.skills = parseMonsterSkills(template)
   store.dungeon.isDungeonBattle = true
   currentEnemy.value = monster
-  battleKey.value++   // 关键：强制重建战斗组件
+  battleKey.value++
 }
 </script>
 
