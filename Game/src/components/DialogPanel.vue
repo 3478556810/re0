@@ -189,4 +189,48 @@ defineExpose({ startScene })
   color: #b89aa5;
   margin-top: 10px;
 }
+
+
+
+/* 移动端适配：屏幕宽度小于800px时自动缩小立绘，保持UI可用 */
+@media (max-width: 800px) {
+  .speaker-container {
+    width: 30vw;        /* 立绘宽度缩小 */
+    height: 50vh;       /* 高度缩小 */
+    top: 10%;
+  }
+  .speaker-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+  .speaker-icon {
+    font-size: 20vw;    /* 图标也相应缩小 */
+  }
+  .dialog-box {
+    width: 95%;         /* 对话框占满剩余空间 */
+    max-width: none;
+    margin-bottom: 20px;
+    padding: 16px 18px;
+    z-index: 50;        /* 确保对话框在立绘上方 */
+    background: rgba(255, 252, 252, 0.95); /* 背景稍微加深防止透明重叠 */
+  }
+  .dialog-text {
+    font-size: 11px;
+    line-height: 1.6;
+    margin-bottom: 15px;
+  }
+  .choice-btn {
+    font-size: 9px;
+    padding: 8px 14px;
+    border-radius: 12px;
+  }
+  .dialog-choices {
+    gap: 8px;
+  }
+  .dialog-indicator {
+    font-size: 7px;
+  }
+}
+
 </style>
