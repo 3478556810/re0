@@ -16,6 +16,7 @@
         </div>
         <div class="core-menu">
           <button class="pixel-btn" @click="openPanel('character')"><Icon icon="mdi:account" /> 角色</button>
+          <button class="pixel-btn" @click="openPanel('skills')"><Icon icon="mdi:star-four-points" /> 技能</button>
           <button class="pixel-btn" @click="openPanel('inventory')"><Icon icon="mdi:bag-personal" /> 背包</button>
           <button class="pixel-btn" @click="openPanel('party')"><Icon icon="mdi:account-group" /> 伙伴</button>
           <button class="pixel-btn" @click="openPanel('pet')"><Icon icon="mdi:paw" /> 宠物</button>
@@ -30,6 +31,8 @@
 
     <DevPanel v-if="currentPanel === 'dev'" @close="currentPanel = null" />
     <CharacterPanel v-if="currentPanel === 'character'" @close="currentPanel = null" />
+
+    <SkillPanel v-if="currentPanel === 'skills'" @close="currentPanel = null" />
 <InventoryPanel
   v-if="currentPanel === 'inventory'"
   :key="'inv-' + inventoryRefreshKey"
@@ -78,6 +81,10 @@ import InnPanel from './InnPanel.vue'
 import DevPanel from './DevPanel/DevPanel.vue'
 import DungeonPanel from './DungeonPanel.vue'
 import DialogPanel from './DialogPanel.vue'
+import SkillPanel from './SkillPanel.vue'
+
+
+
 const inventoryRefreshKey = ref(0)
 const dialogRef = ref(null)
 const store = useGameStore()

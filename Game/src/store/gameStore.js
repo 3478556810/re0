@@ -23,9 +23,13 @@ export const useGameStore = defineStore('game', () => {
     lifesteal: 0,
     waterDmg: 0, fireDmg: 0, thunderDmg: 0, windDmg: 0,
     grassDmg: 0, iceDmg: 0, holyDmg: 0, darkDmg: 0,
-    steelDmg: 0, rockDmg: 0,
-    // 玩家已装备的技能 ID 列表，按顺序排列
-    equippedSkills: ['normal_attack', 'fire_slash']
+    steelDmg: 0, rockDmg: 0,skillPoints: 5,   // 技能点数
+skills: {
+  'normal_attack': { unlocked: true, level: 1 },
+  'fire_slash': { unlocked: false, level: 1 },
+  // ... 其他
+},        // { [skillId]: { unlocked: true, level: 1 } }
+   
   })
 
   // ========== 背包 & 装备 ==========
@@ -111,7 +115,12 @@ tokenShopItems: [
   name: builtInMaterialNames[id] || id,
   type: 'forge'
 })),
-
+skillPool: [
+  { id: 'normal_attack', name: '普通攻击', desc: '无属性基础攻击', element: null, mpCost: 0, baseMul: 1.0, icon: 'mdi:sword-cross', upgradeCost: 2 },
+  { id: 'fire_slash', name: '火焰斩', desc: '火属性攻击', element: 'fire', mpCost: 5, baseMul: 1.8, icon: 'mdi:fire', upgradeCost: 2 },
+  { id: 'ice_bolt', name: '冰冻术', desc: '冰属性攻击', element: 'ice', mpCost: 8, baseMul: 2.0, icon: 'mdi:snowflake', upgradeCost: 3 },
+  { id: 'thunder_shock', name: '雷电', desc: '雷属性攻击', element: 'thunder', mpCost: 6, baseMul: 1.6, icon: 'mdi:lightning-bolt', upgradeCost: 2 }
+],
 
 tokenShopItems: [
   { id: 't1', name: '龙鳞 x3', desc: '稀有锻造材料', type: 'material', cost: 5, rewardId: 'dragon_scale', rewardName: '龙鳞', rewardQty: 3 },
@@ -423,12 +432,31 @@ tokenShopItems: [
 
   // ========== 持久化 ==========
   function save() {
+    const cleanEquipment = {}
+  for (const slot of Object.keys(equipment)) {
+    const item = equipment[slot]
+    if (!item) {
+      cleanEquipment[slot] = null
+    } else {
+      // 只保留可序列化的字段
+      cleanEquipment[slot] = {
+        id: item.id,
+        part: item.part,
+        name: item.name,
+        quality: item.quality,
+        atk: item.atk || 0,
+        def: item.def || 0,
+        affixes: item.affixes ? item.affixes.map(a => ({ id: a.id, level: a.level })) : []
+      }
+    }
+  }
     const state = {
+        equipment: cleanEquipment,
       tokenShopItems: config.tokenShopItems.map(i => ({ ...i })),
       player: { ...player },
       inventory: [...inventory],
       materials: Object.fromEntries(Object.entries(materials).map(([k, v]) => [k, { ...v }])),
-      equipment: { ...equipment },
+      
       world: { ...world },
       weather: { ...weather },
       facilities: {
@@ -484,12 +512,7 @@ if (data.config.tokenShopItems) config.tokenShopItems = data.config.tokenShopIte
       }
       if (data.equipment) Object.assign(equipment, data.equipment)
       // 清理幽灵装备
-      for (const slot of Object.keys(equipment)) {
-        const item = equipment[slot]
-        if (!item) continue
-        const existsInInv = inventory.some(i => i.id === item.id)
-        if (!existsInInv) equipment[slot] = null
-      }
+   
       if (data.world) {
         world.currentBiome = data.world.currentBiome || 'plain'
         world.playerX = data.world.playerX ?? 5

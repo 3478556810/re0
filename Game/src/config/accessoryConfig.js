@@ -215,63 +215,24 @@ export const QUALITY_WEIGHTS = {
   boss:   { white: 5,  green: 20, blue: 35, purple: 30, red: 10 }
 }
 
-// ========== 掉落表 ==========
-export const LOOT_TABLES = {
-  // 按怪物类型分组
-  slime: {
-    dropChance: 0.3,
-    qualityTier: 'weak',
-    accessories: ['earring1', 'earring2']
-  },
-  goblin: {
-    dropChance: 0.35,
-    qualityTier: 'weak',
-    accessories: ['necklace1', 'necklace2']
-  },
-  scorpion: {
-    dropChance: 0.4,
-    qualityTier: 'normal',
-    accessories: ['earring1', 'earring2', 'necklace1', 'necklace2']
-  },
-  wolf: {
-    dropChance: 0.45,
-    qualityTier: 'normal',
-    accessories: ['earring1', 'earring2']
-  },
-  dragon: {
-    dropChance: 0.8,
-    qualityTier: 'strong',
-    accessories: ['earring1', 'earring2', 'necklace1', 'necklace2']
-  },
-  boss: {
-    dropChance: 1.0,
-    qualityTier: 'boss',
-    accessories: ['earring1', 'earring2', 'necklace1', 'necklace2']
+
+// 根据怪物标签获取掉落配置（不再使用硬编码怪物名）
+export function getLootConfig(tag) {
+  const tags = ['weak', 'normal', 'strong', 'boss']
+  const tier = tags.includes(tag) ? tag : 'normal'
+  // 所有怪物都掉落全套饰品
+  const accessories = ['earring1', 'earring2', 'necklace', 'ring1', 'ring2']
+  return {
+    dropChance: 0.3,       // 基础掉率，可在生成时再乘倍率
+    qualityTier: tier,
+    accessories
   }
 }
 
-// 根据怪物名称匹配掉落表
+// 兼容旧函数名（若无其他引用可删除）
 export function getLootTable(enemyName) {
-  const name = enemyName.toLowerCase()
-  if (name.includes('boss') || name.includes('魔王') || name.includes('领主')) {
-    return LOOT_TABLES.boss
-  }
-  if (name.includes('龙') || name.includes('dragon')) {
-    return LOOT_TABLES.dragon
-  }
-  if (name.includes('狼') || name.includes('wolf')) {
-    return LOOT_TABLES.wolf
-  }
-  if (name.includes('蝎') || name.includes('scorpion')) {
-    return LOOT_TABLES.scorpion
-  }
-  if (name.includes('哥布林') || name.includes('goblin')) {
-    return LOOT_TABLES.goblin
-  }
-  if (name.includes('史莱姆') || name.includes('slime')) {
-    return LOOT_TABLES.slime
-  }
-  return LOOT_TABLES.slime // 默认
+  // 不再使用名字，仅保留占位
+  return getLootConfig('normal')
 }
 
 // 根据品质权重随机选择品质

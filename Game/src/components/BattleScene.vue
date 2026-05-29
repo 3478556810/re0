@@ -74,9 +74,9 @@
 
     <div v-if="showSkillPanel && !gameOver && playerTurn && !waiting" class="popup-panel">
       <div class="skill-list">
-        <button v-for="skill in skills" :key="skill.name" class="skill-btn" @click="useSkill(skill)">
-          <Icon :icon="skill.icon" /> {{ skill.name }} ({{ skill.desc }})
-        </button>
+     <button v-for="skill in battleSkills" :key="skill.id" class="skill-btn" @click="useSkill(skill)">
+  <Icon :icon="skill.icon" /> {{ skill.name }} ({{ skill.desc }})
+</button>
       </div>
      
     </div>
@@ -176,10 +176,11 @@ const playerStats = computed(() => {
   }
 })
 
-const skills = [
-  { name: '火焰斩', desc: '火属性攻击', element: 'fire', baseMul: 1.8, mpCost: 5, icon: 'mdi:fire' },
-  { name: '普通攻击', desc: '无属性', element: null, baseMul: 1.0, mpCost: 0, icon: 'mdi:sword-cross' }
-]
+const battleSkills = computed(() => {
+  return store.player.equippedSkills
+    .map(id => store.config.skillPool.find(s => s.id === id))
+    .filter(Boolean)
+})
 
 const enemyHp = ref(props.enemy.hp)
 const playerTurn = ref(true)
@@ -296,9 +297,26 @@ function useItem(item) {
 async function enemyTurn() {
   if (gameOver.value) return
   showMessage(`${props.enemy.name} 的回合！`)
-  const damage = enemyDamage()
-  store.player.hp -= damage
-  showMessage(`受到 ${damage} 点伤害！`)
+  
+  // 尝试使用技能
+  let usedSkill = false
+  if (props.enemy.skills && props.enemy.skills.length > 0 && Math.random() < 0.7) {
+    const skill = props.enemy.skills[Math.floor(Math.random() * props.enemy.skills.length)]
+    if (skill) {
+      const dmg = calculateDamage(props.enemy.atk * (skill.baseMul || 1), skill.element || null)
+      store.player.hp -= dmg.damage
+      showMessage(`${props.enemy.name} 使用了 ${skill.name}！造成 ${dmg.damage} 点伤害！`)
+      usedSkill = true
+    }
+  }
+  
+  // 如果没有使用技能，则普通攻击
+  if (!usedSkill) {
+    const damage = enemyDamage()
+    store.player.hp -= damage
+    showMessage(`受到 ${damage} 点伤害！`)
+  }
+  
   animatePlayerHit()
   if (store.player.hp <= 0) {
     store.player.hp = 0
@@ -310,7 +328,7 @@ async function enemyTurn() {
   }
   playerTurn.value = true
   waiting.value = false
-  showSkillPanel.value = true   // ← 添加这一行，自动弹出技能框
+  showSkillPanel.value = true
 }
 
 async function animateExp(targetExp) {
