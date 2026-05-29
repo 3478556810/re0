@@ -87,6 +87,9 @@
                     {{ getAffixName(aff.id) }} Lv.{{ aff.level }}
                   </span>
                 </div>
+
+ <button class="pixel-btn small danger" @click.stop="deleteAccessory(acc)">删除</button>
+
               </div>
             </div>
           </div>
@@ -162,7 +165,15 @@ const props = defineProps({
 const emit = defineEmits(['close'])
 
 const store = useGameStore()
-
+function deleteAccessory(acc) {
+  if (!confirm(`确定要删除饰品 ${acc.name} 吗？`)) return
+  const idx = store.inventory.indexOf(acc)
+  if (idx > -1) {
+    store.inventory.splice(idx, 1)
+    store.save()
+    
+  }
+}
 // 装备槽定义
 const leftSlots = [
   { key: 'weapon', label: '武器', icon: 'mdi:sword' },
@@ -355,6 +366,8 @@ function hideTooltip() { tooltip.visible = false }
 .dialog-total { font-size: 11px; color: #4caf50; margin-bottom: 20px; }
 .dialog-actions { display: flex; gap: 12px; justify-content: center; }
 .pixel-btn.primary { background: rgba(255,215,0,0.2); border-color: #ffd700; }
-
+.acc-card .danger {
+  margin-top: 6px;
+}
 /* 保留原有布局（省略，来自 InventoryPanel.css） */
 </style>

@@ -1,15 +1,12 @@
-/**
- * 饰品生成工具
- */
 import {
   AFFIX_EFFECTS,
-  AFFIX_IDS,
   QUALITY_RULES,
-  rollQuality,
-  getLootTable
+  QUALITY_WEIGHTS,
+  rollQuality as originalRollQuality
 } from '../config/accessoryConfig'
-import { useGameStore } from '../store/gameStore' // 在函数内使用
+import { useGameStore } from '../store/gameStore'
 
+// 生成一件饰品
 export function generateAccessory(part, quality) {
   const rule = QUALITY_RULES[quality]
   if (!rule) return null
@@ -28,8 +25,12 @@ export function generateAccessory(part, quality) {
   const [minAffix, maxAffix] = rule.affixCount
   const affixCount = minAffix + Math.floor(Math.random() * (maxAffix - minAffix + 1))
 
+  const store = useGameStore()
+  // 从 store 中读取当前可用的词条ID列表，若未配置则回退到静态 AFFIX_EFFECTS 的键
+  const affixPool = store.config?.affixPool || Object.keys(AFFIX_EFFECTS)
+  const availableIds = [...affixPool.map(a => a.id || a)]
+  
   const selectedAffixes = []
-  const availableIds = [...AFFIX_IDS]
   for (let i = 0; i < affixCount && availableIds.length > 0; i++) {
     const idx = Math.floor(Math.random() * availableIds.length)
     const affixId = availableIds.splice(idx, 1)[0]
@@ -46,13 +47,13 @@ export function generateAccessory(part, quality) {
     name,
     atk,
     def,
-     affixes: selectedAffixes || [] 
+    affixes: selectedAffixes || []
   }
 }
 
-// 词条中二名映射表（可后续移至 accessoryConfig.js）
-
+// 名称生成（已修复依赖 store）
 function generateAccessoryName(part, affixes) {
+  const store = useGameStore()
   const partNames = {
     earring1: '左耳环',
     earring2: '右耳环',
@@ -60,41 +61,62 @@ function generateAccessoryName(part, affixes) {
     ring2: '右戒指',
     necklace: '项链'
   }
-  const baseName = partNames[part] || '饰品'
-  
+  const baseName = partNames[part] || '耳环' // 默认左耳环，避免“饰品”
   if (affixes.length === 0) return baseName
 
   const firstAffix = affixes[0]
-  const effect = store.config.affixEffects?.[firstAffix.id] || AFFIX_EFFECTS[firstAffix.id]
+  const effect = store.config?.affixEffects?.[firstAffix.id] || AFFIX_EFFECTS[firstAffix.id]
   const loreName = effect?.loreName || effect?.name || firstAffix.id
   return `${loreName} ${baseName}`
 }
-export function rollAccessoryDrop(enemyName) {
-  const table = getLootTable(enemyName)
-  if (Math.random() > table.dropChance) return null
-  const quality = rollQuality(table.qualityTier)
-  const parts = table.accessories
+
+// 单次掉落判定
+export function rollAccessoryDrop(enemyName, enemyTag) {
+  const store = useGameStore()
+  // 根据怪物标签决定品质权重层级，未提供标签默认为 normal
+  const tier = enemyTag || 'normal'
+  // 直接使用 qualityWeights 中的对应权重来随机品质
+  const quality = rollQuality(tier)
+  // 饰品部位池：所有五件饰品
+  const parts = ['earring1', 'earring2', 'necklace', 'ring1', 'ring2']
   const part = parts[Math.floor(Math.random() * parts.length)]
   return generateAccessory(part, quality)
 }
 
+// 生成多次掉落
 export function generateAccessoryLoot(enemy) {
   if (!enemy) return []
   const store = useGameStore()
-  const multiplier = store.config.lootMultiplier || 1  // 读取全局倍率
+  const multiplier = store.config.lootMultiplier || 1
   const dropped = []
+  // 基础掉率根据等级微调，最高50%
   const baseDropChance = Math.min(0.5, 0.1 + (enemy.level || 1) * 0.02)
   const dropChance = Math.min(1, baseDropChance * multiplier)
   const maxDrops = Math.random() < 0.3 ? 2 : 1
   for (let i = 0; i < maxDrops; i++) {
     if (Math.random() < dropChance) {
-      const acc = rollAccessoryDrop(enemy.name || 'slime')
+      // 传递怪物的标签
+      const acc = rollAccessoryDrop(enemy.name || 'slime', enemy.tag)
       if (acc) dropped.push(acc)
     }
   }
   return dropped
 }
 
+// 根据品质权重随机品质（复用原函数逻辑，但优先使用 store 中的权重）
+function rollQuality(tier) {
+  const store = useGameStore()
+  const weights = store.config?.qualityWeights?.[tier] || QUALITY_WEIGHTS[tier] || QUALITY_WEIGHTS.normal
+  const total = Object.values(weights).reduce((a, b) => a + b, 0)
+  let roll = Math.random() * total
+  for (const [quality, weight] of Object.entries(weights)) {
+    roll -= weight
+    if (roll <= 0) return quality
+  }
+  return 'white'
+}
+
+// 饰品描述工具（无变化）
 export function getAccessoryDescription(accessory) {
   if (!accessory) return ''
   const lines = []
