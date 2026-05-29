@@ -65,25 +65,37 @@ house_interior: {
 }
 
 export function spawnEnemy(template, playerLevel) {
-  const lv = Math.floor(Math.random() * (template.levelRange[1] - template.levelRange[0] + 1)) + template.levelRange[0]
-  const hp = Math.floor(template.baseHp + lv * 8)
-  const atk = Math.floor(template.baseAtk + lv * 3)
-  const def = Math.floor(template.baseDef + lv * 2)
-  const exp = Math.floor(20 + lv * 15)
-  
-  // 材料名称直接使用 template.material.name，若无则使用 id
-  const material = template.material ? { ...template.material } : null
-  if (material && !material.name) material.name = material.id
-
+  if (!template) {
+    template = {
+      name: '史莱姆', baseHp: 30, baseAtk: 10, baseDef: 5,
+      levelRange: [1, 3], material: { id: 'slime_gel', name: '史莱姆凝露' }
+    }
+  }
+  // 优先取 levelRange，否则从 minLevel/maxLevel 构建
+  let range = template.levelRange
+  if (!range) {
+    const min = template.minLevel || 1
+    const max = template.maxLevel || 5
+    range = [min, max]
+  }
+  const lv = Math.floor(Math.random() * (range[1] - range[0] + 1)) + range[0]
+  const hp = Math.floor((template.baseHp || 30) + lv * 4)
+  const atk = Math.floor((template.baseAtk || 10) + lv * 2)
+  const def = Math.floor((template.baseDef || 5) + lv * 1.5)
+  const exp = template.exp || (20 + lv * 10)
   return {
     ...template,
     level: lv,
     hp, maxHp: hp,
     atk, def,
     exp,
-    material: material // 确保 material 有 name 属性
+    material: template.material || { id: 'slime_gel', name: '史莱姆凝露' }
   }
 }
+
+
+
+
 export function generateBiomeMap(biomeKey, width, height, defeatedSet) {
   const biome = BIOMES[biomeKey]
   if (!biome) return []

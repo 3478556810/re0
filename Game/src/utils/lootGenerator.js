@@ -9,6 +9,7 @@ import {
   getLootTable
 } from '../config/accessoryConfig'
 import { useGameStore } from '../store/gameStore' // 在函数内使用
+
 export function generateAccessory(part, quality) {
   const rule = QUALITY_RULES[quality]
   if (!rule) return null
@@ -45,7 +46,7 @@ export function generateAccessory(part, quality) {
     name,
     atk,
     def,
-    affixes: selectedAffixes
+     affixes: selectedAffixes || [] 
   }
 }
 
@@ -64,7 +65,7 @@ function generateAccessoryName(part, affixes) {
   if (affixes.length === 0) return baseName
 
   const firstAffix = affixes[0]
-  const effect = AFFIX_EFFECTS[firstAffix.id]
+  const effect = store.config.affixEffects?.[firstAffix.id] || AFFIX_EFFECTS[firstAffix.id]
   const loreName = effect?.loreName || effect?.name || firstAffix.id
   return `${loreName} ${baseName}`
 }
@@ -80,11 +81,10 @@ export function rollAccessoryDrop(enemyName) {
 export function generateAccessoryLoot(enemy) {
   if (!enemy) return []
   const store = useGameStore()
+  const multiplier = store.config.lootMultiplier || 1  // 读取全局倍率
   const dropped = []
-  const baseMultiplier = store.config.lootMultiplier ?? 1   // 从面板设置的全局倍率
-  const testMultiplier = 1   // 正式上线保持 1，测试时可改大
-  const baseDropChance = Math.min(0.5, 0.1 + enemy.level * 0.02)
-  const dropChance = Math.min(1, baseDropChance * baseMultiplier * testMultiplier)
+  const baseDropChance = Math.min(0.5, 0.1 + (enemy.level || 1) * 0.02)
+  const dropChance = Math.min(1, baseDropChance * multiplier)
   const maxDrops = Math.random() < 0.3 ? 2 : 1
   for (let i = 0; i < maxDrops; i++) {
     if (Math.random() < dropChance) {

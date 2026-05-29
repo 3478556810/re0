@@ -246,6 +246,7 @@
 
 /* ========== 结束面板 ========== */
 .game-over-panel {
+    color: #ffd;   
   position: absolute;
   top: 50%;
   left: 50%;
@@ -257,4 +258,17 @@
   text-align: center;
   z-index: 30;
   font-size: 16px;
+}
+
+.close-btn {
+  background: #5a3a2a;
+  border: none;
+  color: white;
+  padding: 4px 12px;
+  cursor: pointer;
+  font-size: 10px;
+  border-radius: 8px;
+  position: absolute;
+  top: 8px;
+  right: 8px;
 }
