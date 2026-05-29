@@ -1,0 +1,60 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: aether-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: aether
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init_db.sql:/docker-entrypoint-initdb.d/init_db.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always
+    networks:
+      - aether-net
+
+  backend:
+    build: ./backend
+    container_name: aether-backend
+    ports:
+      - "8082:8080"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: aether
+      CACHE_SIZE: "1000"
+      ALPHA: "0.5"
+      PORT: "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    networks:
+      - aether-net
+
+  frontend:
+    build: ./frontend
+    container_name: aether-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: always
+    networks:
+      - aether-net
+
+volumes:
+  pgdata:
+
+networks:
+  aether-net:
+    driver: bridge

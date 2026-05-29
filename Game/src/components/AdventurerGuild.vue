@@ -38,7 +38,7 @@
         </button>
       </div>
 
-      <!-- 贩卖按钮（留白） -->
+      <!-- 贩卖按钮 -->
       <div class="sell-area">
         <button class="pixel-btn" @click="openBackpack">
           <Icon icon="mdi:bag-personal" /> 打开背包贩卖
@@ -54,26 +54,23 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
 
 const store = useGameStore()
 const emit = defineEmits(['close', 'openBackpack'])
 
-const quests = ref([])
-refreshQuests()
-
-// 段位计算
+// 段位配置
 const ranks = [
-  { name: '黑铁', minLevel: 1, maxExp: 300, icon: 'mdi:circle-small' },
-  { name: '青铜', minLevel: 5, maxExp: 600, icon: 'mdi:circle-double' },
-  { name: '白银', minLevel: 10, maxExp: 1000, icon: 'mdi:brightness-5' },
-  { name: '黄金', minLevel: 15, maxExp: 1500, icon: 'mdi:star-four-points' },
-  { name: '白金', minLevel: 20, maxExp: 2200, icon: 'mdi:diamond' },
-  { name: '钻石', minLevel: 25, maxExp: 3200, icon: 'mdi:rhombus-split' },
-  { name: '大师', minLevel: 30, maxExp: 4500, icon: 'mdi:shield-crown' },
-  { name: '王者', minLevel: 35, maxExp: 6000, icon: 'mdi:crown' }
+  { name: '黑铁', minLevel: 1, maxExp: 300, icon: 'mdi:circle-small', boss: '蛮牛王' },
+  { name: '青铜', minLevel: 5, maxExp: 600, icon: 'mdi:circle-double', boss: '沙漠蝎皇' },
+  { name: '白银', minLevel: 10, maxExp: 1000, icon: 'mdi:brightness-5', boss: '冰霜巨龙' },
+  { name: '黄金', minLevel: 15, maxExp: 1500, icon: 'mdi:star-four-points', boss: '暗影领主' },
+  { name: '白金', minLevel: 20, maxExp: 2200, icon: 'mdi:diamond', boss: '炎魔' },
+  { name: '钻石', minLevel: 25, maxExp: 3200, icon: 'mdi:rhombus-split', boss: '雷霆泰坦' },
+  { name: '大师', minLevel: 30, maxExp: 4500, icon: 'mdi:shield-crown', boss: '圣光天使' },
+  { name: '王者', minLevel: 35, maxExp: 6000, icon: 'mdi:crown', boss: '混沌魔神' }
 ]
 
 const currentRankIndex = computed(() => {
@@ -104,15 +101,44 @@ const expPercent = computed(() => {
   return Math.min(100, (expInRank / rank.maxExp) * 100)
 })
 
+// 任务列表
+const quests = ref([])
+refreshQuests()
+
+// 升段Boss监听
+watch(currentRankIndex, (newIdx, oldIdx) => {
+  if (oldIdx !== undefined && newIdx > oldIdx) {
+    const bossName = ranks[newIdx].boss
+    quests.value.push({
+      id: Date.now(),
+      desc: `[升段讨伐] 击败 ${bossName}`,
+      rewardExp: 100 * (newIdx + 1),
+      target: 'boss',
+      count: 1,
+      bossName: bossName
+    })
+  }
+})
+
 function refreshQuests() {
-  quests.value = [
+  // 保留已有的升段Boss任务（id大于10000或带有特殊标记），只刷新普通任务
+  const bossQuests = quests.value.filter(q => q.target === 'boss')
+  const normalQuests = [
     { id: 1, desc: '讨伐史莱姆 x3', rewardExp: 30, target: 'slime', count: 3 },
     { id: 2, desc: '收集哥布林之牙 x5', rewardExp: 50, targetMat: 'goblin_fang', count: 5 }
   ]
+  quests.value = [...bossQuests, ...normalQuests]
 }
 
 function acceptQuest(quest) {
-  // 原有逻辑不变
+  if (quest.target === 'boss') {
+    // Boss 讨伐需要实际战斗，这里暂用经验奖励模拟，后续可接入真正战斗
+    store.addExperience(quest.rewardExp)
+    quests.value = quests.value.filter(q => q.id !== quest.id)
+    alert(`击败了 ${quest.bossName}！获得 ${quest.rewardExp} 经验`)
+    return
+  }
+
   if (quest.target) {
     store.addExperience(quest.rewardExp)
     alert('委托完成！')
@@ -131,10 +157,12 @@ function acceptQuest(quest) {
 }
 
 function openBackpack() {
-  emit('openBackpack')   // 通知父组件打开背包
-  emit('close')          // 同时关闭协会面板，让玩家在背包中贩卖
+  emit('openBackpack')
+  emit('close')
 }
 </script>
+
+
 
 <style scoped>
 .overlay {

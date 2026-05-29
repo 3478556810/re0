@@ -92,8 +92,24 @@
     </div>
 
     <script>
-        const API_BASE = 'http://localhost:8080';
-        const PREVIEW_LENGTH = 300;   // 预览字符数，可修改
+        // ========== 自动检测 API 前缀 ==========
+        function getApiPrefix() {
+            const path = window.location.pathname;
+            // 如果当前页面是通过 /aether 子路径访问的，则 API 前缀为 /aether
+            if (path.startsWith('/aether')) {
+                return '/aether';
+            }
+            // 直接访问时，API 前缀为空（直接请求 /api/search）
+            return '';
+        }
+        const API_PREFIX = getApiPrefix();
+        const PREVIEW_LENGTH = 300;
+
+        // 辅助函数：构造完整的 API URL
+        function apiUrl(path) {
+            // path 例如 '/search' 或 '/document/upload'
+            return `${API_PREFIX}/api${path}`;
+        }
 
         document.getElementById('alphaSlider').addEventListener('input', function() {
             document.getElementById('alphaValue').textContent = this.value;
@@ -112,7 +128,7 @@
             document.getElementById('resultsContainer').innerHTML = '';
 
             try {
-                const url = `${API_BASE}/api/search?q=${encodeURIComponent(query)}&top_k=${topK}&alpha=${alpha}`;
+                const url = apiUrl(`/search?q=${encodeURIComponent(query)}&top_k=${topK}&alpha=${alpha}`);
                 const response = await fetch(url, { method: 'GET', headers: { 'Accept': 'application/json' } });
                 if (!response.ok) {
                     const errText = await response.text();
@@ -137,7 +153,7 @@
             const formData = new FormData();
             formData.append('file', file);
             try {
-                const response = await fetch(`${API_BASE}/api/document/upload`, { method: 'POST', body: formData });
+                const response = await fetch(apiUrl('/document/upload'), { method: 'POST', body: formData });
                 const result = await response.json();
                 if (response.ok) {
                     document.getElementById('uploadStatus').innerHTML = `<span class="text-green-600">✅ ${result.message || '上传成功'}</span>`;
@@ -150,7 +166,7 @@
             }
         }
 
-        // 生成高亮HTML（不截断）
+        // ========== 以下函数与原来完全相同 ==========
         function highlightFullText(text, query) {
             if (!query) return escapeHtml(text);
             const words = query.split(/\s+/).filter(w => w.length > 0);
@@ -162,14 +178,11 @@
             return result;
         }
 
-        // 生成截断且高亮的预览（保证不切断标签）
         function highlightPreview(text, query, maxLen = PREVIEW_LENGTH) {
             if (!query) return escapeHtml(text).substring(0, maxLen) + (text.length > maxLen ? '…' : '');
             let fullHtml = highlightFullText(text, query);
-            // 去除 HTML 标签以计算纯文本长度（粗略但足够）
             let plainText = fullHtml.replace(/<[^>]*>/g, '');
             if (plainText.length <= maxLen) return fullHtml;
-            // 需要截断到接近 maxLen 的位置，并保证标签闭合
             let truncated = fullHtml;
             let pos = 0;
             let insideTag = false;
@@ -194,9 +207,7 @@
                     pos++;
                 }
             }
-            // 追加剩余未闭合标签（如果有）
             if (tagBuffer) result += tagBuffer;
-            // 确保所有标签闭合（简单处理：如果结果中开启的span没闭合，补上）
             let openSpan = (result.match(/<span[^>]*>/g) || []).length;
             let closeSpan = (result.match(/<\/span>/g) || []).length;
             if (openSpan > closeSpan) result += '</span>';
@@ -213,19 +224,16 @@
             }
 
             results.forEach((result) => {
-                if (result.score <= 0) return;   // 跳过零分结果
+                if (result.score <= 0) return;
                 const score = (result.score * 100).toFixed(2);
                 const title = escapeHtml(result.title || '未知文档');
                 const rawContent = result.content || '';
-                // 生成预览和完整内容的高亮HTML
                 const previewHtml = highlightPreview(rawContent, query);
                 const fullHtml = highlightFullText(rawContent, query);
 
-                // 创建卡片容器
                 const card = document.createElement('div');
                 card.className = 'result-card bg-white rounded-lg border border-gray-200 p-5';
 
-                // 标题和分数
                 const headerDiv = document.createElement('div');
                 headerDiv.className = 'flex items-start justify-between mb-2';
                 headerDiv.innerHTML = `
@@ -233,20 +241,16 @@
                     <span class="text-sm font-mono text-blue-600 bg-blue-50 px-2 py-0.5 rounded">${score}%</span>
                 `;
 
-                // 内容区域（动态切换）
                 const contentDiv = document.createElement('div');
                 contentDiv.className = 'text-gray-600 text-sm leading-relaxed mb-2';
-                // 存储两个版本的HTML
                 contentDiv.setAttribute('data-preview', previewHtml);
                 contentDiv.setAttribute('data-full', fullHtml);
                 contentDiv.innerHTML = previewHtml;
 
-                // 展开/收起链接
                 const toggleLink = document.createElement('div');
                 toggleLink.className = 'toggle-link mt-1';
                 toggleLink.textContent = '展开全文';
                 let expanded = false;
-
                 toggleLink.addEventListener('click', () => {
                     if (!expanded) {
                         contentDiv.innerHTML = fullHtml;
@@ -259,7 +263,6 @@
                     }
                 });
 
-                // 底部元信息
                 const metaDiv = document.createElement('div');
                 metaDiv.className = 'flex items-center gap-3 text-xs text-gray-400 mt-2';
                 metaDiv.innerHTML = `
