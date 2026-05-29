@@ -26,7 +26,7 @@ import CharacterPanel from './CharacterPanel.vue'
 import BankPanel from './BankPanel.vue'
 import StockPanel from './StockPanel.vue'
 import ForgePanel from './ForgePanel.vue'
-import DevPanel from './DevPanel.vue'
+import DevPanel from './DevPanel/DevPanel.vue'
 const view = ref(null)
 
 function resetGame() {
