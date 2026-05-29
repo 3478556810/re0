@@ -8,7 +8,7 @@ import {
   rollQuality,
   getLootTable
 } from '../config/accessoryConfig'
-
+import { useGameStore } from '../store/gameStore' // 在函数内使用
 export function generateAccessory(part, quality) {
   const rule = QUALITY_RULES[quality]
   if (!rule) return null
@@ -79,10 +79,12 @@ export function rollAccessoryDrop(enemyName) {
 
 export function generateAccessoryLoot(enemy) {
   if (!enemy) return []
+  const store = useGameStore()
   const dropped = []
-  const testMultiplier = 100  // 测试用，正式上线改回 1
+  const baseMultiplier = store.config.lootMultiplier ?? 1   // 从面板设置的全局倍率
+  const testMultiplier = 1   // 正式上线保持 1，测试时可改大
   const baseDropChance = Math.min(0.5, 0.1 + enemy.level * 0.02)
-  const dropChance = Math.min(1, baseDropChance * testMultiplier)
+  const dropChance = Math.min(1, baseDropChance * baseMultiplier * testMultiplier)
   const maxDrops = Math.random() < 0.3 ? 2 : 1
   for (let i = 0; i < maxDrops; i++) {
     if (Math.random() < dropChance) {

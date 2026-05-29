@@ -47,6 +47,10 @@
           >
             <Icon :icon="action.icon" /> {{ action.name }}
           </button>
+
+          <button class="pixel-btn action-btn" @click="triggerDialog">
+  <Icon icon="mdi:chat" /> 探索剧情
+</button>
         </div>
       </div>
     </div>
@@ -66,6 +70,7 @@
     <ForgePanel v-if="currentPanel === 'forge'" @close="currentPanel = null" />
     <AdventurerGuild v-if="currentPanel === 'guild'" @close="currentPanel = null" @open-backpack="openPanel('inventory')" />
     <InnPanel v-if="currentPanel === 'inn'" @close="currentPanel = null" />
+<DialogPanel ref="dialogRef" @close="onDialogClose" @update="onStoryUpdate" />
   </div>
 </template>
 
@@ -81,7 +86,17 @@ import ForgePanel from './ForgePanel.vue'
 import AdventurerGuild from './AdventurerGuild.vue'
 import InnPanel from './InnPanel.vue'
 import { spawnEnemy } from '../config/biomeConfig'
-import DevPanel from './DevPanel.vue'
+import DevPanel from './DevPanel/DevPanel.vue'
+
+
+
+
+import DialogPanel from './DialogPanel.vue'
+const dialogRef = ref(null)
+
+function triggerDialog() {
+  dialogRef.value.startScene('explore')
+}
 // 简易占位面板组件
 const SimplePanel = {
   props: { title: String, icon: String },
