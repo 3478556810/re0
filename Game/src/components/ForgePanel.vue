@@ -45,7 +45,7 @@
               :class="{ low: mat.qty < 5 }"
             >
               <Icon :icon="materialIcon(id)" class="mat-icon" />
-              <span class="mat-name">{{ getMaterialDisplay(id) }}</span>
+            <span class="mat-name">{{ store.getMaterialName(id) }}</span>
               <span class="mat-qty">{{ mat.qty }}</span>
             </div>
             <div v-if="Object.keys(store.materials).length === 0" class="empty-mats">
@@ -60,7 +60,7 @@
 
 <script setup>
 import { useGameStore } from '../store/gameStore'
-import { getMaterialDisplay } from '../config/materials'
+
 import { Icon } from '@iconify/vue'
 
 const store = useGameStore()

@@ -1,12 +1,17 @@
 <template>
   <div class="dialog-overlay" v-if="visible" @click="nextDialog">
-    <div class="dialog-box pixel-panel">
-      <!-- 角色头像 -->
-      <div class="dialog-speaker" v-if="currentSpeaker">
-        <img v-if="speakerImage" :src="speakerImage" class="speaker-img" />
-        <Icon v-else :icon="speakerIcon" class="speaker-icon" />
-        <span class="speaker-name">{{ speakerName }}</span>
-      </div>
+    <!-- 角色立绘 - 左侧大尺寸 -->
+    <div
+      v-if="currentSpeaker"
+      class="speaker-container"
+      :class="speakerPosition === 'right' ? 'speaker-right' : 'speaker-left'"
+    >
+      <img v-if="speakerImage" :src="speakerImage" class="speaker-img" />
+      <Icon v-else :icon="speakerIcon" class="speaker-icon" />
+    </div>
+
+    <!-- 对话框 -->
+    <div class="dialog-box">
       <div class="dialog-content">
         <p class="dialog-text">{{ currentNode?.text || '...' }}</p>
         <div v-if="currentChoices.length" class="dialog-choices">
@@ -20,7 +25,7 @@
           </button>
         </div>
       </div>
-      <div class="dialog-indicator" v-if="!currentChoices.length && !loading">
+      <div class="dialog-indicator" v-if="!currentChoices.length">
         点击任意处继续
       </div>
     </div>
@@ -31,52 +36,36 @@
 import { ref, computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
-import { storyTree } from '../config/storyScript'
 import { defaultCharacters } from '../config/characters'
-
-const store = useGameStore()
 const emit = defineEmits(['close', 'update'])
+const store = useGameStore()
 const visible = ref(false)
 const currentNodeId = ref('start')
-const loading = ref(false)
+const currentNode = computed(() => store.config.storyScript[currentNodeId.value] || null)
 
-const currentNode = computed(() => storyTree[currentNodeId.value] || null)
 const currentChoices = computed(() => currentNode.value?.choices || [])
 const currentSpeaker = computed(() => currentNode.value?.speaker || null)
-
-const speakerData = computed(() => {
-  return currentSpeaker.value ? defaultCharacters[currentSpeaker.value] : null
-})
+const speakerPosition = computed(() => currentNode.value?.speakerPosition || 'left')
+const speakerData = computed(() => (currentSpeaker.value ? defaultCharacters[currentSpeaker.value] : null))
 const speakerIcon = computed(() => speakerData.value?.icon || 'mdi:account')
-const speakerName = computed(() => speakerData.value?.name || '???')
+// 同步读取立绘（从 store.config.customImages）
 const speakerImage = computed(() => {
   if (!currentSpeaker.value) return null
   return store.config?.customImages?.[currentSpeaker.value] || null
 })
 
-function startScene(startId = 'start') {
-  currentNodeId.value = startId
+function startScene(nodeId = 'start') {
+  currentNodeId.value = nodeId
   visible.value = true
 }
 
-// 点击任意处推进剧情（包括对话框内部和外部的空白区域）
 function nextDialog() {
-  if (loading.value) return
-  // 如果有选项，不自动推进，等待玩家选择
   if (currentChoices.value.length > 0) return
-
   const node = currentNode.value
   if (!node) {
     closeDialog()
     return
   }
-
-  // 如果节点有 action，通知父组件
-  if (node.action) {
-    emit('update', { nodeId: node.id, action: node.action })
-  }
-
-  // 跳转到下一个节点或关闭
   if (node.nextId) {
     currentNodeId.value = node.nextId
   } else {
@@ -87,28 +76,27 @@ function nextDialog() {
 function selectChoice(idx) {
   const choice = currentChoices.value[idx]
   if (!choice) return
-
-  if (choice.action) {
-    emit('update', { nodeId: currentNodeId.value, action: choice.action, choice: choice.text })
+  if (choice.nextId) {
+    currentNodeId.value = choice.nextId
+  } else {
+    closeDialog()
   }
-
-  currentNodeId.value = choice.nextId
-  // 如果选择后节点无选项且无 nextId，自动关闭（可改为自动推进到下一节点）
 }
 
 function closeDialog() {
   visible.value = false
-  emit('close')
+  emit('close')   // ← 添加这一行，通知父组件对话框已关闭
 }
-
 defineExpose({ startScene })
 </script>
 
 <style scoped>
+/* 覆盖层 */
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(250, 240, 242, 0.7);
+  backdrop-filter: blur(5px);
   display: flex;
   justify-content: center;
   align-items: flex-end;
@@ -116,81 +104,89 @@ defineExpose({ startScene })
   cursor: pointer;
 }
 
+/* 立绘容器：左侧大尺寸，底部留空给对话框 */
+.speaker-container {
+  position: absolute;
+  top: 5%;
+  left: 0;
+  width: 50vw;
+  height: 65vh;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.speaker-right {
+  left: auto;
+  right: 0;
+}
+
+.speaker-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  object-position: center bottom;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.speaker-icon {
+  font-size: min(40vw, 300px);
+  color: #d87292;
+  filter: drop-shadow(0 6px 15px rgba(220, 100, 140, 0.5));
+}
+
+/* 对话框 */
 .dialog-box {
   width: 90%;
   max-width: 600px;
   margin-bottom: 30px;
-  padding: 24px;
-  background: rgba(10, 15, 30, 0.95);
-  backdrop-filter: blur(20px);
-  border: 2px solid #b89a6a;
+  padding: 24px 28px;
+  background: rgba(255, 252, 252, 0.92);
+  border: 1px solid #f0c8d4;
   border-radius: 24px;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.7);
-  color: #ffd;
+  box-shadow: 0 8px 25px rgba(220, 140, 160, 0.25);
+  color: #2c1a3a;
   font-family: 'Press Start 2P', cursive;
-  cursor: default;
   position: relative;
-}
-
-.dialog-speaker {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.speaker-img {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  border: 2px solid #b89a6a;
-  object-fit: cover;
-}
-
-.speaker-icon {
-  font-size: 36px;
-  color: #ffd700;
-}
-
-.speaker-name {
-  font-size: 12px;
-  color: #ffd700;
-}
-
-.dialog-content {
-  margin-bottom: 15px;
+  z-index: 100;
 }
 
 .dialog-text {
-  font-size: 14px;
-  line-height: 1.8;
-  text-shadow: 1px 1px 0 #000;
-  margin-bottom: 20px;
+  font-size: 13px;
+  line-height: 1.9;
+  margin-bottom: 22px;
+  color: #2c1a3a;
 }
 
 .dialog-choices {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
 .choice-btn {
-  width: 100%;
-  justify-content: center;
-  padding: 12px;
-  font-size: 11px;
-  background: rgba(255,215,0,0.1);
-  border-color: #ffd700;
+  background: #ffffff;
+  border: 1px solid #e0a0b0;
+  color: #4a2a3a;
+  padding: 10px 18px;
+  font-size: 10px;
+  border-radius: 18px;
+  transition: all 0.2s;
 }
 
 .choice-btn:hover {
-  background: rgba(255,215,0,0.3);
+  background: #ffe0e8;
 }
 
 .dialog-indicator {
   text-align: right;
-  font-size: 9px;
-  color: #888;
+  font-size: 8px;
+  color: #b89aa5;
   margin-top: 10px;
 }
 </style>

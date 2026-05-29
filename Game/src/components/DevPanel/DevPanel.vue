@@ -20,6 +20,12 @@
       </div>
 
       <div class="config-area">
+        <DevStory v-if="tab === 'story'" />
+<DevDungeon v-if="tab === 'dungeons'" />
+
+<DevAffixPool v-if="tab === 'affixPool'" />
+<DevTokenShop v-if="tab === 'tokenShop'" />
+
         <!-- 怪物管理 -->
         <DevMonsters v-if="tab === 'monsters'" />
 
@@ -43,14 +49,7 @@
         </div>
 
         <!-- 材料价格 -->
-        <div v-if="tab === 'materials'" class="section">
-          <h3>材料价格 (G)</h3>
-          <div v-for="(price, id) in store.config.materialPrices" :key="id" class="edit-row">
-            <span class="label">{{ getMaterialDisplay(id) }}</span>
-            <input v-model.number="store.config.materialPrices[id]" type="number" min="1" class="pixel-input" />
-          </div>
-          <button class="pixel-btn" @click="saveConfig"><Icon icon="mdi:content-save" /> 保存</button>
-        </div>
+     <DevMaterials v-if="tab === 'materials'" />
 
         <!-- 股票管理 -->
         <div v-if="tab === 'stocks'" class="section">
@@ -93,11 +92,19 @@ import { useGameStore } from '../../store/gameStore'
 import { getMaterialDisplay } from '../../config/materials'
 import DevMonsters from './DevMonsters.vue'
 import DevCharacters from './DevCharacters.vue'
-
+import DevDungeon from './DevDungeon.vue'
+import DevStory from './DevStory.vue'
+import DevMaterials from './DevMaterials.vue'
+import DevAffixPool from './DevAffixPool.vue'
+import DevTokenShop from './DevTokenShop.vue'
 const store = useGameStore()
 const tab = ref('monsters')
 
 const tabs = [
+{ key: 'affixPool', label: '词条池', icon: 'mdi:star-box' },
+{ key: 'tokenShop', label: '兑换', icon: 'mdi:store' },
+{ key: 'story', label: '剧情', icon: 'mdi:script-text-outline' },
+{ key: 'dungeons', label: '地下城', icon: 'mdi:castle' },
   { key: 'monsters', label: '怪物', icon: 'mdi:skull' },
   { key: 'characters', label: '角色', icon: 'mdi:account-group' },
   { key: 'accessories', label: '饰品', icon: 'mdi:gem' },

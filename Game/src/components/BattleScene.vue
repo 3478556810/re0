@@ -78,7 +78,7 @@
           <Icon :icon="skill.icon" /> {{ skill.name }} ({{ skill.desc }})
         </button>
       </div>
-      <button class="close-btn" @click="showSkillPanel = false">取消</button>
+     
     </div>
 
     <div v-if="gameOver && gameOverMsg === '战斗失败'" class="game-over-panel">
@@ -86,7 +86,14 @@
       <button class="pixel-btn" @click="handleGameOver">确定</button>
     </div>
 
-    <BattleResultPanel v-if="showResult" :reward="reward" @close="onResultClose" />
+    <BattleResultPanel
+  v-if="showResult"
+  :reward="reward"
+  :showDungeon="store.dungeon.active"
+  @close="onResultClose"
+  @next="onNextFloor"
+  @retreat="onRetreat"
+/>
   </div>
 </template>
 
@@ -97,9 +104,60 @@ import { useGameStore } from '../store/gameStore'
 import { generateAccessoryLoot } from '../utils/lootGenerator'
 import BattleResultPanel from './BattleResultPanel.vue'
 import '../assets/css/BattleScene.css'
-
 const props = defineProps({ enemy: Object, battleCoord: Object })
-const emit = defineEmits(['victory', 'exit'])
+const emit = defineEmits(['victory', 'exit', 'nextFloor', 'retreatToDungeon'])
+// 新增：统一保存奖励的函数
+// 已经存在的 saveRewards 函数（不用动）
+function saveRewards() {
+  // 1. 添加经验（避免重复，仅在尚未添加时添加）
+  if (reward.value.exp && store.player.exp === displayExp.value) {
+    // 如果战斗胜利经验还没加（例如直接调用），这里补充
+    store.addExperience(reward.value.exp)
+  }
+
+  // 2. 添加材料（使用 store.addMaterial，确保正确初始化）
+  if (reward.value.materials && reward.value.materials.length > 0) {
+    reward.value.materials.forEach(m => {
+      if (!m || !m.id) return
+      store.addMaterial(m.id, m.name || m.id)
+    })
+    store.save()
+    console.log('✅ 材料已保存:', JSON.stringify(store.materials))
+  } else {
+    console.warn('⚠️ 奖励中没有材料！reward.value:', JSON.stringify(reward.value))
+  }
+
+  // 3. 添加饰品
+  if (reward.value.accessories?.length) {
+    reward.value.accessories.forEach(acc => store.inventory.push(acc))
+    store.save()
+  }
+}
+
+// 下一层（必须保存奖励）
+function onNextFloor() {
+  saveRewards()               // 保存经验、材料、饰品
+  showResult.value = false
+  store.clearFloor()          // 楼层 +1
+  emit('nextFloor')
+}
+
+// 撤退（必须保存奖励）
+function onRetreat() {
+  saveRewards()
+  showResult.value = false
+  store.retreat()
+  emit('retreatToDungeon')
+}
+
+// 普通确定（非地下城时也会保存）
+function onResultClose() {
+  saveRewards()
+  showResult.value = false
+  emit('victory', reward.value)
+}
+
+
 
 const store = useGameStore()
 
@@ -108,7 +166,7 @@ function getCustomImage(type) {
 }
 
 const playerStats = computed(() => {
-  const customImg = getCustomImage('player')
+  const customImg = getCustomImage('hero')
   return {
     ...store.player,
     ...store.playerStats,
@@ -284,14 +342,33 @@ async function animateExp(targetExp) {
 function victory() {
   if (animatingExp.value || gameOver.value) return
 
+  // 1. 准备经验值
   const exp = props.enemy.exp || 30
-  const mats = props.enemy.material ? [props.enemy.material] : []
-  const droppedAccessories = generateAccessoryLoot(props.enemy)
-  reward.value = { exp, materials: mats, accessories: droppedAccessories }
 
+  // 2. 准备材料（深拷贝避免引用问题）
+  const mats = props.enemy.material ? [{ ...props.enemy.material }] : []
+
+  // 3. 生成饰品掉落
+  const droppedAccessories = generateAccessoryLoot(props.enemy)
+
+  // 4. 地下城额外奖励
+  if (store.dungeon.active) {
+    mats.push({ id: 'dungeon_token', name: '地下城徽记' })
+  }
+
+  // 5. 组合奖励对象
+  reward.value = {
+    exp,
+    materials: mats,
+    accessories: droppedAccessories
+  }
+
+  // 6. 播放经验动画，动画结束后弹出结算面板
   const targetExp = displayExp.value + exp
   animateExp(targetExp)
 }
+
+// 新增：统一保存奖励的函数
 
 function handleGameOver() {
   if (gameOverMsg.value === '战斗失败') {
@@ -300,18 +377,10 @@ function handleGameOver() {
   }
 }
 
-function onResultClose() {
-  reward.value.materials.forEach(m => store.addMaterial(m.id, m.name))
-  if (reward.value.accessories?.length) {
-    reward.value.accessories.forEach(acc => {
-      store.inventory.push(acc)
-    })
-    store.save()
-  }
-  if (props.battleCoord) store.markEnemyDefeated(props.battleCoord.x, props.battleCoord.y)
-  emit('victory', reward.value)
-  showResult.value = false
-}
+
+
+
+
 
 function animateEnemyHit() {
   enemyHit.value = true; enemyFlash.value = true; enemyShakeX.value = 5

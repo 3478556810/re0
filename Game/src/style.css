@@ -7,10 +7,9 @@
 }
 
 body {
-  background: #0a1a2a;
+  background: #f5f0e8; /* 暖奶油色 */
   font-family: 'Press Start 2P', cursive;
   overflow: hidden;
-  touch-action: manipulation;
 }
 
 /* 像素卡片面板 */

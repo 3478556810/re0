@@ -1,6 +1,11 @@
 <template>
   <div class="overlay" @click.self="$emit('close')">
     <div class="panel">
+      <!-- 关闭按钮移到右上角 -->
+      <button class="close-btn" @click="$emit('close')">
+        <Icon icon="mdi:close" />
+      </button>
+
       <!-- 段位头部 -->
       <div class="rank-header">
         <div class="rank-badge">
@@ -38,6 +43,13 @@
         </button>
       </div>
 
+      <!-- 徽记兑换入口 -->
+      <div class="section">
+        <button class="pixel-btn" @click="showTokenShop = true">
+          <Icon icon="mdi:castle" /> 徽记兑换
+        </button>
+      </div>
+
       <!-- 贩卖按钮 -->
       <div class="sell-area">
         <button class="pixel-btn" @click="openBackpack">
@@ -45,19 +57,21 @@
         </button>
         <p class="hint">打开背包后，点击材料即可出售给协会。</p>
       </div>
-
-      <button class="pixel-btn close-btn" @click="$emit('close')">
-        <Icon icon="mdi:close" /> 离开
-      </button>
     </div>
+
+    <!-- 徽记兑换商店 -->
+    <TokenShop v-if="showTokenShop" @close="showTokenShop = false" />
   </div>
 </template>
-
 <script setup>
 import { ref, computed, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
+import TokenShop from './TokenShop.vue'
 
+
+
+const showTokenShop = ref(false)
 const store = useGameStore()
 const emit = defineEmits(['close', 'openBackpack'])
 
@@ -158,7 +172,7 @@ function acceptQuest(quest) {
 
 function openBackpack() {
   emit('openBackpack')
-  emit('close')
+  
 }
 </script>
 
@@ -184,63 +198,37 @@ function openBackpack() {
   color: #ffd;
   font-family: 'Press Start 2P', cursive;
   overflow-y: auto;
+  position: relative; /* 新增，用于定位关闭按钮 */
 }
 
-.rank-header {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  margin-bottom: 20px;
+.close-btn {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  background: none;
+  border: none;
+  color: #ffd;
+  font-size: 20px;
+  cursor: pointer;
+  z-index: 10;
 }
-.rank-badge {
-  width: 70px; height: 70px;
-  background: rgba(255,215,0,0.15);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-}
+.close-btn:hover { transform: scale(1.2); }
+
+/* 其他样式保持不变 */
+.rank-header { display: flex; align-items: center; gap: 20px; margin-bottom: 20px; }
+.rank-badge { width: 70px; height: 70px; background: rgba(255,215,0,0.15); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
 .rank-icon { font-size: 36px; color: #ffd700; }
 .rank-info h2 { font-size: 16px; margin-bottom: 5px; }
 .rank-stage { font-size: 10px; opacity: 0.8; }
-
 .exp-section { margin-bottom: 25px; }
-.exp-label {
-  display: flex; justify-content: space-between;
-  font-size: 9px; margin-bottom: 5px;
-}
-.exp-bar {
-  height: 12px; background: #2a2a3a;
-  border-radius: 6px; overflow: hidden;
-}
-.exp-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #4caf50, #8bc34a);
-  border-radius: 6px; transition: width 0.3s;
-}
-
-.section {
-  margin: 20px 0;
-  padding-top: 15px;
-  border-top: 1px solid rgba(255,215,0,0.3);
-}
-.section h3 {
-  font-size: 10px; margin-bottom: 12px;
-  display: flex; align-items: center; gap: 8px;
-}
-.quest {
-  display: flex; align-items: center; gap: 10px;
-  margin-bottom: 10px; font-size: 9px;
-  background: rgba(0,0,0,0.3);
-  padding: 8px; border-radius: 8px;
-}
+.exp-label { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 5px; }
+.exp-bar { height: 12px; background: #2a2a3a; border-radius: 6px; overflow: hidden; }
+.exp-fill { height: 100%; background: linear-gradient(90deg, #4caf50, #8bc34a); border-radius: 6px; transition: width 0.3s; }
+.section { margin: 20px 0; padding-top: 15px; border-top: 1px solid rgba(255,215,0,0.3); }
+.section h3 { font-size: 10px; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.quest { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; font-size: 9px; background: rgba(0,0,0,0.3); padding: 8px; border-radius: 8px; }
 .quest-desc { flex: 1; }
 .quest-reward { color: #ffd700; white-space: nowrap; }
-
-.sell-area {
-  margin: 20px 0; text-align: center;
-  padding: 15px 0;
-  border-top: 1px solid rgba(255,215,0,0.3);
-}
+.sell-area { margin: 20px 0; text-align: center; padding: 15px 0; border-top: 1px solid rgba(255,215,0,0.3); }
 .hint { font-size: 8px; opacity: 0.7; margin-top: 8px; }
-
-.close-btn { width: 100%; margin-top: 10px; }
 </style>
