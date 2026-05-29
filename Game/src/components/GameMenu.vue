@@ -30,8 +30,14 @@ import DevPanel from './DevPanel.vue'
 const view = ref(null)
 
 function resetGame() {
-  if (confirm('确定重置所有进度吗？')) {
+  if (confirm('确定完全重置所有进度吗？此操作不可恢复！')) {
+    // 清除所有相关 localStorage 键
     localStorage.removeItem('star-trails-save')
+    localStorage.removeItem('customImages')
+    // 如果还有其他独立存储的键，也一并清除
+    // localStorage.removeItem('star-trails-config') 等
+
+    // 强制刷新页面，让游戏加载默认状态
     window.location.reload()
   }
 }

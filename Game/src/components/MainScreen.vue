@@ -32,6 +32,9 @@
           <button class="pixel-btn" @click="openPanel('pet')">
             <Icon icon="mdi:paw" /> 宠物
           </button>
+          <button class="pixel-btn dev-btn" @click="openPanel('dev')">
+  <Icon icon="mdi:cog" /> 开发者
+</button>
         </div>
 
         <!-- 场景动态操作按钮 -->
@@ -49,6 +52,7 @@
     </div>
 
     <!-- 各类弹出面板 -->
+    <DevPanel v-if="currentPanel === 'dev'" @close="currentPanel = null" />
     <CharacterPanel v-if="currentPanel === 'character'" @close="currentPanel = null" />
     <InventoryPanel v-if="currentPanel === 'inventory'" @close="currentPanel = null" />
     <SimplePanel v-if="currentPanel === 'party'" title="伙伴" icon="mdi:account-group" @close="currentPanel = null">
@@ -77,7 +81,7 @@ import ForgePanel from './ForgePanel.vue'
 import AdventurerGuild from './AdventurerGuild.vue'
 import InnPanel from './InnPanel.vue'
 import { spawnEnemy } from '../config/biomeConfig'
-
+import DevPanel from './DevPanel.vue'
 // 简易占位面板组件
 const SimplePanel = {
   props: { title: String, icon: String },
@@ -166,27 +170,81 @@ function openPanel(name) {
 }
 
 function handleAction(action) {
+  console.log('[MainScreen] 处理动作:', action)
   if (action.type === 'travel') {
     store.moveTo(action.id, 0, 0)
     store.advanceTime(30)
   } else if (action.type === 'battle') {
-    const monsters = currentBiome.value === 'plain' ? [
-      { id: 'slime', name: '史莱姆', emoji: '', baseHp: 35, baseAtk: 10, baseDef: 6, levelRange: [1,3], material: { id: 'slime_gel', name: '史莱姆凝露' }, icon: 'mdi:blur' },
-      { id: 'goblin', name: '哥布林', emoji: '', baseHp: 45, baseAtk: 16, baseDef: 10, levelRange: [2,5], material: { id: 'goblin_fang', name: '哥布林之牙' }, icon: 'mdi:alien' }
-    ] : [
-      { id: 'scorpion', name: '毒蝎', emoji: '', baseHp: 40, baseAtk: 22, baseDef: 14, levelRange: [3,7], material: { id: 'scorpion_tail', name: '蝎尾针' }, icon: 'mdi:bug' }
-    ]
-    const template = monsters[Math.floor(Math.random() * monsters.length)]
-    const monster = spawnEnemy(template, store.player.level)
-    monster.icon = template.icon
-    emit('startBattle', monster)
+    console.log('当前地形:', currentBiome.value)
+    let monsterPool = []
+    if (currentBiome.value === 'plain') {
+      monsterPool = [
+        { id: 'slime', name: '史莱姆', baseHp: 35, baseAtk: 10, baseDef: 6, levelRange: [1,3], material: { id: 'slime_gel', name: '史莱姆凝露' }, icon: 'mdi:blur' },
+        { id: 'goblin', name: '哥布林', baseHp: 45, baseAtk: 16, baseDef: 10, levelRange: [2,5], material: { id: 'goblin_fang', name: '哥布林之牙' }, icon: 'mdi:alien' }
+      ]
+    } else if (currentBiome.value === 'desert') {
+      monsterPool = [
+        { id: 'scorpion', name: '毒蝎', baseHp: 40, baseAtk: 22, baseDef: 14, levelRange: [3,7], material: { id: 'scorpion_tail', name: '蝎尾针' }, icon: 'mdi:bug' }
+      ]
+    } else {
+      monsterPool = [
+        { id: 'slime', name: '史莱姆', baseHp: 30, baseAtk: 9, baseDef: 5, levelRange: [1,2], material: { id: 'slime_gel', name: '史莱姆凝露' }, icon: 'mdi:blur' }
+      ]
+    }
+    console.log('怪物池长度:', monsterPool.length)
+    const template = monsterPool[Math.floor(Math.random() * monsterPool.length)]
+    console.log('选中模板:', template)
+
+    // 生成怪物
+    let monster
+    try {
+      if (spawnEnemy) {
+        monster = spawnEnemy(template, store.player.level)
+      } else {
+        monster = fallbackSpawnEnemy(template, store.player.level)
+      }
+      monster.icon = template.icon
+      console.log('生成的怪物对象:', monster)
+      if (!monster || !monster.hp) throw new Error('怪物对象无效')
+      
+      // 发出事件
+      emit('startBattle', monster)
+    } catch (e) {
+      console.error('生成怪物失败', e)
+      alert('生成怪物失败: ' + (e.message || '未知错误'))
+    }
   } else if (action.type === 'panel') {
     openPanel(action.id)
+  }
+}
+
+
+function fallbackSpawnEnemy(template, playerLevel) {
+  const lv = Math.floor(Math.random() * 3) + 1
+  const material = template.material ? { ...template.material } : { id: 'unknown', name: '未知材料' }
+  if (!material.name) material.name = material.id
+  return {
+    ...template,
+    level: lv,
+    hp: template.baseHp + lv * 5,
+    maxHp: template.baseHp + lv * 5,
+    atk: template.baseAtk + lv * 2,
+    def: template.baseDef + lv,
+    exp: 20 + lv * 10,
+    gold: 0,
+    material: material
   }
 }
 </script>
 
 <style scoped>
+  .dev-btn {
+  background: rgba(255, 215, 0, 0.15);
+  border-color: #ffd700;
+}
+.dev-btn:hover {
+  background: rgba(255, 215, 0, 0.3);
+}
 /* 全局背景与基础样式 */
 .main-screen {
   width: 100vw;

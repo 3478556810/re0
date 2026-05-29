@@ -26,6 +26,7 @@ const currentEnemy = ref(null)
 // 全局时间流逝
 let timeInterval
 onMounted(() => {
+   store.fixGhostEquipment()   // 启动时自动清理一次幽灵装备
   timeInterval = setInterval(() => {
     store.advanceTime(1)
   }, 1000)
@@ -50,12 +51,8 @@ function onStartBattle(monster) {
 }
 
 function onVictory(reward) {
-  store.addExperience(reward.exp)
-  if (reward.materials) {
-    reward.materials.forEach(m => store.addMaterial(m.id, m.name))
-  }
-  store.advanceTime(30)
   inBattle.value = false
+  // 经验、材料、饰品已在 BattleScene 内部处理完毕
 }
 </script>
 

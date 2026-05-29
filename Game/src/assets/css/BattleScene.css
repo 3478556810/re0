@@ -1,0 +1,260 @@
+/* ========== 背景与装饰 ========== */
+.battle-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  overflow: hidden;
+  z-index: 10;
+}
+.sky {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 60%;
+  background: linear-gradient(180deg, #87CEEB 0%, #B0E0E6 100%);
+}
+.ground {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  background: linear-gradient(180deg, #7CB342 0%, #558B2F 100%);
+  border-top: 4px solid #6B8E23;
+}
+.decoration {
+  position: absolute;
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.6;
+}
+.tree1 { top: 30%; left: 35%; width: 100px; height: 120px; background-image: url("data:image/svg+xml,..."); }
+.tree2 { top: 55%; left: 70%; width: 80px; height: 100px; background-image: url("data:image/svg+xml,..."); }
+.rock { bottom: 12%; left: 45%; width: 60px; height: 40px; background-image: url("data:image/svg+xml,..."); }
+
+/* ========== 敌我包裹器 ========== */
+.enemy-wrapper {
+  position: absolute;
+  top: 5%;
+  right: 3%;
+}
+
+.player-wrapper {
+  position: absolute;
+  bottom: 10%;
+  left: 3%;
+}
+
+/* ========== 状态卡片（保留之前所有样式） ========== */
+.enemy-status-card,
+.player-status-card {
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  border-radius: 20px;
+  padding: 12px 18px;
+  color: #ffd;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 260px;
+}
+
+.name-box {
+  background: #f0e0b0;
+  border: 2px solid #a08040;
+  border-radius: 12px;
+  padding: 4px 14px;
+  font-size: 16px;
+  font-weight: bold;
+  color: #2a2a0a;
+  display: inline-block;
+}
+
+.level-tag {
+  font-size: 13px;
+  color: #ffd;
+  margin: 0;
+}
+
+.buff-area {
+  display: flex;
+  gap: 5px;
+  min-height: 20px;
+}
+
+/* ========== 条形容器（带左侧文字） ========== */
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.bar-text {
+  width: 30px;
+  font-size: 11px;
+  color: #fff;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.hp-bar, .mp-bar, .exp-bar {
+  flex: 1;
+  background: #603020;
+  border-radius: 8px;
+  height: 18px;
+  position: relative;
+  overflow: hidden;
+}
+
+.hp-fill { background: #4caf50; width: 100%; height: 100%; }
+.mp-fill { background: #4488ff; width: 100%; height: 100%; }
+.exp-fill { background: #ffffff; width: 100%; height: 100%; }  /* 经验条白色 */
+
+.hp-bar span, .mp-bar span, .exp-bar span {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 11px;
+  line-height: 18px;
+  color: white;
+  text-shadow: 1px 1px 0 #000;
+}
+
+/* ========== 立绘（独立、放大、偏移） ========== */
+.enemy-sprite {
+  position: absolute;
+  bottom: -320px;   /* 右下偏移 */
+  left: -110px;
+  width: 280px;
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+  transition: transform 0.1s, filter 0.2s;
+}
+
+.player-sprite {
+  position: absolute;
+  top: -320px;     /* 左上偏移 */
+  right: -110px;
+  width: 280px;
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+  transition: transform 0.1s, filter 0.2s;
+}
+
+.big-sprite {
+  font-size: 280px;
+  color: #ffd;
+}
+.big-sprite-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ========== 闪光、浮动消息等保持不变 ========== */
+.flash-white {
+  filter: brightness(2) drop-shadow(0 0 12px white);
+}
+
+/* ========== 浮动消息 ========== */
+.floating-message {
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #000000aa;
+  backdrop-filter: blur(8px);
+  border: 2px solid #c9a87b;
+  border-radius: 40px;
+  padding: 12px 30px;
+  color: #ffffcc;
+  font-size: 18px;
+  z-index: 25;
+  pointer-events: none;
+  text-shadow: 1px 1px 0 #000;
+}
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+/* ========== 行动菜单 ========== */
+.action-menu {
+  position: absolute;
+  bottom: 4%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 30px;
+  background: rgba(0,0,0,0.85);
+  padding: 14px 36px;
+  border-radius: 60px;
+  border: 2px solid #c9a87b;
+}
+.action-btn {
+  background: #2a2a3a;
+  border: 2px solid #b89a6a;
+  color: #ffd;
+  padding: 10px 28px;
+  font-family: monospace;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.action-btn:hover { background: #4a4a6a; }
+
+/* ========== 技能面板 ========== */
+.popup-panel {
+  position: absolute;
+  bottom: 25%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #0a0a12;
+  border: 4px solid #c0a060;
+  border-radius: 24px;
+  padding: 20px;
+  width: 320px;
+  text-align: center;
+  z-index: 20;
+}
+.skill-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
+.skill-btn {
+  background: #2a2a3a;
+  border: 2px solid #8b6a4a;
+  color: #ffd;
+  padding: 10px;
+  cursor: pointer;
+  border-radius: 16px;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.close-btn { background: #5a3a2a; border: none; color: white; padding: 8px 18px; cursor: pointer; font-size: 14px; }
+
+/* ========== 结束面板 ========== */
+.game-over-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: #1a1a2e;
+  border: 4px solid gold;
+  border-radius: 20px;
+  padding: 30px;
+  text-align: center;
+  z-index: 30;
+  font-size: 16px;
+}

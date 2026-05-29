@@ -1,69 +1,56 @@
 <template>
-  <div class="result-overlay" @click.self="$emit('close')">
+  <div class="overlay" @click.self="$emit('close')">
     <div class="result-panel pixel-panel">
-      <h2>🏆 战斗胜利！</h2>
-      <div class="exp-bar">
-        <div class="exp-fill" :style="{ width: expPercent + '%' }"></div>
-        <span>{{ expGained }} EXP</span>
+      <h2><Icon icon="mdi:trophy" /> 战斗胜利！</h2>
+      <div class="reward-list">
+        <div class="reward-row"><Icon icon="mdi:star" /> 经验值 +{{ reward.exp }}</div>
+        <div v-if="reward.materials.length" class="reward-row">
+          <Icon icon="mdi:package-variant-closed" />
+          <span v-for="m in reward.materials" :key="m.id">{{ m.name }} x1 </span>
+        </div>
+        <div v-if="reward.accessories && reward.accessories.length" class="reward-row">
+          <Icon icon="mdi:ring" /> 获得饰品：
+          <span v-for="acc in reward.accessories" :key="acc.id" class="acc-name">{{ acc.name }}</span>
+        </div>
       </div>
-      <div class="gold">💰 {{ goldGained }} G</div>
-      <div v-if="materials.length" class="materials">
-        <span v-for="m in materials" :key="m.id">📦 {{ m.name }} x1</span>
-      </div>
-      <button class="pixel-btn" @click="$emit('close')">OK</button>
+      <button class="pixel-btn" @click="$emit('close')">确定</button>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-
-const props = defineProps({ reward: Object })
-const emit = defineEmits(['close'])
-
-const expGained = ref(0)
-const expTarget = props.reward.exp || 0
-const goldGained = props.reward.gold || 0
-const materials = props.reward.materials || []
-const expPercent = computed(() => Math.min(100, (expGained.value / expTarget) * 100))
-
-onMounted(() => {
-  // 经验值滚动动画
-  let step = 0
-  const interval = setInterval(() => {
-    step += Math.ceil(expTarget / 20)
-    if (step >= expTarget) {
-      step = expTarget
-      clearInterval(interval)
-    }
-    expGained.value = step
-  }, 50)
-})
+import { Icon } from '@iconify/vue'
+defineProps({ reward: Object })
+defineEmits(['close'])
 </script>
 
 <style scoped>
-.result-overlay {
+.overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.7);
   display: flex; justify-content: center; align-items: center;
-  z-index: 1000;
+  z-index: 50;
 }
 .result-panel {
-  padding: 30px; text-align: center; min-width: 300px;
+  padding: 30px;
+  text-align: center;
+  min-width: 320px;
 }
-.exp-bar {
-  background: #603020; height: 24px; border-radius: 12px;
-  position: relative; margin: 20px 0;
+.reward-list {
+  margin: 20px 0;
+  font-size: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
-.exp-fill {
-  background: #4caf50; height: 100%; border-radius: 12px; transition: width 0.1s linear;
-  width: 0;
+.reward-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
 }
-.exp-bar span {
-  position: absolute; top: 0; left: 0; right: 0;
-  text-align: center; line-height: 24px; font-size: 10px; color: #ffd;
+.acc-name {
+  color: #ffd700;
 }
-.gold { font-size: 12px; margin: 10px 0; }
-.materials { margin: 10px 0; font-size: 10px; }
-.materials span { display: block; margin: 4px 0; }
 </style>

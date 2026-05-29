@@ -70,14 +70,19 @@ export function spawnEnemy(template, playerLevel) {
   const atk = Math.floor(template.baseAtk + lv * 3)
   const def = Math.floor(template.baseDef + lv * 2)
   const exp = Math.floor(20 + lv * 15)
- return {
+  
+  // 材料名称直接使用 template.material.name，若无则使用 id
+  const material = template.material ? { ...template.material } : null
+  if (material && !material.name) material.name = material.id
+
+  return {
     ...template,
-    level: lv, hp, maxHp: hp, atk, def, exp,
-    material: {
-      id: template.materialId,
-      name: getMaterialName(template.materialId)  // 从全局配置获取中文名
-    }
-}
+    level: lv,
+    hp, maxHp: hp,
+    atk, def,
+    exp,
+    material: material // 确保 material 有 name 属性
+  }
 }
 export function generateBiomeMap(biomeKey, width, height, defeatedSet) {
   const biome = BIOMES[biomeKey]
