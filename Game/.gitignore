@@ -1,0 +1,14 @@
+# 环境变量文件（包含敏感密钥）
+.env
+.env.local
+.env.*.local
+
+# 依赖
+node_modules
+dist
+
+# 编辑器
+.vscode
+.idea
+*.swp
+*.swo

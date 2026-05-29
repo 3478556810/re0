@@ -3,7 +3,8 @@ import { reactive, ref, computed } from 'vue'
 import { MATERIAL_PRICES, DEFAULT_STOCKS, DAILY_EVENTS, getMaterialName } from '../config/gameConfig'
 import { AFFIX_EFFECTS } from '../config/accessoryConfig'
 import { rollAccessoryDrop } from '../utils/lootGenerator'
-
+import { defaultCharacters } from '../config/characters'
+import { QUALITY_WEIGHTS } from '../config/accessoryConfig' // 确保品质权重也导入
 export const useGameStore = defineStore('game', () => {
   // ========== 玩家 ==========
   const player = reactive({
@@ -69,7 +70,10 @@ export const useGameStore = defineStore('game', () => {
     materialPrices: { ...MATERIAL_PRICES },
     stockOverrides: [],
     monsterTemplates: [], // 补充缺失字段
-    customImages: {} // 用于头像存储
+      characters: { ...defaultCharacters },  // 新增
+    customImages: {} ,// 用于头像存储
+    lootMultiplier: 1 ,  // 新增，全局掉率倍率
+     qualityWeights: JSON.parse(JSON.stringify(QUALITY_WEIGHTS)) // 深拷贝，避免修改原始常量
   })
 
   // ========== 地图标记 ==========
