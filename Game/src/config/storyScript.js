@@ -2,17 +2,22 @@ export const storyTree = {
   start: {
     id: 'start',
     speaker: 'oldman',
-    text: '一位老者向你招手：“勇敢的冒险者，请听我说...”',
-    nextId: 'talk_oldman'  // 点击后自动跳到下一段
-  },
-  talk_oldman: {
-    id: 'talk_oldman',
-    speaker: 'oldman',
-    text: '“北方的森林出现了奇怪的雾气，请调查一下。”',
+    text: '你站在城镇广场，一位老者向你招手。',
     choices: [
-      { text: '接受任务', nextId: 'accept' },
-      { text: '拒绝', nextId: 'refuse' }
+      { text: '上前交谈', nextId: 'talk_oldman' },
+      { text: '无视他', nextId: 'ignore' }
     ]
   },
-  // ... 其他节点
+  forest_entry: {
+    id: 'forest_entry',
+    speaker: 'hero',
+    text: '你踏入了阴森的森林，空气中弥漫着不安...',
+    nextId: null   // 点击后关闭，返回地下城面板
+  },
+  forest_mid: {
+    id: 'forest_mid',
+    speaker: 'oldman',
+    text: '小心，前方的魔力波动越来越强烈了。',
+    nextId: null
+  }
 }

@@ -4,7 +4,7 @@
       <button class="close-btn" @click="$emit('close')">
         <Icon icon="mdi:close" />
       </button>
-      
+
       <!-- 头部：头像 + 职业姓名 -->
       <div class="header">
         <div class="avatar-wrapper">
@@ -152,9 +152,12 @@ import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
 
 const store = useGameStore()
-const playerImage = computed(() => store.config?.customImages?.player || null)
+const playerImage = computed(() => {
+  const imgs = store.config?.customImages
+  if (!imgs) return null
+  return imgs.player || imgs.hero || Object.values(imgs)[0] || null
+})
 
-// 元素属性列表（用于简化模板）
 const elements = [
   { key: 'fireDmg', name: '火', icon: 'mdi:fire' },
   { key: 'waterDmg', name: '水', icon: 'mdi:water-outline' },
@@ -168,10 +171,9 @@ const elements = [
   { key: 'rockDmg', name: '岩', icon: 'mdi:terrain' }
 ]
 
-// 计算每项属性的加成（playerStats - player 基础值）
 const statBonus = computed(() => {
   const base = store.player
-  const stats = store.playerStats || store.player // 若未定义 playerStats 则回退
+  const stats = store.playerStats || store.player
   return {
     maxHp: stats.maxHp - base.maxHp,
     maxMp: stats.maxMp - base.maxMp,
@@ -188,10 +190,7 @@ const statBonus = computed(() => {
 })
 </script>
 
-
-
 <style scoped>
-
 /* 覆盖层 */
 .overlay {
   position: fixed;

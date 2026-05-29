@@ -2,21 +2,12 @@
   <div class="section">
     <h3>角色列表</h3>
     <div v-for="(char, id) in store.config.characters" :key="id" class="character-card">
-      <div class="row">
-        <label>ID</label>
-        <span>{{ id }}</span>
-      </div>
-      <div class="row">
-        <label>显示名</label>
-        <input v-model="char.name" class="pixel-input" />
-      </div>
-      <div class="row">
-        <label>默认图标</label>
-        <input v-model="char.icon" class="pixel-input" placeholder="mdi:xxx" />
-      </div>
+      <div class="row"><label>ID</label><span>{{ id }}</span></div>
+      <div class="row"><label>显示名</label><input v-model="char.name" class="pixel-input" /></div>
+      <div class="row"><label>默认图标</label><input v-model="char.icon" class="pixel-input" placeholder="mdi:xxx" /></div>
       <div class="row">
         <label>立绘</label>
-        <img v-if="getImage(id)" :src="getImage(id)" class="thumbnail" />
+        <img v-if="store.config.customImages?.[id]" :src="store.config.customImages[id]" class="thumbnail" />
         <input type="file" accept="image/*" @change="e => uploadImage(id, e)" class="pixel-input" />
       </div>
       <button class="pixel-btn small danger" @click="deleteCharacter(id)">删除</button>
@@ -27,41 +18,40 @@
 </template>
 
 <script setup>
+import { Icon } from '@iconify/vue'
 import { useGameStore } from '../../store/gameStore'
 
-
 const store = useGameStore()
-
-function getImage(id) { return store.config?.customImages?.[id] || null }
 
 function uploadImage(id, e) {
   const file = e.target.files[0]
   if (!file) return
   const reader = new FileReader()
   reader.onload = (ev) => {
-    const img = new Image()
-    img.onload = () => {
-      const canvas = document.createElement('canvas')
-      canvas.width = 64; canvas.height = 64
-      canvas.getContext('2d').drawImage(img, 0, 0, 64, 64)
-      const compressed = canvas.toDataURL('image/jpeg', 0.6)
-      if (!store.config.customImages) store.config.customImages = {}
-      store.config.customImages[id] = compressed
-    }
-    img.src = ev.target.result
+    if (!store.config.customImages) store.config.customImages = {}
+    store.config.customImages[id] = ev.target.result   // 直接存入对象
+    store.save()
   }
   reader.readAsDataURL(file)
+  console.log('图片已存储，当前 customImages keys:', Object.keys(store.config.customImages))
 }
-
 function addCharacter() {
   const id = 'char_' + Date.now()
   store.config.characters[id] = { name: '新角色', icon: 'mdi:account' }
 }
 
-function deleteCharacter(id) { delete store.config.characters[id] }
+function deleteCharacter(id) {
+  delete store.config.characters[id]
+  if (store.config.customImages?.[id]) {
+    delete store.config.customImages[id]
+    store.save()
+  }
+}
 
 function saveConfig() { store.save(); alert('配置已保存') }
 </script>
+
+
 
 <style scoped>
 .section { margin-bottom: 15px; }

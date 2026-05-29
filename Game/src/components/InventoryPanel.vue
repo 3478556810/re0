@@ -6,6 +6,7 @@
       </button>
 
       <div class="layout">
+        <!-- 左侧装备栏（保持不变） -->
         <div class="equip-section">
           <h2 class="section-title"><Icon icon="mdi:shield-sword" /> 装备</h2>
           <div class="equip-columns">
@@ -62,8 +63,11 @@
           </div>
         </div>
 
+        <!-- 右侧背包 -->
         <div class="mats-section">
           <h2 class="section-title"><Icon icon="mdi:package-variant-closed" /> 背包</h2>
+
+          <!-- 饰品背包（不变） -->
           <div class="accessory-inv">
             <h3 class="sub-title"><Icon icon="mdi:gem" /> 饰品</h3>
             <div v-if="accessoryItems.length === 0" class="empty-mats">暂无饰品</div>
@@ -87,11 +91,21 @@
             </div>
           </div>
 
+          <!-- 材料背包（支持贩卖） -->
           <h3 class="sub-title" style="margin-top: 10px;"><Icon icon="mdi:cube-outline" /> 材料</h3>
+          <div v-if="sellMode" class="sell-info">
+            <Icon icon="mdi:cash-multiple" /> 持有金币：{{ store.player.gold }} G
+          </div>
           <div class="materials-grid">
-            <div v-for="(mat, id) in store.materials" :key="id" class="material-cell">
+            <div
+              v-for="(mat, id) in store.materials"
+              :key="id"
+              class="material-cell"
+              :class="{ clickable: sellMode }"
+              @click="sellMode ? openSellDialog(id) : null"
+            >
               <Icon :icon="materialIcon(id)" class="mat-icon" />
-              <span class="mat-name">{{ getMaterialDisplay(id) }}</span>
+              <span class="mat-name">{{ store.getMaterialName(id) }}</span>
               <span class="mat-qty">x{{ mat.qty }}</span>
             </div>
             <div v-if="Object.keys(store.materials).length === 0" class="empty-mats">暂无材料</div>
@@ -99,19 +113,31 @@
         </div>
       </div>
 
+      <!-- 贩卖弹窗 -->
+      <div v-if="showSellDialog" class="dialog-overlay" @click.self="showSellDialog = false">
+        <div class="sell-dialog pixel-panel">
+          <h3>出售 {{ store.getMaterialName(selectedMatId) }}</h3>
+          <p class="dialog-price">单价：{{ unitPrice }} G</p>
+          <div class="dialog-controls">
+            <button class="pixel-btn small" @click="changeSellQty(-1)">-</button>
+            <input v-model.number="sellQty" type="number" min="1" :max="maxSellQty" class="pixel-input qty-input" />
+            <button class="pixel-btn small" @click="changeSellQty(1)">+</button>
+          </div>
+          <p class="dialog-total">总价：{{ totalPrice }} G</p>
+          <div class="dialog-actions">
+            <button class="pixel-btn primary" @click="confirmSell">出售</button>
+            <button class="pixel-btn" @click="showSellDialog = false">取消</button>
+          </div>
+        </div>
+      </div>
+
       <!-- 悬浮提示 -->
       <div v-if="tooltip.visible" class="tooltip" :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }">
         <div class="tooltip-name" :style="{ color: tooltip.qualityColor }">{{ tooltip.name }}</div>
-        <div class="tooltip-quality" :style="{ color: tooltip.qualityColor }">
-          {{ qualityText(tooltip.quality) }}
-        </div>
+        <div class="tooltip-quality" :style="{ color: tooltip.qualityColor }">{{ qualityText(tooltip.quality) }}</div>
         <div class="tooltip-stats">
-          <div class="tooltip-stat-row">
-            <Icon icon="mdi:sword" /> 攻击 +{{ tooltip.atk }}
-          </div>
-          <div class="tooltip-stat-row">
-            <Icon icon="mdi:shield" /> 防御 +{{ tooltip.def }}
-          </div>
+          <div class="tooltip-stat-row"><Icon icon="mdi:sword" /> 攻击 +{{ tooltip.atk }}</div>
+          <div class="tooltip-stat-row"><Icon icon="mdi:shield" /> 防御 +{{ tooltip.def }}</div>
         </div>
         <div v-if="tooltip.affixes.length" class="tooltip-affixes">
           <div v-for="aff in tooltip.affixes" :key="aff.id" class="tooltip-affix-line">
@@ -127,11 +153,17 @@
 import { computed, ref, reactive } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
-import { getMaterialDisplay } from '../config/materials'
 import { AFFIX_EFFECTS } from '../config/accessoryConfig'
 import '../assets/css/InventoryPanel.css'
+
+const props = defineProps({
+  sellMode: Boolean
+})
+const emit = defineEmits(['close'])
+
 const store = useGameStore()
 
+// 装备槽定义
 const leftSlots = [
   { key: 'weapon', label: '武器', icon: 'mdi:sword' },
   { key: 'gauntlet', label: '臂甲', icon: 'mdi:arm-flex' },
@@ -149,6 +181,107 @@ const rightSlots = [
   { key: 'shoes', label: '鞋子', icon: 'mdi:shoe-sneaker' },
 ]
 
+// 饰品筛选
+const accessoryItems = computed(() => {
+  return store.inventory.filter(item => item.affixes && Array.isArray(item.affixes))
+})
+
+// 贩卖弹窗状态
+const showSellDialog = ref(false)
+const selectedMatId = ref('')
+const sellQty = ref(1)
+
+const maxSellQty = computed(() => {
+  const mat = store.materials[selectedMatId.value]
+  return mat ? mat.qty : 0
+})
+
+const unitPrice = computed(() => {
+  return store.config.materialPrices[selectedMatId.value] || 1
+})
+
+const totalPrice = computed(() => {
+  return unitPrice.value * sellQty.value
+})
+
+function openSellDialog(id) {
+  if (!props.sellMode) return
+  selectedMatId.value = id
+  sellQty.value = 1
+  showSellDialog.value = true
+}
+
+function changeSellQty(delta) {
+  const newVal = sellQty.value + delta
+  if (newVal >= 1 && newVal <= maxSellQty.value) {
+    sellQty.value = newVal
+  }
+}
+
+function confirmSell() {
+  const id = selectedMatId.value
+  const mat = store.materials[id]
+  if (!mat || sellQty.value <= 0 || sellQty.value > mat.qty) return
+
+  const total = totalPrice.value
+  store.addGold(total)
+  mat.qty -= sellQty.value
+  if (mat.qty <= 0) delete store.materials[id]
+  store.save()
+  showSellDialog.value = false
+}
+
+// 工具函数
+function materialIcon(id) {
+  const icons = {
+    slime_gel: 'mdi:water',
+    goblin_fang: 'mdi:tooth',
+    scorpion_tail: 'mdi:needle',
+    iron_ore: 'mdi:mine',
+    dragon_scale: 'mdi:shield-sun',
+  }
+  return icons[id] || 'mdi:circle'
+}
+
+function qualityColor(quality) {
+  const colors = { white: '#ffffff', green: '#4caf50', blue: '#2196f3', purple: '#9c27b0', red: '#ff4444' }
+  return colors[quality] || '#ffffff'
+}
+
+function qualityText(quality) {
+  const texts = { white: '普通', green: '精良', blue: '稀有', purple: '史诗', red: '传说' }
+  return texts[quality] || quality
+}
+
+function getAffixName(affixId) {
+  const effect = AFFIX_EFFECTS[affixId]
+  return effect ? effect.name : affixId
+}
+
+function getAffixDesc(affixId, level) {
+  const effect = AFFIX_EFFECTS[affixId]
+  if (!effect) return ''
+  const threshold = effect.thresholds.filter(t => t.level <= level).pop()
+  return threshold ? threshold.desc : ''
+}
+
+// 装备/卸载
+function equipAccessoryFromInv(acc) {
+  if (!acc || !acc.part) return
+  const slot = acc.part
+  if (store.equipment[slot]) {
+    if (!confirm(`该部位已有饰品，是否替换？`)) return
+  }
+  store.equipAccessory(acc, slot)
+}
+
+function unequip(slot) {
+  if (store.equipment[slot]) {
+    store.unequip(slot)
+  }
+}
+
+// 悬浮提示
 const tooltip = reactive({
   visible: false,
   x: 0, y: 0,
@@ -192,68 +325,36 @@ function showSlotTooltip(slotKey, event) {
 }
 
 function hideTooltip() { tooltip.visible = false }
-
-function getAffixDesc(affixId, level) {
-  const effect = AFFIX_EFFECTS[affixId]
-  if (!effect) return ''
-  const threshold = effect.thresholds.filter(t => t.level <= level).pop()
-  return threshold ? threshold.desc : ''
-}
-
-function getAffixName(affixId) {
-  const effect = AFFIX_EFFECTS[affixId]
-  return effect ? effect.name : affixId
-}
-
-function partIcon(part) {
-  const icons = {
-    earring1: 'mdi:ear-hearing',
-    earring2: 'mdi:ear-hearing',
-    necklace: 'mdi:necklace',
-    ring1: 'mdi:ring',
-    ring2: 'mdi:ring'
-  }
-  return icons[part] || 'mdi:gem'
-}
-
-function materialIcon(id) {
-  const icons = {
-    slime_gel: 'mdi:water',
-    goblin_fang: 'mdi:tooth',
-    scorpion_tail: 'mdi:needle',
-    iron_ore: 'mdi:mine',
-    dragon_scale: 'mdi:shield-sun',
-  }
-  return icons[id] || 'mdi:circle'
-}
-
-function qualityColor(quality) {
-  const colors = { white: '#ffffff', green: '#4caf50', blue: '#2196f3', purple: '#9c27b0', red: '#ff4444' }
-  return colors[quality] || '#ffffff'
-}
-
-function qualityText(quality) {
-  const texts = { white: '普通', green: '精良', blue: '稀有', purple: '史诗', red: '传说' }
-  return texts[quality] || quality
-}
-
-const accessoryItems = computed(() => {
-  return store.inventory.filter(item => item.affixes && Array.isArray(item.affixes))
-})
-
-function equipAccessoryFromInv(acc) {
-  if (!acc || !acc.part) return
-  const slot = acc.part
-  if (store.equipment[slot]) {
-    if (!confirm(`该部位已有饰品，是否替换？`)) return
-  }
-  store.equipAccessory(acc, slot)
-}
-
-function unequip(slot) {
-  if (store.equipment[slot]) {
-    store.unequip(slot)
-  }
-}
 </script>
 
+<style scoped>
+/* 引入外部样式（确保存在 InventoryPanel.css） */
+/* 贩卖相关样式 */
+.sell-info { margin-bottom: 10px; font-size: 10px; color: #ffd700; }
+.clickable { cursor: pointer; }
+.clickable:hover { transform: scale(1.05); }
+
+/* 弹窗样式 */
+.dialog-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.6);
+  backdrop-filter: blur(6px);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 400;
+}
+.sell-dialog {
+  width: 350px;
+  padding: 24px;
+  text-align: center;
+}
+.dialog-price { font-size: 10px; margin: 10px 0; color: #ffd700; }
+.dialog-controls {
+  display: flex; justify-content: center; align-items: center; gap: 12px; margin: 15px 0;
+}
+.qty-input { width: 60px; text-align: center; }
+.dialog-total { font-size: 11px; color: #4caf50; margin-bottom: 20px; }
+.dialog-actions { display: flex; gap: 12px; justify-content: center; }
+.pixel-btn.primary { background: rgba(255,215,0,0.2); border-color: #ffd700; }
+
+/* 保留原有布局（省略，来自 InventoryPanel.css） */
+</style>
