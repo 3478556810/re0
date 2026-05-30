@@ -20,13 +20,13 @@
           <div class="enemy-info">
             <div style="display: flex; align-items: center; gap: 6px;">
               <div class="name-box">{{ enemy.name }}</div>
-              <div class="effect-icons" v-if="enemyEffectsDisplay.length">
-                <div v-for="eff in enemyEffectsDisplay" :key="eff.type" class="effect-badge enemy-effect"
-                     :title="`${eff.type}：每回合 ${eff.value} 点伤害，剩余 ${eff.duration} 回合`">
-                  <Icon :icon="getEffectIcon(eff.type)" />
-                  <span class="effect-dur">{{ eff.duration }}</span>
-                </div>
-              </div>
+        <div class="effect-icons" v-if="enemy.effects && enemy.effects.length">
+  <div v-for="eff in enemy.effects" :key="eff.type" class="effect-badge enemy-effect"
+       :title="`${eff.type}：每回合 ${eff.value} 点伤害，剩余 ${eff.duration} 回合`">
+    <Icon :icon="getEffectIcon(eff.type)" />
+    <span class="effect-dur">{{ eff.duration }}</span>
+  </div>
+</div>
             </div>
             <div class="level-tag">Lv.{{ enemy.level }}</div>
             <div class="bar-row">
@@ -162,7 +162,7 @@ const enemies = ref([])
 const currentTargetIndex = ref(0)
 
 const playerEffectsDisplay = ref([])
-const enemyEffectsDisplay = ref([])
+
 
 const playerStats = computed(() => {
   const base = store.player || {}
@@ -308,7 +308,7 @@ function syncEffectsFromEngine() {
   if (!engine) return
   playerEffectsDisplay.value = engine.player.effects.filter(e => e.duration > 0)
   const target = engine.enemies[currentTargetIndex.value]
-  enemyEffectsDisplay.value = target ? target.effects.filter(e => e.duration > 0) : []
+ 
 }
 
 function selectTarget(idx) {
@@ -321,7 +321,33 @@ function selectTarget(idx) {
 async function useSkill(skill) {
   if (!playerTurn.value || gameOver.value || waiting.value) return
   const targetIdx = currentTargetIndex.value
-  const result = engine.executePlayerAction(skill, targetIdx)
+
+  // ① 计算当前等级倍率
+  const skillLevel = store.player.skills[skill.id]?.level || 1
+  const scaling = skill.levelScaling || { baseMul: 0 }
+  const currentMul = (skill.baseMul || 0) + (skillLevel - 1) * (scaling.baseMul || 0)
+
+  // ② 合并激活的三脚架效果
+  const tripodChoices = store.player.tripodChoices[skill.id] || {}
+  const extraEffects = []
+  if (skill.tripods) {
+    skill.tripods.forEach((tripod, tIdx) => {
+      const choiceIdx = tripodChoices[tIdx]
+      if (choiceIdx !== undefined && choiceIdx !== '' && tripod.effects[choiceIdx]) {
+        extraEffects.push(tripod.effects[choiceIdx])
+      }
+    })
+  }
+
+  // ③ 组装战斗用的技能对象
+  const effectiveSkill = {
+    ...skill,
+    baseMul: currentMul,
+    effects: [...(skill.effects || []), ...extraEffects]
+  }
+
+  // ④ 传给引擎（关键：这里之前传错了，传的是 skill 而不是 effectiveSkill）
+  const result = engine.executePlayerAction(effectiveSkill, targetIdx)
   if (!result) return
 
   waiting.value = true
@@ -333,7 +359,6 @@ async function useSkill(skill) {
     if (engine.battleOver) break
   }
 
-  // 如果战斗已结束，直接处理
   if (engine.battleOver) {
     gameOver.value = true
     gameOverMsg.value = engine.winner === 'player' ? '战斗胜利！' : '战斗失败'
@@ -348,8 +373,6 @@ async function useSkill(skill) {
   playerTurn.value = false
   await enemyTurn()
 }
-
-
 
 
 async function useItem(item) {

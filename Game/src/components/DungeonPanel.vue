@@ -21,7 +21,7 @@
           </button>
         </div>
 
-        <!-- 营地视图（保留关键功能，用篝火替换聊天） -->
+        <!-- 营地视图 -->
         <div v-if="currentView === 'camp'" class="camp-view">
           <div class="top-row">
             <div class="title-area">
@@ -38,18 +38,18 @@
             </div>
           </div>
 
-          <!-- 篝火动画 + 同伴区域（代替原来的聊天框） -->
+          <!-- 篝火动画 + 同伴区域 -->
           <div class="camp-center">
             <div class="campfire-area">
-             <div class="campfire">
-  <div class="fire">
-    <div class="fire-particle"></div>
-    <div class="fire-particle"></div>
-    <div class="fire-particle"></div>
-    <div class="fire-particle"></div>
-  </div>
-  <div class="logs"></div>
-</div>
+              <div class="campfire">
+                <div class="fire">
+                  <div class="fire-particle"></div>
+                  <div class="fire-particle"></div>
+                  <div class="fire-particle"></div>
+                  <div class="fire-particle"></div>
+                </div>
+                <div class="logs"></div>
+              </div>
               <p class="campfire-hint">篝火噼啪作响...</p>
             </div>
             <div class="companions-section">
@@ -64,11 +64,10 @@
             </div>
           </div>
 
+          <!-- 操作按钮 -->
           <div class="actions">
             <div class="main-actions">
-              <button class="pixel-btn" @click="currentView = 'mine'">
-  🪨 测试矿洞
-</button>
+              <button class="pixel-btn" @click="currentView = 'mine'">🪨 测试矿洞</button>
               <button class="pixel-btn primary" @click="explore">
                 <Icon icon="mdi:sword-cross" /> 深入探索
               </button>
@@ -80,6 +79,10 @@
               </button>
             </div>
             <div class="sub-actions">
+              <!-- 切换地下城按钮：触发本地选择面板 -->
+              <button class="pixel-btn" @click="showLocalDungeonSelect = true">
+                <Icon icon="mdi:swap-horizontal" /> 切换地下城
+              </button>
               <button class="pixel-btn" @click="$emit('openInventory')">
                 <Icon icon="mdi:bag-personal" /> 背包
               </button>
@@ -88,25 +91,32 @@
           <p v-if="cooldownMsg" class="cooldown">{{ cooldownMsg }}</p>
         </div>
 
-        <!-- 全屏城镇地图（替换旧地图） -->
+        <!-- 地图视图 -->
         <TownMap
-           v-else-if="currentView === 'map'"
+          v-else-if="currentView === 'map'"
           :dungeon-name="dungeonName"
           :current-floor="store.dungeon.currentFloor"
           @close="$emit('close')"
           @startBattle="emit('startBattle', $event)"
           @triggerStory="emit('triggerStory', $event)"
-           @openMine="currentView = 'mine'"
+          @openMine="currentView = 'mine'"
         />
-
-
-    
       </div>
     </div>
-        <MinePanel
-    v-if="currentView === 'mine'"
-  @close="currentView = 'map'"
-/>
+
+    <!-- 内置地下城选择面板 -->
+    <div v-if="showLocalDungeonSelect" class="local-select-overlay" @click.self="showLocalDungeonSelect = false">
+      <div class="local-select-panel">
+        <h2>选择地下城</h2>
+        <div v-for="dg in availableDungeons" :key="dg.id" class="dungeon-card" @click="switchToDungeon(dg.id)">
+          <div class="name">{{ dg.name }}</div>
+          <div class="info">{{ dg.maxFloors }} 层</div>
+        </div>
+        <button class="pixel-btn" @click="showLocalDungeonSelect = false">关闭</button>
+      </div>
+    </div>
+
+    <MinePanel v-if="currentView === 'mine'" @close="currentView = 'map'" />
   </div>
 </template>
 
@@ -116,14 +126,32 @@ import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
 import { DUNGEONS } from '../config/dungeonConfig'
 import { defaultCharacters } from '../config/characters'
-import TownMap from './TownMap.vue'  // 导入新的地图组件
+import TownMap from './TownMap.vue'
 import MinePanel from './MinePanel.vue'
+
 const store = useGameStore()
 const emit = defineEmits(['close', 'startBattle', 'triggerStory', 'openInventory'])
 
 const currentView = ref('camp')
+const showLocalDungeonSelect = ref(false)
 
-// ─── 营地数据 ───
+// 可用地下城列表
+const availableDungeons = computed(() => {
+  const configs = store.config.dungeonConfigs || {}
+  return Object.keys(configs).map(id => ({ id, ...configs[id] }))
+})
+
+// 切换地下城
+function switchToDungeon(id) {
+  if (store.startDungeon(id)) {
+    showLocalDungeonSelect.value = false
+    // 重置当前楼层等视图
+  } else {
+    alert('该地下城暂时无法进入')
+  }
+}
+
+// 营地数据
 const dungeonName = computed(() => {
   const id = store.dungeon.currentDungeon || store.dungeon.lastDungeonId
   return DUNGEONS[id]?.name || '神秘地下城'
@@ -146,23 +174,19 @@ function formatTime(min) { const h = Math.floor(min / 60), m = min % 60; return 
 
 const companions = computed(() => {
   const chars = store.config?.characters || defaultCharacters
-  const heroId = 'hero'
-  return Object.values(chars).filter(c => c.id !== heroId && c.name)
+  return Object.values(chars).filter(c => c.id !== 'hero' && c.name)
 })
 
-// ─── 探索逻辑 ───
 function explore() {
   const floor = store.dungeon.currentFloor
   const dg = DUNGEONS[store.dungeon.currentDungeon]
   const storyId = dg?.storyByFloor?.[floor]
-
   if (storyId && !store.dungeon.storyTriggered?.[floor]) {
     if (!store.dungeon.storyTriggered) store.dungeon.storyTriggered = {}
     store.dungeon.storyTriggered[floor] = true
     emit('triggerStory', storyId)
     return
   }
-
   if (floor === 1) {
     emit('startBattle', ['slime', 'slime', 'goblin'])
   } else {
@@ -198,6 +222,8 @@ function talkToCompanion(char) {
   }
 }
 </script>
+
+
 
 <style scoped>
 /* 防止全局滚动条 */
@@ -439,4 +465,38 @@ function talkToCompanion(char) {
   font-size: 9px;
   color: #b89aa5;
 }
+
+
+
+/* 原有所有样式保持不变，新增本地选择面板样式 */
+.local-select-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 300;
+}
+.local-select-panel {
+  width: 400px;
+  max-width: 90vw;
+  max-height: 80vh;
+  overflow-y: auto;
+  background: rgba(20,28,40,0.95);
+  border: 2px solid #b89a6a;
+  border-radius: 20px;
+  padding: 20px;
+  color: #ffd;
+  font-family: 'Press Start 2P', cursive;
+}
+.dungeon-card {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.dungeon-card:hover { background: rgba(255,215,0,0.15); }
+.name { font-size: 11px; margin-bottom: 6px; color: #ffd; }
+.info { font-size: 9px; color: #b89aa5; }
 </style>
