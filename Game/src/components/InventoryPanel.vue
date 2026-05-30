@@ -178,30 +178,38 @@
 </template>
 
 <script setup>
+
+import '../assets/css/InventoryPanel.css'
 import { computed, ref, reactive } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
 import { AFFIX_EFFECTS } from '../config/accessoryConfig'
-import '../assets/css/InventoryPanel.css'
-// 筛选锻造产出的武器/防具（有 type 字段且为 weapon 或 armor）
-const equipmentItems = computed(() => {
-  return store.inventory.filter(item => item.type === 'weapon' || item.type === 'armor')
-})
-const props = defineProps({
-  sellMode: Boolean
-})
-const emit = defineEmits(['close'])
 
+const props = defineProps({ sellMode: Boolean })
+const emit = defineEmits(['close'])
 const store = useGameStore()
-function deleteAccessory(acc) {
-  if (!confirm(`确定要删除饰品 ${acc.name} 吗？`)) return
-  const idx = store.inventory.indexOf(acc)
-  if (idx > -1) {
-    store.inventory.splice(idx, 1)
-    store.save()
-    
-  }
-}
+
+// 饰品槽位列表（关键！修复前缺少这个定义）
+const accessorySlots = ['necklace', 'ring1', 'ring2', 'earring1', 'earring2']
+
+// 武器 / 防具
+const equipmentItems = computed(() => {
+  return (store.inventory || []).filter(item => {
+    if (!item) return false
+    if (item.type === 'weapon' || item.type === 'armor') return true
+    if (item.part && !accessorySlots.includes(item.part) && (item.atk || item.def)) return true
+    return false
+  })
+})
+
+// 饰品
+const accessoryItems = computed(() => {
+  return (store.inventory || []).filter(item => {
+    if (!item) return false
+    return item.part && accessorySlots.includes(item.part)
+  })
+})
+
 // 装备槽定义
 const leftSlots = [
   { key: 'weapon', label: '武器', icon: 'mdi:sword' },
@@ -212,7 +220,6 @@ const leftSlots = [
   { key: 'earring1', label: '左耳环', icon: 'mdi:ear-hearing' },
   { key: 'earring2', label: '右耳环', icon: 'mdi:ear-hearing' },
 ]
-
 const rightSlots = [
   { key: 'helmet', label: '头盔', icon: 'mdi:hat-fedora' },
   { key: 'armor', label: '上衣', icon: 'mdi:tshirt-crew' },
@@ -220,143 +227,98 @@ const rightSlots = [
   { key: 'shoes', label: '鞋子', icon: 'mdi:shoe-sneaker' },
 ]
 
-// 饰品筛选
-const accessoryItems = computed(() => {
-  return store.inventory.filter(item => item.affixes && Array.isArray(item.affixes))
-})
-
-// 贩卖弹窗状态
+// 贩卖弹窗
 const showSellDialog = ref(false)
 const selectedMatId = ref('')
 const sellQty = ref(1)
+const maxSellQty = computed(() => (store.materials[selectedMatId.value] || {}).qty || 0)
+const unitPrice = computed(() => store.config.materialPrices[selectedMatId.value] || 1)
+const totalPrice = computed(() => unitPrice.value * sellQty.value)
 
-const maxSellQty = computed(() => {
-  const mat = store.materials[selectedMatId.value]
-  return mat ? mat.qty : 0
-})
-
-const unitPrice = computed(() => {
-  return store.config.materialPrices[selectedMatId.value] || 1
-})
-
-const totalPrice = computed(() => {
-  return unitPrice.value * sellQty.value
-})
-
-
-function equipItemFromInv(item) {
-  store.equipItem(item)
-}
 function openSellDialog(id) {
   if (!props.sellMode) return
   selectedMatId.value = id
   sellQty.value = 1
   showSellDialog.value = true
 }
-
 function changeSellQty(delta) {
-  const newVal = sellQty.value + delta
-  if (newVal >= 1 && newVal <= maxSellQty.value) {
-    sellQty.value = newVal
-  }
+  const n = sellQty.value + delta
+  if (n >= 1 && n <= maxSellQty.value) sellQty.value = n
 }
-
 function confirmSell() {
-  const id = selectedMatId.value
-  const mat = store.materials[id]
+  const mat = store.materials[selectedMatId.value]
   if (!mat || sellQty.value <= 0 || sellQty.value > mat.qty) return
-
-  const total = totalPrice.value
-  store.addGold(total)
+  store.addGold(totalPrice.value)
   mat.qty -= sellQty.value
-  if (mat.qty <= 0) delete store.materials[id]
+  if (mat.qty <= 0) delete store.materials[selectedMatId.value]
   store.save()
   showSellDialog.value = false
 }
 
-// 工具函数
+// 工具
 function materialIcon(id) {
   const icons = {
-    slime_gel: 'mdi:water',
-    goblin_fang: 'mdi:tooth',
-    scorpion_tail: 'mdi:needle',
-    iron_ore: 'mdi:mine',
-    dragon_scale: 'mdi:shield-sun',
+    slime_gel: 'mdi:water', goblin_fang: 'mdi:tooth', scorpion_tail: 'mdi:needle',
+    iron_ore: 'mdi:mine', dragon_scale: 'mdi:shield-sun',
   }
   return icons[id] || 'mdi:circle'
 }
-
-function qualityColor(quality) {
-  const colors = { white: '#ffffff', green: '#4caf50', blue: '#2196f3', purple: '#9c27b0', red: '#ff4444' }
-  return colors[quality] || '#ffffff'
+function qualityColor(q) {
+  const m = { white: '#ccc', green: '#4caf50', blue: '#2196f3', purple: '#9c27b0', red: '#ff4444' }
+  return m[q] || '#ccc'
 }
-
-function qualityText(quality) {
-  const texts = { white: '普通', green: '精良', blue: '稀有', purple: '史诗', red: '传说' }
-  return texts[quality] || quality
+function qualityText(q) {
+  const m = { white: '普通', green: '精良', blue: '稀有', purple: '史诗', red: '传说' }
+  return m[q] || q
 }
-
-function getAffixName(affixId) {
-  const effect = AFFIX_EFFECTS[affixId]
-  return effect ? effect.name : affixId
+function getAffixName(id) {
+  const eff = AFFIX_EFFECTS[id]
+  return eff ? eff.name : id
 }
-
-function getAffixDesc(affixId, level) {
-  const effect = AFFIX_EFFECTS[affixId]
-  if (!effect) return ''
-  const threshold = effect.thresholds.filter(t => t.level <= level).pop()
-  return threshold ? threshold.desc : ''
+function getAffixDesc(id, level) {
+  const eff = AFFIX_EFFECTS[id]
+  if (!eff) return ''
+  const t = eff.thresholds.filter(th => th.level <= level).pop()
+  return t ? t.desc : ''
 }
 
 // 装备/卸载
+function equipItemFromInv(item) {
+  if (item) store.equipItem(item)
+}
 function equipAccessoryFromInv(acc) {
   if (!acc || !acc.part) return
   const slot = acc.part
   if (store.equipment[slot]) {
-    if (!confirm(`该部位已有饰品，是否替换？`)) return
+    if (!confirm('该部位已有饰品，是否替换？')) return
   }
   store.equipAccessory(acc, slot)
 }
-
 function unequip(slot) {
-  if (store.equipment[slot]) {
-    store.unequip(slot)
+  if (store.equipment[slot]) store.unequip(slot)
+}
+function deleteAccessory(acc) {
+  if (!confirm(`确定要删除饰品 ${acc.name} 吗？`)) return
+  const idx = store.inventory.indexOf(acc)
+  if (idx > -1) {
+    store.inventory.splice(idx, 1)
+    store.save()
   }
 }
 
 // 悬浮提示
 const tooltip = reactive({
-  visible: false,
-  x: 0, y: 0,
+  visible: false, x: 0, y: 0,
   name: '', quality: '', atk: 0, def: 0,
-  qualityColor: '#ffffff',
-  affixes: []
+  qualityColor: '#fff', affixes: []
 })
-
-function showTooltip(acc, event) {
-  tooltip.visible = true
-  tooltip.x = event.clientX + 10
-  tooltip.y = event.clientY + 10
-  tooltip.name = acc.name
-  tooltip.quality = acc.quality
-  tooltip.qualityColor = qualityColor(acc.quality)
-  tooltip.atk = acc.atk || 0
-  tooltip.def = acc.def || 0
-  tooltip.affixes = (acc.affixes || []).map(a => ({
-    ...a,
-    name: getAffixName(a.id),
-    desc: getAffixDesc(a.id, a.level)
-  }))
-}
-
-function showSlotTooltip(slotKey, event) {
-  const item = store.equipment[slotKey]
+function showTooltip(item, event) {
   if (!item) return
   tooltip.visible = true
   tooltip.x = event.clientX + 10
   tooltip.y = event.clientY + 10
-  tooltip.name = item.name
-  tooltip.quality = item.quality
+  tooltip.name = item.name || ''
+  tooltip.quality = item.quality || ''
   tooltip.qualityColor = qualityColor(item.quality)
   tooltip.atk = item.atk || 0
   tooltip.def = item.def || 0
@@ -366,7 +328,11 @@ function showSlotTooltip(slotKey, event) {
     desc: getAffixDesc(a.id, a.level)
   }))
 }
-
+function showSlotTooltip(slotKey, event) {
+  const item = store.equipment[slotKey]
+  if (!item) return
+  showTooltip(item, event)
+}
 function hideTooltip() { tooltip.visible = false }
 </script>
 

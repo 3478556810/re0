@@ -110,38 +110,22 @@ skillPoints: 5
 // 在 config 的初始定义中添加（找到 config 对象的定义位置）
 forgeRecipes: [
   {
-    id: 'iron_sword',
-    name: '铁剑',
+    id: 'iron_sword', name: '铁剑',
     materials: [
       { id: 'iron_ore', qty: 3 },
       { id: 'slime_gel', qty: 2 }
     ],
     goldCost: 80,
-    result: {
-      type: 'weapon',
-      name: '铁剑',
-      atk: 15,
-      def: 0,
-      affixSlots: 1,
-      icon: 'mdi:sword'
-    }
+    result: { type: 'weapon', part: 'weapon', name: '铁剑', atk: 15, def: 0, affixSlots: 1, icon: 'mdi:sword' }
   },
   {
-    id: 'leather_armor',
-    name: '皮革甲',
+    id: 'leather_armor', name: '皮革甲',
     materials: [
       { id: 'wolf_fang', qty: 4 },
       { id: 'iron_ore', qty: 2 }
     ],
     goldCost: 120,
-    result: {
-      type: 'armor',
-      name: '皮革甲',
-      atk: 0,
-      def: 12,
-      affixSlots: 1,
-      icon: 'mdi:shield'
-    }
+    result: { type: 'armor', part: 'armor', name: '皮革甲', atk: 0, def: 12, affixSlots: 1, icon: 'mdi:shield' }
   }
 ],
 
@@ -676,7 +660,9 @@ if (data.config.tokenShopItems) config.tokenShopItems = data.config.tokenShopIte
 
 
 
-        if (data.config.materialPrices) Object.assign(config.materialPrices, data.config.materialPrices)
+        if (data.config.materialPrices !== undefined) {
+  config.materialPrices = { ...data.config.materialPrices }
+}
         // 仅当存档中有该字段时才覆盖，否则保留默认（重要！）
  if (data.config.forgeRecipes !== undefined) {
     config.forgeRecipes = data.config.forgeRecipes
@@ -736,8 +722,14 @@ if (Array.isArray(savedImages)) {
   }
 
 function equipItem(item) {
-  if (!item || !item.part) return false
-  const slot = item.part
+  if (!item) return false
+  // 如果缺少 part 字段，根据 type 自动推断
+  let slot = item.part
+  if (!slot) {
+    if (item.type === 'weapon') slot = 'weapon'
+    else if (item.type === 'armor') slot = 'armor'
+    else return false
+  }
   // 如果该部位已有装备，先卸下放入背包
   if (equipment[slot]) {
     inventory.push(equipment[slot])
@@ -792,7 +784,7 @@ function equipItem(item) {
        player.mp = player.maxMp // 升级时回满 MP
       player.attack += 3
       player.defense += 2
-      player.skillPoints = (player.skillPoints || 0) + 1     // ← 新增：每级给 1 技能点
+      player.skillPoints = (player.skillPoints || 0) + 2     // ← 新增：每级给 1 技能点
     }
     save()
   }

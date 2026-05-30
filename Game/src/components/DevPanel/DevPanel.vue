@@ -20,6 +20,7 @@
       </div>
 
       <div class="config-area">
+        <DevInit v-if="tab === 'init'" />
         <DevStory v-if="tab === 'story'" />
 <DevDungeon v-if="tab === 'dungeons'" />
 <DevSkills v-if="tab === 'skills'" />
@@ -99,12 +100,14 @@ import DevAffixPool from './DevAffixPool.vue'
 import DevTokenShop from './DevTokenShop.vue'
 import DevSkills from './DevSkills.vue'
 import DevForge from './DevForge.vue'   // 新增导入
-
+import DevInit from './DevInit.vue'
 
 const store = useGameStore()
-const tab = ref('monsters')
+const tab = ref('init')
 
 const tabs = [
+// tabs 数组最前面加
+{ key: 'init', label: '导入初始', icon: 'mdi:database-import' },
 { key: 'skills', label: '技能', icon: 'mdi:star-four-points' },
 { key: 'affixPool', label: '词条池', icon: 'mdi:star-box' },
 { key: 'tokenShop', label: '兑换', icon: 'mdi:store' },
