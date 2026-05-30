@@ -1,36 +1,80 @@
+
 <template>
-  <div class="battle-container">
+ <div class="battle-container" >
     <div class="sky"></div>
     <div class="ground"></div>
     <div class="decoration tree1"></div>
     <div class="decoration tree2"></div>
     <div class="decoration rock"></div>
 
-    <!-- 敌人区域（右上）：状态栏 + 立绘在右下 -->
-    <div class="enemy-wrapper">
-      <div class="enemy-status-card">
-        <div class="name-box">{{ enemy.name }}</div>
-        <div class="level-tag">Lv.{{ enemy.level }}</div>
-        <div class="bar-row">
-          <span class="bar-text">HP</span>
-          <div class="hp-bar">
-            <div class="hp-fill" :style="{ width: enemyHpPercent + '%' }"></div>
-            <span>{{ Math.ceil(enemyHp) }} / {{ enemy.maxHp }}</span>
+    <!-- 敌人区域 -->
+    <div class="enemy-area">
+      <div class="enemy-cards">
+        <div
+          v-for="(enemy, idx) in enemies"
+          :key="enemy.id"
+          class="enemy-card"
+          :class="{ 'target-selected': idx === currentTargetIndex }"
+          @click="selectTarget(idx)"
+        >
+          <div class="enemy-info">
+            <div style="display: flex; align-items: center; gap: 6px;">
+              <div class="name-box">{{ enemy.name }}</div>
+              <div class="effect-icons" v-if="enemyEffectsDisplay.length">
+                <div v-for="eff in enemyEffectsDisplay" :key="eff.type" class="effect-badge enemy-effect"
+                     :title="`${eff.type}：每回合 ${eff.value} 点伤害，剩余 ${eff.duration} 回合`">
+                  <Icon :icon="getEffectIcon(eff.type)" />
+                  <span class="effect-dur">{{ eff.duration }}</span>
+                </div>
+              </div>
+            </div>
+            <div class="level-tag">Lv.{{ enemy.level }}</div>
+            <div class="bar-row">
+              <span class="bar-text">HP</span>
+              <div class="hp-bar">
+                <div class="hp-fill" :style="{ width: (enemy.hp / enemy.maxHp) * 100 + '%' }"></div>
+                <span>{{ enemy.hp }} / {{ enemy.maxHp }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
-     <div class="enemy-sprite" :class="{ 'enemy-hit': enemyHit, 'flash-white': enemyFlash }"
-     :style="{ transform: `translateX(${enemyShakeX}px)` }">
-  <img v-if="getCustomImage(enemy.id)" :src="getCustomImage(enemy.id)" class="big-sprite-img" />
-  <Icon v-else :icon="enemy.icon || 'mdi:help-circle'" class="big-sprite" />
-</div>
+
+      <div class="enemy-sprites">
+        <div
+          v-for="(enemy, idx) in enemies"
+          :key="'sprite-' + enemy.id"
+          class="enemy-sprite"
+          :class="{ 'target-sprite': idx === currentTargetIndex }"
+          @click="selectTarget(idx)"
+        >
+          <img
+            v-if="getCustomImage(enemy.id)"
+            :src="getCustomImage(enemy.id)"
+            class="big-sprite-img"
+          />
+          <Icon
+            v-else
+            :icon="enemy.icon || 'mdi:help-circle'"
+            class="big-sprite-icon"
+          />
+        </div>
+      </div>
     </div>
 
-    <!-- 玩家区域（左下）：状态栏 + 立绘在左上 -->
+    <!-- 玩家区域 -->
     <div class="player-wrapper">
       <div class="player-status-card">
-        <div class="buff-area"></div>
         <div class="name-box">{{ playerStats.name }}</div>
+
+        <div class="effect-icons" v-if="playerEffectsDisplay.length">
+          <div v-for="eff in playerEffectsDisplay" :key="eff.type" class="effect-badge"
+               :title="`${eff.type}：每回合 ${eff.value} 点伤害，剩余 ${eff.duration} 回合`">
+            <Icon :icon="getEffectIcon(eff.type)" class="effect-icon" />
+            <span class="effect-dur">{{ eff.duration }}</span>
+          </div>
+        </div>
+
         <div class="level-tag">Lv.{{ playerStats.level }}</div>
         <div class="bar-row">
           <span class="bar-text">HP</span>
@@ -60,13 +104,15 @@
         <Icon v-else icon="mdi:account" class="big-sprite" />
       </div>
     </div>
-    <!-- 浮动消息、行动菜单、技能面板等保持不变 -->
+
+    <!-- 浮动消息（可点击跳过） -->
     <Transition name="fade">
       <div v-if="floatingMessage.visible" class="floating-message">
         {{ floatingMessage.text }}
       </div>
     </Transition>
-
+<!-- 透明遮罩，用于点击任意位置跳过消息 -->
+<div v-if="floatingMessage.visible" class="message-overlay" ></div>
     <div class="action-menu" v-if="!gameOver && playerTurn && !waiting && !showResult">
       <button class="action-btn" @click="showSkillPanel = true"><Icon icon="mdi:sword-cross" /> 技能</button>
       <button class="action-btn" @click="useItem('potion')"><Icon icon="mdi:bottle-tonic-plus" /> 物品</button>
@@ -74,11 +120,10 @@
 
     <div v-if="showSkillPanel && !gameOver && playerTurn && !waiting" class="popup-panel">
       <div class="skill-list">
-     <button v-for="skill in battleSkills" :key="skill.id" class="skill-btn" @click="useSkill(skill)">
-  <Icon :icon="skill.icon" /> {{ skill.name }} ({{ skill.desc }})
-</button>
+        <button v-for="skill in battleSkills" :key="skill.id" class="skill-btn" @click="useSkill(skill)">
+          <Icon :icon="skill.icon" /> {{ skill.name }} ({{ skill.desc }})
+        </button>
       </div>
-     
     </div>
 
     <div v-if="gameOver && gameOverMsg === '战斗失败'" class="game-over-panel">
@@ -87,306 +132,316 @@
     </div>
 
     <BattleResultPanel
-  v-if="showResult"
-  :reward="reward"
-  :showDungeon="store.dungeon.active"
-  @close="onResultClose"
-  @next="onNextFloor"
-  @retreat="onRetreat"
-/>
+      v-if="showResult"
+      :reward="totalReward"
+      :showDungeon="store.dungeon.active"
+      @close="onResultClose"
+      @next="onNextFloor"
+      @retreat="onRetreat"
+    />
   </div>
 </template>
-
 <script setup>
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
 import { generateAccessoryLoot } from '../utils/lootGenerator'
+import { CombatEngine } from '../combat/CombatEngine'
 import BattleResultPanel from './BattleResultPanel.vue'
 import '../assets/css/BattleScene.css'
-const props = defineProps({ enemy: Object, battleCoord: Object })
+
+const props = defineProps({ enemies: Array, battleCoord: Object })
 const emit = defineEmits(['victory', 'exit', 'nextFloor', 'retreatToDungeon'])
-// 新增：统一保存奖励的函数
-// 已经存在的 saveRewards 函数（不用动）
-function saveRewards() {
-  // 1. 添加经验（避免重复，仅在尚未添加时添加）
-  if (reward.value.exp && store.player.exp === displayExp.value) {
-    // 如果战斗胜利经验还没加（例如直接调用），这里补充
-    store.addExperience(reward.value.exp)
-  }
-
-  // 2. 添加材料（使用 store.addMaterial，确保正确初始化）
-  if (reward.value.materials && reward.value.materials.length > 0) {
-    reward.value.materials.forEach(m => {
-      if (!m || !m.id) return
-      store.addMaterial(m.id, m.name || m.id)
-    })
-    store.save()
-    console.log('✅ 材料已保存:', JSON.stringify(store.materials))
-  } else {
-    console.warn('⚠️ 奖励中没有材料！reward.value:', JSON.stringify(reward.value))
-  }
-
-  // 3. 添加饰品
-  if (reward.value.accessories?.length) {
-    reward.value.accessories.forEach(acc => store.inventory.push(acc))
-    store.save()
-  }
-}
-
-// 下一层（必须保存奖励）
-function onNextFloor() {
-  saveRewards()               // 保存经验、材料、饰品
-  showResult.value = false
-  store.clearFloor()          // 楼层 +1
-  emit('nextFloor')
-}
-
-// 撤退（必须保存奖励）
-function onRetreat() {
-  saveRewards()
-  showResult.value = false
-  store.retreat()
-  emit('retreatToDungeon')
-}
-
-// 普通确定（非地下城时也会保存）
-function onResultClose() {
-  saveRewards()
-  showResult.value = false
-  emit('victory', reward.value)
-}
-
-
 
 const store = useGameStore()
 
-function getCustomImage(type) {
-  return store.config?.customImages?.[type] || null
-}
+// ========== 战斗引擎 ==========
+let engine = null
+
+const enemies = ref([])
+const currentTargetIndex = ref(0)
+
+const playerEffectsDisplay = ref([])
+const enemyEffectsDisplay = ref([])
 
 const playerStats = computed(() => {
-  const customImg = getCustomImage('hero')
+  const base = store.player || {}
+  const stats = store.playerStats || {}
+  const customImg = store.config?.customImages?.hero || store.config?.customImages?.player
   return {
-    ...store.player,
-    ...store.playerStats,
-    customImg,
-    level: store.player.level,
-    name: store.player.name
+    name: base.name || '勇者',
+    level: base.level || 1,
+    attack: stats.attack || 10,
+    defense: stats.defense || 5,
+    customImg: customImg || null,
+    ...stats,
   }
 })
 
 const battleSkills = computed(() => {
-  return store.player.equippedSkills
-    .map(id => store.config.skillPool.find(s => s.id === id))
+  return (store.player.equippedSkills || [])
+    .map(id => store.config?.skillPool?.find(s => s.id === id))
     .filter(Boolean)
 })
 
-const enemyHp = ref(props.enemy.hp)
+const playerHpPercent = computed(() => (store.player.hp / store.player.maxHp) * 100)
+const displayExp = ref(store.player.exp)
+const nextLevelExp = computed(() => store.player.level * 100)
+const displayExpPercent = computed(() => (displayExp.value / nextLevelExp.value) * 100)
+
 const playerTurn = ref(true)
 const gameOver = ref(false)
 const gameOverMsg = ref('')
 const waiting = ref(false)
 const showSkillPanel = ref(true)
 const showResult = ref(false)
-const reward = ref({ exp: 0, materials: [], accessories: [] })
-
-const displayExp = ref(store.player.exp)
-const animatingExp = ref(false)
+const totalReward = ref({ exp: 0, materials: [], accessories: [] })
 
 const playerHit = ref(false)
-const enemyHit = ref(false)
 const playerFlash = ref(false)
-const enemyFlash = ref(false)
 const playerShakeX = ref(0)
-const enemyShakeX = ref(0)
 
+// ========== 浮动消息 ==========
+// ========== 浮动消息 ==========
 const floatingMessage = reactive({ visible: false, text: '' })
 let messageTimeout = null
+let messageResolve = null
 
-const enemyHpPercent = computed(() => (enemyHp.value / props.enemy.maxHp) * 100)
-const playerHpPercent = computed(() => (store.player.hp / store.player.maxHp) * 100)
+let globalSkipHandler = null
 
-const nextLevelExp = computed(() => store.player.level * 100)
-const displayExpPercent = computed(() => (displayExp.value / nextLevelExp.value) * 100)
+function showMessage(text, duration = 5000) {
+  return new Promise((resolve) => {
+    if (messageTimeout) clearTimeout(messageTimeout)
+    if (messageResolve) {
+      messageResolve()
+      messageResolve = null
+    }
 
-function showMessage(text) {
+    floatingMessage.text = text
+    floatingMessage.visible = true
+    messageResolve = resolve
+
+    if (globalSkipHandler) document.removeEventListener('click', globalSkipHandler)
+    globalSkipHandler = () => {
+      skipMessage()
+    }
+    setTimeout(() => {
+      document.addEventListener('click', globalSkipHandler)
+    }, 0)
+
+    messageTimeout = setTimeout(() => {
+      floatingMessage.visible = false
+      cleanupMessage()
+      if (messageResolve) {
+        messageResolve()
+        messageResolve = null
+      }
+    }, duration)
+  })
+}
+
+function skipMessage() {
   if (messageTimeout) clearTimeout(messageTimeout)
-  floatingMessage.text = text
-  floatingMessage.visible = true
-  messageTimeout = setTimeout(() => { floatingMessage.visible = false }, 1800)
-}
-
-const effectiveness = {
-  fire: { bug: 2, grass: 2, fire: 0.5, water: 0.5 },
-  grass: { water: 2, bug: 1.5, fire: 0.5 },
-  bug: { grass: 2, fire: 0.5, bug: 1 },
-}
-function getEffectiveness(attackerElem, defenderElem) {
-  if (!attackerElem || !defenderElem) return 1
-  return effectiveness[attackerElem]?.[defenderElem] || 1
-}
-
-function calculateDamage(baseDamage, skillElement = null) {
-  const stats = playerStats.value
-  let damage = baseDamage
-  if (skillElement === 'fire') damage *= (1 + (stats.fireDmg || 0) / 100)
-  damage += stats.trueDmg || 0
-  const elem = skillElement || 'fire'
-  const mult = getEffectiveness(elem, props.enemy.element || 'bug')
-  damage *= mult
-  if (mult > 1) showMessage('效果拔群！')
-  if (mult < 1) showMessage('效果不理想...')
-  let isCrit = false
-  if (Math.random() * 100 < (stats.critRate || 5)) {
-    damage *= (stats.critDmg || 150) / 100
-    isCrit = true
-    showMessage('会心一击！')
+  if (messageResolve) {
+    floatingMessage.visible = false
+    cleanupMessage()
+    messageResolve()
+    messageResolve = null
   }
-  const defenseReduce = props.enemy.def / (props.enemy.def + 50)
-  damage = Math.max(1, Math.floor(damage * (1 - defenseReduce)))
-  return { damage, isCrit }
 }
 
-function enemyDamage() {
-  const stats = playerStats.value
-  let damage = props.enemy.atk - stats.defense * 0.5
-  damage = Math.max(5, Math.floor(damage))
-  return damage
+function cleanupMessage() {
+  if (globalSkipHandler) {
+    document.removeEventListener('click', globalSkipHandler)
+    globalSkipHandler = null
+  }
+}
+function getEffectIcon(type) {
+  const map = {
+    dot: 'mdi:skull-crossbones',
+    hot: 'mdi:heart-plus',
+    atkUp: 'mdi:sword-cross',
+    defUp: 'mdi:shield-star',
+    spdUp: 'mdi:run-fast',
+    atkDown: 'mdi:sword-broken',
+    defDown: 'mdi:shield-off',
+    spdDown: 'mdi:walk',
+    shield: 'mdi:shield',
+    stun: 'mdi:lightning-bolt',
+    silence: 'mdi:microphone-off',
+    reflect: 'mdi:mirror',
+  }
+  return map[type] || 'mdi:circle-small'
+}
+
+function initEngine() {
+  if (!props.enemies || props.enemies.length === 0) {
+    console.warn('没有敌人数据')
+    enemies.value = []
+    return
+  }
+  engine = new CombatEngine(store.playerStats, props.enemies)
+  syncStateFromEngine()
+}
+
+function syncStateFromEngine() {
+  if (!engine) return
+  store.player.hp = engine.player.hp
+  store.player.mp = engine.player.mp
+  enemies.value = engine.enemies.map(e => ({
+    ...e,
+    id: e.id,
+    name: e.name || '未知敌人',
+    hp: e.hp,
+    maxHp: e.maxHp,
+    element: e.element || '',
+    icon: e.icon || 'mdi:help-circle',
+    level: e.level || 1,
+    atk: e.attack,
+    def: e.defense,
+    effects: e.effects || [],
+  }))
+  syncEffectsFromEngine()
+}
+
+function syncEffectsFromEngine() {
+  if (!engine) return
+  playerEffectsDisplay.value = engine.player.effects.filter(e => e.duration > 0)
+  const target = engine.enemies[currentTargetIndex.value]
+  enemyEffectsDisplay.value = target ? target.effects.filter(e => e.duration > 0) : []
+}
+
+function selectTarget(idx) {
+  if (idx >= 0 && idx < enemies.value.length) {
+    currentTargetIndex.value = idx
+    syncEffectsFromEngine()
+  }
 }
 
 async function useSkill(skill) {
   if (!playerTurn.value || gameOver.value || waiting.value) return
+  const targetIdx = currentTargetIndex.value
+  const result = engine.executePlayerAction(skill, targetIdx)
+  if (!result) return
+
   waiting.value = true
   showSkillPanel.value = false
-  if (skill.mpCost > 0 && store.player.mp < skill.mpCost) {
-    showMessage('MP不足！')
+
+  for (const msg of result.messages) {
+    await showMessage(msg, 5000)
+    syncStateFromEngine()
+    if (engine.battleOver) break
+  }
+
+  // 如果战斗已结束，直接处理
+  if (engine.battleOver) {
+    gameOver.value = true
+    gameOverMsg.value = engine.winner === 'player' ? '战斗胜利！' : '战斗失败'
+    if (engine.winner === 'player') victory()
     waiting.value = false
     return
   }
-  if (skill.mpCost > 0) store.player.mp -= skill.mpCost
-  const baseDamage = playerStats.value.attack * skill.baseMul
-  const { damage } = calculateDamage(baseDamage, skill.element)
-  showMessage(`${playerStats.value.name} 使用了${skill.name}！`)
-  enemyHp.value -= damage
-  showMessage(`造成 ${damage} 点伤害！`)
-  animateEnemyHit()
-  if (enemyHp.value <= 0) {
-    enemyHp.value = 0
-    victory()
-    return
-  }
+
+  const nextAlive = engine.enemies.findIndex(e => e.hp > 0)
+  if (nextAlive !== -1) currentTargetIndex.value = nextAlive
+
   playerTurn.value = false
-  setTimeout(() => enemyTurn(), 800)
+  await enemyTurn()
 }
 
-function useItem(item) {
+
+
+
+async function useItem(item) {
   if (!playerTurn.value || gameOver.value || waiting.value) return
   if (item === 'potion') {
     if (store.player.hp >= store.player.maxHp) {
-      showMessage('HP已满！')
+      await showMessage('HP已满！')
       return
     }
-    store.player.hp = Math.min(store.player.maxHp, store.player.hp + 30)
-    showMessage('使用了恢复药水，恢复了 30HP！')
+    const healAmount = 30
+    store.player.hp = Math.min(store.player.maxHp, store.player.hp + healAmount)
+    engine.player.hp = store.player.hp
+    await showMessage(`使用了恢复药水，恢复了 ${healAmount} HP！`)
+    syncStateFromEngine()        // 立刻刷新血条
     playerTurn.value = false
-    setTimeout(() => enemyTurn(), 800)
+    await enemyTurn()
   }
 }
 
 async function enemyTurn() {
-  if (gameOver.value) return
-  showMessage(`${props.enemy.name} 的回合！`)
-  
-  // 尝试使用技能
-  let usedSkill = false
-  if (props.enemy.skills && props.enemy.skills.length > 0 && Math.random() < 0.7) {
-    const skill = props.enemy.skills[Math.floor(Math.random() * props.enemy.skills.length)]
-    if (skill) {
-      const dmg = calculateDamage(props.enemy.atk * (skill.baseMul || 1), skill.element || null)
-      store.player.hp -= dmg.damage
-      showMessage(`${props.enemy.name} 使用了 ${skill.name}！造成 ${dmg.damage} 点伤害！`)
-      usedSkill = true
+  if (gameOver.value) return;
+
+  // 1. 先处理 DOT，每次 DOT 伤害单独显示并同步
+  const dotResult = engine.executePlayerDotTick();
+  if (dotResult.messages.length > 0) {
+    for (const msg of dotResult.messages) {
+      await showMessage(msg, 5000);
+      syncStateFromEngine();
+      if (engine.battleOver) break;
+    }
+    if (engine.battleOver) {
+      gameOver.value = true;
+      gameOverMsg.value = '战斗失败';
+      waiting.value = false;
+      return;
     }
   }
-  
-  // 如果没有使用技能，则普通攻击
-  if (!usedSkill) {
-    const damage = enemyDamage()
-    store.player.hp -= damage
-    showMessage(`受到 ${damage} 点伤害！`)
-  }
-  
-  animatePlayerHit()
-  if (store.player.hp <= 0) {
-    store.player.hp = 0
-    showMessage('你倒下了...')
-    gameOver.value = true
-    gameOverMsg.value = '战斗失败'
-    waiting.value = false
-    return
-  }
-  playerTurn.value = true
-  waiting.value = false
-  showSkillPanel.value = true
-}
 
-async function animateExp(targetExp) {
-  if (animatingExp.value) return
-  animatingExp.value = true
+  // 2. 每个敌人逐个行动
+  const alive = engine.getAliveEnemies();
+  for (const enemy of alive) {
+    if (engine.battleOver) break;
 
-  const startExp = displayExp.value
-  const duration = 800
-  const startTime = performance.now()
-
-  function update() {
-    const now = performance.now()
-    const elapsed = now - startTime
-    const progress = Math.min(elapsed / duration, 1)
-    displayExp.value = Math.round(startExp + (targetExp - startExp) * progress)
-
-    if (progress < 1) {
-      requestAnimationFrame(update)
-    } else {
-      displayExp.value = targetExp
-      store.addExperience(targetExp - startExp)
-      animatingExp.value = false
-      showResult.value = true   // 直接弹出结算面板，无需确认
+    // 执行单个敌人行动
+    const res = engine.executeSingleEnemyAction(enemy);
+    for (const msg of res.messages) {
+      await showMessage(msg, 5000);
+      syncStateFromEngine();
+      if (engine.battleOver) break;
     }
+    animatePlayerHit();
+    await new Promise(r => setTimeout(r, 300));
+
+    if (engine.battleOver) break;
   }
-  requestAnimationFrame(update)
+
+  syncStateFromEngine();
+
+  if (engine.battleOver) {
+    gameOver.value = true;
+    gameOverMsg.value = '战斗失败';
+    waiting.value = false;
+    return;
+  }
+
+  // 回合结束
+  engine.endTurn();
+  syncStateFromEngine();
+
+  playerTurn.value = true;
+  waiting.value = false;
+  showSkillPanel.value = true;
 }
+
+
+
+
 
 function victory() {
-  if (animatingExp.value || gameOver.value) return
+  gameOver.value = true
+  gameOverMsg.value = '战斗胜利！'
 
-  // 1. 准备经验值
-  const exp = props.enemy.exp || 30
-
-  // 2. 准备材料（深拷贝避免引用问题）
-  const mats = props.enemy.material ? [{ ...props.enemy.material }] : []
-
-  // 3. 生成饰品掉落
-  const droppedAccessories = generateAccessoryLoot(props.enemy)
-
-  // 4. 地下城额外奖励
-  if (store.dungeon.active) {
-    mats.push({ id: 'dungeon_token', name: '地下城徽记' })
+  const engineRewards = engine.getRewards()
+  const totalMats = engineRewards.materials || []
+  const totalAccs = []
+  for (const enemy of props.enemies) {
+    const accs = generateAccessoryLoot(enemy)
+    if (accs) totalAccs.push(...accs)
   }
-
-  // 5. 组合奖励对象
-  reward.value = {
-    exp,
-    materials: mats,
-    accessories: droppedAccessories
-  }
-
-  // 6. 播放经验动画，动画结束后弹出结算面板
-  const targetExp = displayExp.value + exp
-  animateExp(targetExp)
+  totalReward.value = { exp: engineRewards.exp, materials: totalMats, accessories: totalAccs }
+  showResult.value = true
 }
-
-// 新增：统一保存奖励的函数
 
 function handleGameOver() {
   if (gameOverMsg.value === '战斗失败') {
@@ -395,29 +450,121 @@ function handleGameOver() {
   }
 }
 
+function onResultClose() { saveRewards(); showResult.value = false; emit('victory', totalReward.value) }
+function onNextFloor() { saveRewards(); showResult.value = false; store.clearFloor(); emit('nextFloor') }
+function onRetreat() { saveRewards(); showResult.value = false; store.retreat(); emit('retreatToDungeon') }
 
-
-
-
-
-function animateEnemyHit() {
-  enemyHit.value = true; enemyFlash.value = true; enemyShakeX.value = 5
-  setTimeout(() => { enemyHit.value = false; enemyShakeX.value = 0 }, 200)
-  setTimeout(() => { enemyFlash.value = false }, 100)
+function saveRewards() {
+  if (totalReward.value.exp) store.addExperience(totalReward.value.exp)
+  if (totalReward.value.materials?.length) {
+    totalReward.value.materials.forEach(m => store.addMaterial(m.id, m.name))
+  }
+  if (totalReward.value.accessories?.length) {
+    totalReward.value.accessories.forEach(acc => store.inventory.push(acc))
+    store.save()
+  }
 }
+
+function getCustomImage(type) {
+  const val = store.config?.customImages?.[type]
+  return val && val.trim() !== '' ? val : null
+}
+
 function animatePlayerHit() {
-  playerHit.value = true; playerFlash.value = true; playerShakeX.value = -5
-  setTimeout(() => { playerHit.value = false; playerShakeX.value = 0 }, 200)
-  setTimeout(() => { playerFlash.value = false }, 100)
+  playerHit.value = true
+  playerFlash.value = true
+  playerShakeX.value = -8
+  setTimeout(() => { playerHit.value = false; playerShakeX.value = 8 }, 100)
+  setTimeout(() => { playerShakeX.value = 0; playerFlash.value = false }, 300)
 }
 
 onMounted(() => {
-  showMessage('野生 ' + props.enemy.name + ' 出现了！')
+  initEngine()
+  showMessage('敌人出现了！')
   displayExp.value = store.player.exp
-  animatingExp.value = false
 })
 
 onUnmounted(() => {
   if (messageTimeout) clearTimeout(messageTimeout)
+  if (globalSkipHandler) document.removeEventListener('click', globalSkipHandler)
 })
 </script>
+
+<style scoped>
+/* 保持你原有的样式，我这里只保留必要的 */
+.enemy-area { position: absolute; top: 5%; right: 2%; display: flex; flex-direction: column; align-items: flex-end; z-index: 10; gap: 12px; }
+.enemy-cards { display: flex; flex-direction: column; gap: 8px; }
+.enemy-card { background: rgba(0,0,0,0.5); border-radius: 16px; padding: 8px 12px; border: 2px solid transparent; cursor: pointer; transition: border-color 0.2s; width: 260px; }
+.enemy-card.target-selected { border-color: #ffd700; }
+.enemy-info .name-box { background: #f0e0b0; border: 1px solid #a08040; padding: 2px 6px; font-size: 9px; margin-bottom: 2px; display: inline-block; }
+.level-tag { font-size: 8px; color: #ffd; }
+.bar-row { display: flex; align-items: center; gap: 5px; margin-top: 3px; }
+.bar-text { width: 25px; font-size: 8px; color: #fff; }
+.hp-bar { flex: 1; background: #603020; height: 12px; border-radius: 6px; position: relative; overflow: hidden; }
+.hp-fill { background: #4caf50; height: 100%; transition: width 0.3s; }
+.hp-bar span { position: absolute; top: 0; left: 0; right: 0; text-align: center; font-size: 7px; line-height: 12px; color: white; }
+.enemy-sprites { display: flex; flex-direction: row; gap: 15px; justify-content: flex-end; }
+.enemy-sprite { width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border: 3px solid transparent; border-radius: 12px; background: rgba(0,0,0,0.3); cursor: pointer; transition: border-color 0.2s, transform 0.2s; }
+.enemy-sprite.target-sprite { border-color: #ffd700; transform: scale(1.1); }
+.enemy-sprite:hover { border-color: rgba(255,255,255,0.6); }
+.big-sprite-img { width: 100%; height: 100%; object-fit: contain; }
+.big-sprite-icon { font-size: 50px; color: #ffd; }
+.effect-icons { display: flex; gap: 4px; flex-wrap: wrap; }
+.effect-badge { background: rgba(0,0,0,0.6); border-radius: 8px; padding: 2px 6px; display: flex; align-items: center; gap: 3px; font-size: 12px; color: #ffd; white-space: nowrap; }
+.effect-icon { font-size: 16px; }
+.effect-dur { font-size: 10px; color: #fff; }
+.enemy-effect { background: rgba(200,0,0,0.4); }
+.message-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 19;
+  background: transparent;
+  pointer-events: none;   /* 👈 关键：鼠标事件穿透 */
+}
+.floating-message {
+  z-index: 20; /* 确保消息在遮罩之上 */
+}
+
+
+/* 手机横屏适配 */
+@media (max-width: 900px) and (max-height: 500px) {
+  .enemy-sprite {
+    width: 60px !important;
+    height: 60px !important;
+    font-size: 40px !important;
+  }
+  .enemy-card {
+    width: 180px !important;
+    padding: 4px 8px !important;
+    font-size: 7px !important;
+  }
+  .enemy-info .name-box {
+    font-size: 7px !important;
+  }
+  .player-sprite {
+    width: 120px !important;
+    height: 120px !important;
+    top: -280px !important;
+  }
+  .big-sprite, .big-sprite-icon {
+    font-size: 80px !important;
+  }
+  .player-status-card {
+    min-width: 100px !important;
+    padding: 8px 12px !important;
+    font-size: 7px !important;
+  }
+  .action-btn {
+    padding: 6px 14px !important;
+    font-size: 10px !important;
+  }
+  .floating-message {
+    font-size: 12px !important;
+    padding: 8px 20px !important;
+  }
+}
+
+</style>

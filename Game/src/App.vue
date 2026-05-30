@@ -7,7 +7,7 @@
 <BattleScene
   v-else
   :key="battleKey"
-  :enemy="currentEnemy"
+  :enemies="currentEnemies"
   @victory="onVictory"
   @exit="inBattle = false"
   @nextFloor="onNextFloor"
@@ -25,7 +25,7 @@ import { spawnEnemy } from './config/biomeConfig'   // 添加导入
 const battleKey = ref(0)
 const store = useGameStore()
 const inBattle = ref(false)
-const currentEnemy = ref(null)
+const currentEnemies = ref([])
 function onRetreatToDungeon() {
   inBattle.value = false
   store.pendingDungeonPanel = true   // 标志位，通知 MainScreen 打开地下城面板
@@ -51,9 +51,9 @@ function fallbackSpawnEnemy(template, playerLevel) {
 // 全局时间流逝
 let timeInterval
 onMounted(() => {
-    window.addEventListener('beforeunload', () => {
-    store.save()
-  })
+  //   window.addEventListener('beforeunload', () => {
+  //   store.save()
+  // })
   //store.fixGhostEquipment()
   timeInterval = setInterval(() => {
     store.advanceTime(1)
@@ -79,101 +79,87 @@ function onVictory(reward) {
   inBattle.value = false
 }
 
-
-function parseMonsterSkills(template) {
-  if (template.skillsText) {
-    try {
-      return JSON.parse(template.skillsText)
-    } catch (e) {
-      console.warn('怪物技能解析失败:', e)
-      return []
-    }
+function parseMonsterSkills(monster) {
+  if (!monster || !monster.skillsText) return []
+  try {
+    const parsed = JSON.parse(monster.skillsText)
+    return Array.isArray(parsed) ? parsed : []
+  } catch (e) {
+    return []
   }
-  return []
 }
 
-function onStartBattle(monsterOrId) {
-  let monster = null
 
-  if (typeof monsterOrId === 'string') {
-    const builtin = {
-      slime: { id: 'slime', name: '史莱姆', baseHp: 35, baseAtk: 10, baseDef: 6, levelRange: [1,3], material: { id: 'slime_gel', name: '史莱姆凝露' }, icon: 'mdi:blur' },
-      goblin: { id: 'goblin', name: '哥布林', baseHp: 45, baseAtk: 16, baseDef: 10, levelRange: [2,5], material: { id: 'goblin_fang', name: '哥布林之牙' }, icon: 'mdi:alien' },
-      wolf: { id: 'wolf', name: '森林狼', baseHp: 50, baseAtk: 22, baseDef: 12, levelRange: [3,6], material: { id: 'wolf_fang', name: '狼牙' }, icon: 'mdi:dog' },
-      scorpion: { id: 'scorpion', name: '毒蝎', baseHp: 40, baseAtk: 22, baseDef: 14, levelRange: [3,7], material: { id: 'scorpion_tail', name: '蝎尾针' }, icon: 'mdi:bug' },
-      golem: { id: 'golem', name: '石魔像', baseHp: 80, baseAtk: 30, baseDef: 25, levelRange: [5,10], material: { id: 'golem_core', name: '魔像核心' }, icon: 'mdi:robot' },
-      boss_wolfking: { id: 'boss_wolfking', name: '狼王', baseHp: 120, baseAtk: 35, baseDef: 20, levelRange: [8,12], material: { id: 'wolf_heart', name: '狼王之心' }, icon: 'mdi:skull', isBoss: true },
-    }
-    let template = builtin[monsterOrId] || store.config.monsterTemplates.find(m => m.id === monsterOrId)
-    if (!template) {
-      console.error('找不到怪物模板:', monsterOrId)
-      return
-    }
 
-    try {
-      if (spawnEnemy) {
-        monster = spawnEnemy(template, store.player.level)
-      } else {
-        monster = fallbackSpawnEnemy(template, store.player.level)
-      }
-      monster.icon = template.icon || 'mdi:help-circle'
-      if (template.isBoss) monster.isBoss = true
-      // 解析技能
-      monster.skills = parseMonsterSkills(template)
-    } catch (e) {
-      console.error('生成怪物失败', e)
-      monster = fallbackSpawnEnemy(template, store.player.level)
-      monster.icon = template.icon || 'mdi:help-circle'
-    }
-  } else if (monsterOrId && typeof monsterOrId === 'object') {
-    monster = monsterOrId
-    if (!monster.skills && monster.skillsText) {
-      monster.skills = parseMonsterSkills(monster)
-    }
+function onStartBattle(monsterIds) {
+  const ids = Array.isArray(monsterIds) ? monsterIds : [monsterIds]
+  const monsters = []
+
+  const builtin = {
+    slime: { id: 'slime', name: '史莱姆', baseHp: 35, baseAtk: 10, baseDef: 6, levelRange: [1,3], material: { id: 'slime_gel', name: '史莱姆凝露' }, icon: 'mdi:blur' },
+    goblin: { id: 'goblin', name: '哥布林', baseHp: 45, baseAtk: 16, baseDef: 10, levelRange: [2,5], material: { id: 'goblin_fang', name: '哥布林之牙' }, icon: 'mdi:alien' },
+    wolf: { id: 'wolf', name: '森林狼', baseHp: 50, baseAtk: 22, baseDef: 12, levelRange: [3,6], material: { id: 'wolf_fang', name: '狼牙' }, icon: 'mdi:dog' },
+    scorpion: { id: 'scorpion', name: '毒蝎', baseHp: 40, baseAtk: 22, baseDef: 14, levelRange: [3,7], material: { id: 'scorpion_tail', name: '蝎尾针' }, icon: 'mdi:bug' },
+    golem: { id: 'golem', name: '石魔像', baseHp: 80, baseAtk: 30, baseDef: 25, levelRange: [5,10], material: { id: 'golem_core', name: '魔像核心' }, icon: 'mdi:robot' },
+    boss_wolfking: { id: 'boss_wolfking', name: '狼王', baseHp: 120, baseAtk: 35, baseDef: 20, levelRange: [8,12], material: { id: 'wolf_heart', name: '狼王之心' }, icon: 'mdi:skull', isBoss: true },
   }
 
-  if (!monster) {
-    console.error('无法生成怪物')
+  for (const item of ids) {
+    let monster
+
+    if (typeof item === 'object' && item !== null) {
+      // 已经是完整的怪物对象（例如从 getRandomMonsterForFloor 返回）
+      monster = { ...item } // 拷贝一份，避免修改原始数据
+    } else {
+      // 是字符串 ID，需要查找模板
+      const id = item
+      const template = store.config.monsterTemplates?.find(m => m.id === id) || builtin[id]
+      if (!template) {
+        console.error('找不到怪物模板:', id)
+        continue
+      }
+
+      try {
+        if (spawnEnemy) {
+          monster = spawnEnemy(template, store.player.level)
+        } else {
+          monster = fallbackSpawnEnemy(template, store.player.level)
+        }
+        monster.icon = template.icon || 'mdi:help-circle'
+        if (template.isBoss) monster.isBoss = true
+      } catch (e) {
+        console.error('生成怪物失败', e)
+        monster = fallbackSpawnEnemy(template, store.player.level)
+        monster.icon = template.icon || 'mdi:help-circle'
+      }
+    }
+
+    // 统一解析技能
+    monster.skills = parseMonsterSkills(monster) // 注意：这里需要从 monster 自身取 skillsText，不是从 template
+    monsters.push(monster)
+  }
+
+  if (monsters.length === 0) {
+    console.error('无法生成任何怪物')
     return
   }
 
-  currentEnemy.value = monster
+  currentEnemies.value = monsters
   battleKey.value++
   inBattle.value = true
 }
-
 function onNextFloor() {
   if (!store.dungeon.active) {
     inBattle.value = false
     return
   }
   const monsterId = store.getRandomMonsterForFloor()
-  let template = null
-  if (monsterId) {
-    template = store.config.monsterTemplates.find(m => m.id === monsterId)
+  if (!monsterId) {
+    inBattle.value = false
+    return
   }
-  if (!template) {
-    const builtin = {
-      slime: { id: 'slime', name: '史莱姆', baseHp: 35, baseAtk: 10, baseDef: 6, levelRange: [1,3], material: { id: 'slime_gel', name: '史莱姆凝露' }, icon: 'mdi:blur' },
-      goblin: { id: 'goblin', name: '哥布林', baseHp: 45, baseAtk: 16, baseDef: 10, levelRange: [2,5], material: { id: 'goblin_fang', name: '哥布林之牙' }, icon: 'mdi:alien' },
-      wolf: { id: 'wolf', name: '森林狼', baseHp: 50, baseAtk: 22, baseDef: 12, levelRange: [3,6], material: { id: 'wolf_fang', name: '狼牙' }, icon: 'mdi:dog' },
-      scorpion: { id: 'scorpion', name: '毒蝎', baseHp: 40, baseAtk: 22, baseDef: 14, levelRange: [3,7], material: { id: 'scorpion_tail', name: '蝎尾针' }, icon: 'mdi:bug' },
-      golem: { id: 'golem', name: '石魔像', baseHp: 80, baseAtk: 30, baseDef: 25, levelRange: [5,10], material: { id: 'golem_core', name: '魔像核心' }, icon: 'mdi:robot' },
-      boss_wolfking: { id: 'boss_wolfking', name: '狼王', baseHp: 120, baseAtk: 35, baseDef: 20, levelRange: [8,12], material: { id: 'wolf_heart', name: '狼王之心' }, icon: 'mdi:skull', isBoss: true },
-    }
-    template = builtin[monsterId] || builtin.slime
-  }
-  if (!template.levelRange) {
-    template = { ...template, levelRange: [1, 5] }
-  }
-  const monster = spawnEnemy(template, store.player.level)
-  monster.icon = template.icon || 'mdi:help-circle'
-  if (template.isBoss) monster.isBoss = true
-  // 解析技能
-  monster.skills = parseMonsterSkills(template)
-  store.dungeon.isDungeonBattle = true
-  currentEnemy.value = monster
-  battleKey.value++
+  // 直接调用 onStartBattle，它会处理单个字符串
+  onStartBattle(monsterId)
 }
 </script>
 

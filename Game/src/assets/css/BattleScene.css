@@ -127,18 +127,7 @@
 }
 
 /* ========== 立绘（独立、放大、偏移） ========== */
-.enemy-sprite {
-  position: absolute;
-  bottom: -320px;   /* 右下偏移 */
-  left: -110px;
-  width: 280px;
-  height: 280px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
-  transition: transform 0.1s, filter 0.2s;
-}
+
 
 .player-sprite {
   position: absolute;
