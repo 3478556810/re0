@@ -1,3 +1,5 @@
+// src/utils/mineLogic.js
+
 export const TILE = {
   WALL: 'wall',
   ROCK: 'rock',
@@ -30,19 +32,6 @@ export function generateCave(rows, cols) {
       else if (rand < 0.30) grid[r][c] = TILE.JUNK
     }
   }
-
-  // 放置楼梯（远离玩家出生点，放在右下区域）
-  // let ladderPlaced = false
-  // for (let r = rows - 2; r >= Math.floor(rows / 2); r--) {
-  //   for (let c = cols - 2; c >= Math.floor(cols / 2); c--) {
-  //     if (grid[r][c] === TILE.EMPTY) {
-  //       grid[r][c] = TILE.LADDER
-  //       ladderPlaced = true
-  //       break
-  //     }
-  //   }
-  //   if (ladderPlaced) break
-  // }
 
   // 放置怪物（2~3只）
   let monsterCount = 0
@@ -81,12 +70,47 @@ export function moveMonsters(grid, rows, cols) {
   }
 }
 
-// 矿石掉落
-export function rollOre(floor) {
-  const r = Math.random()
-  if (floor >= 5 && r < 0.15) return 'dragon_scale'
-  if (floor >= 3 && r < 0.35) return 'goblin_fang'
-  return 'iron_ore'
+/**
+ * 根据材料定义中的 dropRate 权重随机选择矿石
+ * @param {Array} materialDefs 所有材料定义（包含 type 和 dropRate 字段）
+ * @returns {string} 矿石 ID
+ */
+export function rollOreDynamic(materialDefs) {
+  const ores = materialDefs.filter(m => m.type === 'ore' && (m.dropRate || 0) > 0)
+  if (ores.length === 0) return 'iron_ore' // 兜底
+
+  const totalWeight = ores.reduce((sum, ore) => sum + (ore.dropRate || 0), 0)
+  let roll = Math.random() * totalWeight
+
+  for (const ore of ores) {
+    roll -= ore.dropRate || 0
+    if (roll <= 0) return ore.id
+  }
+
+  return ores[0].id // 保险
+}
+
+/**
+ * 根据楼层获取可能的怪物列表（从怪物模板筛选）
+ * @param {number} floor 当前楼层
+ * @param {Array} allMonsters 所有怪物模板
+ * @returns {Array} 符合条件的怪物 ID 数组
+ */
+export function getMonstersForFloor(floor, allMonsters) {
+  // 楼层与怪物标签对应关系
+  const tagByFloor = [
+    { maxFloor: 3, tags: ['weak'] },
+    { maxFloor: 7, tags: ['weak', 'normal'] },
+    { maxFloor: 15, tags: ['weak', 'normal', 'strong'] },
+    { maxFloor: Infinity, tags: ['weak', 'normal', 'strong', 'boss'] }
+  ]
+
+  const rule = tagByFloor.find(r => floor <= r.maxFloor) || tagByFloor[tagByFloor.length - 1]
+  const allowedTags = rule.tags
+
+  return allMonsters
+    .filter(m => allowedTags.includes(m.tag))
+    .map(m => m.id)
 }
 
 // 相邻判断
@@ -94,7 +118,7 @@ export function isAdjacent(r1, c1, r2, c2) {
   return Math.abs(r1 - r2) + Math.abs(c1 - c2) === 1
 }
 
-// 材料图标
+// 材料图标（静态映射，可扩展）
 export function getMaterialIcon(id) {
   const map = {
     iron_ore: 'mdi:mine',

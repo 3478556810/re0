@@ -20,6 +20,7 @@
         <label>用途</label>
         <select v-model="mat.type" class="pixel-input">
           <option value="forge">锻造材料</option>
+            <option value="ore">矿石</option>   
           <option value="enchant">附魔材料</option>
           <option value="upgrade">强化材料</option>
           <option value="breakthrough">突破材料</option>
@@ -27,6 +28,12 @@
           <option value="other">其他</option>
         </select>
       </div>
+<div class="row">
+  <label>矿石掉率</label>
+  <input v-model.number="mat.dropRate" type="number" min="0" max="100" class="pixel-input" />
+</div>
+
+
       <button class="pixel-btn small danger" @click="removeMaterial(idx)">删除</button>
     </div>
 
@@ -66,7 +73,8 @@ function addMaterial() {
   store.config.materialDefinitions.push({
     id,
     name: '新材料',
-    type: 'other'
+    type: 'other',
+      dropRate: 0       // 新增字段
   })
   if (!store.config.materialPrices[id]) {
     store.config.materialPrices[id] = 1

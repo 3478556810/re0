@@ -27,7 +27,10 @@ maxStamina: 100,
     grassDmg: 0, iceDmg: 0, holyDmg: 0, darkDmg: 0,
     steelDmg: 0, rockDmg: 0,skillPoints: 5,   // 技能点数
 equippedSkills: ['normal_attack', 'fire_slash'],
-skills: {},
+skills: {
+  normal_attack: { unlocked: true, level: 1 },
+  fire_slash: { unlocked: true, level: 1 }
+},
 tripodChoices: {},
 skillPoints: 5
   // ... 其他
@@ -709,6 +712,10 @@ if (Array.isArray(savedImages)) {
       defeatedEnemies.value = new Set(data.defeated || [])
       exploredTiles.value = new Set(data.explored || [])
       if (data.currentEvent) currentEvent.value = data.currentEvent
+
+      if (player.skillPoints === undefined || isNaN(player.skillPoints)) {
+  player.skillPoints = 5
+}
     } catch (e) {
       console.error('存档加载失败', e)
     }
@@ -780,9 +787,12 @@ function equipItem(item) {
       player.exp -= player.level * 100
       player.level++
       player.maxHp += 10
+      player.maxMp += 5        // 新增
       player.hp = player.maxHp
+       player.mp = player.maxMp // 升级时回满 MP
       player.attack += 3
       player.defense += 2
+      player.skillPoints = (player.skillPoints || 0) + 1     // ← 新增：每级给 1 技能点
     }
     save()
   }
