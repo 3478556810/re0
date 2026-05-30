@@ -308,7 +308,7 @@ function interact() {
 function dig(r, c) {
   if (store.player.stamina < 10) { showToast('体力不足！'); return }
   store.player.stamina -= 10
-  const oreId = rollOreDynamic(store.config.materialDefinitions)
+  const oreId =rollOreDynamic(store.config.materialDefinitions, store.mine.currentFloor)
   store.addMaterial(oreId, store.getMaterialName(oreId), 1)
   if (!loot.value[oreId]) loot.value[oreId] = 0
   loot.value[oreId]++

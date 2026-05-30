@@ -104,7 +104,7 @@ function craft(recipe) {
     part: recipe.type === 'weapon' ? 'weapon' : 'armor', // 新增：装备槽位
     levelRequired: recipe.levelRequired || 1,
     quality: recipe.quality || 'white',
-    atk: recipe.baseAtk || 0,   // 改用 baseAtk
+   atk: (recipe.baseAtk || 0) + Math.floor(Math.random() * 5),   // ±0~4 浮动   // 改用 baseAtk
     def: recipe.baseDef || 0,   // 改用 baseDef
     gemSlots: recipe.gemSlots || 0,
     setId: recipe.setId || '',

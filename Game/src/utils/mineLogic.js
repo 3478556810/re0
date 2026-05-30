@@ -75,19 +75,29 @@ export function moveMonsters(grid, rows, cols) {
  * @param {Array} materialDefs 所有材料定义（包含 type 和 dropRate 字段）
  * @returns {string} 矿石 ID
  */
-export function rollOreDynamic(materialDefs) {
-  const ores = materialDefs.filter(m => m.type === 'ore' && (m.dropRate || 0) > 0)
-  if (ores.length === 0) return 'iron_ore' // 兜底
-
-  const totalWeight = ores.reduce((sum, ore) => sum + (ore.dropRate || 0), 0)
-  let roll = Math.random() * totalWeight
-
-  for (const ore of ores) {
-    roll -= ore.dropRate || 0
-    if (roll <= 0) return ore.id
+export function rollOreDynamic(materialDefinitions, floor = 1) {
+  const ores = materialDefinitions.filter(m => m.type === 'ore' && m.dropRate > 0)
+  if (ores.length === 0) return 'waste_stone'
+  
+  // 层数越高，稀有矿石权重越大
+  // dropRate 越低的矿越稀有，floor 越高时给它们额外加权
+  const floorFactor = Math.min(floor, 50) // 50层封顶
+  const weighted = ores.map(ore => {
+    // 基础权重 = dropRate（本身越高越容易出）
+    // 稀有度补偿 = (50 - dropRate) * floorFactor * 0.02
+    // 层数越高，低dropRate的矿石获得越大的补偿权重
+    const baseWeight = ore.dropRate
+    const rarityBonus = Math.max(0, (50 - ore.dropRate) * floorFactor * 0.02)
+    return { ...ore, weight: baseWeight + rarityBonus }
+  })
+  
+  const totalWeight = weighted.reduce((sum, o) => sum + o.weight, 0)
+  let rand = Math.random() * totalWeight
+  for (const ore of weighted) {
+    rand -= ore.weight
+    if (rand <= 0) return ore.id
   }
-
-  return ores[0].id // 保险
+  return weighted[weighted.length - 1].id
 }
 
 /**
