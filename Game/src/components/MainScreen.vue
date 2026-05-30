@@ -30,6 +30,11 @@
     </div>
 
     <!-- 所有面板统一使用 popPanel 关闭 -->
+    <DungeonSelectPanel
+  v-if="showDungeonSelect"
+  @close="showDungeonSelect = false"
+  @select="onDungeonSelected"
+/>
     <DevPanel v-if="currentPanel === 'dev'" @close="popPanel" />
     <CharacterPanel v-if="currentPanel === 'character'" @close="popPanel" />
     <SkillPanel v-if="currentPanel === 'skills'" @close="popPanel" />
@@ -54,13 +59,14 @@
     />
 
     <DialogPanel ref="dialogRef" @close="onDialogClose" @update="onStoryUpdate" />
-    <DungeonPanel
-      v-if="currentPanel === 'dungeon'"
-      @close="popPanel"
-      @startBattle="emit('startBattle', $event)"
-      @triggerStory="startStory"
-      @openInventory="openInventory"
-    />
+ <DungeonPanel
+  v-if="currentPanel === 'dungeon'"
+  @close="popPanel"
+  @startBattle="emit('startBattle', $event)"
+  @triggerStory="startStory"
+  @openInventory="openInventory"
+  @switchDungeon="showDungeonSelect = true"
+/>
   </div>
 </template>
 
@@ -79,13 +85,13 @@ import DevPanel from './DevPanel/DevPanel.vue'
 import DungeonPanel from './DungeonPanel.vue'
 import DialogPanel from './DialogPanel.vue'
 import SkillPanel from './SkillPanel.vue'
-
+import DungeonSelectPanel from './DungeonSelectPanel.vue'
 const inventoryRefreshKey = ref(0)
 const dialogRef = ref(null)
 const store = useGameStore()
 const emit = defineEmits(['startBattle'])
 const currentPanel = ref(null)
-
+const showDungeonSelect = ref(false)
 // 面板堆栈
 const panelStack = ref([])
 
@@ -192,12 +198,27 @@ function openPanel(name) {
     inventoryRefreshKey.value++
     return
   }
-  if (name === 'dungeon') {
-    if (!store.startDungeon('forest_depths')) { alert('地下城冷却中，明天再来吧！'); return }
+if (name === 'dungeon') {
+  const lastId = store.dungeon.lastDungeonId
+  if (lastId && store.startDungeon(lastId)) {
+    pushPanel('dungeon')
+    return
   }
+    const firstDungeonId = Object.keys(store.config.dungeonConfigs)[0]
+  if (firstDungeonId && store.startDungeon(firstDungeonId)) {
+    pushPanel('dungeon')
+    return
+  }
+  showDungeonSelect.value = true
+  return
+}
   pushPanel(name)
 }
-
+function onDungeonSelected(dungeonId) {
+  showDungeonSelect.value = false
+  // 直接进入地下城面板
+  pushPanel('dungeon')
+}
 function handleAction(action) { if (action.type === 'panel') openPanel(action.id) }
 </script>
 

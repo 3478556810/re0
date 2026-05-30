@@ -33,8 +33,6 @@
       <div v-if="Object.keys(loot).length === 0" class="loot-empty">暂无</div>
     </div>
 
-    
-
     <!-- 地图容器 -->
     <div class="map-container" ref="mapContainer">
       <div class="mine-grid" :style="gridStyle">
@@ -43,6 +41,7 @@
           :key="idx"
           class="mine-cell"
           :class="[tile, { 'player-cell': idx === playerPos }]"
+          @click="handleCellClick(tile, idx)"
         >
           <Icon v-if="idx === playerPos" icon="mdi:account-circle" class="player-full-icon" />
           <template v-else>
@@ -52,7 +51,33 @@
           </template>
         </div>
       </div>
+
+      <!-- 虚拟方向键 (手机专用) -->
+      <div class="virtual-dpad">
+        <div class="dpad-row">
+          <div class="dpad-btn" @touchstart.prevent="tryMove(-1, 0)" @click="tryMove(-1, 0)">
+            <Icon icon="mdi:chevron-up" />
+          </div>
+        </div>
+        <div class="dpad-row">
+          <div class="dpad-btn" @touchstart.prevent="tryMove(0, -1)" @click="tryMove(0, -1)">
+            <Icon icon="mdi:chevron-left" />
+          </div>
+          <div class="dpad-btn dpad-center" @touchstart.prevent="interact" @click="interact">
+            <Icon icon="mdi:hand-back-right" />
+          </div>
+          <div class="dpad-btn" @touchstart.prevent="tryMove(0, 1)" @click="tryMove(0, 1)">
+            <Icon icon="mdi:chevron-right" />
+          </div>
+        </div>
+        <div class="dpad-row">
+          <div class="dpad-btn" @touchstart.prevent="tryMove(1, 0)" @click="tryMove(1, 0)">
+            <Icon icon="mdi:chevron-down" />
+          </div>
+        </div>
+      </div>
     </div>
+
     <!-- 获得材料提示（浮动消失） -->
     <Transition name="fade">
       <div v-if="toastMessage" class="material-toast">{{ toastMessage }}</div>
@@ -67,7 +92,8 @@ import { useGameStore } from '../store/gameStore'
 import {
   generateCave,
   moveMonsters,
-  rollOre,
+  rollOreDynamic,
+  getMonstersForFloor,
   getMaterialIcon,
   TILE
 } from '../utils/mineLogic'
@@ -111,7 +137,6 @@ const containerWidth = ref(0)
 const containerHeight = ref(0)
 const ready = ref(false)
 
-// 镜头偏移（使用 left/top，配合 CSS transition 平滑）
 const cameraStyle = computed(() => {
   if (!ready.value) return { left: '0px', top: '0px' }
   const playerX = playerCol.value * cellSize + cellSize / 2
@@ -144,7 +169,7 @@ function showToast(text) {
   toastTimer = setTimeout(() => { toastMessage.value = '' }, 1500)
 }
 
-// 生成新楼层（无固定楼梯）
+// 生成新楼层
 function newFloor() {
   grid.value = generateCave(rows, cols)
   const centerR = Math.floor(rows / 2)
@@ -210,6 +235,28 @@ watch(() => store.mine.currentFloor, () => {
   nextTick(() => ready.value = true)
 })
 
+// 通用移动逻辑（键盘和按钮共用）
+function tryMove(dr, dc) {
+  const nr = playerRow.value + dr
+  const nc = playerCol.value + dc
+  if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) return
+
+  const tile = grid.value[nr][nc]
+  if (tile === TILE.EMPTY || tile === TILE.LADDER) {
+    playerRow.value = nr
+    playerCol.value = nc
+  } else if (tile === TILE.MONSTER) {
+    const monsterIds = getMonstersForFloor(store.mine.currentFloor, store.config.monsterTemplates)
+    if (monsterIds.length > 0) {
+      const pick = monsterIds[Math.floor(Math.random() * monsterIds.length)]
+      emit('startBattle', [pick])
+    }
+    grid.value[nr][nc] = TILE.EMPTY
+    playerRow.value = nr
+    playerCol.value = nc
+  }
+}
+
 function handleKeydown(e) {
   const key = e.key.toLowerCase()
   if (['w', 'a', 's', 'd', 'e'].includes(key)) e.preventDefault()
@@ -223,23 +270,28 @@ function handleKeydown(e) {
   else if (key === 'd') dc = 1
   else return
 
-  const nr = playerRow.value + dr
-  const nc = playerCol.value + dc
-  if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) return
+  tryMove(dr, dc)
+}
 
-  const tile = grid.value[nr][nc]
-  if (tile === TILE.EMPTY || tile === TILE.LADDER) {
-    playerRow.value = nr
-    playerCol.value = nc
-  } else if (tile === TILE.MONSTER) {
-    const monsterType = ['slime', 'goblin', 'bat', 'skeleton'][Math.floor(Math.random() * 4)]
-    emit('startBattle', [monsterType])
-    grid.value[nr][nc] = TILE.EMPTY
-    playerRow.value = nr
-    playerCol.value = nc
+// 手机点击相邻格子
+function handleCellClick(tile, index) {
+  const clickedRow = Math.floor(index / cols)
+  const clickedCol = index % cols
+  const playerR = playerRow.value
+  const playerC = playerCol.value
+
+  if (Math.abs(clickedRow - playerR) + Math.abs(clickedCol - playerC) !== 1) return
+
+  if (tile === TILE.ROCK) {
+    dig(clickedRow, clickedCol)
+  } else if (tile === TILE.JUNK) {
+    digJunk(clickedRow, clickedCol)
+  } else if (tile === TILE.LADDER) {
+    goDown()
   }
 }
 
+// 交互键（电脑E或手机中间按钮）
 function interact() {
   const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]]
   for (const [dr, dc] of dirs) {
@@ -256,7 +308,7 @@ function interact() {
 function dig(r, c) {
   if (store.player.stamina < 10) { showToast('体力不足！'); return }
   store.player.stamina -= 10
-  const oreId = rollOre(store.mine.currentFloor)
+  const oreId = rollOreDynamic(store.config.materialDefinitions)
   store.addMaterial(oreId, store.getMaterialName(oreId), 1)
   if (!loot.value[oreId]) loot.value[oreId] = 0
   loot.value[oreId]++

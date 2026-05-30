@@ -95,10 +95,11 @@
           <span class="tooltip-label">MP消耗</span>
           <span>{{ tooltip.skill.mpCost || 0 }}</span>
         </div>
-        <div class="tooltip-row">
-          <span class="tooltip-label">基础倍率</span>
-          <span>{{ tooltip.skill.baseMul }}x</span>
-        </div>
+     <div class="tooltip-row">
+  <span class="tooltip-label">当前倍率</span>
+  <span>{{ tooltip.skill.currentMul }}x</span>
+</div>
+<!-- 可保留基础倍率作为对比，但建议只显示当前倍率 -->
         <div class="tooltip-row" v-if="tooltip.skill.levelScaling">
           <span class="tooltip-label">倍率成长</span>
           <span>+{{ tooltip.skill.levelScaling.baseMul || 0 }}/级</span>
@@ -166,8 +167,9 @@ function getSkillLevel(skillId) {
 function canUpgrade(skillId) {
   const skill = store.config.skillPool.find(s => s.id === skillId)
   if (!skill) return false
+  const cost = skill.upgradeCost ?? 2
   const currentLevel = getSkillLevel(skillId)
-  return store.player.skillPoints >= (skill.upgradeCost || 2) && currentLevel < (skill.maxLevel || 10)
+  return store.player.skillPoints >= cost && currentLevel < (skill.maxLevel || 10)
 }
 
 function learnSkill(skillId) {
@@ -188,11 +190,21 @@ function learnSkill(skillId) {
 function upgradeSkill(skillId) {
   if (!canUpgrade(skillId)) return
   const skill = store.config.skillPool.find(s => s.id === skillId)
-  store.player.skillPoints -= skill.upgradeCost
-  store.player.skills[skillId].level++
-  store.save()
-}
+  if (!skill) return
 
+  const cost = skill.upgradeCost ?? 2
+  if (typeof store.player.skillPoints !== 'number' || store.player.skillPoints < cost) return
+
+  store.player.skillPoints -= cost
+  if (!store.player.skills) store.player.skills = {}
+  if (!store.player.skills[skillId]) {
+    store.player.skills[skillId] = { unlocked: true, level: 1 }
+  }
+  store.player.skills[skillId].level = (store.player.skills[skillId].level || 1) + 1
+  store.save()
+
+  hideTooltip()  // 关闭悬浮提示，让玩家重新悬停查看新倍率
+}
 function equipSkill(skillId) {
   if (isEquipped(skillId)) return
   if (store.player.equippedSkills.length >= 4) {
@@ -244,37 +256,31 @@ const tooltip = reactive({
 })
 
 function showTooltip(skill, event) {
-  const card = event.currentTarget; // 获取 .skill-card 元素
-  const rect = card.getBoundingClientRect();
-  
-  const tooltipWidth = 220;  // 与 .skill-tooltip 的 max-width 一致
-  const tooltipHeight = 200; // 预估高度（可根据内容调整）
-  const offset = 10;         // 提示框与卡片之间的间距
-  
-  // 计算提示框的初始位置（卡片上方居中）
-  let x = rect.left + rect.width / 2 - tooltipWidth / 2;
-  let y = rect.top - tooltipHeight - offset;
-  
-  // 防止左侧超出屏幕
-  if (x < 10) x = 10;
-  // 防止右侧超出屏幕
-  if (x + tooltipWidth > window.innerWidth - 10) {
-    x = window.innerWidth - tooltipWidth - 10;
+  // 从 store 中获取最新的技能配置，确保读取到 levelScaling 等字段
+  const freshSkill = store.config.skillPool.find(s => s.id === skill.id) || skill
+  const card = event.currentTarget
+  const rect = card.getBoundingClientRect()
+  const tooltipWidth = 220, tooltipHeight = 200, offset = 10
+
+  let x = rect.left + rect.width / 2 - tooltipWidth / 2
+  let y = rect.top - tooltipHeight - offset
+  if (x < 10) x = 10
+  if (x + tooltipWidth > window.innerWidth - 10) x = window.innerWidth - tooltipWidth - 10
+  if (y < 10) y = rect.bottom + offset
+
+  const level = getSkillLevel(freshSkill.id)
+  const scaling = freshSkill.levelScaling || {}
+  const currentMul = ((freshSkill.baseMul || 0) + (level - 1) * (scaling.baseMul || 0)).toFixed(2)
+
+  tooltip.skill = {
+    ...freshSkill,
+    currentMul,
+    levelScaling: { ...scaling }
   }
-  
-  // 如果上方空间不足，则显示在卡片下方
-  if (y < 10) {
-    y = rect.bottom + offset;
-  }
-  
-  tooltip.skill = skill;
-  tooltip.x = x;
-  tooltip.y = y;
-  tooltip.visible = true;
+  tooltip.x = x
+  tooltip.y = y
+  tooltip.visible = true
 }
-
-
-
 function hideTooltip() {
   tooltip.visible = false
 }

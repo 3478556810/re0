@@ -254,101 +254,107 @@ export class CombatEngine {
   }
 
   executePlayerAction(skill, targetIndex) {
-    if (this.battleOver) return null;
-    const target = this.enemies[targetIndex];
-    if (!target || target.hp <= 0) return null;
+  if (this.battleOver) return null;
+  const target = this.enemies[targetIndex];
+  if (!target || target.hp <= 0) return null;
 
-    const result = {
-      type: 'player_action',
-      skill: skill.name,
-      target: target.name,
-      damage: 0,
-      healing: 0,
-      mpDrain: 0,
-      hpDrain: 0,
-      messages: [],
-      crit: false,
-      multiplier: 1,
-    };
+  const result = {
+    type: 'player_action',
+    skill: skill.name,
+    target: target.name,
+    damage: 0,
+    healing: 0,
+    mpDrain: 0,
+    hpDrain: 0,
+    messages: [],
+    crit: false,
+    multiplier: 1,
+  };
 
-    if (this.player.isStunned()) {
-      result.messages.push(`${this.player.name} 被眩晕，无法行动！`);
-      this.player.removeEffect(EFFECT_TYPES.STUN);
-      return result;
-    }
-    if (skill.mpCost > 0 && this.player.mp < skill.mpCost) {
-      result.messages.push('MP不足！');
-      return result;
-    }
-    this.player.mp -= skill.mpCost;
-
-    // 治疗技能
-    if (skill.healMul) {
-      const heal = Math.floor(this.player.getEffectiveAttack() * skill.healMul);
-      this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal);
-      result.healing = heal;
-      result.messages.push(`${this.player.name} 恢复了 ${heal} HP`);
-      return result;
-    }
-
-    const attackerSnap = {
-      attack: this.player.getEffectiveAttack(),
-      critRate: this.player.critRate,
-      critDmg: this.player.critDmg,
-      trueDmg: this.player.trueDmg,
-      element: skill.element || '',
-    };
-    if (skill.element) attackerSnap[skill.element + 'Dmg'] = this.player.elemDmg[skill.element] || 0;
-    const defenderSnap = {
-      defense: target.getEffectiveDefense(),
-      element: target.element,
-    };
-
-    const { damage, crit, multiplier } = calculateDamage(attackerSnap, defenderSnap, skill);
-    target.takeDamage(damage, this.player);
-    result.damage = damage;
-    result.crit = crit;
-    result.multiplier = multiplier;
-
-    let msg = `${this.player.name} 使用${skill.name}，造成 ${damage} 伤害`;
-    if (crit) msg += ' (暴击)';
-    if (multiplier > 1) msg += ' 效果拔群！';
-    if (multiplier < 1) msg += ' 效果不理想...';
-    result.messages.push(msg);
-
-    // 吸血吸蓝（基于实际扣血量）
-    const actualHpLoss = Math.min(target.hp + damage, damage);
-    if (this.player.lifesteal > 0) {
-      const drain = Math.floor(actualHpLoss * this.player.lifesteal / 100);
-      if (drain > 0) {
-        this.player.hp = Math.min(this.player.maxHp, this.player.hp + drain);
-        result.hpDrain = drain;
-        result.messages.push(`吸取了 ${drain} HP`);
-      }
-    }
-    if (this.player.mpLifesteal > 0) {
-      const drain = Math.floor(actualHpLoss * this.player.mpLifesteal / 100);
-      if (drain > 0) {
-        this.player.mp = Math.min(this.player.maxMp, this.player.mp + drain);
-        result.mpDrain = drain;
-        result.messages.push(`吸取了 ${drain} MP`);
-      }
-    }
-
-    // 应用技能自带效果（例如 dot、buff 等）
-    if (skill.effects && skill.effects.length > 0) {
-      const effectMsgs = this.applySkillEffects(this.player, target, skill.effects);
-      result.messages.push(...effectMsgs);
-    }
-
-    if (target.hp <= 0) result.messages.push(`${target.name} 被击败！`);
-    if (this.getAliveEnemies().length === 0) {
-      this.battleOver = true;
-      this.winner = 'player';
-    }
+  // 眩晕检查
+  if (this.player.isStunned()) {
+    result.messages.push(`${this.player.name} 被眩晕，无法行动！`);
+    this.player.removeEffect(EFFECT_TYPES.STUN);
     return result;
   }
 
+  // MP 检查
+  if (skill.mpCost > 0 && this.player.mp < skill.mpCost) {
+    result.messages.push('MP不足！');
+    return result;
+  }
+  this.player.mp -= skill.mpCost;
+
+  // 治疗技能
+  if (skill.healMul) {
+    const heal = Math.floor(this.player.getEffectiveAttack() * skill.healMul);
+    this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal);
+    result.healing = heal;
+    result.messages.push(`${this.player.name} 恢复了 ${heal} HP`);
+    return result;
+  }
+
+  // 伤害计算
+  const attackerSnap = {
+    attack: this.player.getEffectiveAttack(),
+    critRate: this.player.critRate,
+    critDmg: this.player.critDmg,
+    trueDmg: this.player.trueDmg,
+    element: skill.element || '',
+  };
+  if (skill.element) attackerSnap[skill.element + 'Dmg'] = this.player.elemDmg[skill.element] || 0;
+
+  const defenderSnap = {
+    defense: target.getEffectiveDefense(),
+    element: target.element,
+  };
+
+  const { damage, crit, multiplier } = calculateDamage(attackerSnap, defenderSnap, skill);
+  target.takeDamage(damage, this.player);
+  result.damage = damage;
+  result.crit = crit;
+  result.multiplier = multiplier;
+
+  let msg = `${this.player.name} 使用${skill.name}，造成 ${damage} 伤害`;
+  if (crit) msg += ' (暴击)';
+  if (multiplier > 1) msg += ' 效果拔群！';
+  if (multiplier < 1) msg += ' 效果不理想...';
+  result.messages.push(msg);
+
+  // 吸血吸蓝
+  const actualHpLoss = Math.min(target.hp + damage, damage);
+  if (this.player.lifesteal > 0) {
+    const drain = Math.floor(actualHpLoss * this.player.lifesteal / 100);
+    if (drain > 0) {
+      this.player.hp = Math.min(this.player.maxHp, this.player.hp + drain);
+      result.hpDrain = drain;
+      result.messages.push(`吸取了 ${drain} HP`);
+    }
+  }
+  if (this.player.mpLifesteal > 0) {
+    const drain = Math.floor(actualHpLoss * this.player.mpLifesteal / 100);
+    if (drain > 0) {
+      this.player.mp = Math.min(this.player.maxMp, this.player.mp + drain);
+      result.mpDrain = drain;
+      result.messages.push(`吸取了 ${drain} MP`);
+    }
+  }
+
+  // 应用技能自带效果（dot、buff、debuff 等）
+  if (skill.effects && skill.effects.length > 0) {
+    const effectMsgs = this.applySkillEffects(this.player, target, skill.effects);
+    result.messages.push(...effectMsgs);
+  }
+
+  // 检查目标死亡
+  if (target.hp <= 0) result.messages.push(`${target.name} 被击败！`);
+  if (this.getAliveEnemies().length === 0) {
+    this.battleOver = true;
+    this.winner = 'player';
+  }
+
+  return result;
+}
   executeEnemyTurn() {
     const results = [];
 
