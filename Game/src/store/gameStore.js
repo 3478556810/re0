@@ -21,14 +21,17 @@ export const useGameStore = defineStore('game', () => {
     critDmg: 150,
     trueDmg: 0,
     lifesteal: 0,
+    stamina: 100,   // 体力
+maxStamina: 100,
     waterDmg: 0, fireDmg: 0, thunderDmg: 0, windDmg: 0,
     grassDmg: 0, iceDmg: 0, holyDmg: 0, darkDmg: 0,
     steelDmg: 0, rockDmg: 0,skillPoints: 5,   // 技能点数
-skills: {
-  'normal_attack': { unlocked: true, level: 1 },
-  'fire_slash': { unlocked: false, level: 1 },
+equippedSkills: ['normal_attack', 'fire_slash'],
+skills: {},
+tripodChoices: {},
+skillPoints: 5
   // ... 其他
-},        // { [skillId]: { unlocked: true, level: 1 } }
+      // { [skillId]: { unlocked: true, level: 1 } }
    
   })
 
@@ -101,6 +104,44 @@ skills: {
   }
 
   const config = reactive({
+// 在 config 的初始定义中添加（找到 config 对象的定义位置）
+forgeRecipes: [
+  {
+    id: 'iron_sword',
+    name: '铁剑',
+    materials: [
+      { id: 'iron_ore', qty: 3 },
+      { id: 'slime_gel', qty: 2 }
+    ],
+    goldCost: 80,
+    result: {
+      type: 'weapon',
+      name: '铁剑',
+      atk: 15,
+      def: 0,
+      affixSlots: 1,
+      icon: 'mdi:sword'
+    }
+  },
+  {
+    id: 'leather_armor',
+    name: '皮革甲',
+    materials: [
+      { id: 'wolf_fang', qty: 4 },
+      { id: 'iron_ore', qty: 2 }
+    ],
+    goldCost: 120,
+    result: {
+      type: 'armor',
+      name: '皮革甲',
+      atk: 0,
+      def: 12,
+      affixSlots: 1,
+      icon: 'mdi:shield'
+    }
+  }
+],
+
     affixEffects: JSON.parse(JSON.stringify(AFFIX_EFFECTS)),   // 深拷贝词条效果表
 tokenShopItems: [
   { id: 't1', name: '龙鳞 x3', desc: '稀有锻造材料', type: 'material', cost: 5, rewardId: 'dragon_scale', rewardName: '龙鳞', rewardQty: 3 },
@@ -291,7 +332,11 @@ tokenShopItems: [
     lastDungeonId: null,
       storyTriggered: {}  // 新增：记录已触发过的剧情楼层，例如 {1: true, 3: true}
   })
-
+const mine = reactive({
+  currentFloor: 1,           // 当前矿洞层数
+  unlockedFloors: 1,         // 已解锁层数
+  floors: {}                 // 每层网格数据（懒加载）
+})
   const pendingDungeonPanel = ref(false)
 
   // ========== 地图标记 ==========
@@ -451,6 +496,11 @@ tokenShopItems: [
     }
   }
     const state = {
+        mine: {
+    currentFloor: mine.currentFloor,
+    unlockedFloors: mine.unlockedFloors,
+    floors: { ...mine.floors } // 简单拷贝
+  },
         equipment: cleanEquipment,
       tokenShopItems: config.tokenShopItems.map(i => ({ ...i })),
       player: { ...player },
@@ -465,6 +515,9 @@ tokenShopItems: [
         farm: [...facilities.farm]
       },
       config: {
+
+  forgeRecipes: JSON.parse(JSON.stringify(config.forgeRecipes)),
+
         affixEffects: JSON.parse(JSON.stringify(config.affixEffects)),
 tokenShopItems: config.tokenShopItems.map(i => ({ ...i })),
         storyScript: JSON.parse(JSON.stringify(config.storyScript)),
@@ -487,6 +540,70 @@ tokenShopItems: config.tokenShopItems.map(i => ({ ...i })),
     }
     localStorage.setItem('star-trails-save', JSON.stringify(state))
   }
+
+
+
+
+// ========== 保存初始默认状态快照（用于重置） ==========
+const initialState = {
+  player: JSON.parse(JSON.stringify(player)),
+  inventory: [],
+  materials: {},
+  equipment: JSON.parse(JSON.stringify(equipment)),
+  world: JSON.parse(JSON.stringify(world)),
+  weather: JSON.parse(JSON.stringify(weather)),
+  facilities: {
+    bank: JSON.parse(JSON.stringify(facilities.bank)),
+    stocks: facilities.stocks.map(s => ({ ...s, history: [...s.history] })),
+    farm: [...facilities.farm]
+  },
+  config: JSON.parse(JSON.stringify(config)),
+  dungeon: JSON.parse(JSON.stringify(dungeon)),
+  defeatedEnemies: new Set(),
+  exploredTiles: new Set(),
+  currentEvent: { title: '', description: '', effects: [] }
+}
+
+function $reset() {
+  // 玩家
+  Object.assign(player, initialState.player)
+  // 背包
+  inventory.splice(0, inventory.length, ...initialState.inventory)
+  // 材料
+  for (const key of Object.keys(materials)) delete materials[key]
+  for (const [key, value] of Object.entries(initialState.materials)) {
+    materials[key] = { ...value }
+  }
+  // 装备
+  for (const slot of Object.keys(equipment)) {
+    equipment[slot] = initialState.equipment[slot] ? { ...initialState.equipment[slot] } : null
+  }
+  // 世界
+  Object.assign(world, initialState.world)
+  // 天气
+  Object.assign(weather, initialState.weather)
+  // 设施
+  Object.assign(facilities.bank, initialState.facilities.bank)
+  facilities.stocks.splice(0, facilities.stocks.length, ...initialState.facilities.stocks.map(s => ({ ...s, history: [...s.history] })))
+  facilities.farm.splice(0, facilities.farm.length, ...initialState.facilities.farm)
+  // 配置（深拷贝覆盖）
+  const configKeys = Object.keys(config)
+  configKeys.forEach(k => delete config[k])
+  Object.assign(config, JSON.parse(JSON.stringify(initialState.config)))
+  // 地下城
+  Object.assign(dungeon, initialState.dungeon)
+  // 已击败、已探索
+  defeatedEnemies.value = new Set()
+  exploredTiles.value = new Set()
+  // 每日事件
+  Object.assign(currentEvent.value, initialState.currentEvent)
+
+  save() // 保存重置后的状态
+  // 清空面板堆栈（在 MainScreen 组件中定义的，这里无法直接访问，但我们可以通过事件或者直接刷新页面来清空）
+// 最简单：重置后强制刷新一次页面，让所有组件重新初始化
+window.location.reload()
+}
+
 
   function load() {
     const saved = localStorage.getItem('star-trails-save')
@@ -542,9 +659,27 @@ if (data.config.tokenShopItems) config.tokenShopItems = data.config.tokenShopIte
           })
         }
       }
+
+
+
+      if (data.mine) {
+  mine.currentFloor = data.mine.currentFloor || 1
+  mine.unlockedFloors = data.mine.unlockedFloors || 1
+  mine.floors = data.mine.floors || {}
+}
       if (data.config) {
+
+
+
+
+
         if (data.config.materialPrices) Object.assign(config.materialPrices, data.config.materialPrices)
         // 仅当存档中有该字段时才覆盖，否则保留默认（重要！）
+ if (data.config.forgeRecipes !== undefined) {
+    config.forgeRecipes = data.config.forgeRecipes
+  }
+
+
         if (data.config.materialDefinitions !== undefined) {
           config.materialDefinitions = data.config.materialDefinitions
         }
@@ -593,6 +728,27 @@ if (Array.isArray(savedImages)) {
     save()
   }
 
+function equipItem(item) {
+  if (!item || !item.part) return false
+  const slot = item.part
+  // 如果该部位已有装备，先卸下放入背包
+  if (equipment[slot]) {
+    inventory.push(equipment[slot])
+  }
+  // 从背包中移除要装备的物品
+  const idx = inventory.findIndex(i => i.id === item.id)
+  if (idx === -1) return false
+  inventory.splice(idx, 1)
+  // 装上
+  equipment[slot] = item
+  save()
+  return true
+}
+
+
+
+
+
   function unequip(slot) {
     const item = equipment[slot]
     if (!item) return
@@ -603,16 +759,13 @@ if (Array.isArray(savedImages)) {
 
   function addGold(amount) { player.gold += amount; save() }
 
-  
  function addMaterial(id, name, qty = 1) {
-  console.log(`addMaterial 被调用: id=${id}, name=${name}, qty=${qty}`)
   if (!id) return
   if (!materials[id]) {
-    // 确保新材料的 qty 初始化为 0
     materials[id] = { qty: 0, name: name || id }
   }
   materials[id].qty += qty
-  console.log(`材料 ${id} 当前数量:`, materials[id].qty)
+  if (materials[id].qty < 0) materials[id].qty = 0 // 防止负数
   save()
 }
 
@@ -797,13 +950,33 @@ if (Array.isArray(savedImages)) {
     save()
   }
 
-  function getRandomMonsterForFloor() {
-    const dg = config.dungeonConfigs[dungeon.currentDungeon] || DUNGEONS[dungeon.currentDungeon]
-    if (!dg || !dg.monstersByFloor) return null
-    const pool = dg.monstersByFloor[dungeon.currentFloor]
-    if (!pool || pool.length === 0) return null
-    return pool[Math.floor(Math.random() * pool.length)]
+function getRandomMonsterForFloor() {
+  const dg = config.dungeonConfigs[dungeon.currentDungeon] || DUNGEONS[dungeon.currentDungeon]
+  if (!dg || !dg.monstersByFloor) return null
+  const pool = dg.monstersByFloor[dungeon.currentFloor]
+  if (!pool || pool.length === 0) return null
+
+  // 随机选一个池子里的对象（可能是 { id: 'slime' } 或 { id: 'slime', level: 3 } 等）
+  const pick = pool[Math.floor(Math.random() * pool.length)]
+
+  // 从模板库查找完整定义
+  const template = config.monsterTemplates.find(t => t.id === (pick.id || pick))
+  if (!template) return null
+
+  // 动态等级
+  const floorLevel = dungeon.currentFloor
+  const level = pick.level || floorLevel
+  const scale = 1 + (level - 1) * 0.2
+
+  return {
+    ...template,                    // 包含 skillsText, element, critRate 等所有字段
+    level,
+    hp: Math.floor(template.baseHp * scale),
+    maxHp: Math.floor(template.baseHp * scale),
+    atk: Math.floor(template.baseAtk * scale),
+    def: Math.floor(template.baseDef * scale),
   }
+}
 
   const totalAssets = computed(() => {
     let stocksValue = facilities.stocks.reduce((sum, s) => sum + s.price * s.holding, 0)
@@ -848,9 +1021,9 @@ if (Array.isArray(savedImages)) {
     rollAccessoryForEnemy, equipAccessory, unequip,
     advanceTime, totalAssets,
     save, load, fixGhostEquipment,
-    dungeon, pendingDungeonPanel, getMaterialName,
+    dungeon, pendingDungeonPanel, getMaterialName,equipItem,
     startDungeon, clearFloor, retreat, getRandomMonsterForFloor,
     getSkillById, getPlayerSkills, equipSkill, unequipSkill,
-    moveSkillUp, moveSkillDown
+    moveSkillUp, moveSkillDown,  $reset,mine, // 👈 新增这一行
   }
 })

@@ -22,7 +22,7 @@
       <div class="config-area">
         <DevStory v-if="tab === 'story'" />
 <DevDungeon v-if="tab === 'dungeons'" />
-
+<DevSkills v-if="tab === 'skills'" />
 <DevAffixPool v-if="tab === 'affixPool'" />
 <DevTokenShop v-if="tab === 'tokenShop'" />
 
@@ -50,7 +50,7 @@
 
         <!-- 材料价格 -->
      <DevMaterials v-if="tab === 'materials'" />
-
+<DevForge v-if="tab === 'forge'" />   <!-- 新增 -->
         <!-- 股票管理 -->
         <div v-if="tab === 'stocks'" class="section">
           <h3>股票公司</h3>
@@ -97,10 +97,15 @@ import DevStory from './DevStory.vue'
 import DevMaterials from './DevMaterials.vue'
 import DevAffixPool from './DevAffixPool.vue'
 import DevTokenShop from './DevTokenShop.vue'
+import DevSkills from './DevSkills.vue'
+import DevForge from './DevForge.vue'   // 新增导入
+
+
 const store = useGameStore()
 const tab = ref('monsters')
 
 const tabs = [
+{ key: 'skills', label: '技能', icon: 'mdi:star-four-points' },
 { key: 'affixPool', label: '词条池', icon: 'mdi:star-box' },
 { key: 'tokenShop', label: '兑换', icon: 'mdi:store' },
 { key: 'story', label: '剧情', icon: 'mdi:script-text-outline' },
@@ -111,6 +116,7 @@ const tabs = [
   { key: 'materials', label: '材料', icon: 'mdi:package-variant-closed' },
   { key: 'stocks', label: '股票', icon: 'mdi:chart-line' },
   { key: 'time', label: '时间', icon: 'mdi:clock-fast' },
+   { key: 'forge', label: '锻造配方', icon: 'mdi:anvil' }   // 新增
 ]
 
 function formatTime(min) {
@@ -134,11 +140,48 @@ function setMarketClose() {
 
 function saveConfig() { store.save(); alert('配置已保存') }
 
-function resetConfig() {
-  if (confirm('确定重置所有配置？')) {
-    localStorage.removeItem('star-trails-save')
-    window.location.reload()
+ 
+async function resetConfig() {
+  if (!confirm('⚠️ 这将永久删除所有进度和配置！确定吗？')) return
+
+  // 清空所有持久化存储
+  localStorage.clear()
+  sessionStorage.clear()
+
+  // 删除 IndexedDB
+  if (window.indexedDB) {
+    try {
+      const dbs = await window.indexedDB.databases()
+      for (const db of dbs) {
+        window.indexedDB.deleteDatabase(db.name)
+      }
+    } catch (e) {}
   }
+
+  // 注销 Service Worker
+  if ('serviceWorker' in navigator) {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations()
+      for (const reg of registrations) {
+        await reg.unregister()
+      }
+    } catch (e) {}
+  }
+
+  // 清除 Cache Storage
+  if ('caches' in window) {
+    try {
+      const cacheNames = await caches.keys()
+      for (const name of cacheNames) {
+        await caches.delete(name)
+      }
+    } catch (e) {}
+  }
+
+  // 重置游戏状态到默认值
+  store.$reset()
+
+  alert('✅ 已重置为初始状态')
 }
 
 function addStock() {

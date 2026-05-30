@@ -67,6 +67,31 @@
         <div class="mats-section">
           <h2 class="section-title"><Icon icon="mdi:package-variant-closed" /> 背包</h2>
 
+<!-- 武器 / 防具 -->
+<h3 class="sub-title"><Icon icon="mdi:sword-cross" /> 武器 / 防具</h3>
+<div v-if="equipmentItems.length === 0" class="empty-mats">暂无装备</div>
+<div v-else class="acc-grid">
+  <div
+    v-for="item in equipmentItems"
+    :key="item.id"
+    class="acc-card"
+    :class="'quality-' + item.quality"
+    @click="equipItemFromInv(item)"
+    @mouseenter="showTooltip(item, $event)"
+    @mouseleave="hideTooltip"
+  >
+    <div class="acc-name" :style="{ color: qualityColor(item.quality) }">{{ item.name }}</div>
+    <div class="tooltip-stats">
+      <span>攻击 +{{ item.atk }}</span>
+      <span>防御 +{{ item.def }}</span>
+    </div>
+  </div>
+</div>
+
+
+
+
+
           <!-- 饰品背包（不变） -->
           <div class="accessory-inv">
             <h3 class="sub-title"><Icon icon="mdi:gem" /> 饰品</h3>
@@ -158,7 +183,10 @@ import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
 import { AFFIX_EFFECTS } from '../config/accessoryConfig'
 import '../assets/css/InventoryPanel.css'
-
+// 筛选锻造产出的武器/防具（有 type 字段且为 weapon 或 armor）
+const equipmentItems = computed(() => {
+  return store.inventory.filter(item => item.type === 'weapon' || item.type === 'armor')
+})
 const props = defineProps({
   sellMode: Boolean
 })
@@ -215,6 +243,10 @@ const totalPrice = computed(() => {
   return unitPrice.value * sellQty.value
 })
 
+
+function equipItemFromInv(item) {
+  store.equipItem(item)
+}
 function openSellDialog(id) {
   if (!props.sellMode) return
   selectedMatId.value = id
