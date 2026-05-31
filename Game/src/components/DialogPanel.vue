@@ -33,7 +33,7 @@
             <Icon :icon="autoPlay ? 'mdi:stop' : 'mdi:play'" />
             {{ autoPlay ? '停止' : '自动' }}
           </button>
-          <button class="skip-btn" @click.stop="closeDialog">
+          <button class="skip-btn" @click.stop="skipToChoices">
             <Icon icon="mdi:close" /> 跳过
           </button>
         </div>
@@ -43,20 +43,23 @@
         <p class="dialog-text">{{ displayedText }}<span v-if="isTyping" class="typing-cursor">|</span></p>
       </div>
 
-  <button
-  v-for="(choice, idx) in currentChoices"
-  :key="idx"
-  class="pixel-btn choice-btn"
-  :class="{ 'key-choice': choice.keyChoice }"
-  @click.stop="selectChoice(idx)"
->
-  {{ choice.text }}
-</button>
-
       <div class="dialog-indicator" v-if="!showChoices && !isTyping && !autoPlay">
         <span>点击任意处继续</span>
         <Icon icon="mdi:gesture-tap" class="tap-icon" />
       </div>
+    </div>
+
+    <!-- 选项：独立浮层，在对话框上方 -->
+    <div v-if="showChoices" class="floating-choices">
+      <button
+        v-for="(choice, idx) in currentChoices"
+        :key="idx"
+        class="pixel-btn choice-btn"
+        :class="{ 'key-choice': choice.keyChoice }"
+        @click.stop="selectChoice(idx)"
+      >
+        {{ choice.text }}
+      </button>
     </div>
   </div>
 </template>
@@ -67,7 +70,87 @@ import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
 
 
-const emit = defineEmits(['close', 'update'])
+function skipToChoices() {
+  // 1. 如果当前节点已经有选项，立刻完成打字显示选项
+  if (currentChoices.value.length > 0) {
+    finishTyping()
+    return
+  }
+
+  // 2. 循环跳转，直到找到有选项的节点或到达末尾
+  let node = currentNode.value
+  let safety = 0  // 防止死循环
+  while (node && !node.choices && node.nextId && safety < 50) {
+    safety++
+    currentNodeId.value = node.nextId
+    node = store.config.storyScript[node.nextId]
+  }
+
+  // 3. 如果找到了有选项的节点，完成打字
+  if (node && node.choices) {
+    finishTyping()
+    return
+  }
+
+  // 4. 没找到选项，关闭对话框
+  closeDialog()
+}
+// 朗读功能（默认开启）
+const speechEnabled = ref(true)
+
+let onSpeechEnd = null  // 放在所有 ref 和函数外面，<script setup> 内顶部
+
+function speak(text, callback) {
+  if (!text) return
+  window.speechSynthesis.cancel()
+
+  if (onSpeechEnd) onSpeechEnd = null
+
+  const utterance = new SpeechSynthesisUtterance(text)
+  utterance.lang = 'zh-CN'
+  utterance.rate = 0.9
+  utterance.pitch = 1.0
+
+  const voices = window.speechSynthesis.getVoices()
+  const preferred = voices.find(v => v.name === 'Microsoft Xiaoxiao Online (Natural) - Chinese (Mainland)')
+  
+  if (preferred) {
+    utterance.voice = preferred
+  } else {
+    // 语音列表未加载，延迟重试
+    const retry = () => {
+      const retryVoices = window.speechSynthesis.getVoices()
+      const retryPreferred = retryVoices.find(v => v.name === 'Microsoft Xiaoxiao Online (Natural) - Chinese (Mainland)')
+      if (retryPreferred) utterance.voice = retryPreferred
+      window.speechSynthesis.speak(utterance)
+    }
+    
+    if (voices.length === 0) {
+      speechSynthesis.onvoiceschanged = () => {
+        retry()
+        speechSynthesis.onvoiceschanged = null
+      }
+      return  // 等待语音列表加载完成
+    } else {
+      const anyChinese = voices.find(v => v.lang.startsWith('zh'))
+      if (anyChinese) utterance.voice = anyChinese
+    }
+  }
+
+  if (callback) {
+    onSpeechEnd = callback
+    utterance.onend = () => {
+      if (onSpeechEnd) {
+        const cb = onSpeechEnd
+        onSpeechEnd = null
+        cb()
+      }
+    }
+  }
+
+  window.speechSynthesis.speak(utterance)
+}
+const emit = defineEmits(['close', 'update', 'startBattle'])
 const store = useGameStore()
 
 const visible = ref(false)
@@ -88,7 +171,7 @@ const speakerData = computed(() => (currentSpeaker.value ? defaultCharacters[cur
 const speakerIcon = computed(() => speakerData.value?.icon || 'mdi:account')
 const speakerImage = ref(null)
 import { defaultCharacters } from '../config/characters'
-
+import {  onMounted } from 'vue'
 const charColors = {
   freyja: '#C4A3D4',
   ain: '#5B8DEF',
@@ -96,7 +179,15 @@ const charColors = {
   sela: '#7EC8A0',
   noel: '#F5E6CA'
 }
-
+onMounted(() => {
+  // 预加载语音列表
+  if ('speechSynthesis' in window) {
+    speechSynthesis.getVoices()
+    speechSynthesis.onvoiceschanged = () => {
+      speechSynthesis.getVoices()
+    }
+  }
+})
 function getAffectionColor(charId, val) {
   if (val > 0) return '#4caf50'
   if (val < 0) return '#f44336'
@@ -117,13 +208,47 @@ const showChoices = computed(() => currentChoices.value.length > 0 && !isTyping.
 watch(currentNodeId, () => startTyping())
 
 // ========== 打字机 ==========
+// 修改 startTyping，在打字开始时就朗读整句
 function startTyping() {
+
+
+   if (!currentNode.value) {
+    store.pendingStoryNodeAfterBattle = null
+    closeDialog()
+    return
+  }
+
   if (typingTimer.value) clearTimeout(typingTimer.value)
   if (autoPlayTimer.value) clearTimeout(autoPlayTimer.value)
 
   const fullText = currentNode.value?.text || '...'
   displayedText.value = ''
   isTyping.value = true
+
+  // 背景淡出再淡入
+  const bgEl = document.querySelector('.dialog-background')
+  if (bgEl) {
+    bgEl.style.opacity = '0.3'
+    setTimeout(() => {
+      bgEl.style.opacity = '1'
+    }, 200)
+  }
+ 
+  if (typingTimer.value) clearTimeout(typingTimer.value)
+  if (autoPlayTimer.value) clearTimeout(autoPlayTimer.value)
+
+  displayedText.value = ''
+  isTyping.value = true
+
+  // 朗读（如果有语音）
+  if (speechEnabled.value) {
+    speak(fullText, () => {
+      // 语音读完回调：如果开启了自动播放且无选项，自动下一句
+      if (autoPlay.value && currentChoices.value.length === 0) {
+        autoPlayTimer.value = setTimeout(() => nextDialog(), 300)
+      }
+    })
+  }
 
   let index = 0
   const speed = 25
@@ -135,13 +260,15 @@ function startTyping() {
       typingTimer.value = setTimeout(typeNext, speed)
     } else {
       isTyping.value = false
-      if (autoPlay.value && currentChoices.value.length === 0) {
+      // 如果没有语音，打字完成后按原来的自动跳转逻辑
+      if (!speechEnabled.value && autoPlay.value && currentChoices.value.length === 0) {
         autoPlayTimer.value = setTimeout(() => nextDialog(), 1500)
       }
     }
   }
   typeNext()
 }
+
 
 // ========== 自动播放开关 ==========
 function toggleAutoPlay() {
@@ -181,6 +308,12 @@ function finishTyping() {
 
 // ========== 下一句 ==========
 function nextDialog() {
+  // 取消语音结束回调，防止冲突
+  if (onSpeechEnd) {
+    onSpeechEnd = null
+  }
+  window.speechSynthesis.cancel()
+  
   if (autoPlayTimer.value) {
     clearTimeout(autoPlayTimer.value)
     autoPlayTimer.value = null
@@ -197,33 +330,40 @@ function nextDialog() {
 
 // ========== 选择选项 ==========
 function selectChoice(idx) {
+
   const choice = currentChoices.value[idx]
   if (!choice) return
   
   // 应用好感变化
-  if (choice.affection) {
-    store.applyAffection(choice.affection)
-  }
+  if (choice.affection) store.applyAffection(choice.affection)
   
   // 关键选择确认
-  if (choice.keyChoice && !confirm('这个选择会影响后续剧情，确定吗？')) {
+  if (choice.keyChoice && !confirm('这个选择会影响后续剧情，确定吗？')) return
+
+  // 触发战斗
+  if (choice.battle) {
+    emit('startBattle', choice.battle, currentNodeId.value, choice.nextId)
+    closeDialog()
     return
   }
-  
-  const next = choice.nextId || choice.next
-  if (next) {
-    currentNodeId.value = next
-  } else {
-    closeDialog()
-  }
-}
 
-// ========== 关闭 ==========
+  const next = choice.nextId || choice.next
+  if (next) currentNodeId.value = next
+  else closeDialog()
+}
+// 修改 closeDialog，关闭时停止语音
 function closeDialog() {
+  
+  window.speechSynthesis.cancel()
   if (autoPlayTimer.value) clearTimeout(autoPlayTimer.value)
   autoPlay.value = false
   visible.value = false
   emit('close')
+}
+
+// 如果以后想加控制台开关，可以留一个方法
+function toggleSpeech() {
+  speechEnabled.value = !speechEnabled.value
 }
 
 function startScene(nodeId = 'start') {
@@ -257,7 +397,8 @@ defineExpose({ startScene })
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: 1;                 /* 完全清晰 */
+  opacity: 1;
+  transition: opacity 0.6s ease;    /* 加上这行 */
 }
 
 /* ========== 立绘容器（加大尺寸） ========== */
@@ -390,7 +531,7 @@ defineExpose({ startScene })
 
 .dialog-text {
   font-size: 18px;
-  line-height: 2.5;
+  line-height: 1.5;
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
@@ -419,14 +560,19 @@ defineExpose({ startScene })
 }
 
 .choice-btn {
+  min-width: 280px;
+  max-width: 90vw;
+  padding: 14px 24px;
+  font-size: 14px;
+  text-align: center;
   background: rgba(255, 255, 255, 0.15);
-  border: 1px solid rgba(255,255,255,0.4);
+  border: 1px solid rgba(255, 255, 255, 0.4);
   color: #fff;
-  padding: 8px 16px;
-  font-size: 9px;
   border-radius: 18px;
   transition: all 0.2s;
   cursor: pointer;
+  font-family: 'Press Start 2P', cursive;
+  white-space: nowrap;
 }
 .choice-btn:hover {
   background: rgba(255,255,255,0.3);
@@ -447,7 +593,17 @@ defineExpose({ startScene })
 .tap-icon {
   font-size: 12px;
 }
-
+.floating-choices {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+  z-index: 200;
+}
 /* ========== 移动端适配 ========== */
 @media (max-width: 600px) {
   .speaker-container {
@@ -470,7 +626,21 @@ defineExpose({ startScene })
   .speaker-name { font-size: 9px; }
   .dialog-text { font-size: 10px; line-height: 1.6; }
   .skip-btn, .auto-btn { font-size: 7px; padding: 2px 6px; }
-  .choice-btn { font-size: 8px; padding: 6px 12px; }
+.choice-btn {
+  min-width: 280px;
+  max-width: 90vw;
+  padding: 14px 24px;
+  font-size: 14px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  border-radius: 18px;
+  transition: all 0.2s;
+  cursor: pointer;
+  font-family: 'Press Start 2P', cursive;
+  white-space: nowrap;
+}
   .dialog-indicator { font-size: 7px; }
 }
 
@@ -496,16 +666,7 @@ defineExpose({ startScene })
 
 
 
-.choice-text {
-  flex: 1;
-}
 
-.choice-btn {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-}
 
 .key-choice {
   border-color: #ffd700 !important;

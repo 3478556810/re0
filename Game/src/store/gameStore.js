@@ -4,6 +4,7 @@ import { MATERIAL_PRICES, DEFAULT_STOCKS, DAILY_EVENTS } from '../config/gameCon
 import { rollAccessoryDrop } from '../utils/lootGenerator'
 import { defaultCharacters } from '../config/characters'
 import { DUNGEONS } from '../config/dungeonConfig'
+import { loadContentPacks } from '../utils/contentLoader'
 import { storyTree as defaultStoryTree } from '../config/storyScript'
 import { defaultSkillDatabase } from '../config/skillDatabase'
 import { AFFIX_EFFECTS, QUALITY_RULES, QUALITY_WEIGHTS, getLootTable } from '../config/accessoryConfig'
@@ -368,8 +369,9 @@ const mine = reactive({
   unlockedFloors: 1,         // 已解锁层数
   floors: {}                 // 每层网格数据（懒加载）
 })
-  const pendingDungeonPanel = ref(false)
-
+  
+const pendingDungeonPanel = ref(false)
+const pendingStoryNodeAfterBattle = ref(null)
   // ========== 地图标记 ==========
   const defeatedEnemies = ref(new Set())
   const exploredTiles = ref(new Set())
@@ -829,7 +831,11 @@ if (Array.isArray(savedImages)) {
   }
 
   load()
-
+loadContentPacks().then(packConfig => {
+  // 合并内容包数据（覆盖存档中的旧配置）
+  Object.assign(config, packConfig)
+  save() // 保存合并后的配置
+})
   // ========== 方法 ==========
   function equipAccessory(accessory, slot) {
     const idx = inventory.findIndex(item => item.id === accessory.id)
@@ -1043,6 +1049,7 @@ function equipItem(item) {
     dungeon.maxFloors = dg.maxFloors
     dungeon.floorsCleared = 0
     dungeon.bossDefeated = false
+     dungeon.lastDungeonId = dungeonId   // 新增：记住本次选择
     return true
   }
 
@@ -1062,6 +1069,7 @@ function equipItem(item) {
     dungeon.lastRetreatDay = world.day
     dungeon.retreatCooldown = dg ? dg.cooldown : 1
     dungeon.lastDungeonId = dungeon.currentDungeon
+     dungeon.lastDungeonId = dungeon.currentDungeon   // 确保撤退也记录
     dungeon.active = false
     save()
   }
@@ -1164,7 +1172,7 @@ function getRandomMonsterForFloor() {
     moveTo, respawn, setRespawnPoint,
     rollAccessoryForEnemy, equipAccessory, unequip,
     advanceTime, totalAssets,
-    save, load, fixGhostEquipment,
+    save, load, fixGhostEquipment,pendingStoryNodeAfterBattle,
     dungeon, pendingDungeonPanel, getMaterialName,equipItem,
     startDungeon, clearFloor, retreat, getRandomMonsterForFloor,
     getSkillById, getPlayerSkills, equipSkill, unequipSkill,

@@ -61,7 +61,7 @@
       @close="onCloseInventory"
     />
 <AffectionPanel v-if="currentPanel === 'affection'" @close="popPanel" />
-    <DialogPanel ref="dialogRef" @close="onDialogClose" @update="onStoryUpdate" />
+   <DialogPanel ref="dialogRef" @close="onDialogClose" @update="onStoryUpdate" @startBattle="(config, nodeId) => emit('startBattle', config, nodeId)" />
  <DungeonPanel
   v-if="currentPanel === 'dungeon'"
   @close="popPanel"
@@ -91,6 +91,8 @@ import SkillPanel from './SkillPanel.vue'
 import DungeonSelectPanel from './DungeonSelectPanel.vue'
 
 import AffectionPanel from './AffectionPanel.vue'
+
+
 const inventoryRefreshKey = ref(0)
 const dialogRef = ref(null)
 const store = useGameStore()
@@ -116,6 +118,21 @@ function popPanel() {
   }
 }
 
+import { nextTick } from 'vue'
+
+watch(() => store.pendingStoryNodeAfterBattle, (nodeId) => {
+  if (nodeId && store.config.storyScript[nodeId]) {
+    currentPanel.value = null
+    panelStack.value = []
+    nextTick(() => {
+      dialogRef.value?.startScene(nodeId)
+      store.pendingStoryNodeAfterBattle = null
+    })
+  } else if (nodeId && !store.config.storyScript[nodeId]) {
+    // 节点不存在，清除标记
+    store.pendingStoryNodeAfterBattle = null
+  }
+}, { immediate: true })
 const inventorySellMode = ref(false)
 const previousPanel = ref(null)
 
@@ -146,7 +163,13 @@ onMounted(() => {
 
 function onDialogClose() { }
 function onStoryUpdate(data) { console.log('剧情选择:', data) }
-function triggerDialog() { dialogRef.value.startScene('start') }
+function triggerDialog() {
+  if (dialogRef.value && typeof dialogRef.value.startScene === 'function') {
+    dialogRef.value.startScene('start')
+  } else {
+    console.warn('DialogPanel 尚未就绪')
+  }
+}
 
 function startStory(storyId) {
   currentPanel.value = null

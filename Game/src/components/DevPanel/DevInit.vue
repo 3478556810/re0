@@ -256,13 +256,16 @@ function getCount(key) {
   return 0
 }
 
-function importAllDefaults() {
-  if (!confirm('将导入所有模块的默认配置，当前配置将被覆盖。确定？')) return
-  for (const [key, value] of Object.entries(defaultConfigs)) {
-    store.config[key] = JSON.parse(JSON.stringify(value))
+import { loadContentPacks } from '../../utils/contentLoader'
+
+async function importAllDefaults() {
+  if (!confirm('将重新加载 public/data/ 中的配置，当前配置将被覆盖。确定？')) return
+  const packConfig = await loadContentPacks()
+  for (const key of Object.keys(packConfig)) {
+    store.config[key] = packConfig[key]
   }
   store.save()
-  alert('✅ 全部默认配置已导入并保存')
+  alert('✅ 已从文件重新加载配置')
   location.reload()
 }
 
