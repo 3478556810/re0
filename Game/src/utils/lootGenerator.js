@@ -1,22 +1,75 @@
 import {
-  AFFIX_EFFECTS,
+  rollQuality as originalRollQuality,
   QUALITY_RULES,
+  AFFIX_EFFECTS,
   QUALITY_WEIGHTS,
-  rollQuality as originalRollQuality
+  QUALITY_STATS_MULTIPLIER,
+  QUALITY_AFFIX_LEVEL_MIN
 } from '../config/accessoryConfig'
 import { useGameStore } from '../store/gameStore'
 
-// 生成一件饰品
-export function generateAccessory(part, quality) {
+// ========== 核心生成函数 ==========
+/**
+ * 根据怪物等级、世界等级、怪物标签生成一件饰品
+ * @param {Object} enemy - 怪物对象，需包含 level、tag 等字段
+ * @param {number} worldLevel - 当前世界等级
+ * @returns {Object|null}
+ */
+export function generateAccessoryLoot(enemy, worldLevel = 1) {
+  if (!enemy || !enemy.level) return null
+
+  const itemLevel = enemy.level || 1
+  const tag = enemy.tag || 'normal'
+
+  // 1. 随机品质（根据怪物标签 + 世界等级微调）
+  const quality = rollQualityForEnemy(tag, worldLevel)
+
+  // 2. 基础属性：饰品等级和品质倍率决定
+  const baseAtk = 1 + (itemLevel - 1) * 0.5
+  const baseDef = 1 + (itemLevel - 1) * 0.3
+  const qualityMult = QUALITY_STATS_MULTIPLIER[quality] || 1
+  const atk = Math.floor(baseAtk * qualityMult)
+  const def = Math.floor(baseDef * qualityMult)
+
+  // 3. 随机词条
+  const rule = QUALITY_RULES[quality]
+  const minAffix = rule?.affixCount?.[0] || 0
+  const maxAffix = rule?.affixCount?.[1] || 1
+  const affixCount = minAffix + Math.floor(Math.random() * (maxAffix - minAffix + 1))
+  const affixes = generateAffixes(affixCount, quality, itemLevel)
+
+  // 4. 随机部位
+  const parts = ['necklace', 'ring1', 'ring2', 'earring1', 'earring2']
+  const part = parts[Math.floor(Math.random() * parts.length)]
+
+  return {
+    id: 'acc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+    name: `${getQualityLabel(quality)} ${getPartName(part)}`,
+    part,
+    quality,
+    level: itemLevel,
+    atk,
+    def,
+    affixes
+  }
+}
+
+// 兼容旧调用（用于商店等场景）
+export function rollAccessoryDrop(enemyName, enemyTag) {
+  const tag = enemyTag || 'normal'
+  const quality = rollQualityForEnemy(tag, 1)
+  const parts = ['earring1', 'earring2', 'necklace', 'ring1', 'ring2']
+  const part = parts[Math.floor(Math.random() * parts.length)]
+  return generateAccessoryLegacy(part, quality)
+}
+
+// 旧版生成（保留兼容性）
+function generateAccessoryLegacy(part, quality) {
   const rule = QUALITY_RULES[quality]
   if (!rule) return null
 
   const qualityBase = {
-    white: [1, 3],
-    green: [3, 6],
-    blue: [5, 10],
-    purple: [8, 15],
-    red: [12, 20]
+    white: [1, 3], green: [3, 6], blue: [5, 10], purple: [8, 15], red: [12, 20]
   }
   const [atkMin, atkMax] = qualityBase[quality] || [0, 0]
   const atk = Math.floor(Math.random() * (atkMax - atkMin + 1)) + atkMin
@@ -24,89 +77,45 @@ export function generateAccessory(part, quality) {
 
   const [minAffix, maxAffix] = rule.affixCount
   const affixCount = minAffix + Math.floor(Math.random() * (maxAffix - minAffix + 1))
-
-  const store = useGameStore()
-  // 从 store 中读取当前可用的词条ID列表，若未配置则回退到静态 AFFIX_EFFECTS 的键
-  const affixPool = store.config?.affixPool || Object.keys(AFFIX_EFFECTS)
-  const availableIds = [...affixPool.map(a => a.id || a)]
-  
-  const selectedAffixes = []
-  for (let i = 0; i < affixCount && availableIds.length > 0; i++) {
-    const idx = Math.floor(Math.random() * availableIds.length)
-    const affixId = availableIds.splice(idx, 1)[0]
-    const level = 1 + Math.floor(Math.random() * rule.maxLevel)
-    selectedAffixes.push({ id: affixId, level })
-  }
-
-  const name = generateAccessoryName(part, selectedAffixes)
+  const affixes = generateAffixes(affixCount, quality, 1)
 
   return {
     id: `acc_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
     part,
     quality,
-    name,
+    name: generateAccessoryName(part, affixes),
     atk,
     def,
-    affixes: selectedAffixes || []
+    level: 1,
+    affixes
   }
 }
 
-// 名称生成（已修复依赖 store）
-function generateAccessoryName(part, affixes) {
-  const store = useGameStore()
-  const partNames = {
-    earring1: '左耳环',
-    earring2: '右耳环',
-    ring1: '左戒指',
-    ring2: '右戒指',
-    necklace: '项链'
+// ========== 工具函数 ==========
+
+function generateAffixes(count, quality, itemLevel) {
+  const affixKeys = Object.keys(AFFIX_EFFECTS)
+  if (affixKeys.length === 0) return []
+
+  const result = []
+  const used = new Set()
+  const minLevel = QUALITY_AFFIX_LEVEL_MIN[quality] || 1
+
+  for (let i = 0; i < count; i++) {
+    const key = affixKeys[Math.floor(Math.random() * affixKeys.length)]
+    if (used.has(key)) continue
+    used.add(key)
+
+    const level = Math.min(5, Math.max(minLevel, Math.floor(itemLevel / 10) + 1))
+    result.push({ id: key, level })
   }
-  const baseName = partNames[part] || '耳环' // 默认左耳环，避免“饰品”
-  if (affixes.length === 0) return baseName
 
-  const firstAffix = affixes[0]
-  const effect = store.config?.affixEffects?.[firstAffix.id] || AFFIX_EFFECTS[firstAffix.id]
-  const loreName = effect?.loreName || effect?.name || firstAffix.id
-  return `${loreName} ${baseName}`
+  return result
 }
 
-// 单次掉落判定
-export function rollAccessoryDrop(enemyName, enemyTag) {
+function rollQualityForEnemy(tag, worldLevel) {
   const store = useGameStore()
-  // 根据怪物标签决定品质权重层级，未提供标签默认为 normal
-  const tier = enemyTag || 'normal'
-  // 直接使用 qualityWeights 中的对应权重来随机品质
-  const quality = rollQuality(tier)
-  // 饰品部位池：所有五件饰品
-  const parts = ['earring1', 'earring2', 'necklace', 'ring1', 'ring2']
-  const part = parts[Math.floor(Math.random() * parts.length)]
-  return generateAccessory(part, quality)
-}
-
-// 生成多次掉落
-export function generateAccessoryLoot(enemy) {
-  if (!enemy) return []
-  const store = useGameStore()
-  const multiplier = store.config.lootMultiplier || 1
-  const dropped = []
-  // 基础掉率根据等级微调，最高50%
-  const baseDropChance = Math.min(0.5, 0.1 + (enemy.level || 1) * 0.02)
-  const dropChance = Math.min(1, baseDropChance * multiplier)
-  const maxDrops = Math.random() < 0.3 ? 2 : 1
-  for (let i = 0; i < maxDrops; i++) {
-    if (Math.random() < dropChance) {
-      // 传递怪物的标签
-      const acc = rollAccessoryDrop(enemy.name || 'slime', enemy.tag)
-      if (acc) dropped.push(acc)
-    }
-  }
-  return dropped
-}
-
-// 根据品质权重随机品质（复用原函数逻辑，但优先使用 store 中的权重）
-function rollQuality(tier) {
-  const store = useGameStore()
-  const weights = store.config?.qualityWeights?.[tier] || QUALITY_WEIGHTS[tier] || QUALITY_WEIGHTS.normal
+  const weights = store.config?.qualityWeights?.[tag] || QUALITY_WEIGHTS[tag] || QUALITY_WEIGHTS.normal
   const total = Object.values(weights).reduce((a, b) => a + b, 0)
   let roll = Math.random() * total
   for (const [quality, weight] of Object.entries(weights)) {
@@ -116,7 +125,31 @@ function rollQuality(tier) {
   return 'white'
 }
 
-// 饰品描述工具（无变化）
+function getQualityLabel(q) {
+  const map = { white: '普通', green: '优秀', blue: '精良', purple: '史诗', red: '传说' }
+  return map[q] || q
+}
+
+function getPartName(part) {
+  const map = {
+    necklace: '项链',
+    ring1: '戒指',
+    ring2: '戒指',
+    earring1: '耳环',
+    earring2: '耳环'
+  }
+  return map[part] || '饰品'
+}
+
+function generateAccessoryName(part, affixes) {
+  const baseName = getPartName(part)
+  if (!affixes || affixes.length === 0) return baseName
+  const firstAffix = affixes[0]
+  const effect = AFFIX_EFFECTS[firstAffix.id]
+  const loreName = effect?.loreName || effect?.name || firstAffix.id
+  return `${loreName} ${baseName}`
+}
+
 export function getAccessoryDescription(accessory) {
   if (!accessory) return ''
   const lines = []

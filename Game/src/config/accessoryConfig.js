@@ -211,8 +211,8 @@ export const QUALITY_ORDER = ['white', 'green', 'blue', 'purple', 'red']
 export const QUALITY_WEIGHTS = {
   weak:   { white: 50, green: 30, blue: 15, purple: 4, red: 1 },
   normal: { white: 30, green: 35, blue: 25, purple: 8, red: 2 },
-  strong: { white: 15, green: 30, blue: 35, purple: 15, red: 5 },
-  boss:   { white: 5,  green: 20, blue: 35, purple: 30, red: 10 }
+  strong: { white: 15, green: 30, blue: 35, purple: 15, red: 4 },
+  boss:   { white: 5,  green: 20, blue: 35, purple: 30, red: 8 }
 }
 
 
@@ -255,4 +255,21 @@ export function getQualityLabel(quality) {
 // 获取品质颜色
 export function getQualityColor(quality) {
   return QUALITY_RULES[quality]?.color || '#ffffff'
+}
+// 品质属性倍率（白色为基础，红色为100倍）
+export const QUALITY_STATS_MULTIPLIER = {
+  white: 2,   // 基础两倍
+  green: 4,   // 白色翻倍
+  blue: 8,    // 绿色翻倍
+  purple: 16, // 蓝色翻倍
+  red: 32     // 紫色翻倍，最终白装与红装差距约16倍
+}
+
+// 品质对应的词条等级下限（品质越高，词条等级越高）
+export const QUALITY_AFFIX_LEVEL_MIN = {
+  white: 1,
+  green: 1,
+  blue: 2,
+  purple: 3,
+  red: 4
 }

@@ -128,12 +128,12 @@ function updateHuntProgress(enemyIds) {
 
 // 获取图片（异步）
 const worldLevel = computed(() => {
-  // 基于玩家等级映射世界等级
-  if (player.level < 5) return 1
-  if (player.level < 10) return 2
-  if (player.level < 15) return 3
-  if (player.level < 20) return 4
-  if (player.level < 30) return 5
+  const lv = player.level
+  if (lv < 5) return 1
+  if (lv < 10) return 2
+  if (lv < 15) return 3
+  if (lv < 20) return 4
+  if (lv < 30) return 5
   return 6
 })
 
@@ -365,9 +365,11 @@ tokenShopItems: [
       storyTriggered: {}  // 新增：记录已触发过的剧情楼层，例如 {1: true, 3: true}
   })
 const mine = reactive({
-  currentFloor: 1,           // 当前矿洞层数
-  unlockedFloors: 1,         // 已解锁层数
-  floors: {}                 // 每层网格数据（懒加载）
+  currentFloor: 1,
+  unlockedFloors: [1],          // 必须是数组
+  savedFloors: { 1: true },     // 已保存的楼层
+  basket: {},                   // 收获筐
+  maxBasketSize: 30
 })
   
 const pendingDungeonPanel = ref(false)
@@ -772,10 +774,11 @@ if (data.config.tokenShopItems) config.tokenShopItems = data.config.tokenShopIte
 
 
 
-      if (data.mine) {
+if (data.mine) {
   mine.currentFloor = data.mine.currentFloor || 1
-  mine.unlockedFloors = data.mine.unlockedFloors || 1
-  mine.floors = data.mine.floors || {}
+  mine.unlockedFloors = Array.isArray(data.mine.unlockedFloors) ? data.mine.unlockedFloors : [1]
+  mine.savedFloors = data.mine.savedFloors || { 1: true }
+  mine.basket = data.mine.basket || {}
 }
       if (data.config) {
 
@@ -849,29 +852,39 @@ loadContentPacks().then(packConfig => {
   }
 
 function equipItem(item) {
-  if (!item) return false
-  // 如果缺少 part 字段，根据 type 自动推断
+  if (!item || !item.id) return false
+
   let slot = item.part
   if (!slot) {
-    if (item.type === 'weapon') slot = 'weapon'
-    else if (item.type === 'armor') slot = 'armor'
-    else return false
+    const typeMap = {
+      weapon: 'weapon',
+      gauntlet: 'gauntlet',
+      helmet: 'helmet',
+      armor: 'armor',
+      pants: 'pants',
+      shoes: 'shoes'
+    }
+    slot = typeMap[item.type]
   }
-  // 如果该部位已有装备，先卸下放入背包
+  if (!slot) return false
+
+  // 卸下旧装备
   if (equipment[slot]) {
     inventory.push(equipment[slot])
+    equipment[slot] = null
   }
-  // 从背包中移除要装备的物品
-  const idx = inventory.findIndex(i => i.id === item.id)
-  if (idx === -1) return false
-  inventory.splice(idx, 1)
-  // 装上
-  equipment[slot] = item
-  save()
-  return true
+
+  // 直接从背包中找到并移除
+  for (let i = 0; i < inventory.length; i++) {
+    if (inventory[i] && inventory[i].id === item.id) {
+      equipment[slot] = inventory.splice(i, 1)[0]
+      save()
+      return true
+    }
+  }
+
+  return false
 }
-
-
 
 
 
@@ -1091,9 +1104,15 @@ function getRandomMonsterForFloor() {
 
   // 怪物数量
   let count = 1
-  if (floor >= maxFloors - 1) count = 2 + Math.floor(Math.random() * 2)
-  else if (floor >= 3) count = 1 + Math.floor(Math.random() * 3)
-  else count = 1 + Math.floor(Math.random() * 2)
+if (floor === maxFloors) {
+  count = 1  // Boss层只生成1个
+} else if (floor >= 4) {
+  count = 2 + Math.floor(Math.random() * 2)
+} else if (floor >= 2) {
+  count = 1 + Math.floor(Math.random() * 2)
+} else {
+  count = 1 + Math.floor(Math.random() * 2)
+}
 
   const pool = dg.monstersByFloor[floor] || dg.monstersByFloor[1] || ['slime']
   const uniquePool = [...new Set(pool)]

@@ -1,4 +1,12 @@
 {
+  "hero": {
+  "id": "hero",
+  "name": "勇者",
+  "icon": "mdi:account",
+  "portrait": "hero.png",
+  "color": "#FFD700",
+  "desc": "你自己"
+},
   "freyja": {
     "id": "freyja",
     "name": "芙蕾雅",

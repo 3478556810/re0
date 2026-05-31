@@ -32,6 +32,8 @@
             <div class="bar-row">
               <span class="bar-text">HP</span>
               <div class="hp-bar">
+                 <!-- 护盾条（蓝色，在血条上方） -->
+  <div v-if="enemy.shield > 0" class="shield-fill" :style="{ width: (enemy.shield / enemy.maxHp) * 100 + '%' }"></div>
                 <div class="hp-fill" :style="{ width: (enemy.hp / enemy.maxHp) * 100 + '%' }"></div>
                 <span>{{ enemy.hp }} / {{ enemy.maxHp }}</span>
               </div>
@@ -79,6 +81,7 @@
         <div class="bar-row">
           <span class="bar-text">HP</span>
           <div class="hp-bar">
+             <div v-if="playerShield > 0" class="shield-fill" :style="{ width: (playerShield / store.player.maxHp) * 100 + '%' }"></div>
             <div class="hp-fill" :style="{ width: playerHpPercent + '%' }"></div>
             <span>{{ Math.ceil(store.player.hp) }} / {{ store.player.maxHp }}</span>
           </div>
@@ -199,7 +202,10 @@ const props = defineProps({
   storyBattle: Boolean  // 新增
 })
 const emit = defineEmits(['victory', 'exit', 'nextFloor', 'retreatToDungeon'])
-
+const playerShield = computed(() => {
+  if (!engine || !engine.player) return 0
+  return engine.player.getShield()
+})
 const store = useGameStore()
 // 技能预览浮层
 const skillPreview = reactive({
@@ -449,19 +455,21 @@ function syncStateFromEngine() {
   if (!engine) return
   store.player.hp = engine.player.hp
   store.player.mp = engine.player.mp
-  enemies.value = engine.enemies.map(e => ({
-    ...e,
-    id: e.id,
-    name: e.name || '未知敌人',
-    hp: e.hp,
-    maxHp: e.maxHp,
-    element: e.element || '',
-    icon: e.icon || 'mdi:help-circle',
-    level: e.level || 1,
-    atk: e.attack,
-    def: e.defense,
-    effects: e.effects || [],
-  }))
+  
+  enemies.value = engine.enemies.map(enemy => ({
+  ...enemy,
+  id: enemy.id,
+  name: enemy.name || '未知敌人',
+  hp: enemy.hp,
+  maxHp: enemy.maxHp,
+  shield: enemy.getShield(),   // 参数名是 enemy，不是 e
+  element: enemy.element || '',
+  icon: enemy.icon || 'mdi:help-circle',
+  level: enemy.level || 1,
+  atk: enemy.attack,
+  def: enemy.defense,
+  effects: enemy.effects || [],
+}))
 if (engine && engine.companion) {
   companion.value = {
     id: engine.companion.id,
@@ -510,23 +518,35 @@ async function useSkill(skill) {
   const currentMul = (skill.baseMul || 0) + (skillLevel - 1) * (scaling.baseMul || 0)
 
   // ② 合并激活的三脚架效果
-  const tripodChoices = store.player.tripodChoices[skill.id] || {}
-  const extraEffects = []
-  if (skill.tripods) {
-    skill.tripods.forEach((tripod, tIdx) => {
-      const choiceIdx = tripodChoices[tIdx]
-      if (choiceIdx !== undefined && choiceIdx !== '' && tripod.effects[choiceIdx]) {
-        extraEffects.push(tripod.effects[choiceIdx])
+  // ② 合并激活的三脚架效果
+// ② 合并激活的三脚架效果
+const tripodChoices = store.player.tripodChoices[skill.id] || {}
+const extraEffects = []
+const extraActions = []
+if (skill.tripods) {
+  skill.tripods.forEach((tripod, tIdx) => {
+    const choiceIdx = tripodChoices[tIdx]
+    if (choiceIdx !== undefined && choiceIdx !== '' && tripod.effects && tripod.effects[choiceIdx]) {
+      const chosenEffect = tripod.effects[choiceIdx]
+      // 如果是"追加攻击"等特殊动作，放入 extraActions
+      if (chosenEffect.note === '追加攻击' || chosenEffect.type === 'extraAction') {
+        extraActions.push(chosenEffect)
+      } else {
+        // 其他效果（dot、buff、debuff 等）直接合并到技能效果列表
+        extraEffects.push(chosenEffect)
       }
-    })
-  }
+    }
+  })
+}
 
-  // ③ 组装战斗用的技能对象
-  const effectiveSkill = {
-    ...skill,
-    baseMul: currentMul,
-    effects: [...(skill.effects || []), ...extraEffects]
-  }
+const effectiveSkill = {
+  ...skill,
+  baseMul: currentMul,
+  effects: [...(skill.effects || []), ...extraEffects],
+  extraActions  // 追加攻击等特殊动作
+}
+
+
 
   // ④ 传给引擎（关键：这里之前传错了，传的是 skill 而不是 effectiveSkill）
   const result = engine.executePlayerAction(effectiveSkill, targetIdx)
@@ -575,89 +595,93 @@ async function useItem(item) {
 }
 
 async function enemyTurn() {
-  if (gameOver.value) return;
+  if (gameOver.value) return
 
-  // 1. 先处理 DOT，每次 DOT 伤害单独显示并同步
-  const dotResult = engine.executePlayerDotTick();
+  // 1. DOT 处理（不变）
+  const dotResult = engine.executePlayerDotTick()
   if (dotResult.messages.length > 0) {
     for (const msg of dotResult.messages) {
-      await showMessage(msg, 5000);
-      syncStateFromEngine();
-      if (engine.battleOver) break;
+      await showMessage(msg, 5000)
+      syncStateFromEngine()
+      if (engine.battleOver) break
     }
     if (engine.battleOver) {
-      gameOver.value = true;
-      gameOverMsg.value = '战斗失败';
-      waiting.value = false;
-      return;
+      gameOver.value = true
+      gameOverMsg.value = '战斗失败'
+      waiting.value = false
+      return
     }
   }
 
-  // 2. 每个敌人逐个行动
-  const alive = engine.getAliveEnemies();
+  // 2. 检测 Boss 是否进入狂暴（在行动前）
+  const alive = engine.getAliveEnemies()
   for (const enemy of alive) {
-    if (engine.battleOver) break;
-
-    // 执行单个敌人行动
-    const res = engine.executeSingleEnemyAction(enemy);
-    for (const msg of res.messages) {
-      await showMessage(msg, 5000);
-      syncStateFromEngine();
-      if (engine.battleOver) break;
+    if (enemy.isEnraged && !enemy._enrageNotified) {
+      await showMessage(`${enemy.name} 进入狂暴状态！攻击力大幅提升！`, 3000)
+      enemy._enrageNotified = true
     }
-    animatePlayerHit();
-    await new Promise(r => setTimeout(r, 300));
-
-    if (engine.battleOver) break;
   }
-  // ⚡ 新增：所有敌人死后立即结束战斗
 
-  syncStateFromEngine();
+  // 3. 每个敌人逐个行动
+  for (const enemy of alive) {
+    if (engine.battleOver) break
+
+    const res = engine.executeSingleEnemyAction(enemy)
+    for (const msg of res.messages) {
+      await showMessage(msg, 5000)
+      syncStateFromEngine()
+      if (engine.battleOver) break
+    }
+    animatePlayerHit()
+    await new Promise(r => setTimeout(r, 300))
+
+    if (engine.battleOver) break
+  }
+
+  syncStateFromEngine()
 
   if (engine.battleOver) {
-    gameOver.value = true;
-    gameOverMsg.value = '战斗失败';
-    waiting.value = false;
-    return;
+    gameOver.value = true
+    gameOverMsg.value = '战斗失败'
+    waiting.value = false
+    return
   }
- // ⚡ 新增：所有敌人死后立即结束战斗
+
+  // 4. 所有敌人死后立即结束战斗
   if (engine.getAliveEnemies().length === 0) {
-    engine.battleOver = true;
-    engine.winner = 'player';
-    gameOver.value = true;
-    gameOverMsg.value = '战斗胜利！';
-    victory();
-    return;
+    engine.battleOver = true
+    engine.winner = 'player'
+    gameOver.value = true
+    gameOverMsg.value = '战斗胜利！'
+    victory()
+    return
   }
 
-  // 3. 同伴行动（仅在有敌人时执行）
-  const compResult = engine.executeCompanionAction();
+  // 5. 同伴行动
+  const compResult = engine.executeCompanionAction()
   for (const msg of compResult.messages) {
-    await showMessage(msg, 5000);
-    syncStateFromEngine();
+    await showMessage(msg, 5000)
+    syncStateFromEngine()
   }
-// 同伴行动后再次检查
-if (engine.getAliveEnemies().length === 0) {
-  engine.battleOver = true
-  engine.winner = 'player'
-  gameOver.value = true
-  gameOverMsg.value = '战斗胜利！'
-  victory()
-  return
+
+  // 6. 同伴行动后再次检查
+  if (engine.getAliveEnemies().length === 0) {
+    engine.battleOver = true
+    engine.winner = 'player'
+    gameOver.value = true
+    gameOverMsg.value = '战斗胜利！'
+    victory()
+    return
+  }
+
+  // 7. 回合结束
+  engine.endTurn()
+  syncStateFromEngine()
+
+  playerTurn.value = true
+  waiting.value = false
+  showSkillPanel.value = true
 }
-
-
-
-  // 回合结束
-  engine.endTurn();
-  syncStateFromEngine();
-
-  playerTurn.value = true;
-  waiting.value = false;
-  showSkillPanel.value = true;
-}
-
-
 
 
 
@@ -676,10 +700,15 @@ function victory() {
   const engineRewards = engine.getRewards()
   const totalMats = engineRewards.materials || []
   const totalAccs = []
-  for (const enemy of props.enemies) {
-    const accs = generateAccessoryLoot(enemy)
-    if (accs) totalAccs.push(...accs)
+// 修改为：
+const worldLv = store.worldLevel || 1
+for (const enemy of props.enemies) {
+  const dropChance = Math.min(0.8, 0.05 * worldLv)
+  if (Math.random() < dropChance) {
+    const acc = generateAccessoryLoot(enemy, worldLv)
+    if (acc) totalAccs.push(acc)
   }
+}
   totalReward.value = { exp: engineRewards.exp, materials: totalMats, accessories: totalAccs }
   showResult.value = true
 }
@@ -748,7 +777,7 @@ onUnmounted(() => {
 .bar-row { display: flex; align-items: center; gap: 5px; margin-top: 3px; }
 .bar-text { width: 25px; font-size: 8px; color: #fff; }
 .hp-bar { flex: 1; background: #603020; height: 12px; border-radius: 6px; position: relative; overflow: hidden; }
-.hp-fill { background: #4caf50; height: 100%; transition: width 0.3s; }
+.hp-fill { background: #4caf50; height: 100%; transition: width 0.3s; z-index: 2; }
 .hp-bar span { position: absolute; top: 0; left: 0; right: 0; text-align: center; font-size: 7px; line-height: 12px; color: white; }
 .enemy-sprites { display: flex; flex-direction: row; gap: 15px; justify-content: flex-end; }
 .enemy-sprite { width: 80px; height: 80px; display: flex; align-items: center; justify-content: center; border: 3px solid transparent; border-radius: 12px; background: rgba(0,0,0,0.3); cursor: pointer; transition: border-color 0.2s, transform 0.2s; }
@@ -1007,4 +1036,14 @@ onUnmounted(() => {
   color: #ff9800;
   font-size: 10px;
 }
+.shield-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: rgba(0, 150, 255, 0.6);
+  border-radius: 6px;
+  z-index: 1;
+}
+
 </style>
