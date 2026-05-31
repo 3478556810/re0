@@ -60,14 +60,28 @@ function appendJson() {
   }
   try {
     const newPart = JSON.parse(appendJsonText.value)
-    const current = JSON.parse(jsonText.value) // 从文本框读取当前完整剧情
-    // 合并：新节点覆盖同名ID
+    const current = JSON.parse(jsonText.value) // 当前剧情
+
+    // 获取新节点的第一个ID（用于连接）
+    const newIds = Object.keys(newPart)
+    if (newIds.length > 0) {
+      const firstNewId = newIds[0]
+      // 找到当前剧情中所有 nextId 为 null 或 undefined 的节点（非 start）
+      for (const nodeId of Object.keys(current)) {
+        const node = current[nodeId]
+        if (node && (node.nextId === null || node.nextId === undefined) && nodeId !== 'start') {
+          node.nextId = firstNewId // 自动指向新章节
+        }
+      }
+    }
+
+    // 合并（新节点覆盖同名ID）
     const merged = { ...current, ...newPart }
     const fixed = ensureStartNode(merged)
     store.config.storyScript = fixed
     store.save()
-    jsonText.value = JSON.stringify(fixed, null, 2) // 更新显示
-    appendJsonText.value = '' // 清空追加框
+    jsonText.value = JSON.stringify(fixed, null, 2)
+    appendJsonText.value = ''
     alert('新节点已追加！')
   } catch (e) {
     alert('JSON 格式错误: ' + e.message)

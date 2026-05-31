@@ -116,7 +116,11 @@
       </div>
     </div>
 
-    <MinePanel v-if="currentView === 'mine'" @close="currentView = 'map'" />
+  <MinePanel
+  v-if="currentView === 'mine'"
+  @close="currentView = 'map'"
+  @startBattle="emit('startBattle', $event)"
+/>
   </div>
 </template>
 
@@ -187,14 +191,12 @@ function explore() {
     emit('triggerStory', storyId)
     return
   }
-  if (floor === 1) {
-    emit('startBattle', ['slime', 'slime', 'goblin'])
-  } else {
-    const monsterId = store.getRandomMonsterForFloor()
-    if (monsterId) {
-      store.dungeon.isDungeonBattle = true
-      emit('startBattle', monsterId)
-    }
+
+  // 统一使用随机生成函数，不再硬编码第一层
+  const monsters = store.getRandomMonsterForFloor()
+  if (monsters && monsters.length > 0) {
+    store.dungeon.isDungeonBattle = true
+    emit('startBattle', monsters)
   }
 }
 

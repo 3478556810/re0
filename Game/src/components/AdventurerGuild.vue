@@ -27,7 +27,11 @@
           <div class="exp-fill" :style="{ width: expPercent + '%' }"></div>
         </div>
       </div>
-
+<div v-if="store.activeHuntQuest" class="active-quest">
+  <Icon icon="mdi:sword-cross" />
+  <span>{{ store.activeHuntQuest.desc }}</span>
+  <span>({{ store.activeHuntQuest.killed }}/{{ store.activeHuntQuest.count }})</span>
+</div>
       <!-- 委托列表 -->
       <div class="section">
         <h3><Icon icon="mdi:script-text-outline" /> 委托任务</h3>
@@ -69,22 +73,19 @@ import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
 import TokenShop from './TokenShop.vue'
 
-
-
 const showTokenShop = ref(false)
 const store = useGameStore()
 const emit = defineEmits(['close', 'openBackpack'])
 
-// 段位配置
 const ranks = [
-  { name: '黑铁', minLevel: 1, maxExp: 300, icon: 'mdi:circle-small', boss: '蛮牛王' },
-  { name: '青铜', minLevel: 5, maxExp: 600, icon: 'mdi:circle-double', boss: '沙漠蝎皇' },
-  { name: '白银', minLevel: 10, maxExp: 1000, icon: 'mdi:brightness-5', boss: '冰霜巨龙' },
-  { name: '黄金', minLevel: 15, maxExp: 1500, icon: 'mdi:star-four-points', boss: '暗影领主' },
-  { name: '白金', minLevel: 20, maxExp: 2200, icon: 'mdi:diamond', boss: '炎魔' },
-  { name: '钻石', minLevel: 25, maxExp: 3200, icon: 'mdi:rhombus-split', boss: '雷霆泰坦' },
-  { name: '大师', minLevel: 30, maxExp: 4500, icon: 'mdi:shield-crown', boss: '圣光天使' },
-  { name: '王者', minLevel: 35, maxExp: 6000, icon: 'mdi:crown', boss: '混沌魔神' }
+  { name: '黑铁', minLevel: 1, maxExp: 300, icon: 'mdi:circle-small' },
+  { name: '青铜', minLevel: 5, maxExp: 600, icon: 'mdi:circle-double' },
+  { name: '白银', minLevel: 10, maxExp: 1000, icon: 'mdi:brightness-5' },
+  { name: '黄金', minLevel: 15, maxExp: 1500, icon: 'mdi:star-four-points' },
+  { name: '白金', minLevel: 20, maxExp: 2200, icon: 'mdi:diamond' },
+  { name: '钻石', minLevel: 25, maxExp: 3200, icon: 'mdi:rhombus-split' },
+  { name: '大师', minLevel: 30, maxExp: 4500, icon: 'mdi:shield-crown' },
+  { name: '王者', minLevel: 35, maxExp: 6000, icon: 'mdi:crown' }
 ]
 
 const currentRankIndex = computed(() => {
@@ -102,78 +103,148 @@ const currentRank = computed(() => ranks[currentRankIndex.value])
 const rankName = computed(() => currentRank.value.name)
 const rankIcon = computed(() => currentRank.value.icon)
 
-const currentStage = computed(() => {
-  const rank = currentRank.value
-  const expInRank = store.player.exp % rank.maxExp
-  return Math.min(3, Math.floor((expInRank / rank.maxExp) * 3) + 1)
-})
-
+const expInRank = computed(() => store.player.exp % currentRank.value.maxExp)
+const expPercent = computed(() => Math.min(100, (expInRank.value / currentRank.value.maxExp) * 100))
 const nextRankExp = computed(() => currentRank.value.maxExp)
-const expPercent = computed(() => {
-  const rank = currentRank.value
-  const expInRank = store.player.exp % rank.maxExp
-  return Math.min(100, (expInRank / rank.maxExp) * 100)
-})
+const canRankUp = computed(() => expInRank.value >= currentRank.value.maxExp)
 
-// 任务列表
+const activeBossQuest = ref(null)
 const quests = ref([])
-refreshQuests()
 
-// 升段Boss监听
-watch(currentRankIndex, (newIdx, oldIdx) => {
-  if (oldIdx !== undefined && newIdx > oldIdx) {
-    const bossName = ranks[newIdx].boss
-    quests.value.push({
-      id: Date.now(),
-      desc: `[升段讨伐] 击败 ${bossName}`,
-      rewardExp: 100 * (newIdx + 1),
-      target: 'boss',
-      count: 1,
-      bossName: bossName
-    })
-  }
-})
-
-function refreshQuests() {
-  // 保留已有的升段Boss任务（id大于10000或带有特殊标记），只刷新普通任务
-  const bossQuests = quests.value.filter(q => q.target === 'boss')
-  const normalQuests = [
-    { id: 1, desc: '讨伐史莱姆 x3', rewardExp: 30, target: 'slime', count: 3 },
-    { id: 2, desc: '收集哥布林之牙 x5', rewardExp: 50, targetMat: 'goblin_fang', count: 5 }
-  ]
-  quests.value = [...bossQuests, ...normalQuests]
-}
 
 function acceptQuest(quest) {
   if (quest.target === 'boss') {
-    // Boss 讨伐需要实际战斗，这里暂用经验奖励模拟，后续可接入真正战斗
-    store.addExperience(quest.rewardExp)
-    quests.value = quests.value.filter(q => q.id !== quest.id)
-    alert(`击败了 ${quest.bossName}！获得 ${quest.rewardExp} 经验`)
+    // Boss 任务也通过 store 接受
+    store.acceptHuntQuest({
+      ...quest,
+      killed: 0,
+      target: quest.bossId  // Boss 的怪物 ID
+    })
+    alert(`已接受升段讨伐：${quest.desc}。去地下城击败 Boss！`)
     return
   }
 
   if (quest.target) {
-    store.addExperience(quest.rewardExp)
-    alert('委托完成！')
-  } else if (quest.targetMat) {
+    // 怪物讨伐：调用 store 方法
+    store.acceptHuntQuest({ ...quest, killed: 0 })
+    alert(`已接受委托：${quest.desc}。去地下城讨伐吧！`)
+    return
+  }
+
+  if (quest.targetMat) {
     const mat = store.materials[quest.targetMat]
     if (mat && mat.qty >= quest.count) {
       mat.qty -= quest.count
-      if (mat.qty === 0) delete store.materials[quest.targetMat]
+      if (mat.qty <= 0) delete store.materials[quest.targetMat]
       store.addExperience(quest.rewardExp)
       store.save()
+      quests.value = quests.value.filter(q => q.id !== quest.id)
+      addRandomQuest()
       alert('委托完成！')
     } else {
       alert('材料不足！')
     }
   }
 }
+// 安全获取怪物模板数组
+const monsterTemplates = computed(() => {
+  const templates = store.config.monsterTemplates
+  return Array.isArray(templates) ? templates : []
+})
+
+// 安全获取材料定义数组
+const materialDefs = computed(() => {
+  const defs = store.config.materialDefinitions
+  return Array.isArray(defs) ? defs : []
+})
+
+function generateRandomQuest() {
+  const types = ['hunt', 'collect']
+  const type = types[Math.floor(Math.random() * types.length)]
+
+  if (type === 'hunt') {
+    const normalMonsters = monsterTemplates.value.filter(m => !m.isBoss)
+    if (normalMonsters.length === 0) return null
+    const monster = normalMonsters[Math.floor(Math.random() * normalMonsters.length)]
+    const count = Math.floor(Math.random() * 3) + 1
+    return {
+      id: Date.now() + Math.random(),
+      desc: `讨伐 ${monster.name} x${count}`,
+      rewardExp: 30 + count * 10,
+      target: monster.id,
+      count
+    }
+  } else {
+    const materials = materialDefs.value
+    if (materials.length === 0) return null
+    const mat = materials[Math.floor(Math.random() * materials.length)]
+    const count = Math.floor(Math.random() * 5) + 2
+    return {
+      id: Date.now() + Math.random(),
+      desc: `收集 ${mat.name} x${count}`,
+      rewardExp: 20 + count * 5,
+      targetMat: mat.id,
+      count
+    }
+  }
+}
+
+function spawnBossQuest() {
+  if (activeBossQuest.value) return
+
+  const allBosses = monsterTemplates.value.filter(m => m.isBoss)
+  if (allBosses.length === 0) return
+
+  const playerLevel = store.player.level
+  const eligibleBosses = allBosses.filter(boss => {
+    const minLv = boss.levelRange?.[0] || boss.minLevel || 1
+    const maxLv = boss.levelRange?.[1] || boss.maxLevel || 99
+    return minLv <= playerLevel + 3 && maxLv >= playerLevel - 2
+  })
+
+  const pool = eligibleBosses.length > 0 ? eligibleBosses : allBosses
+  const boss = pool[Math.floor(Math.random() * pool.length)]
+
+  const quest = {
+    id: 'boss_' + Date.now(),
+    desc: `[升段讨伐] 击败 ${boss.name}`,
+    rewardExp: 0,
+    target: 'boss',
+    bossId: boss.id,
+    bossName: boss.name
+  }
+
+  quests.value.push(quest)
+  activeBossQuest.value = quest.id
+}
+
+function refreshQuests() {
+  const bossQuest = quests.value.find(q => q.target === 'boss')
+  quests.value = bossQuest ? [bossQuest] : []
+  for (let i = 0; i < 3; i++) {
+    const q = generateRandomQuest()
+    if (q) quests.value.push(q)
+  }
+}
+
+function addRandomQuest() {
+  const q = generateRandomQuest()
+  if (q) quests.value.push(q)
+}
+
+watch(canRankUp, (val) => {
+  if (val && !activeBossQuest.value) {
+    spawnBossQuest()
+  }
+})
+
+
 
 function openBackpack() {
   emit('openBackpack')
-  
 }
+
+refreshQuests()
 </script>
 
 
