@@ -19,7 +19,7 @@ class UnitState {
     this.maxHp = baseStats.maxHp || 100;
     this.mp = baseStats.mp ?? baseStats.maxMp;
     this.maxMp = baseStats.maxMp || 30;
-
+  this.level = baseStats.level || 1;
     // 吸血/吸蓝
     this.lifesteal = baseStats.lifesteal || 0;
     this.mpLifesteal = baseStats.mpLifesteal || 0;

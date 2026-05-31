@@ -38,6 +38,42 @@ skillPoints: 5
    
   })
 
+
+
+ const activeHuntQuest = ref(null)
+
+function acceptHuntQuest(quest) {
+  activeHuntQuest.value = {
+    id: quest.id,
+    desc: quest.desc,
+    target: quest.target,      // 怪物ID
+    count: quest.count,        // 需要讨伐数量
+    killed: 0,                 // 已讨伐数量
+    rewardExp: quest.rewardExp
+  }
+  save()
+}
+
+function updateHuntProgress(enemyIds) {
+  const quest = activeHuntQuest.value
+  if (!quest) return false
+
+  for (const id of enemyIds) {
+    if (id === quest.target) {
+      quest.killed++
+    }
+  }
+
+  if (quest.killed >= quest.count) {
+    addExperience(quest.rewardExp)
+    activeHuntQuest.value = null
+    save()
+    return true   // 任务完成
+  }
+  save()
+  return false    // 未完成
+}
+
   // ========== 背包 & 装备 ==========
   const inventory = reactive([])
   const materials = reactive({})  // { id: { qty, name } }
@@ -90,7 +126,15 @@ skillPoints: 5
 
 
 // 获取图片（异步）
-
+const worldLevel = computed(() => {
+  // 基于玩家等级映射世界等级
+  if (player.level < 5) return 1
+  if (player.level < 10) return 2
+  if (player.level < 15) return 3
+  if (player.level < 20) return 4
+  if (player.level < 30) return 5
+  return 6
+})
 
   const builtInMaterialNames = {
     slime_gel: '史莱姆凝露',
@@ -330,6 +374,57 @@ const mine = reactive({
   const defeatedEnemies = ref(new Set())
   const exploredTiles = ref(new Set())
 
+  // 好感度存储器
+const affection = reactive({})
+
+// 角色称号映射表（策划可配）
+const affectionTitles = {
+  freyja: [
+    { min: 0, title: '冷淡的剑士' },
+    { min: 10, title: '毒舌的同伴' },
+    { min: 30, title: '只对你笑的人' },
+    { min: 50, title: '约定的守护者' },
+    { min: 80, title: '命运的伴侣' },
+  ],
+  ain: [
+    { min: 0, title: '迷惘的冒险者' },
+    { min: 10, title: '可靠的搭档' },
+    { min: 30, title: '默契的战友' },
+    { min: 50, title: '心灵的支柱' },
+    { min: 80, title: '不可替代之人' },
+  ]
+}
+
+// 好感度等级计算
+function getAffectionLevel(charId) {
+  const val = affection[charId] || 0
+  if (val >= 80) return 5
+  if (val >= 50) return 4
+  if (val >= 30) return 3
+  if (val >= 10) return 2
+  return 1
+}
+
+// 获取称号
+function getAffectionTitle(charId) {
+  const val = affection[charId] || 0
+  const titles = affectionTitles[charId] || []
+  let result = '？？？'
+  for (const t of titles) {
+    if (val >= t.min) result = t.title
+  }
+  return result
+}
+
+// 应用好感变化
+function applyAffection(changes) {
+  for (const [charId, delta] of Object.entries(changes)) {
+    if (!affection[charId]) affection[charId] = 0
+    affection[charId] = Math.max(0, Math.min(100, affection[charId] + delta))
+  }
+  save()
+}
+
   // ========== 每日事件 ==========
   const currentEvent = ref({ title: '', description: '', effects: [] })
 
@@ -483,11 +578,12 @@ const mine = reactive({
     }
   }
     const state = {
+      affection: { ...affection },
         mine: {
     currentFloor: mine.currentFloor,
     unlockedFloors: mine.unlockedFloors,
     floors: { ...mine.floors } // 简单拷贝
-  },
+  },activeHuntQuest: activeHuntQuest.value ? { ...activeHuntQuest.value } : null,
         equipment: cleanEquipment,
       tokenShopItems: config.tokenShopItems.map(i => ({ ...i })),
       player: { ...player },
@@ -552,45 +648,68 @@ const initialState = {
 }
 
 function $reset() {
-  // 玩家
-  Object.assign(player, initialState.player)
-  // 背包
-  inventory.splice(0, inventory.length, ...initialState.inventory)
-  // 材料
+  // 1. 清空持久化存储
+  localStorage.removeItem('star-trails-save')
+  localStorage.removeItem('tilemap_game_save')
+  sessionStorage.clear()
+
+  // 2. 获取完整默认配置
+const defaults = JSON.parse(JSON.stringify(initialState))
+
+  // 3. 玩家
+  Object.assign(player, defaults.player)
+
+  // 4. 背包、材料、装备
+  inventory.splice(0, inventory.length, ...(defaults.inventory || []))
   for (const key of Object.keys(materials)) delete materials[key]
-  for (const [key, value] of Object.entries(initialState.materials)) {
-    materials[key] = { ...value }
-  }
-  // 装备
+  Object.assign(materials, defaults.materials || {})
   for (const slot of Object.keys(equipment)) {
-    equipment[slot] = initialState.equipment[slot] ? { ...initialState.equipment[slot] } : null
+    equipment[slot] = defaults.equipment?.[slot] || null
   }
-  // 世界
-  Object.assign(world, initialState.world)
-  // 天气
-  Object.assign(weather, initialState.weather)
-  // 设施
-  Object.assign(facilities.bank, initialState.facilities.bank)
-  facilities.stocks.splice(0, facilities.stocks.length, ...initialState.facilities.stocks.map(s => ({ ...s, history: [...s.history] })))
-  facilities.farm.splice(0, facilities.farm.length, ...initialState.facilities.farm)
-  // 配置（深拷贝覆盖）
-  const configKeys = Object.keys(config)
-  configKeys.forEach(k => delete config[k])
-  Object.assign(config, JSON.parse(JSON.stringify(initialState.config)))
-  // 地下城
-  Object.assign(dungeon, initialState.dungeon)
-  // 已击败、已探索
+
+  // 5. 世界、天气
+  Object.assign(world, defaults.world)
+  Object.assign(weather, defaults.weather)
+
+  // 6. 设施（银行、股票、农场）
+  Object.assign(facilities.bank, defaults.facilities.bank)
+  facilities.stocks.splice(0, facilities.stocks.length,
+    ...(defaults.facilities.stocks || []).map(s => ({
+      ...s,
+      history: [s.price]
+    }))
+  )
+  facilities.farm.splice(0, facilities.farm.length, ...(defaults.facilities.farm || []))
+
+  // 7. 地下城、矿洞
+  Object.assign(dungeon, defaults.dungeon)
+  Object.assign(mine, defaults.mine || { currentFloor: 1, unlockedFloors: 1, floors: {} })
+
+  // 8. 已击败、已探索、事件
   defeatedEnemies.value = new Set()
   exploredTiles.value = new Set()
-  // 每日事件
-  Object.assign(currentEvent.value, initialState.currentEvent)
+  currentEvent.value = { title: '', description: '', effects: [] }
 
-  save() // 保存重置后的状态
-  // 清空面板堆栈（在 MainScreen 组件中定义的，这里无法直接访问，但我们可以通过事件或者直接刷新页面来清空）
-// 最简单：重置后强制刷新一次页面，让所有组件重新初始化
-window.location.reload()
+  // 9. config 全部字段完整替换（包括 materialPrices、stockOverrides、skillPool 等）
+  for (const key of Object.keys(config)) {
+    delete config[key]
+  }
+  Object.assign(config, JSON.parse(JSON.stringify(defaults.config)))
+
+  // 10. 好感度清空
+  for (const key of Object.keys(affection)) {
+    delete affection[key]
+  }
+
+  // 11. 技能
+  player.equippedSkills = defaults.player.equippedSkills || []
+  player.skills = defaults.player.skills || {}
+  player.tripodChoices = {}
+
+  // 12. 存档并强制刷新
+  save()
+  location.reload()
 }
-
 
   function load() {
     const saved = localStorage.getItem('star-trails-save')
@@ -598,8 +717,19 @@ window.location.reload()
     try {
       
       const data = JSON.parse(saved)
-
-
+if (data.activeHuntQuest) {
+  activeHuntQuest.value = data.activeHuntQuest
+}
+// 先清空现有好感度
+for (const key of Object.keys(affection)) {
+  delete affection[key]
+}
+// 再加载存档中的好感度
+if (data.affection) {
+  for (const [key, val] of Object.entries(data.affection)) {
+    affection[key] = val
+  }
+}
       if (data.config.affixEffects) config.affixEffects = data.config.affixEffects
 if (data.config.tokenShopItems) config.tokenShopItems = data.config.tokenShopItems
       if (data.config.tokenShopItems) config.tokenShopItems = data.config.tokenShopItems
@@ -627,25 +757,16 @@ if (data.config.tokenShopItems) config.tokenShopItems = data.config.tokenShopIte
         world.respawnPoint = data.world.respawnPoint || { biome: 'town', x: 5, y: 4 }
       }
       if (data.weather) Object.assign(weather, data.weather)
-      if (data.facilities) {
-        if (data.facilities.bank) Object.assign(facilities.bank, data.facilities.bank)
-        if (data.facilities.stocks) {
-          const defaults = DEFAULT_STOCKS.map(s => ({ ...s, price: s.basePrice, holding: 0, costBasis: 0, history: [s.basePrice] }))
-          facilities.stocks = defaults.map(def => {
-            const old = data.facilities.stocks.find(o => o.id === def.id)
-            if (old) {
-              return {
-                ...def,
-                holding: old.holding || 0,
-                costBasis: old.costBasis || def.price,
-                price: old.price || def.price,
-                history: old.history ? [...old.history] : [def.price]
-              }
-            }
-            return { ...def }
-          })
-        }
-      }
+     if (data.facilities) {
+  if (data.facilities.bank) Object.assign(facilities.bank, data.facilities.bank)
+  if (data.facilities.stocks) {
+    // 完全替换，不合并
+    facilities.stocks = data.facilities.stocks.map(s => ({
+      ...s,
+      history: Array.isArray(s.history) ? [...s.history] : [s.price]
+    }))
+  }
+}
 
 
 
@@ -954,30 +1075,51 @@ function equipItem(item) {
 
 function getRandomMonsterForFloor() {
   const dg = config.dungeonConfigs[dungeon.currentDungeon] || DUNGEONS[dungeon.currentDungeon]
-  if (!dg || !dg.monstersByFloor) return null
-  const pool = dg.monstersByFloor[dungeon.currentFloor]
-  if (!pool || pool.length === 0) return null
+  if (!dg) return null
 
-  // 随机选一个池子里的对象（可能是 { id: 'slime' } 或 { id: 'slime', level: 3 } 等）
-  const pick = pool[Math.floor(Math.random() * pool.length)]
+  const floor = dungeon.currentFloor
+  const maxFloors = dg.maxFloors || 5
+  const wLv = worldLevel.value   // 世界等级（确保 worldLevel 已定义并导出）
 
-  // 从模板库查找完整定义
-  const template = config.monsterTemplates.find(t => t.id === (pick.id || pick))
-  if (!template) return null
+  // 怪物数量
+  let count = 1
+  if (floor >= maxFloors - 1) count = 2 + Math.floor(Math.random() * 2)
+  else if (floor >= 3) count = 1 + Math.floor(Math.random() * 3)
+  else count = 1 + Math.floor(Math.random() * 2)
 
-  // 动态等级
-  const floorLevel = dungeon.currentFloor
-  const level = pick.level || floorLevel
-  const scale = 1 + (level - 1) * 0.2
+  const pool = dg.monstersByFloor[floor] || dg.monstersByFloor[1] || ['slime']
+  const uniquePool = [...new Set(pool)]
 
-  return {
-    ...template,                    // 包含 skillsText, element, critRate 等所有字段
-    level,
-    hp: Math.floor(template.baseHp * scale),
-    maxHp: Math.floor(template.baseHp * scale),
-    atk: Math.floor(template.baseAtk * scale),
-    def: Math.floor(template.baseDef * scale),
+  const selected = []
+  for (let i = 0; i < count; i++) {
+    const pickId = uniquePool[Math.floor(Math.random() * uniquePool.length)]
+    const template = config.monsterTemplates.find(t => t.id === pickId)
+    if (!template) continue
+
+    // 基础等级：在怪物模板的 levelRange 内随机
+    const minLv = template.levelRange?.[0] ?? template.minLevel ?? 1
+    const maxLv = template.levelRange?.[1] ?? template.maxLevel ?? 99
+    const baseLevel = Math.floor(Math.random() * (maxLv - minLv + 1)) + minLv
+
+    // 最终等级 = 基础随机 + 世界等级加成 + 楼层加成
+    const level = baseLevel + (wLv - 1) + Math.floor((floor - 1) / 2)
+    const scale = 1 + (level - 1) * 0.25
+
+    selected.push({
+      ...template,
+      level,
+      hp: Math.floor(template.baseHp * scale),
+      maxHp: Math.floor(template.baseHp * scale),
+      atk: Math.floor(template.baseAtk * scale),
+      def: Math.floor(template.baseDef * scale),
+      exp: Math.floor((template.exp || 20) * scale),
+    })
   }
+
+  // 调试代码（上线后可删除）
+  console.log('生成怪物:', selected.map(m => `${m.name} Lv.${m.level}`).join(', '))
+
+  return selected.length > 0 ? selected : null
 }
 
   const totalAssets = computed(() => {
@@ -1026,6 +1168,6 @@ function getRandomMonsterForFloor() {
     dungeon, pendingDungeonPanel, getMaterialName,equipItem,
     startDungeon, clearFloor, retreat, getRandomMonsterForFloor,
     getSkillById, getPlayerSkills, equipSkill, unequipSkill,
-    moveSkillUp, moveSkillDown,  $reset,mine, // 👈 新增这一行
+    moveSkillUp, moveSkillDown,  $reset,mine, worldLevel,activeHuntQuest, acceptHuntQuest, updateHuntProgress,affection, applyAffection, getAffectionLevel, getAffectionTitle, affectionTitles
   }
 })

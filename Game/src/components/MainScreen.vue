@@ -1,6 +1,7 @@
 <template>
   <div class="main-screen">
     <div class="status-bar">
+      <div class="world-level">世界等级：{{ store.worldLevel }}</div>
       <span class="status-item"><Icon icon="mdi:cash-multiple" /> {{ store.player.gold }}G</span>
       <span class="status-item"><Icon icon="mdi:heart" /> {{ store.player.hp }}/{{ store.player.maxHp }}</span>
       <span class="status-item"><Icon icon="mdi:weather-partly-cloudy" /> {{ weather }}</span>
@@ -18,8 +19,10 @@
           <button class="pixel-btn" @click="openPanel('character')"><Icon icon="mdi:account" /> 角色</button>
           <button class="pixel-btn" @click="openPanel('skills')"><Icon icon="mdi:star-four-points" /> 技能</button>
           <button class="pixel-btn" @click="openPanel('inventory')"><Icon icon="mdi:bag-personal" /> 背包</button>
-          <button class="pixel-btn" @click="openPanel('party')"><Icon icon="mdi:account-group" /> 伙伴</button>
-          <button class="pixel-btn" @click="openPanel('pet')"><Icon icon="mdi:paw" /> 宠物</button>
+         <button class="pixel-btn affection-btn" @click="openPanel('affection')">
+  <Icon icon="mdi:heart" /> 羁绊
+</button>
+
           <button class="pixel-btn dev-btn" @click="openPanel('dev')"><Icon icon="mdi:cog" /> 开发者</button>
         </div>
         <div class="action-buttons">
@@ -57,7 +60,7 @@
       :sellMode="inventorySellMode"
       @close="onCloseInventory"
     />
-
+<AffectionPanel v-if="currentPanel === 'affection'" @close="popPanel" />
     <DialogPanel ref="dialogRef" @close="onDialogClose" @update="onStoryUpdate" />
  <DungeonPanel
   v-if="currentPanel === 'dungeon'"
@@ -86,6 +89,8 @@ import DungeonPanel from './DungeonPanel.vue'
 import DialogPanel from './DialogPanel.vue'
 import SkillPanel from './SkillPanel.vue'
 import DungeonSelectPanel from './DungeonSelectPanel.vue'
+
+import AffectionPanel from './AffectionPanel.vue'
 const inventoryRefreshKey = ref(0)
 const dialogRef = ref(null)
 const store = useGameStore()
@@ -243,4 +248,13 @@ function handleAction(action) { if (action.type === 'panel') openPanel(action.id
   ::-webkit-scrollbar { width: 6px; }
   ::-webkit-scrollbar-track { background: rgba(255, 105, 180, 0.1); }
   ::-webkit-scrollbar-thumb { background: rgba(255, 105, 180, 0.5); border-radius: 3px; }
+.affection-btn {
+  background: rgba(255, 64, 129, 0.15);
+  border-color: #ff4081;
+}
+.affection-btn:hover {
+  background: rgba(255, 64, 129, 0.3);
+}
+
+
 </style>
