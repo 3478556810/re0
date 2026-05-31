@@ -455,6 +455,14 @@ function victory() {
   gameOver.value = true
   gameOverMsg.value = '战斗胜利！'
 
+  // 更新讨伐任务进度
+  const enemyIds = props.enemies.map(e => e.id || e.template?.id).filter(Boolean)
+  const questCompleted = store.updateHuntProgress(enemyIds)
+  if (questCompleted) {
+    showMessage('讨伐任务完成！', 2000)
+  }
+
+  // 原有胜利结算逻辑
   const engineRewards = engine.getRewards()
   const totalMats = engineRewards.materials || []
   const totalAccs = []
@@ -465,7 +473,6 @@ function victory() {
   totalReward.value = { exp: engineRewards.exp, materials: totalMats, accessories: totalAccs }
   showResult.value = true
 }
-
 function handleGameOver() {
   if (gameOverMsg.value === '战斗失败') {
     store.respawn()

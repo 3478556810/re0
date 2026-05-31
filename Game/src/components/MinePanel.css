@@ -174,15 +174,14 @@
   gap: 6px;
   margin-bottom: 4px;
 }
-/* 虚拟方向键 */
 .virtual-dpad {
   position: absolute;
-  bottom: 20px;
-  right: 20px;
+  bottom: 28%;
+  left: 15px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   z-index: 40;
   pointer-events: auto;
 }
@@ -192,9 +191,81 @@
   gap: 6px;
 }
 
+/* 交互按钮：右侧中下部 */
+.dpad-center {
+  position: absolute;
+  bottom: 28%;
+  right: 15px;
+  width: 80px;
+  height: 80px;
+  border-radius: 20px;
+  background: rgba(255, 215, 0, 0.25);
+  border: 3px solid #ffd700;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffd;
+  font-size: 14px;
+  cursor: pointer;
+  user-select: none;
+  z-index: 40;
+  gap: 4px;
+}
+
+.dpad-center .action-icon {
+  font-size: 32px;
+}
+
+.dpad-center:active {
+  background: rgba(255, 215, 0, 0.5);
+}
+/* 左侧方向键组 */
+.dpad-left {
+  position: absolute;
+  bottom: 30%;
+  left: 15px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 40;
+}
+
+/* 右侧交互大按钮 */
+.action-right {
+  position: absolute;
+  bottom: 30%;
+  right: 15px;
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 215, 0, 0.25);
+  border: 3px solid #ffd700;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffd;
+  font-size: 14px;
+  font-family: 'Press Start 2P', cursive;
+  gap: 4px;
+  z-index: 40;
+  cursor: pointer;
+}
+
+.action-right:active {
+  background: rgba(255, 215, 0, 0.5);
+}
+
+.action-icon {
+  font-size: 32px;
+}
+
+/* 方向键按钮 */
 .dpad-btn {
-  width: 50px;
-  height: 50px;
+  width: 60px;
+  height: 60px;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.15);
   border: 2px solid rgba(255, 215, 0, 0.5);
@@ -202,7 +273,7 @@
   align-items: center;
   justify-content: center;
   color: #ffd;
-  font-size: 24px;
+  font-size: 28px;
   cursor: pointer;
   user-select: none;
 }
@@ -211,7 +282,75 @@
   background: rgba(255, 215, 0, 0.4);
 }
 
-.dpad-center {
-  background: rgba(255, 215, 0, 0.2);
-  border-color: #ffd700;
+/* 玩家头像 */
+
+
+/* 左侧方向键组：整体右移，不再贴边 */
+.dpad-left {
+  position: absolute;
+  bottom: 28%;
+  left: 20%;           /* 向右移，避免截断 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 40;
+}
+
+/* 右侧交互大按钮：向左移 */
+.action-right {
+  position: absolute;
+  bottom: 28%;
+  right: 20%;          /* 向左移 */
+  width: 80px;
+  height: 80px;
+  background: rgba(255, 215, 0, 0.25);
+  border: 3px solid #ffd700;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: #ffd;
+  font-size: 14px;
+  font-family: 'Press Start 2P', cursive;
+  gap: 4px;
+  z-index: 40;
+  cursor: pointer;
+}
+
+.action-right:active {
+  background: rgba(255, 215, 0, 0.5);
+}
+
+.action-icon {
+  font-size: 32px;
+}
+
+/* 方向键按钮尺寸 */
+.dpad-btn {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.15);
+  border: 2px solid rgba(255, 215, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffd;
+  font-size: 28px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.dpad-btn:active {
+  background: rgba(255, 215, 0, 0.4);
+}
+
+/* 头像样式 */
+.player-head-icon {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  
 }

@@ -6,13 +6,7 @@
         <Icon icon="mdi:pickaxe" />
         <span>{{ store.mine.currentFloor }}F</span>
       </div>
-      <div class="status-item">
-        <Icon icon="mdi:arm-flex" />
-        <div class="stamina-bar">
-          <div class="stamina-fill" :style="{ width: staminaPercent + '%' }"></div>
-        </div>
-        <span>{{ store.player.stamina }}</span>
-      </div>
+   
       <div class="status-item">
         <Icon icon="mdi:clock-outline" />
         <span>{{ timeStr }}</span>
@@ -43,7 +37,10 @@
           :class="[tile, { 'player-cell': idx === playerPos }]"
           @click="handleCellClick(tile, idx)"
         >
-          <Icon v-if="idx === playerPos" icon="mdi:account-circle" class="player-full-icon" />
+                  <template v-if="idx === playerPos">
+  <img v-if="playerImage" :src="playerImage" class="player-head-icon" />
+  <Icon v-else icon="mdi:account-circle" class="player-full-icon" />
+</template>
           <template v-else>
             <Icon v-if="tile === 'rock' || tile === 'junk'" icon="mdi:stone" class="cell-icon" />
             <Icon v-else-if="tile === 'ladder'" icon="mdi:arrow-down-bold-circle" class="cell-icon" />
@@ -53,31 +50,33 @@
       </div>
 
       <!-- 虚拟方向键 (手机专用) -->
-      <div class="virtual-dpad">
-        <div class="dpad-row">
-          <div class="dpad-btn" @touchstart.prevent="tryMove(-1, 0)" @click="tryMove(-1, 0)">
-            <Icon icon="mdi:chevron-up" />
-          </div>
+      
+    </div>
+    <!-- 方向键：左侧（上、左、下、右） -->
+    <div class="dpad-left">
+      <div class="dpad-row">
+        <div class="dpad-btn" @touchstart.prevent="tryMove(-1, 0)" @click="tryMove(-1, 0)">
+          <Icon icon="mdi:chevron-up" />
         </div>
-        <div class="dpad-row">
-          <div class="dpad-btn" @touchstart.prevent="tryMove(0, -1)" @click="tryMove(0, -1)">
-            <Icon icon="mdi:chevron-left" />
-          </div>
-          <div class="dpad-btn dpad-center" @touchstart.prevent="interact" @click="interact">
-            <Icon icon="mdi:hand-back-right" />
-          </div>
-          <div class="dpad-btn" @touchstart.prevent="tryMove(0, 1)" @click="tryMove(0, 1)">
-            <Icon icon="mdi:chevron-right" />
-          </div>
+      </div>
+      <div class="dpad-row">
+        <div class="dpad-btn" @touchstart.prevent="tryMove(0, -1)" @click="tryMove(0, -1)">
+          <Icon icon="mdi:chevron-left" />
         </div>
-        <div class="dpad-row">
-          <div class="dpad-btn" @touchstart.prevent="tryMove(1, 0)" @click="tryMove(1, 0)">
-            <Icon icon="mdi:chevron-down" />
-          </div>
+        <div class="dpad-btn" @touchstart.prevent="tryMove(1, 0)" @click="tryMove(1, 0)">
+          <Icon icon="mdi:chevron-down" />
+        </div>
+        <div class="dpad-btn" @touchstart.prevent="tryMove(0, 1)" @click="tryMove(0, 1)">
+          <Icon icon="mdi:chevron-right" />
         </div>
       </div>
     </div>
 
+    <!-- 交互按钮：右侧大按钮 -->
+    <div class="action-right" @touchstart.prevent="interact" @click="interact">
+      <Icon icon="mdi:hand-back-right" class="action-icon" />
+      <span>交互</span>
+    </div>
     <!-- 获得材料提示（浮动消失） -->
     <Transition name="fade">
       <div v-if="toastMessage" class="material-toast">{{ toastMessage }}</div>
@@ -136,7 +135,11 @@ const mapContainer = ref(null)
 const containerWidth = ref(0)
 const containerHeight = ref(0)
 const ready = ref(false)
-
+const playerImage = computed(() => {
+  const imgs = store.config?.customImages
+  if (!imgs) return null
+  return imgs.player || imgs.hero || Object.values(imgs)[0] || null
+})
 const cameraStyle = computed(() => {
   if (!ready.value) return { left: '0px', top: '0px' }
   const playerX = playerCol.value * cellSize + cellSize / 2
@@ -171,7 +174,9 @@ function showToast(text) {
 
 // 生成新楼层
 function newFloor() {
-  grid.value = generateCave(rows, cols)
+   const isNight = store.world.gameTime >= 1080 || store.world.gameTime < 360  // 18:00-6:00
+  grid.value = generateCave(rows, cols, isNight ? 1.5 : 1)  // 夜间怪物密度×1.5
+
   const centerR = Math.floor(rows / 2)
   const centerC = Math.floor(cols / 2)
 
@@ -306,9 +311,12 @@ function interact() {
 }
 
 function dig(r, c) {
-  if (store.player.stamina < 10) { showToast('体力不足！'); return }
-  store.player.stamina -= 10
-  const oreId =rollOreDynamic(store.config.materialDefinitions, store.mine.currentFloor)
+  const totalMats = Object.values(store.materials).reduce((sum, m) => sum + m.qty, 0)
+if (totalMats >= 30) {  // 背包上限30个
+  showToast('背包已满！请回城整理')
+  return
+}
+  const oreId = rollOreDynamic(store.config.materialDefinitions, store.mine.currentFloor)
   store.addMaterial(oreId, store.getMaterialName(oreId), 1)
   if (!loot.value[oreId]) loot.value[oreId] = 0
   loot.value[oreId]++
@@ -317,8 +325,6 @@ function dig(r, c) {
 }
 
 function digJunk(r, c) {
-  if (store.player.stamina < 8) { showToast('体力不足！'); return }
-  store.player.stamina -= 8
   store.addMaterial('waste_stone', '废石', 1)
   if (!loot.value['waste_stone']) loot.value['waste_stone'] = 0
   loot.value['waste_stone']++
