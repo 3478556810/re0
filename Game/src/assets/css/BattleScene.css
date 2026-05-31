@@ -131,10 +131,10 @@
 
 .player-sprite {
   position: absolute;
-  top: -320px;     /* 左上偏移 */
-  right: -110px;
-  width: 280px;
-  height: 280px;
+  top: -260px;     /* 左上偏移 */
+  left: 6%;
+  width: 240px;
+  height: 240px;
   display: flex;
   align-items: center;
   justify-content: center;

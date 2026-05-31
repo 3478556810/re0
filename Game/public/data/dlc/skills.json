@@ -1,0 +1,182 @@
+[
+  {
+    "id": "normal_attack",
+    "name": "普通攻击",
+    "desc": "无属性基础攻击",
+    "icon": "mdi:sword-cross",
+    "type": "active",
+    "target": "single",
+    "element": "",
+    "mpCost": 0,
+    "baseMul": 1.0,
+    "maxLevel": 10,
+    "upgradeCost": 2,
+    "learnCost": 0,
+    "levelScaling": { "baseMul": 0.1, "mpCost": 0 },
+    "effects": [],
+    "tripods": [
+      { "name": "连击强化", "desc": "增加攻击次数", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 10, "stat": "atk", "duration": 2, "chance": 30 }] },
+      { "name": "会心", "desc": "提高暴击率", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 15, "stat": "critRate", "duration": 2, "chance": 100 }] },
+      { "name": "吸血", "desc": "造成伤害回复生命", "unlockLevel": 10, "effects": [{ "type": "lifesteal", "value": 15, "duration": 0, "chance": 100 }] }
+    ]
+  },
+  {
+    "id": "fire_slash",
+    "name": "火焰斩",
+    "desc": "火属性单体攻击，30%概率附加灼烧",
+    "icon": "mdi:fire",
+    "type": "active",
+    "target": "single",
+    "element": "fire",
+    "mpCost": 5,
+    "baseMul": 1.8,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.15, "mpCost": -1 },
+    "effects": [
+      { "type": "dot", "element": "fire", "value": 5, "duration": 3, "chance": 30 }
+    ],
+    "tripods": [
+      { "name": "烈焰", "desc": "灼烧伤害提升", "unlockLevel": 4, "effects": [{ "type": "dot", "value": 10, "duration": 3, "chance": 50 }] },
+      { "name": "蔓延", "desc": "灼烧扩散至其他敌人", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 8, "duration": 2, "chance": 40, "target": "aoe" }] },
+      { "name": "焦土", "desc": "攻击后附加防御降低", "unlockLevel": 10, "effects": [{ "type": "debuff", "value": 20, "stat": "def", "duration": 2, "chance": 100 }] }
+    ]
+  },
+  {
+    "id": "ice_bolt",
+    "name": "冰冻术",
+    "desc": "冰属性单体攻击，20%概率冻结",
+    "icon": "mdi:snowflake",
+    "type": "active",
+    "target": "single",
+    "element": "ice",
+    "mpCost": 8,
+    "baseMul": 2.0,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.2, "mpCost": 0 },
+    "effects": [
+      { "type": "debuff", "value": 0, "stat": "freeze", "duration": 1, "chance": 20 }
+    ],
+    "tripods": [
+      { "name": "深寒", "desc": "冻结概率提高", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": 0, "stat": "freeze", "duration": 1, "chance": 40 }] },
+      { "name": "冰刺", "desc": "额外造成真实伤害", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 8, "duration": 2, "chance": 100 }] },
+      { "name": "冰甲", "desc": "使用后获得护盾", "unlockLevel": 10, "effects": [{ "type": "shield", "value": 30, "duration": 2, "chance": 100 }] }
+    ]
+  },
+  {
+    "id": "thunder_shock",
+    "name": "雷电",
+    "desc": "雷属性全体攻击，10%麻痹",
+    "icon": "mdi:lightning-bolt",
+    "type": "active",
+    "target": "aoe",
+    "element": "thunder",
+    "mpCost": 10,
+    "baseMul": 1.6,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 3,
+    "levelScaling": { "baseMul": 0.12, "mpCost": 0 },
+    "effects": [
+      { "type": "debuff", "value": 0, "stat": "paralyze", "duration": 1, "chance": 10 }
+    ],
+    "tripods": [
+      { "name": "高压", "desc": "麻痹概率提升", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": 0, "stat": "paralyze", "duration": 1, "chance": 25 }] },
+      { "name": "连锁", "desc": "重复攻击一次（50%伤害）", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 50, "duration": 1, "chance": 100, "note": "重复攻击" }] },
+      { "name": "电磁场", "desc": "自身速度提升", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 15, "stat": "speed", "duration": 3, "chance": 100 }] }
+    ]
+  },
+  {
+    "id": "heal_light",
+    "name": "治愈术",
+    "desc": "恢复自身HP",
+    "icon": "mdi:heart-pulse",
+    "type": "active",
+    "target": "self",
+    "element": "holy",
+    "mpCost": 8,
+    "baseMul": 0,
+    "maxLevel": 10,
+    "upgradeCost": 2,
+    "learnCost": 1,
+    "levelScaling": { "healAmount": 10 },
+    "effects": [
+      { "type": "heal", "value": 30, "duration": 0, "chance": 100 }
+    ],
+    "tripods": [
+      { "name": "快速治愈", "desc": "额外恢复MP", "unlockLevel": 4, "effects": [{ "type": "mpDrain", "value": 10, "duration": 0, "chance": 100 }] },
+      { "name": "净化", "desc": "解除一个负面状态", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0, "stat": "cleanse", "duration": 0, "chance": 100 }] },
+      { "name": "生命链接", "desc": "为全队恢复少量HP", "unlockLevel": 10, "effects": [{ "type": "heal", "value": 15, "duration": 0, "chance": 100, "target": "ally" }] }
+    ]
+  },
+  {
+    "id": "wind_blade",
+    "name": "风刃",
+    "desc": "风属性单体攻击，概率追加一次",
+    "icon": "mdi:weather-windy",
+    "type": "active",
+    "target": "single",
+    "element": "wind",
+    "mpCost": 6,
+    "baseMul": 1.5,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.12, "mpCost": 0 },
+    "effects": [],
+    "tripods": [
+      { "name": "连风", "desc": "追加攻击概率提升", "unlockLevel": 4, "effects": [{ "type": "dot", "value": 60, "duration": 1, "chance": 40, "note": "追加攻击" }] },
+      { "name": "风暴", "desc": "对全体造成少量伤害", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 15, "duration": 1, "chance": 100, "target": "aoe" }] },
+      { "name": "顺风", "desc": "自身速度提升", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 10, "stat": "speed", "duration": 3, "chance": 100 }] }
+    ]
+  },
+  {
+    "id": "dark_ball",
+    "name": "暗影球",
+    "desc": "暗属性单体攻击，概率降低敌人攻击",
+    "icon": "mdi:circle-opacity",
+    "type": "active",
+    "target": "single",
+    "element": "dark",
+    "mpCost": 7,
+    "baseMul": 1.7,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.15, "mpCost": 0 },
+    "effects": [
+      { "type": "debuff", "value": 10, "stat": "atk", "duration": 2, "chance": 30 }
+    ],
+    "tripods": [
+      { "name": "黑暗", "desc": "降攻效果增强", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": 20, "stat": "atk", "duration": 2, "chance": 50 }] },
+      { "name": "吞噬", "desc": "造成伤害恢复MP", "unlockLevel": 7, "effects": [{ "type": "mpDrain", "value": 8, "duration": 0, "chance": 100 }] },
+      { "name": "湮灭", "desc": "概率即死(对Boss无效)", "unlockLevel": 10, "effects": [{ "type": "debuff", "value": 0, "stat": "death", "duration": 0, "chance": 5 }] }
+    ]
+  },
+  {
+    "id": "poison_mist",
+    "name": "毒雾",
+    "desc": "对全体敌人施加中毒",
+    "icon": "mdi:skull-crossbones",
+    "type": "active",
+    "target": "aoe",
+    "element": "",
+    "mpCost": 9,
+    "baseMul": 0.6,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 3,
+    "levelScaling": { "baseMul": 0.05, "mpCost": 0 },
+    "effects": [
+      { "type": "dot", "value": 4, "duration": 4, "chance": 80 }
+    ],
+    "tripods": [
+      { "name": "猛毒", "desc": "中毒伤害提升", "unlockLevel": 4, "effects": [{ "type": "dot", "value": 8, "duration": 4, "chance": 90 }] },
+      { "name": "传染", "desc": "中毒概率扩散至额外目标", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 6, "duration": 3, "chance": 100, "note": "扩散" }] },
+      { "name": "毒爆", "desc": "中毒结束时造成一次额外伤害", "unlockLevel": 10, "effects": [{ "type": "dot", "value": 15, "duration": 0, "chance": 100, "note": "爆炸伤害" }] }
+    ]
+  }
+]

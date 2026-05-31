@@ -1,0 +1,30 @@
+{
+  "goblin_cave": {
+    "name": "哥布林洞穴",
+    "icon": "mdi:castle",
+    "maxFloors": 10,
+    "cooldown": 0,
+    "background": "cave_dark.png",
+    "monstersByFloor": {
+      "1": ["slime", "green_slime"],
+      "2": ["slime", "goblin", "green_slime"],
+      "3": ["goblin", "goblin_scout", "cave_spider"],
+      "4": ["goblin_scout", "cave_spider", "giant_bat"],
+      "5": ["boss_goblin_chief"],
+      "6": ["goblin", "cave_spider", "rock_golem"],
+      "7": ["goblin_scout", "giant_bat", "rock_golem"],
+      "8": ["cave_spider", "rock_golem", "rock_golem"],
+      "9": ["goblin_scout", "giant_bat", "cave_spider", "rock_golem"],
+      "10": ["boss_goblin_king"]
+    }
+  },
+  "training_room": {
+    "name": "训练房",
+    "icon": "mdi:target",
+    "maxFloors": 1,
+    "cooldown": 0,
+    "monstersByFloor": {
+      "1": ["training_dummy"]
+    }
+  }
+}

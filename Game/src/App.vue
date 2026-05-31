@@ -8,8 +8,11 @@
   v-else
   :key="battleKey"
   :enemies="currentEnemies"
+  :storyBattle="!!storyBattleConfig"
   @victory="onVictory"
-  @exit="inBattle = false"
+  @defeat="onBattleDefeat"
+  @flee="onBattleExit"
+  @exit="onBattleExit"
   @nextFloor="onNextFloor"
   @retreatToDungeon="() => { inBattle = false; store.pendingDungeonPanel = true }"
 />
@@ -17,7 +20,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import MainScreen from './components/MainScreen.vue'
 import BattleScene from './components/BattleScene.vue'
 import { useGameStore } from './store/gameStore'
@@ -27,6 +30,10 @@ const battleKey = ref(0)
 const store = useGameStore()
 const inBattle = ref(false)
 const currentEnemies = ref([])
+
+// 剧情战斗相关
+const storyBattleConfig = ref(null)    // { enemies, winNext, loseNext, fleeNext }
+const storyNodeBeforeBattle = ref(null) // 触发战斗前的剧情节点ID（保留，未用但可记录）
 
 // 后备生成函数
 function fallbackSpawnEnemy(template, playerLevel) {
@@ -49,6 +56,13 @@ function fallbackSpawnEnemy(template, playerLevel) {
 // 全局时间流逝
 let timeInterval
 onMounted(() => {
+    // 页面刷新后，清理可能残留的战斗状态
+  if (!inBattle.value) {
+    storyBattleConfig.value = null
+    storyNodeBeforeBattle.value = null
+    store.pendingStoryNodeAfterBattle = null
+    sessionStorage.removeItem('storyBattleConfig')
+  }
   timeInterval = setInterval(() => {
     store.advanceTime(1)
   }, 1000)
@@ -66,8 +80,45 @@ function onKeyDebug(e) {
   }
 }
 
+// 战斗结束处理
 function onVictory(reward) {
   inBattle.value = false
+  if (storyBattleConfig.value) {
+    // 剧情战斗胜利：跳转到 winNext
+    const nextNode = storyBattleConfig.value.winNext
+    storyBattleConfig.value = null
+    startStoryAfterBattle(nextNode)
+  }
+}
+
+function onBattleExit() {
+  inBattle.value = false
+  if (storyBattleConfig.value) {
+    // 逃跑或手动退出：跳转到 fleeNext
+    const nextNode = storyBattleConfig.value.fleeNext || storyBattleConfig.value.loseNext
+    storyBattleConfig.value = null
+    startStoryAfterBattle(nextNode)
+  }
+}
+
+// 战斗失败（由 BattleScene 发出 defeat 事件）
+function onBattleDefeat() {
+  inBattle.value = false
+  if (storyBattleConfig.value) {
+    const nextNode = storyBattleConfig.value.loseNext
+    storyBattleConfig.value = null
+    startStoryAfterBattle(nextNode)
+  } else {
+    // 普通战斗失败：重生
+    store.respawn()
+  }
+}
+
+// 战斗结束后继续剧情
+function startStoryAfterBattle(nodeId) {
+  if (!nodeId) return
+  // 通过 store 设置待处理的剧情节点，MainScreen 会检测并启动
+  store.pendingStoryNodeAfterBattle = nodeId
 }
 
 function parseMonsterSkills(monster) {
@@ -90,47 +141,69 @@ const builtin = {
   boss_wolfking: { id: 'boss_wolfking', name: '狼王', baseHp: 120, baseAtk: 35, baseDef: 20, levelRange: [8,12], material: { id: 'wolf_heart', name: '狼王之心' }, icon: 'mdi:skull', isBoss: true },
 }
 
-function onStartBattle(monstersInput) {
-  const inputArray = Array.isArray(monstersInput) ? monstersInput : [monstersInput]
-  const monsters = []
+// 开始战斗（统一入口）
+function onStartBattle(monstersOrConfig, storyNodeId = null) {
+  // 如果是剧情触发的战斗：参数为一个对象 { enemies, winNext, loseNext, fleeNext }
+  if (typeof monstersOrConfig === 'object' && monstersOrConfig.enemies) {
+    storyBattleConfig.value = monstersOrConfig
+    storyNodeBeforeBattle.value = storyNodeId
 
-  for (const item of inputArray) {
-    let monster
-
-    if (typeof item === 'object' && item !== null) {
-      // 已经是完整怪物对象（比如从 getRandomMonsterForFloor 返回的）
-      monster = { ...item }
-      if (!monster.icon) monster.icon = 'mdi:help-circle'
-    } else {
-      // 字符串 ID，需要生成
-      const id = item
+    // 根据配置生成怪物
+    const enemyIds = storyBattleConfig.value.enemies
+    const monsters = []
+    for (const id of enemyIds) {
       const template = store.config.monsterTemplates?.find(m => m.id === id) || builtin[id]
       if (!template) {
         console.error('找不到怪物模板:', id)
         continue
       }
-
-      try {
-        monster = spawnEnemy ? spawnEnemy(template, store.player.level) : fallbackSpawnEnemy(template, store.player.level)
-        monster.icon = template.icon || 'mdi:help-circle'
-        if (template.isBoss) monster.isBoss = true
-      } catch (e) {
-        console.error('生成怪物失败', e)
-        monster = fallbackSpawnEnemy(template, store.player.level)
-        monster.icon = template.icon || 'mdi:help-circle'
-      }
+      // 简单生成，不使用世界等级，固定等级以匹配剧情难度
+      const monster = fallbackSpawnEnemy(template, store.player.level)
+      monster.icon = template.icon || 'mdi:help-circle'
+      if (template.isBoss) monster.isBoss = true
+      monster.skills = parseMonsterSkills(monster)
+      monsters.push(monster)
     }
-
-    monster.skills = parseMonsterSkills(monster)
-    monsters.push(monster)
+    currentEnemies.value = monsters
+  } else {
+    // 普通战斗（地下城或野外）
+    const inputArray = Array.isArray(monstersOrConfig) ? monstersOrConfig : [monstersOrConfig]
+    const monsters = []
+    for (const item of inputArray) {
+      let monster
+      if (typeof item === 'object' && item !== null) {
+        monster = { ...item }
+        if (!monster.icon) monster.icon = 'mdi:help-circle'
+      } else {
+        const id = item
+        const template = store.config.monsterTemplates?.find(m => m.id === id) || builtin[id]
+        if (!template) {
+          console.error('找不到怪物模板:', id)
+          continue
+        }
+        try {
+          monster = spawnEnemy ? spawnEnemy(template, store.player.level) : fallbackSpawnEnemy(template, store.player.level)
+          monster.icon = template.icon || 'mdi:help-circle'
+          if (template.isBoss) monster.isBoss = true
+        } catch (e) {
+          console.error('生成怪物失败', e)
+          monster = fallbackSpawnEnemy(template, store.player.level)
+          monster.icon = template.icon || 'mdi:help-circle'
+        }
+      }
+      monster.skills = parseMonsterSkills(monster)
+      monsters.push(monster)
+    }
+    if (monsters.length === 0) {
+      console.error('无法生成任何怪物')
+      return
+    }
+    currentEnemies.value = monsters
+    // 清除剧情配置
+    storyBattleConfig.value = null
+    storyNodeBeforeBattle.value = null
   }
 
-  if (monsters.length === 0) {
-    console.error('无法生成任何怪物')
-    return
-  }
-
-  currentEnemies.value = monsters
   battleKey.value++
   inBattle.value = true
 }

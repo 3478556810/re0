@@ -182,6 +182,10 @@ const companions = computed(() => {
 })
 
 function explore() {
+
+    // 记录本次探索的地下城
+  store.dungeon.lastDungeonId = store.dungeon.currentDungeon
+  store.save()
   const floor = store.dungeon.currentFloor
   const dg = DUNGEONS[store.dungeon.currentDungeon]
   const storyId = dg?.storyByFloor?.[floor]

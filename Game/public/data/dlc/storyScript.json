@@ -1,0 +1,345 @@
+{
+  "start": {
+    "id": "start",
+    "text": "时间流转",
+    "speaker": "",
+    "nextId": "chapter0_s1"
+  },
+  "chapter0_s1": {
+    "id": "chapter0_s1",
+    "speaker": "",
+    "text": "破晓前的欧拉希昂。公会大厅塔楼上的辉石散发着幽蓝的光，将整座迷宫都市笼罩在薄明之中。你站在地下城的青铜巨门前，已经站了很久。",
+    "background": "guild_dawn.png",
+    "nextId": "chapter0_s2"
+  },
+  "chapter0_s2": {
+    "id": "chapter0_s2",
+    "speaker": "",
+    "text": "秋夜的风从广场吹来，带着苔藓的湿气和若有若无的血腥味。那是从地下城深处翻涌上来的、属于另一个世界的吐息。你低头看着自己的手——手指细长，关节处有握剑磨出的薄茧。",
+    "background": "guild_dawn.png",
+    "nextId": "chapter0_s3"
+  },
+  "chapter0_s3": {
+    "id": "chapter0_s3",
+    "speaker": "",
+    "text": "这柄短剑是用祖父的怀表换来的。三个月前，你还在边境的托尔村，一个只有三百户人家的地方。日子安静得像一潭死水。你是铁匠的女儿，但父亲从不让你碰熔炉。他说女孩子的手是用来缝嫁衣的。",
+    "background": "guild_dawn.png",
+    "nextId": "chapter0_s4"
+  },
+  "chapter0_s4": {
+    "id": "chapter0_s4",
+    "speaker": "",
+    "text": "你十六岁了。按照村里的规矩，明年就该嫁人。嫁给不爱的男人，生几个孩子，然后在某个冬天因为风寒死在床上。墓碑会被雨水冲刷，名字会被青苔覆盖。你常在夜里爬上村口的老橡树，望着山脊线发呆。山的那边有什么？",
+    "background": "guild_dawn.png",
+    "nextId": "chapter0_s5"
+  },
+  "chapter0_s5": {
+    "id": "chapter0_s5",
+    "speaker": "",
+    "text": "然后那个雨夜来了。一辆来自欧拉希昂的马车陷进了村口的泥沼。车厢里躺着一个浑身缠满绷带的女人，断了一条腿，肋骨断了三根，右眼还在渗血。可她在笑。",
+    "background": "guild_dawn.png",
+    "nextId": "chapter0_s6"
+  },
+  "chapter0_s6": {
+    "id": "chapter0_s6",
+    "speaker": "",
+    "text": "她对同伴说了一句话，声音很轻，却像钉子一样扎进了你的耳朵。「下次一定能到第五层。」伤成这样，已经在想「下次」了。你蹲在车厢边，雨水顺着伞沿滴在膝盖上，凉得刺骨。你问她：「地下城……真的有吗？」",
+    "background": "guild_dawn.png",
+    "nextId": "chapter0_s7"
+  },
+  "chapter0_s7": {
+    "id": "chapter0_s7",
+    "speaker": "",
+    "text": "她转过头，用仅剩的左眼直直地看着你。看了很久。然后她笑了——不是自言自语的笑，而是一种更深的、带着温柔的笑。「有。那里很黑，很冷。每走一步都有可能死。」她停了一下，闪电照亮了她的脸。「但也很美。那种美，地面上没有。」",
+    "background": "guild_dawn.png",
+    "nextId": "chapter0_s8"
+  },
+  "chapter0_s8": {
+    "id": "chapter0_s8",
+    "speaker": "",
+    "text": "她从怀里摸出一颗魔石塞进你手心。魔石在雨夜里发出微弱的蓝光，像一颗迷路的星星。「如果你心里也有一个填不满的洞，那就去欧拉希昂。」第二天清晨，你从村子里消失了。带走了魔石、怀表、还有被全村人嘲笑过的妄想。",
+    "background": "guild_dawn.png",
+    "nextId": "chapter0_s9"
+  },
+  "chapter0_s9": {
+    "id": "chapter0_s9",
+    "speaker": "",
+    "text": "现在，你卖了怀表换来这柄短剑，站在那扇你魂牵梦萦的门前。青铜门缓缓推开，门轴发出低沉的轰鸣。门缝里涌出的空气冷得像从冰窖里倒出来的，带着潮湿的、腐败的甜味。你深吸一口气，踏出了第一步。",
+    "background": "cave_entrance.png",
+    "nextId": "chapter0_s10"
+  },
+  "chapter0_s10": {
+    "id": "chapter0_s10",
+    "speaker": "",
+    "text": "第一层的空气粘稠如凝固的冷油。每一次呼吸都能尝到铁锈、湿石灰、以及某种更古老的腐败甜味。水珠从洞顶滴落，在绝对寂静中格外清晰。岩壁上爬满了发光的苔藓，幽蓝光晕微微脉动，像石壁自身的呼吸。",
+    "background": "cave_entrance.png",
+    "nextId": "chapter0_s11"
+  },
+  "chapter0_s11": {
+    "id": "chapter0_s11",
+    "speaker": "艾因",
+    "portrait": "heroine_glance_away",
+    "speakerPosition": "left",
+    "text": "苔藓的光只能照亮十步。十步以外，是纯粹的黑暗。",
+    "background": "cave_entrance.png",
+    "nextId": "chapter0_s12"
+  },
+  "chapter0_s12": {
+    "id": "chapter0_s12",
+    "speaker": "",
+    "text": "你按住胸口。隔着皮甲和校服，心脏在疯狂撞击肋骨。不是恐惧，至少不完全是。那里还混着某种期待——在村子里望着山脊线的每一个黄昏，因父亲的话偷偷咬住嘴唇的每一个夜晚，你所想象的「别处」，就是这里。",
+    "background": "cave_entrance.png",
+    "nextId": "chapter0_s13"
+  },
+  "chapter0_s13": {
+    "id": "chapter0_s13",
+    "speaker": "",
+    "text": "通道在前方分成三条岔路。你蹲下身，取出那颗魔石——雨夜女人给你的那颗——借着微光检视地面。左右岔路积着薄灰。中间那条散落着细小的骨头，在蓝光下泛着惨白。骨头的断口是新的。",
+    "background": "cave_crossroad.png",
+    "nextId": "chapter0_s14"
+  },
+  "chapter0_s14": {
+    "id": "chapter0_s14",
+    "speaker": "艾因",
+    "portrait": "heroine_thinking",
+    "speakerPosition": "left",
+    "text": "有什么东西在这条路里捕猎。但公会指南说过，第一层只有最低阶的魔物。不能在这里就退缩。",
+    "background": "cave_crossroad.png",
+    "choices": [
+      {
+        "text": "握紧短剑，走中间",
+        "nextId": "chapter0_s15"
+      },
+      {
+        "text": "先检查一下两侧岔路的情况",
+        "nextId": "chapter0_s14_check"
+      }
+    ]
+  },
+  "chapter0_s14_check": {
+    "id": "chapter0_s14_check",
+    "speaker": "",
+    "text": "你仔细查看了左右岔路的岩壁。两侧都有陈旧的爪痕，但右边岔路的地面上有一小片干涸的绿色液体——是魔物的血，至少是几天前的。无论走哪条路，这里都不安全。你回到中间岔路前。",
+    "background": "cave_crossroad.png",
+    "choices": [
+      {
+        "text": "走中间，做好战斗准备",
+        "nextId": "chapter0_s15"
+      }
+    ]
+  },
+  "chapter0_s15": {
+    "id": "chapter0_s15",
+    "speaker": "",
+    "text": "通道越来越窄。天花板在降低，苔藓蓝光越来越稀疏。你感觉自己正被这个巨大的生物——地下城本身——缓慢地吞入腹中。然后你听到了声音。咔哒。咔哒。爪子在石头上摩擦。不止一只。",
+    "background": "cave_narrow.png",
+    "nextId": "chapter0_s16"
+  },
+  "chapter0_s16": {
+    "id": "chapter0_s16",
+    "speaker": "",
+    "text": "你停下脚步，背靠岩壁。三对猩红的光点在黑暗中浮现。狗头人。三只。体型只到你的腰部，但爪子和牙齿异常发达。中间那只额头有旧伤疤，歪着头打量你，发出一声低沉的咕噜。然后它尖啸了一声。三只同时扑了上来。",
+    "background": "cave_narrow.png",
+    "nextId": "chapter0_s17"
+  },
+  "chapter0_s17": {
+    "id": "chapter0_s17",
+    "speaker": "",
+    "text": "一道银白色的弧光从你右侧闪过。像月光穿透深海。那一剑精确地切过跃起的狗头人，从肩斜劈至胯，一刀两断。绿色血雾在黑暗中炸开，溅了你满脸。你甚至没来得及眨眼。",
+    "background": "cave_narrow.png",
+    "nextId": "chapter0_s18"
+  },
+  "chapter0_s18": {
+    "id": "chapter0_s18",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "不要站着发呆。深呼吸，重心下沉。还有两只。左边那只交给你。这算你欠我的第一个人情。",
+    "background": "cave_narrow.png",
+    "nextId": "chapter0_s19"
+  },
+  "chapter0_s19": {
+    "id": "chapter0_s19",
+    "speaker": "",
+    "text": "没有商量，没有鼓励。只是平静地陈述事实。你透过被血糊住的睫毛看去——一位银发女剑士背对着你，修长的剑斜指地面，深绿血液沿剑脊滴落。她侧过头，淡紫色眼眸看了你一眼，眼角有一道浅疤。左边那只狗头人已经扑过来了。",
+    "background": "cave_narrow.png",
+    "choices": [
+      {
+        "text": "挥剑迎上去！",
+        "nextId": "chapter0_s20",
+        "affection": { "freyja": 2 }
+      },
+      {
+        "text": "先闪避，找机会反击",
+        "nextId": "chapter0_s20_dodge",
+        "affection": { "freyja": 1 }
+      }
+    ]
+  },
+  "chapter0_s20": {
+    "id": "chapter0_s20",
+    "speaker": "",
+    "text": "你的腰本能地一拧，手臂以肩为轴画了一个笨拙的弧线。不是剑术，是劈柴。短剑刺入狗头人的腹部。皮毛和肌肉的阻力顺着剑柄传来，紧接着是骨头碎裂的细微声响。绿色血涌出来，浸湿了你的手指。是热的。怪物的血是热的。",
+    "background": "cave_narrow.png",
+    "nextId": "chapter0_s21"
+  },
+  "chapter0_s20_dodge": {
+    "id": "chapter0_s20_dodge",
+    "speaker": "",
+    "text": "你侧身闪过扑咬，后背撞上岩壁，短剑在手中转了一圈。狗头人一爪落空，身体失去平衡。你没有犹豫，双手握剑刺入它暴露的侧腹。剑身穿透肋骨的触感让手臂一麻。它尖叫着倒下，绿色血溅了一地。",
+    "background": "cave_narrow.png",
+    "nextId": "chapter0_s21"
+  },
+  "chapter0_s21": {
+    "id": "chapter0_s21",
+    "speaker": "",
+    "text": "你把短剑拔出来，大口喘着气。狗头人抽搐了几下，再也没动。另一只已经被女剑士钉死在地上。三只全灭。你跪在地上，吐了。她没有嘲讽，也没有安慰。只是站在原地等着，直到你用袖口擦干净嘴。",
+    "background": "cave_aftermath.png",
+    "nextId": "chapter0_s22"
+  },
+  "chapter0_s22": {
+    "id": "chapter0_s22",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "芙蕾雅。我叫芙蕾雅。口头感谢不如魔石实在。这三只的魔石归我，你有意见吗？",
+    "background": "cave_aftermath.png",
+    "nextId": "chapter0_s23"
+  },
+  "chapter0_s23": {
+    "id": "chapter0_s23",
+    "speaker": "艾因",
+    "portrait": "heroine_glance_away",
+    "speakerPosition": "left",
+    "text": "我叫艾因。刚才……谢谢。没有意见。",
+    "background": "cave_aftermath.png",
+    "nextId": "chapter0_s24"
+  },
+  "chapter0_s24": {
+    "id": "chapter0_s24",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "她看了看三颗魔石，又看了看你。银色的睫毛低垂，淡紫色眼眸里闪过一丝你无法读懂的情绪。然后她叹了口气，把最小那颗扔了过来。这颗，算你新手期的启动资金。",
+    "background": "cave_aftermath.png",
+    "nextId": "chapter0_s25"
+  },
+  "chapter0_s25": {
+    "id": "chapter0_s25",
+    "speaker": "",
+    "text": "你狼狈地接住魔石。只有小拇指指甲盖大小，表面还残留着尸体的余温。你把它和怀里那颗放在一起——雨夜女人给你的那颗。两颗魔石并排躺着，一大一小，像某种无声的传承。",
+    "background": "cave_aftermath.png",
+    "nextId": "chapter0_s26"
+  },
+  "chapter0_s26": {
+    "id": "chapter0_s26",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "你刚才那一剑，只有蛮力，没有心。刺进去就闭眼，是等着怪物自己死吗？不过……第一次能刺中，算及格。至少你挥了剑。大部分人第一次连剑都拔不出来。",
+    "background": "cave_aftermath.png",
+    "nextId": "chapter0_s27"
+  },
+  "chapter0_s27": {
+    "id": "chapter0_s27",
+    "speaker": "",
+    "text": "她站起来，用布擦干净长剑，收剑入鞘。动作一气呵成，带着长年养成的利落。你注意到她腰间的布袋上绣着一个褪色的家徽，某种曾经繁复的花卉图案，如今磨损得几乎认不出原本的颜色。",
+    "background": "cave_aftermath.png",
+    "nextId": "chapter0_s28"
+  },
+  "chapter0_s28": {
+    "id": "chapter0_s28",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "你打算继续往下走？为什么？",
+    "background": "cave_aftermath.png",
+    "choices": [
+      {
+        "text": "「因为不想在田埂上老死。」",
+        "nextId": "chapter0_s29_honest",
+        "affection": { "freyja": 3 },
+        "keyChoice": true
+      },
+      {
+        "text": "「我也不知道。就是觉得应该继续走。」",
+        "nextId": "chapter0_s29_humble",
+        "affection": { "freyja": 1 }
+      },
+      {
+        "text": "「那你又是为什么在这里？」",
+        "nextId": "chapter0_s29_askback",
+        "affection": { "freyja": 0 }
+      }
+    ]
+  },
+  "chapter0_s29_honest": {
+    "id": "chapter0_s29_honest",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "不想在田埂上老死……她重复了一遍你的话，嘴角似乎动了一下。那不是嘲笑，但也算不上微笑。有意思。很多人来这里是为了钱、名声、或者逃避什么。你不一样。",
+    "background": "cave_aftermath.png",
+    "nextId": "chapter0_s30"
+  },
+  "chapter0_s29_humble": {
+    "id": "chapter0_s29_humble",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "她看了你一眼。不知道还往前走，说明你至少是清醒的。地下城里最危险的不是怪物，是搞不清楚自己在干什么的人。",
+    "background": "cave_aftermath.png",
+    "nextId": "chapter0_s30"
+  },
+  "chapter0_s29_askback": {
+    "id": "chapter0_s29_askback",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "她沉默了一瞬。淡紫色的眼眸里掠过一道你来不及捕捉的情绪。问别人之前先报上自己的，我告诉过你了。至于我……有些债总要还的。",
+    "background": "cave_aftermath.png",
+    "nextId": "chapter0_s30"
+  },
+  "chapter0_s30": {
+    "id": "chapter0_s30",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "随你。如果你一定要往下走，就跟着我的脚印。别踩我没踩过的地方。别死在我后面，我没空回头。",
+    "background": "cave_aftermath.png",
+    "nextId": "chapter0_s31"
+  },
+  "chapter0_s31": {
+    "id": "chapter0_s31",
+    "speaker": "",
+    "text": "她转身朝更深处走去。脚步很轻，银发在幽蓝苔藓的光晕中像一道落在地上的月亮。你深吸一口气，把两颗魔石都放回怀里，握紧那柄沾满绿色血迹的短剑，跟了上去。前方的黑暗中隐约传来翅膀扑腾的声音——新的魔物在等待。",
+    "background": "cave_aftermath.png",
+    "choices": [
+      {
+        "text": "跟随芙蕾雅，继续前进",
+        "battle": {
+          "enemies": ["giant_bat", "giant_bat"],
+          "winNext": "chapter0_s32"
+        },
+        "affection": { "freyja": 2 }
+      }
+    ]
+  },
+  "chapter0_s32": {
+    "id": "chapter0_s32",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "你确实挥了剑。及格了。下次战斗，睁开眼。",
+    "background": "cave_aftermath.png",
+    "nextId": "chapter0_s33"
+  },
+  "chapter0_s33": {
+    "id": "chapter0_s33",
+    "speaker": "",
+    "text": "地下迷宫深处传来古老的低鸣，仿佛在回应某个微不足道的誓言。序章·英雄的起点——终。",
+    "background": "cave_aftermath.png",
+    "nextId": null,
+    "partner": "freyja"
+  }
+}
