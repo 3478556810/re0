@@ -460,7 +460,7 @@ function syncStateFromEngine() {
   ...enemy,
   id: enemy.id,
   name: enemy.name || '未知敌人',
-  hp: enemy.hp,
+  hp: Math.max(0, enemy.hp),    // 👈 关键：强制非负
   maxHp: enemy.maxHp,
   shield: enemy.getShield(),   // 参数名是 enemy，不是 e
   element: enemy.element || '',
@@ -474,7 +474,7 @@ if (engine && engine.companion) {
   companion.value = {
     id: engine.companion.id,
     name: engine.companion.name,
-    hp: engine.companion.hp,
+    hp: Math.max(0, engine.companion.hp),   // 👈 伙伴血量也保护
     maxHp: engine.companion.maxHp,
     icon: engine.companion.icon,
   }

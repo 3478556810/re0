@@ -178,6 +178,9 @@ addEffect(effectDef) {
 
 
     this.hp -= damage;
+
+
+    if (this.hp < 0) this.hp = 0   // 👈 引擎内部也保护
   if (this.hp <= 0) {
     // 检查复活特性
     if (this.traits.includes('revive') && !this.hasRevived) {
@@ -490,6 +493,7 @@ executePlayerAction(skill, targetIndex) {
   // 伤害计算
   let totalDamage = 0;
   for (const target of targets) {
+      if (target.hp <= 0) continue   // 👈 已死的跳过
     const attackerSnap = {
       attack: this.player.getEffectiveAttack(),
       critRate: this.player.critRate,
