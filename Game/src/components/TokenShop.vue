@@ -28,7 +28,6 @@
 import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
-// 使用你项目中实际的饰品生成函数
 import { rollAccessoryDrop } from '../utils/lootGenerator'
 
 const store = useGameStore()
@@ -47,27 +46,64 @@ function buy(item) {
   token.qty -= item.cost
   if (token.qty <= 0) delete store.materials['dungeon_token']
 
-  // 给予奖励
-  if (item.type === 'material') {
-    if (item.rewardId) {
-      store.addMaterial(item.rewardId, item.rewardName || item.rewardId, item.rewardQty || 1)
-    } else {
-      alert('配置错误：材料 ID 为空')
-      return
-    }
-  } else if (item.type === 'accessory') {
-    // 随机生成饰品（根据怪物强度标签，这里用 normal 作为基础）
-    const acc = rollAccessoryDrop('normal')
-    if (acc) {
-      store.inventory.push(acc)
-    } else {
-      alert('饰品生成失败')
-      return
-    }
+  let success = false
+
+  switch (item.type) {
+    case 'material':
+      if (item.rewardId) {
+        store.addMaterial(item.rewardId, item.rewardName || item.rewardId, item.rewardQty || 1)
+        success = true
+      } else {
+        alert('配置错误：材料 ID 为空')
+      }
+      break
+
+    case 'accessory':
+      const acc = rollAccessoryDrop('normal')
+      if (acc) {
+        store.inventory.push(acc)
+        success = true
+      } else {
+        alert('饰品生成失败')
+      }
+      break
+
+    case 'skillPoint':
+      store.player.skillPoints = (store.player.skillPoints || 0) + (item.rewardQty || 1)
+      success = true
+      break
+
+    case 'exp':
+      store.addExperience(item.rewardQty || 100)
+      success = true
+      break
+
+    case 'consumable':
+      // 消耗品暂存为材料，后续可接入战斗物品系统
+      if (item.rewardId) {
+        store.addMaterial(item.rewardId, item.rewardName || item.rewardId, item.rewardQty || 1)
+        success = true
+      } else {
+        alert('配置错误：消耗品 ID 为空')
+      }
+      break
+
+    default:
+      alert('未知物品类型')
+      break
   }
 
-  store.save()
-  alert(`成功兑换 ${item.name}！`)
+  if (success) {
+    store.save()
+    alert(`成功兑换 ${item.name}！`)
+  } else {
+    // 兑换失败，退回徽记
+    token.qty = (token.qty || 0) + item.cost
+    if (!store.materials['dungeon_token']) {
+      store.materials['dungeon_token'] = { qty: item.cost, name: '地下城徽记' }
+    }
+    store.save()
+  }
 }
 </script>
 

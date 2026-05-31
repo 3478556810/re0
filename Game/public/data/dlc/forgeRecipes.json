@@ -1,0 +1,156 @@
+[
+  {
+    "id": "adventurer_sword",
+    "name": "冒险者之剑",
+    "type": "weapon",
+    "icon": "mdi:sword",
+    "goldCost": 80,
+    "quality": "white",
+    "baseAtk": 15,
+    "baseDef": 0,
+    "materials": [
+      { "id": "iron_ore", "qty": 3 },
+      { "id": "slime_gel", "qty": 2 }
+    ],
+    "affixPool": []
+  },
+  {
+    "id": "adventurer_gauntlet",
+    "name": "冒险者臂甲",
+    "type": "gauntlet",
+    "icon": "mdi:arm-flex",
+    "goldCost": 60,
+    "quality": "white",
+    "baseAtk": 5,
+    "baseDef": 3,
+    "materials": [
+      { "id": "iron_ore", "qty": 2 },
+      { "id": "goblin_fang", "qty": 2 }
+    ],
+    "affixPool": []
+  },
+  {
+    "id": "adventurer_helmet",
+    "name": "冒险者兜帽",
+    "type": "helmet",
+    "icon": "mdi:hat-fedora",
+    "goldCost": 70,
+    "quality": "white",
+    "baseAtk": 0,
+    "baseDef": 8,
+    "materials": [
+      { "id": "slime_gel", "qty": 3 },
+      { "id": "iron_ore", "qty": 1 }
+    ],
+    "affixPool": []
+  },
+  {
+    "id": "adventurer_armor",
+    "name": "冒险者外衣",
+    "type": "armor",
+    "icon": "mdi:tshirt-crew",
+    "goldCost": 100,
+    "quality": "white",
+    "baseAtk": 0,
+    "baseDef": 12,
+    "materials": [
+      { "id": "goblin_fang", "qty": 4 },
+      { "id": "iron_ore", "qty": 2 }
+    ],
+    "affixPool": []
+  },
+  {
+    "id": "adventurer_pants",
+    "name": "冒险者长裤",
+    "type": "pants",
+    "icon": "mdi:pants",
+    "goldCost": 80,
+    "quality": "white",
+    "baseAtk": 0,
+    "baseDef": 10,
+    "materials": [
+      { "id": "slime_gel", "qty": 4 },
+      { "id": "goblin_fang", "qty": 2 }
+    ],
+    "affixPool": []
+  },
+  {
+    "id": "adventurer_shoes",
+    "name": "冒险者之靴",
+    "type": "shoes",
+    "icon": "mdi:shoe-sneaker",
+    "goldCost": 60,
+    "quality": "white",
+    "baseAtk": 3,
+    "baseDef": 5,
+    "materials": [
+      { "id": "iron_ore", "qty": 2 },
+      { "id": "slime_gel", "qty": 2 }
+    ],
+    "affixPool": []
+  },
+  {
+    "id": "stone_gauntlet",
+    "name": "石肤臂甲",
+    "type": "gauntlet",
+    "icon": "mdi:arm-flex-outline",
+    "goldCost": 150,
+    "quality": "green",
+    "baseAtk": 8,
+    "baseDef": 10,
+    "materials": [
+      { "id": "small_magic_stone", "qty": 2 },
+      { "id": "iron_ore", "qty": 3 },
+      { "id": "bat_wing", "qty": 2 }
+    ],
+    "affixPool": []
+  },
+  {
+    "id": "bat_wing_boots",
+    "name": "蝙蝠翼靴",
+    "type": "shoes",
+    "icon": "mdi:shoe-print",
+    "goldCost": 150,
+    "quality": "green",
+    "baseAtk": 6,
+    "baseDef": 8,
+    "materials": [
+      { "id": "bat_wing", "qty": 3 },
+      { "id": "iron_ore", "qty": 2 },
+      { "id": "slime_gel", "qty": 2 }
+    ],
+    "affixPool": []
+  },
+  {
+    "id": "reinforced_helmet",
+    "name": "强化兜帽",
+    "type": "helmet",
+    "icon": "mdi:hard-hat",
+    "goldCost": 180,
+    "quality": "green",
+    "baseAtk": 0,
+    "baseDef": 16,
+    "materials": [
+      { "id": "small_magic_stone", "qty": 2 },
+      { "id": "goblin_fang", "qty": 4 },
+      { "id": "iron_ore", "qty": 3 }
+    ],
+    "affixPool": []
+  },
+  {
+    "id": "tough_pants",
+    "name": "韧皮裤",
+    "type": "pants",
+    "icon": "mdi:pants",
+    "goldCost": 160,
+    "quality": "green",
+    "baseAtk": 0,
+    "baseDef": 18,
+    "materials": [
+      { "id": "bat_wing", "qty": 3 },
+      { "id": "goblin_fang", "qty": 3 },
+      { "id": "slime_gel", "qty": 3 }
+    ],
+    "affixPool": []
+  }
+]

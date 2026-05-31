@@ -1,0 +1,9 @@
+[
+  { "id": "slime_gel", "name": "史莱姆凝露", "type": "forge", "dropRate": 40 },
+  { "id": "goblin_fang", "name": "哥布林之牙", "type": "forge", "dropRate": 35 },
+  { "id": "bat_wing", "name": "蝙蝠翅膀", "type": "forge", "dropRate": 20 },
+  { "id": "spider_silk", "name": "蜘蛛丝", "type": "forge", "dropRate": 15 },
+  { "id": "small_magic_stone", "name": "小型魔石", "type": "ore", "dropRate": 10 },
+  { "id": "dungeon_token", "name": "地下城徽记", "type": "token", "dropRate": 0 },
+  { "id": "iron_ore", "name": "铁矿石", "type": "ore", "dropRate": 30 }
+]

@@ -3,6 +3,7 @@ import { EFFECT_TYPES } from './effectDefs';
 
 class UnitState {
   constructor(baseStats, isPlayer = false) {
+    this.isCompanion = baseStats.isCompanion || false;
     this.id = baseStats.id || 'unit';
     this.name = baseStats.name || '';
     this.isPlayer = isPlayer;
@@ -48,16 +49,18 @@ class UnitState {
 
     // 保留原始模板信息用于奖励计算
     this.base = { ...baseStats };
+  this.isCompanion = baseStats.isCompanion || false;
   }
 
   getEffectiveAttack() {
-    let atk = this.attack;
-    this.effects.forEach(eff => {
-      if (eff.type === EFFECT_TYPES.ATK_UP) atk *= (1 + eff.value);
-      else if (eff.type === EFFECT_TYPES.ATK_DOWN) atk *= (1 + eff.value);
-    });
-    return Math.max(1, Math.floor(atk));
-  }
+  let atk = this.attack;
+  this.effects.forEach(eff => {
+    if (eff.type === EFFECT_TYPES.ATK_UP) atk *= (1 + eff.value);
+    else if (eff.type === EFFECT_TYPES.ATK_DOWN) atk *= (1 + eff.value);
+    else if (eff.type === EFFECT_TYPES.WEAK) atk *= (1 + eff.value);  // 新增
+  });
+  return Math.max(1, Math.floor(atk));
+}
 
   getEffectiveDefense() {
     let def = this.defense;
@@ -67,8 +70,9 @@ class UnitState {
     });
     return Math.max(0, Math.floor(def));
   }
-
-  isStunned() { return this.effects.some(e => e.type === EFFECT_TYPES.STUN); }
+isStunned() { 
+  return this.effects.some(e => e.type === EFFECT_TYPES.STUN || e.type === EFFECT_TYPES.FREEZE); 
+}
   isSilenced() { return this.effects.some(e => e.type === EFFECT_TYPES.SILENCE); }
 
   getShield() {
@@ -123,12 +127,31 @@ addEffect(effectDef) {
   
   removeEffect(type) { this.effects = this.effects.filter(e => e.type !== type); }
 
-  onTurnEnd() {
-    this.effects.forEach(e => e.duration--);
-    this.effects = this.effects.filter(e => e.duration > 0);
-  }
+ onTurnEnd() {
+  // 再生：每回合恢复生命
+  this.effects.filter(e => e.type === EFFECT_TYPES.REGEN).forEach(e => {
+    const heal = Math.floor(this.maxHp * (e.value || 0.08));
+    this.hp = Math.min(this.maxHp, this.hp + heal);
+  });
+
+  // 流血：每回合损失生命
+  this.effects.filter(e => e.type === EFFECT_TYPES.BLEED).forEach(e => {
+    const dmg = Math.floor(this.maxHp * (e.value || 0.05));
+    this.hp -= dmg;
+    if (this.hp < 0) this.hp = 0;
+  });
+
+  // 原有逻辑
+  this.effects.forEach(e => e.duration--);
+  this.effects = this.effects.filter(e => e.duration > 0);
+}
 
   takeDamage(rawDamage, attacker) {
+      // 如果被冻结且受到攻击，额外伤害
+  if (this.effects.some(e => e.type === EFFECT_TYPES.FREEZE) && attacker) {
+    rawDamage = Math.floor(rawDamage * 1.3);  // 额外30%伤害
+    this.removeEffect(EFFECT_TYPES.FREEZE);   // 冻结解除
+  }
     let shield = this.getShield();
     let damage = rawDamage;
     if (shield > 0) {
@@ -166,13 +189,77 @@ addEffect(effectDef) {
 }
 
 export class CombatEngine {
-  constructor(playerStats, enemies) {
-    this.player = new UnitState({ ...playerStats, isPlayer: true });
-    this.enemies = enemies.map(e => new UnitState({ ...e }));
-    this.battleOver = false;
-    this.winner = null;
+
+constructor(playerStats, enemies, companion = null) {
+  this.player = new UnitState({ ...playerStats, isPlayer: true });
+  this.companion = companion ? new UnitState({ ...companion, isCompanion: true }) : null;
+  this.enemies = enemies.map(e => new UnitState({ ...e }));
+  this.battleOver = false;
+  this.winner = null;
+}
+executeCompanionAction() {
+  if (!this.companion || this.companion.hp <= 0) return { messages: [] };
+
+  const companion = this.companion;
+  const messages = [];
+
+  // 同伴被眩晕/冻结时跳过
+  if (companion.isStunned()) {
+    companion.removeEffect(EFFECT_TYPES.STUN);
+    companion.removeEffect(EFFECT_TYPES.FREEZE);
+    return { messages: [`${companion.name} 无法行动！`] };
   }
 
+  // 简单的同伴 AI：优先治疗，然后攻击
+  const playerHpPercent = this.player.hp / this.player.maxHp;
+  
+  // 玩家血量低于 40% 时尝试治疗
+  if (playerHpPercent < 0.4 && companion.mp >= 5) {
+    const heal = Math.floor(companion.getEffectiveAttack() * 0.5);
+    this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal);
+    companion.mp -= 5;
+    return { messages: [`${companion.name} 为你治疗了 ${heal} HP`] };
+  }
+
+  // 选择一个存活的敌人攻击
+  const aliveEnemies = this.getAliveEnemies();
+  if (aliveEnemies.length === 0) return { messages: [] };
+
+  const target = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+  
+  // 同伴普攻
+  const attackerSnap = {
+    attack: companion.getEffectiveAttack(),
+    critRate: companion.critRate || 5,
+    critDmg: companion.critDmg || 150,
+    trueDmg: companion.trueDmg || 0,
+    element: companion.element || '',
+  };
+  const defenderSnap = {
+    defense: target.getEffectiveDefense(),
+    element: target.element || '',
+  };
+
+  const { damage, crit } = calculateDamage(attackerSnap, defenderSnap, {
+    baseMul: 0.7,  // 同伴攻击倍率较低
+    element: companion.element || '',
+  });
+
+  target.takeDamage(damage, companion);
+  let msg = `${companion.name} 攻击了 ${target.name}，造成 ${damage} 伤害`;
+  if (crit) msg += ' (暴击)';
+  messages.push(msg);
+
+  if (target.hp <= 0) {
+    messages.push(`${target.name} 被击败！`);
+    if (this.getAliveEnemies().length === 0) {
+      this.battleOver = true;
+      this.winner = 'player';
+    }
+  }
+
+  return { messages };
+}
   getAliveEnemies() { return this.enemies.filter(e => e.hp > 0); }
 
   // 技能效果应用
@@ -188,18 +275,79 @@ export class CombatEngine {
       const duration = effDef.duration || 0;
 
       switch (effDef.type) {
-     case 'dot': {
-  const dotDamage = Math.floor(source.getEffectiveAttack() * (value || 0.1));
+case 'freeze':
+  target.addEffect({
+    type: EFFECT_TYPES.FREEZE,
+    duration: duration || 1,
+    value: value || 0,
+    stackable: false,
+  });
+  messages.push(`${target.name} 被冻结了！`);
+  break;
+case 'bleed': 
+  // 流血基于目标最大生命值的百分比，这里 value 是百分比（如 0.05 = 5%）
+  const bleedPercent = value || 0.05
+  const bleedDamage = Math.floor(target.maxHp * bleedPercent)
+  target.addEffect({
+    type: EFFECT_TYPES.BLEED,
+    value: bleedPercent,        // 存储百分比，用于 onTurnEnd 计算
+    duration: duration || 3,
+    stackable: true,
+    maxStacks: 5,
+  })
+  messages.push(`${target.name} 开始流血，每回合损失 ${bleedDamage} 点生命`)
+  break;
+
+case 'weak':
+  target.addEffect({
+    type: EFFECT_TYPES.WEAK,
+    value: value || -0.3,
+    duration: duration || 2,
+    stackable: false,
+  });
+  messages.push(`${target.name} 陷入虚弱状态`);
+  break;
+
+case 'taunt':
+  target.addEffect({
+    type: EFFECT_TYPES.TAUNT,
+    duration: duration || 2,
+    stackable: false,
+  });
+  messages.push(`${target.name} 被嘲讽了！`);
+  break;
+
+case 'regen':
+  source.addEffect({
+    type: EFFECT_TYPES.REGEN,
+    value: value || 0.08,
+    duration: duration || 3,
+    stackable: false,
+  });
+  messages.push(`${source.name} 获得再生效果`);
+  break;
+
+case 'lifestealBuff':
+  source.addEffect({
+    type: EFFECT_TYPES.LIFESTEAL_BUFF,
+    value: value || 0.15,
+    duration: duration || 3,
+    stackable: false,
+  });
+  messages.push(`${source.name} 的吸血效果增强了`);
+case 'dot': {
+  // value 现在是倍率（如 0.3 表示攻击力×30%），不再是直接数值
+  const dotDamage = Math.floor(source.getEffectiveAttack() * Math.min(value || 0.1, 1.0));
   const added = target.addEffect({
     type: EFFECT_TYPES.DOT,
     value: dotDamage,
-    duration: duration,          // 直接使用，不要修改
+    duration: duration,
     stackable: true,
     maxStacks: 3,
     noRefresh: effDef.noRefresh ?? false,
   });
   if (added) {
-  messages.push(`${target.name} 被附加了持续伤害，每回合损失 ${dotDamage} 点生命，持续 ${duration} 回合`);
+    messages.push(`${target.name} 被附加了持续伤害，每回合损失 ${dotDamage} 点生命，持续 ${duration} 回合`);
   }
   break;
 }
@@ -255,13 +403,19 @@ export class CombatEngine {
 
   executePlayerAction(skill, targetIndex) {
   if (this.battleOver) return null;
-  const target = this.enemies[targetIndex];
-  if (!target || target.hp <= 0) return null;
+
+  // 确定目标列表：AOE 取所有存活敌人，否则取指定目标
+  const isAoeDamage = skill.target === 'aoe';
+  const targets = isAoeDamage
+    ? this.getAliveEnemies()
+    : [this.enemies[targetIndex]].filter(t => t && t.hp > 0);
+
+  if (targets.length === 0) return null;
 
   const result = {
     type: 'player_action',
     skill: skill.name,
-    target: target.name,
+    target: isAoeDamage ? '全体敌人' : targets[0].name,
     damage: 0,
     healing: 0,
     mpDrain: 0,
@@ -294,60 +448,92 @@ export class CombatEngine {
     return result;
   }
 
-  // 伤害计算
-  const attackerSnap = {
-    attack: this.player.getEffectiveAttack(),
-    critRate: this.player.critRate,
-    critDmg: this.player.critDmg,
-    trueDmg: this.player.trueDmg,
-    element: skill.element || '',
-  };
-  if (skill.element) attackerSnap[skill.element + 'Dmg'] = this.player.elemDmg[skill.element] || 0;
+  // 伤害计算（对每个目标）
+  let totalDamage = 0;
+  for (const target of targets) {
+    const attackerSnap = {
+      attack: this.player.getEffectiveAttack(),
+      critRate: this.player.critRate,
+      critDmg: this.player.critDmg,
+      trueDmg: this.player.trueDmg,
+      element: skill.element || '',
+    };
+    if (skill.element) attackerSnap[skill.element + 'Dmg'] = this.player.elemDmg[skill.element] || 0;
 
-  const defenderSnap = {
-    defense: target.getEffectiveDefense(),
-    element: target.element,
-  };
+    const defenderSnap = {
+      defense: target.getEffectiveDefense(),
+      element: target.element,
+    };
 
-  const { damage, crit, multiplier } = calculateDamage(attackerSnap, defenderSnap, skill);
-  target.takeDamage(damage, this.player);
-  result.damage = damage;
-  result.crit = crit;
-  result.multiplier = multiplier;
+    const { damage, crit, multiplier } = calculateDamage(attackerSnap, defenderSnap, skill);
+    target.takeDamage(damage, this.player);
+    totalDamage += damage;
 
-  let msg = `${this.player.name} 使用${skill.name}，造成 ${damage} 伤害`;
-  if (crit) msg += ' (暴击)';
-  if (multiplier > 1) msg += ' 效果拔群！';
-  if (multiplier < 1) msg += ' 效果不理想...';
-  result.messages.push(msg);
+    // 吸血吸蓝（基于单次伤害）
+    const actualHpLoss = Math.min(target.hp + damage, damage);
+    if (this.player.lifesteal > 0) {
+      const drain = Math.floor(actualHpLoss * this.player.lifesteal / 100);
+      if (drain > 0) {
+        this.player.hp = Math.min(this.player.maxHp, this.player.hp + drain);
+        result.hpDrain += drain;
+      }
+    }
+    if (this.player.mpLifesteal > 0) {
+      const drain = Math.floor(actualHpLoss * this.player.mpLifesteal / 100);
+      if (drain > 0) {
+        this.player.mp = Math.min(this.player.maxMp, this.player.mp + drain);
+        result.mpDrain += drain;
+      }
+    }
 
-  // 吸血吸蓝
-  const actualHpLoss = Math.min(target.hp + damage, damage);
-  if (this.player.lifesteal > 0) {
-    const drain = Math.floor(actualHpLoss * this.player.lifesteal / 100);
-    if (drain > 0) {
-      this.player.hp = Math.min(this.player.maxHp, this.player.hp + drain);
-      result.hpDrain = drain;
-      result.messages.push(`吸取了 ${drain} HP`);
+    let msg;
+    if (isAoeDamage) {
+      msg = `${this.player.name} 使用${skill.name}，对 ${target.name} 造成 ${damage} 伤害`;
+    } else {
+      msg = `${this.player.name} 使用${skill.name}，造成 ${damage} 伤害`;
+    }
+    if (crit) msg += ' (暴击)';
+    if (multiplier > 1) msg += ' 效果拔群！';
+    if (multiplier < 1) msg += ' 效果不理想...';
+    result.messages.push(msg);
+
+    // 记录首次暴击/倍率（用于整体展示）
+    if (target === targets[0]) {
+      result.crit = crit;
+      result.multiplier = multiplier;
     }
   }
-  if (this.player.mpLifesteal > 0) {
-    const drain = Math.floor(actualHpLoss * this.player.mpLifesteal / 100);
-    if (drain > 0) {
-      this.player.mp = Math.min(this.player.maxMp, this.player.mp + drain);
-      result.mpDrain = drain;
-      result.messages.push(`吸取了 ${drain} MP`);
-    }
-  }
+  result.damage = totalDamage;
 
-  // 应用技能自带效果（dot、buff、debuff 等）
+  // 吸血吸蓝总结
+  if (result.hpDrain > 0) result.messages.push(`合计吸取了 ${result.hpDrain} HP`);
+  if (result.mpDrain > 0) result.messages.push(`合计吸取了 ${result.mpDrain} MP`);
+
+  // 应用技能效果（AOE 效果与伤害 AOE 独立，可叠加）
   if (skill.effects && skill.effects.length > 0) {
-    const effectMsgs = this.applySkillEffects(this.player, target, skill.effects);
-    result.messages.push(...effectMsgs);
+    for (const effDef of skill.effects) {
+      if (effDef.target === 'aoe' || isAoeDamage) {
+        // AOE 效果：对所有敌人施加
+        const aliveEnemies = this.getAliveEnemies();
+        for (const enemy of aliveEnemies) {
+          const msgs = this.applySkillEffects(this.player, enemy, [effDef]);
+          result.messages.push(...msgs);
+        }
+      } else {
+        // 单体效果：对第一个目标（或原选中目标）
+        const primaryTarget = targets[0];
+        if (primaryTarget) {
+          const msgs = this.applySkillEffects(this.player, primaryTarget, [effDef]);
+          result.messages.push(...msgs);
+        }
+      }
+    }
   }
 
-  // 检查目标死亡
-  if (target.hp <= 0) result.messages.push(`${target.name} 被击败！`);
+  // 检查是否有敌人死亡
+  for (const target of targets) {
+    if (target.hp <= 0) result.messages.push(`${target.name} 被击败！`);
+  }
   if (this.getAliveEnemies().length === 0) {
     this.battleOver = true;
     this.winner = 'player';
@@ -424,10 +610,22 @@ export class CombatEngine {
       };
 
       // 敌人技能效果
-      if (skill.effects && skill.effects.length > 0) {
-        const effectMsgs = this.applySkillEffects(enemy, this.player, skill.effects);
-        res.messages.push(...effectMsgs);
+     if (skill.effects && skill.effects.length > 0) {
+  for (const effDef of skill.effects) {
+    if (effDef.target === 'aoe') {
+      // 怪物全体效果：对玩家和同伴施加
+      const targets = [this.player];
+      if (this.companion && this.companion.hp > 0) targets.push(this.companion);
+      for (const t of targets) {
+        const msgs = this.applySkillEffects(enemy, t, [effDef]);
+        res.messages.push(...msgs);
       }
+    } else {
+      const msgs = this.applySkillEffects(enemy, this.player, [effDef]);
+      res.messages.push(...msgs);
+    }
+  }
+}
 
       results.push(res);
 
@@ -493,6 +691,14 @@ executeSingleEnemyAction(enemy) {
     };
   }
 
+  // 随机选择攻击目标：玩家 或 存活的同伴
+  const targets = [this.player];
+  if (this.companion && this.companion.hp > 0) {
+    targets.push(this.companion);
+  }
+  const target = targets[Math.floor(Math.random() * targets.length)];
+
+  // 技能选择
   let skill;
   if (enemy.skills && enemy.skills.length > 0) {
     const randomIdx = Math.floor(Math.random() * enemy.skills.length);
@@ -509,14 +715,14 @@ executeSingleEnemyAction(enemy) {
   };
   if (skill.element) attackerSnap[skill.element + 'Dmg'] = enemy.elemDmg[skill.element] || 0;
   const defenderSnap = {
-    defense: this.player.getEffectiveDefense(),
-    element: this.player.element,
+    defense: target.getEffectiveDefense(),
+    element: target.element,
   };
 
   const { damage, crit, multiplier } = calculateDamage(attackerSnap, defenderSnap, skill);
-  this.player.takeDamage(damage, enemy);
+  target.takeDamage(damage, enemy);
 
-  let msg = `${enemy.name} 使用 ${skill.name}，造成 ${damage} 伤害`;
+  let msg = `${enemy.name} 使用 ${skill.name}，对 ${target.name} 造成 ${damage} 伤害`;
   if (crit) msg += ' (暴击)';
 
   const res = {
@@ -528,19 +734,33 @@ executeSingleEnemyAction(enemy) {
     messages: [msg],
   };
 
-  if (skill.effects && skill.effects.length > 0) {
-    const effectMsgs = this.applySkillEffects(enemy, this.player, skill.effects);
-    res.messages.push(...effectMsgs);
+   if (skill.effects && skill.effects.length > 0) {
+    for (const effDef of skill.effects) {
+      if (effDef.target === 'aoe') {
+        // 敌人 AOE：对我方全体（玩家 + 存活的同伴）
+        const targets = [this.player];
+        if (this.companion && this.companion.hp > 0) targets.push(this.companion);
+        for (const t of targets) {
+          const msgs = this.applySkillEffects(enemy, t, [effDef]);
+          res.messages.push(...msgs);
+        }
+      } else {
+        // 单体效果
+        const msgs = this.applySkillEffects(enemy, target, [effDef]);
+        res.messages.push(...msgs);
+      }
+    }
   }
 
-
-
-  // 检查玩家是否死亡
-  if (this.player.hp <= 0) {
+  // 检查目标死亡
+  if (target === this.player && this.player.hp <= 0) {
     this.player.hp = 0;
     this.battleOver = true;
     this.winner = 'enemy';
     res.messages.push('玩家倒下了...');
+  } else if (target === this.companion && this.companion.hp <= 0) {
+    this.companion.hp = 0;
+    res.messages.push(`${this.companion.name} 倒下了！`);
   }
 
   return res;
