@@ -56,6 +56,11 @@ function fallbackSpawnEnemy(template, playerLevel) {
 // 全局时间流逝
 let timeInterval
 onMounted(() => {
+  // 请求全屏（需在用户手势中触发）
+document.addEventListener('click', () => {
+  if (document.fullscreenElement) return
+  document.documentElement.requestFullscreen?.().catch(() => {})
+}, { once: true })
     // 页面刷新后，清理可能残留的战斗状态
   if (!inBattle.value) {
     storyBattleConfig.value = null
