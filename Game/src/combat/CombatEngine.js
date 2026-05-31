@@ -7,7 +7,17 @@ class UnitState {
     this.id = baseStats.id || 'unit';
     this.name = baseStats.name || '';
     this.isPlayer = isPlayer;
-
+ this.isBoss = baseStats.isBoss || false;
+  this.traits = baseStats.traits || [];
+  // 向后兼容旧的字符串 trait
+  if (typeof baseStats.trait === 'string' && baseStats.trait) {
+    this.traits.push(baseStats.trait);
+  }
+  // 复活相关
+  this.hasRevived = false;
+  // 狂暴相关
+  this.enrageTurn = baseStats.enrageTurn || 0;   // 可手动覆盖狂暴回合
+  this.isEnraged = false;
     // 基础面板
     this.attack = baseStats.attack || baseStats.atk || 10;
     this.defense = baseStats.defense || baseStats.def || 5;
@@ -163,8 +173,20 @@ addEffect(effectDef) {
         this.removeEffect(EFFECT_TYPES.SHIELD);
       }
     }
+  
+
+
+
     this.hp -= damage;
-    if (this.hp < 0) this.hp = 0;
+  if (this.hp <= 0) {
+    // 检查复活特性
+    if (this.traits.includes('revive') && !this.hasRevived) {
+      this.hasRevived = true;
+      this.hp = Math.floor(this.maxHp * 0.3);  // 复活 30% 血量
+      return { damage, revived: true };  // 返回特殊标记
+    }
+  }
+  
     // 反伤
     let reflectDmg = 0;
     this.effects.forEach(e => {
@@ -196,6 +218,27 @@ constructor(playerStats, enemies, companion = null) {
   this.enemies = enemies.map(e => new UnitState({ ...e }));
   this.battleOver = false;
   this.winner = null;
+ this.turnCount = 0;
+
+}
+
+endTurn() {
+  this.turnCount++;
+  
+  // Boss 自动狂暴（默认第 4 回合，如果怪物有 enrageTurn 则优先）
+  this.enemies.forEach(enemy => {
+    if (enemy.isBoss && !enemy.isEnraged) {
+      const triggerTurn = enemy.enrageTurn || 4;
+      if (this.turnCount >= triggerTurn) {
+        enemy.isEnraged = true;
+        enemy.attack = Math.floor(enemy.attack * 1.5);
+        // 战斗消息会由 BattleScene 在下次行动时显示
+      }
+    }
+  });
+
+  this.player.onTurnEnd();
+  this.enemies.forEach(e => e.onTurnEnd());
 }
 executeCompanionAction() {
   if (!this.companion || this.companion.hp <= 0) return { messages: [] };
@@ -401,10 +444,9 @@ case 'dot': {
     return messages;
   }
 
-  executePlayerAction(skill, targetIndex) {
+executePlayerAction(skill, targetIndex) {
   if (this.battleOver) return null;
 
-  // 确定目标列表：AOE 取所有存活敌人，否则取指定目标
   const isAoeDamage = skill.target === 'aoe';
   const targets = isAoeDamage
     ? this.getAliveEnemies()
@@ -425,21 +467,18 @@ case 'dot': {
     multiplier: 1,
   };
 
-  // 眩晕检查
   if (this.player.isStunned()) {
     result.messages.push(`${this.player.name} 被眩晕，无法行动！`);
     this.player.removeEffect(EFFECT_TYPES.STUN);
     return result;
   }
 
-  // MP 检查
   if (skill.mpCost > 0 && this.player.mp < skill.mpCost) {
     result.messages.push('MP不足！');
     return result;
   }
   this.player.mp -= skill.mpCost;
 
-  // 治疗技能
   if (skill.healMul) {
     const heal = Math.floor(this.player.getEffectiveAttack() * skill.healMul);
     this.player.hp = Math.min(this.player.maxHp, this.player.hp + heal);
@@ -448,7 +487,7 @@ case 'dot': {
     return result;
   }
 
-  // 伤害计算（对每个目标）
+  // 伤害计算
   let totalDamage = 0;
   for (const target of targets) {
     const attackerSnap = {
@@ -466,11 +505,21 @@ case 'dot': {
     };
 
     const { damage, crit, multiplier } = calculateDamage(attackerSnap, defenderSnap, skill);
+    
+    // 记录伤害前血量
+    const hpBefore = target.hp;
     target.takeDamage(damage, this.player);
     totalDamage += damage;
 
-    // 吸血吸蓝（基于单次伤害）
-    const actualHpLoss = Math.min(target.hp + damage, damage);
+    // 复活检查（每个目标独立）
+    if (target.traits?.includes('revive') && !target.hasRevived && target.hp <= 0) {
+      target.hasRevived = true;
+      target.hp = Math.floor(target.maxHp * 0.3);
+      result.messages.push(`${target.name} 复活了！`);
+    }
+
+    // 吸血吸蓝
+    const actualHpLoss = Math.min(hpBefore + damage, damage);
     if (this.player.lifesteal > 0) {
       const drain = Math.floor(actualHpLoss * this.player.lifesteal / 100);
       if (drain > 0) {
@@ -497,42 +546,87 @@ case 'dot': {
     if (multiplier < 1) msg += ' 效果不理想...';
     result.messages.push(msg);
 
-    // 记录首次暴击/倍率（用于整体展示）
     if (target === targets[0]) {
       result.crit = crit;
       result.multiplier = multiplier;
     }
+
+    if (target.hp <= 0) result.messages.push(`${target.name} 被击败！`);
+    if (this.getAliveEnemies().length === 0) {
+      this.battleOver = true;
+      this.winner = 'player';
+      break;
+    }
   }
+
   result.damage = totalDamage;
 
-  // 吸血吸蓝总结
+  // 追加攻击（三脚架效果，只对主目标一次）
+  // 通用三脚架特殊动作处理（追加攻击、溅射等）
+if (skill.extraActions && skill.extraActions.length > 0 && !this.battleOver) {
+  for (const action of skill.extraActions) {
+    if (action.note === '追加攻击') {
+      const mainTarget = targets[0]
+      if (!mainTarget || mainTarget.hp <= 0) continue
+      const chance = action.chance || 100
+      if (Math.random() * 100 < chance) {
+        const mul = (action.value || 50) / 100
+        const attackerSnap = {
+          attack: this.player.getEffectiveAttack(),
+          critRate: this.player.critRate,
+          critDmg: this.player.critDmg,
+          trueDmg: this.player.trueDmg,
+          element: skill.element || '',
+        }
+        if (skill.element) attackerSnap[skill.element + 'Dmg'] = this.player.elemDmg[skill.element] || 0
+        const defenderSnap = {
+          defense: mainTarget.getEffectiveDefense(),
+          element: mainTarget.element,
+        }
+        const { damage: extraDmg } = calculateDamage(attackerSnap, defenderSnap, {
+          baseMul: skill.baseMul * mul,
+          element: skill.element || ''
+        })
+        mainTarget.takeDamage(extraDmg, this.player)
+        result.damage += extraDmg
+        result.messages.push(`追加攻击造成 ${extraDmg} 点伤害`)
+        if (mainTarget.hp <= 0) {
+          result.messages.push(`${mainTarget.name} 被击败！`)
+          if (this.getAliveEnemies().length === 0) {
+            this.battleOver = true
+            this.winner = 'player'
+          }
+        }
+      }
+    }
+    // 未来可扩展：溅射（对相邻敌人造成伤害）、额外回合等
+  }
+}
+  
+
   if (result.hpDrain > 0) result.messages.push(`合计吸取了 ${result.hpDrain} HP`);
   if (result.mpDrain > 0) result.messages.push(`合计吸取了 ${result.mpDrain} MP`);
 
-  // 应用技能效果（AOE 效果与伤害 AOE 独立，可叠加）
+  // 技能效果（AOE 与单体）
   if (skill.effects && skill.effects.length > 0) {
     for (const effDef of skill.effects) {
       if (effDef.target === 'aoe' || isAoeDamage) {
-        // AOE 效果：对所有敌人施加
-        const aliveEnemies = this.getAliveEnemies();
-        for (const enemy of aliveEnemies) {
+        for (const enemy of this.getAliveEnemies()) {
           const msgs = this.applySkillEffects(this.player, enemy, [effDef]);
           result.messages.push(...msgs);
         }
       } else {
-        // 单体效果：对第一个目标（或原选中目标）
-        const primaryTarget = targets[0];
-        if (primaryTarget) {
-          const msgs = this.applySkillEffects(this.player, primaryTarget, [effDef]);
+        if (targets[0]) {
+          const msgs = this.applySkillEffects(this.player, targets[0], [effDef]);
           result.messages.push(...msgs);
         }
       }
     }
   }
 
-  // 检查是否有敌人死亡
-  for (const target of targets) {
-    if (target.hp <= 0) result.messages.push(`${target.name} 被击败！`);
+  // 最终检查
+  for (const t of targets) {
+    if (t.hp <= 0) result.messages.push(`${t.name} 被击败！`);
   }
   if (this.getAliveEnemies().length === 0) {
     this.battleOver = true;
@@ -639,10 +733,7 @@ case 'dot': {
     return results;
   }
 
-  endTurn() {
-    this.player.onTurnEnd();
-    this.enemies.forEach(e => e.onTurnEnd());
-  }
+
 
   getRewards() {
     if (this.winner !== 'player') return { exp: 0, materials: [], accessories: [] };

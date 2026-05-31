@@ -6,25 +6,28 @@
         <Icon icon="mdi:pickaxe" />
         <span>{{ store.mine.currentFloor }}F</span>
       </div>
-   
       <div class="status-item">
         <Icon icon="mdi:clock-outline" />
         <span>{{ timeStr }}</span>
       </div>
-      <div class="status-item loot-preview" @click="showLoot = !showLoot">
+      <button class="pixel-btn small" @click="showElevator = true">
+        <Icon icon="mdi:elevator" /> 电梯 ({{ Array.isArray(store.mine.unlockedFloors) ? store.mine.unlockedFloors.join(', ') : '1' }}F)
+      </button>
+      <div class="status-item loot-preview" @click="showBasket = !showBasket">
         <Icon icon="mdi:bag-personal" />
-        <span class="loot-count">{{ totalLoot }}</span>
+        <span class="loot-count">{{ totalInBasket }}</span>
       </div>
       <button class="leave-btn" @click="$emit('close')">离开</button>
     </div>
 
-    <!-- 收获详情（点击展开） -->
-    <div v-if="showLoot" class="loot-detail">
-      <div v-for="(qty, id) in loot" :key="id" class="loot-item">
+    <!-- 收获筐 -->
+    <div v-if="showBasket" class="loot-detail">
+      <div v-for="(qty, id) in store.mine.basket" :key="id" class="loot-item">
         <Icon :icon="getMaterialIcon(id)" />
         <span>{{ store.getMaterialName(id) }} ×{{ qty }}</span>
       </div>
-      <div v-if="Object.keys(loot).length === 0" class="loot-empty">暂无</div>
+      <div>总计：{{ totalInBasket }} / {{ store.mine.maxBasketSize }}</div>
+      <div v-if="Object.keys(store.mine.basket).length === 0" class="loot-empty">筐是空的</div>
     </div>
 
     <!-- 地图容器 -->
@@ -37,10 +40,10 @@
           :class="[tile, { 'player-cell': idx === playerPos }]"
           @click="handleCellClick(tile, idx)"
         >
-                  <template v-if="idx === playerPos">
-  <img v-if="playerImage" :src="playerImage" class="player-head-icon" />
-  <Icon v-else icon="mdi:account-circle" class="player-full-icon" />
-</template>
+          <template v-if="idx === playerPos">
+            <img v-if="playerImage" :src="playerImage" class="player-head-icon" />
+            <Icon v-else icon="mdi:account-circle" class="player-full-icon" />
+          </template>
           <template v-else>
             <Icon v-if="tile === 'rock' || tile === 'junk'" icon="mdi:stone" class="cell-icon" />
             <Icon v-else-if="tile === 'ladder'" icon="mdi:arrow-down-bold-circle" class="cell-icon" />
@@ -48,11 +51,9 @@
           </template>
         </div>
       </div>
-
-      <!-- 虚拟方向键 (手机专用) -->
-      
     </div>
-    <!-- 方向键：左侧（上、左、下、右） -->
+
+    <!-- 方向键 -->
     <div class="dpad-left">
       <div class="dpad-row">
         <div class="dpad-btn" @touchstart.prevent="tryMove(-1, 0)" @click="tryMove(-1, 0)">
@@ -72,15 +73,26 @@
       </div>
     </div>
 
-    <!-- 交互按钮：右侧大按钮 -->
+    <!-- 交互按钮 -->
     <div class="action-right" @touchstart.prevent="interact" @click="interact">
       <Icon icon="mdi:hand-back-right" class="action-icon" />
       <span>交互</span>
     </div>
-    <!-- 获得材料提示（浮动消失） -->
+
+    <!-- 获得材料提示 -->
     <Transition name="fade">
       <div v-if="toastMessage" class="material-toast">{{ toastMessage }}</div>
     </Transition>
+
+    <!-- 电梯面板 -->
+    <div v-if="showElevator" class="elevator-panel">
+      <h3>选择楼层</h3>
+      <button v-for="floor in store.mine.unlockedFloors" :key="floor"
+        class="pixel-btn small" @click="goToFloor(floor)">
+        第 {{ floor }} 层
+      </button>
+      <button class="pixel-btn small" @click="showElevator = false">关闭</button>
+    </div>
   </div>
 </template>
 
@@ -99,10 +111,12 @@ import {
 
 const store = useGameStore()
 const emit = defineEmits(['close', 'startBattle'])
-const loot = ref({})
-const showLoot = ref(false)
 const toastMessage = ref('')
 let toastTimer = null
+
+const totalInBasket = computed(() =>
+  Object.values(store.mine.basket).reduce((sum, q) => sum + q, 0)
+)
 
 const rows = 20
 const cols = 20
@@ -115,15 +129,6 @@ const playerPos = computed(() => playerRow.value * cols + playerCol.value)
 const grid = ref([])
 const flatGrid = computed(() => grid.value.flat())
 
-const staminaPercent = computed(() => {
-  const max = store.player.maxStamina || 100
-  return Math.min(100, (store.player.stamina / max) * 100)
-})
-
-const totalLoot = computed(() =>
-  Object.values(loot.value).reduce((a, b) => a + b, 0)
-)
-
 const timeStr = computed(() => {
   const total = store.world.gameTime
   const h = Math.floor(total / 60).toString().padStart(2, '0')
@@ -135,11 +140,16 @@ const mapContainer = ref(null)
 const containerWidth = ref(0)
 const containerHeight = ref(0)
 const ready = ref(false)
+
+const showBasket = ref(false)
+const showElevator = ref(false)
+
 const playerImage = computed(() => {
   const imgs = store.config?.customImages
   if (!imgs) return null
   return imgs.player || imgs.hero || Object.values(imgs)[0] || null
 })
+
 const cameraStyle = computed(() => {
   if (!ready.value) return { left: '0px', top: '0px' }
   const playerX = playerCol.value * cellSize + cellSize / 2
@@ -172,11 +182,16 @@ function showToast(text) {
   toastTimer = setTimeout(() => { toastMessage.value = '' }, 1500)
 }
 
-// 生成新楼层
-function newFloor() {
-   const isNight = store.world.gameTime >= 1080 || store.world.gameTime < 360  // 18:00-6:00
-  grid.value = generateCave(rows, cols, isNight ? 1.5 : 1)  // 夜间怪物密度×1.5
+function goToFloor(floor) {
+  store.mine.currentFloor = floor
+  showElevator.value = false
+  newFloor()
+  showToast(`电梯直达第 ${floor} 层`)
+}
 
+function newFloor() {
+  const isNight = store.world.gameTime >= 1080 || store.world.gameTime < 360
+  grid.value = generateCave(rows, cols, isNight ? 1.5 : 1)
   const centerR = Math.floor(rows / 2)
   const centerC = Math.floor(cols / 2)
 
@@ -185,7 +200,6 @@ function newFloor() {
     playerCol.value = centerC
     return
   }
-
   for (let r = 1; r < rows - 1; r++) {
     for (let c = 1; c < cols - 1; c++) {
       if (grid.value[r][c] === TILE.EMPTY) {
@@ -215,12 +229,9 @@ async function initMap() {
 }
 
 onMounted(() => {
-  store.player.stamina = 100
-  store.player.maxStamina = 100
   window.addEventListener('keydown', handleKeydown)
   window.addEventListener('resize', updateContainerSize)
   initMap()
-
   monsterTimer = setInterval(() => {
     if (grid.value.length) moveMonsters(grid.value, rows, cols)
   }, 1500)
@@ -236,11 +247,9 @@ let monsterTimer = null
 
 watch(() => store.mine.currentFloor, () => {
   newFloor()
-  loot.value = {}
   nextTick(() => ready.value = true)
 })
 
-// 通用移动逻辑（键盘和按钮共用）
 function tryMove(dr, dc) {
   const nr = playerRow.value + dr
   const nc = playerCol.value + dc
@@ -278,7 +287,6 @@ function handleKeydown(e) {
   tryMove(dr, dc)
 }
 
-// 手机点击相邻格子
 function handleCellClick(tile, index) {
   const clickedRow = Math.floor(index / cols)
   const clickedCol = index % cols
@@ -296,7 +304,6 @@ function handleCellClick(tile, index) {
   }
 }
 
-// 交互键（电脑E或手机中间按钮）
 function interact() {
   const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]]
   for (const [dr, dc] of dirs) {
@@ -311,33 +318,44 @@ function interact() {
 }
 
 function dig(r, c) {
-  const totalMats = Object.values(store.materials).reduce((sum, m) => sum + m.qty, 0)
-if (totalMats >= 30) {  // 背包上限30个
-  showToast('背包已满！请回城整理')
-  return
-}
+  if (totalInBasket.value >= store.mine.maxBasketSize) {
+    showToast('收获筐已满！下到5层存档或离开矿洞')
+    return
+  }
   const oreId = rollOreDynamic(store.config.materialDefinitions, store.mine.currentFloor)
-  store.addMaterial(oreId, store.getMaterialName(oreId), 1)
-  if (!loot.value[oreId]) loot.value[oreId] = 0
-  loot.value[oreId]++
+  if (!store.mine.basket[oreId]) store.mine.basket[oreId] = 0
+  store.mine.basket[oreId]++
   showToast(`获得 ${store.getMaterialName(oreId)}`)
   grid.value[r][c] = Math.random() < 0.15 ? TILE.LADDER : TILE.EMPTY
 }
 
 function digJunk(r, c) {
-  store.addMaterial('waste_stone', '废石', 1)
-  if (!loot.value['waste_stone']) loot.value['waste_stone'] = 0
-  loot.value['waste_stone']++
+  if (totalInBasket.value >= store.mine.maxBasketSize) {
+    showToast('收获筐已满！下到5层存档或离开矿洞')
+    return
+  }
+  const junkId = 'waste_stone'
+  if (!store.mine.basket[junkId]) store.mine.basket[junkId] = 0
+  store.mine.basket[junkId]++
   showToast('获得 废石')
   grid.value[r][c] = TILE.EMPTY
 }
 
 function goDown() {
-  showToast('进入下一层...')
   store.mine.currentFloor++
-  if (store.mine.currentFloor > store.mine.unlockedFloors) {
-    store.mine.unlockedFloors = store.mine.currentFloor
+  if (store.mine.currentFloor % 5 === 0) {
+    for (const [id, qty] of Object.entries(store.mine.basket)) {
+      store.addMaterial(id, store.getMaterialName(id), qty)
+    }
+    store.mine.basket = {}
+    if (!store.mine.unlockedFloors.includes(store.mine.currentFloor)) {
+      store.mine.unlockedFloors.push(store.mine.currentFloor)
+    }
+    store.mine.savedFloors[store.mine.currentFloor] = true
+    store.save()
+    showToast(`第 ${store.mine.currentFloor} 层已存档！材料已存入背包`)
   }
+  newFloor()
 }
 </script>
 
