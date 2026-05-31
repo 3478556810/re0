@@ -96,20 +96,20 @@ function craft(recipe) {
   }
 
   // 生成装备对象
- const item = {
-    id: `equip_${Date.now()}`,
-    name: recipe.name,
-    icon: recipe.icon || (recipe.type === 'weapon' ? 'mdi:sword' : 'mdi:shield'),
-    type: recipe.type,
-    part: recipe.type === 'weapon' ? 'weapon' : 'armor', // 新增：装备槽位
-    levelRequired: recipe.levelRequired || 1,
-    quality: recipe.quality || 'white',
-   atk: (recipe.baseAtk || 0) + Math.floor(Math.random() * 5),   // ±0~4 浮动   // 改用 baseAtk
-    def: recipe.baseDef || 0,   // 改用 baseDef
-    gemSlots: recipe.gemSlots || 0,
-    setId: recipe.setId || '',
-    affixes,  // 已有
-  }
+const item = {
+  id: `equip_${Date.now()}`,
+  name: recipe.name,
+  icon: recipe.icon || (recipe.type === 'weapon' ? 'mdi:sword' : 'mdi:shield'),
+  type: recipe.type,
+  part: recipe.type || 'armor', // 直接用配方中的 type 字段作为槽位
+  levelRequired: recipe.levelRequired || 1,
+  quality: recipe.quality || 'white',
+  atk: recipe.baseAtk || 0,
+  def: recipe.baseDef || 0,
+  gemSlots: recipe.gemSlots || 0,
+  setId: recipe.setId || '',
+  affixes,
+}
 
   store.inventory.push(item)
   store.save()

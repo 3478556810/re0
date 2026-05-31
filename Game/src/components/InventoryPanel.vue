@@ -76,15 +76,17 @@
     :key="item.id"
     class="acc-card"
     :class="'quality-' + item.quality"
-    @click="equipItemFromInv(item)"
+   @click="equipItemLocal(item)"
     @mouseenter="showTooltip(item, $event)"
     @mouseleave="hideTooltip"
   >
-    <div class="acc-name" :style="{ color: qualityColor(item.quality) }">{{ item.name }}</div>
+    <div class="acc-name" :style="{ color: qualityColor(item.quality) }">{{ item.name }}<span v-if="item.level" style="font-size:7px;color:#aaa;">Lv.{{ item.level }}</span></div>
     <div class="tooltip-stats">
       <span>攻击 +{{ item.atk }}</span>
       <span>防御 +{{ item.def }}</span>
     </div>
+  
+  <button class="pixel-btn small danger" @click.stop="deleteEquipment(item)">删除</button>
   </div>
 </div>
 
@@ -102,11 +104,11 @@
                 :key="acc.id"
                 class="acc-card"
                 :class="'quality-' + acc.quality"
-                @click="equipAccessoryFromInv(acc)"
+               @click="equipAccessoryLocal(acc)"
                 @mouseenter="showTooltip(acc, $event)"
                 @mouseleave="hideTooltip"
               >
-                <div class="acc-name" :style="{ color: qualityColor(acc.quality) }">{{ acc.name }}</div>
+                <div class="acc-name" :style="{ color: qualityColor(acc.quality) }">{{ acc.name }}<span v-if="acc.level" class="acc-level">Lv.{{ acc.level }}</span></div>
                 <div class="acc-affixes" v-if="acc.affixes?.length">
                   <span v-for="aff in acc.affixes" :key="aff.id" class="acc-affix-tag">
                     {{ getAffixName(aff.id) }} Lv.{{ aff.level }}
@@ -161,7 +163,7 @@
 
       <!-- 悬浮提示 -->
       <div v-if="tooltip.visible" class="tooltip" :style="{ left: tooltip.x + 'px', top: tooltip.y + 'px' }">
-        <div class="tooltip-name" :style="{ color: tooltip.qualityColor }">{{ tooltip.name }}</div>
+        <div class="tooltip-name" :style="{ color: tooltip.qualityColor }">{{ tooltip.name }}<span v-if="tooltip.level" style="font-size:7px;color:#aaa;">Lv.{{ tooltip.level }}</span></div>
         <div class="tooltip-quality" :style="{ color: tooltip.qualityColor }">{{ qualityText(tooltip.quality) }}</div>
         <div class="tooltip-stats">
           <div class="tooltip-stat-row"><Icon icon="mdi:sword" /> 攻击 +{{ tooltip.atk }}</div>
@@ -191,13 +193,22 @@ const store = useGameStore()
 
 // 饰品槽位列表（关键！修复前缺少这个定义）
 const accessorySlots = ['necklace', 'ring1', 'ring2', 'earring1', 'earring2']
-
+function deleteEquipment(item) {
+  if (!confirm(`确定要删除 ${item.name} 吗？`)) return
+  const idx = store.inventory.indexOf(item)
+  if (idx > -1) {
+    store.inventory.splice(idx, 1)
+    store.save()
+  }
+}
 // 武器 / 防具
 const equipmentItems = computed(() => {
   return (store.inventory || []).filter(item => {
     if (!item) return false
-    if (item.type === 'weapon' || item.type === 'armor') return true
-    if (item.part && !accessorySlots.includes(item.part) && (item.atk || item.def)) return true
+    // 只要有 part 字段且不是饰品槽位，就视为装备（武器、防具、臂甲等）
+    if (item.part && !accessorySlots.includes(item.part)) return true
+    // 兜底：没有 part 但 type 是 weapon 或 armor，或者有 atk/def 属性
+    if ((item.type === 'weapon' || item.type === 'armor' || item.atk || item.def) && !item.part) return true
     return false
   })
 })
@@ -209,7 +220,20 @@ const accessoryItems = computed(() => {
     return item.part && accessorySlots.includes(item.part)
   })
 })
+function equipAccessoryLocal(acc) {
+  if (!acc || !acc.part) return
+  const slot = acc.part
+  const idx = store.inventory.findIndex(i => i.id === acc.id)
+  if (idx === -1) return
 
+  if (store.equipment[slot]) {
+    if (!confirm('该部位已有饰品，是否替换？')) return
+    store.inventory.push(store.equipment[slot])
+  }
+
+  store.equipment[slot] = store.inventory.splice(idx, 1)[0]
+  store.save()
+}
 // 装备槽定义
 const leftSlots = [
   { key: 'weapon', label: '武器', icon: 'mdi:sword' },
@@ -217,13 +241,13 @@ const leftSlots = [
   { key: 'necklace', label: '项链', icon: 'mdi:necklace' },
   { key: 'ring1', label: '左戒指', icon: 'mdi:ring' },
   { key: 'ring2', label: '右戒指', icon: 'mdi:ring' },
-  { key: 'earring1', label: '左耳环', icon: 'mdi:ear-hearing' },
-  { key: 'earring2', label: '右耳环', icon: 'mdi:ear-hearing' },
+  { key: 'earring1', label: '左耳环', icon: 'tabler:rings' },
+  { key: 'earring2', label: '右耳环', icon: 'tabler:rings' },
 ]
 const rightSlots = [
   { key: 'helmet', label: '头盔', icon: 'mdi:hat-fedora' },
-  { key: 'armor', label: '上衣', icon: 'mdi:tshirt-crew' },
-  { key: 'pants', label: '下衣', icon: 'mdi:pants' },
+  { key: 'armor', label: '上衣', icon: 'emojione-monotone:dress' },
+  { key: 'pants', label: '下衣', icon: 'game-icons:armored-pants' },
   { key: 'shoes', label: '鞋子', icon: 'mdi:shoe-sneaker' },
 ]
 
@@ -283,16 +307,40 @@ function getAffixDesc(id, level) {
 }
 
 // 装备/卸载
-function equipItemFromInv(item) {
-  if (item) store.equipItem(item)
+
+// 本地装备：武器 / 防具
+function equipItemLocal(item) {
+  if (!item || !item.part) return
+  const slot = item.part
+  const idx = store.inventory.findIndex(i => i.id === item.id)
+  if (idx === -1) return
+
+  // 如果该部位已有装备，先卸下
+  if (store.equipment[slot]) {
+    store.inventory.push(store.equipment[slot])
+  }
+
+  // 从背包中取出并装上
+  store.equipment[slot] = store.inventory.splice(idx, 1)[0]
+  store.save()
 }
+
+
+// 装备武器/防具
+function equipItemFromInv(item) {
+  if (!item) return
+  // 直接传入引用
+  store.equipItem(item)
+}
+// 装备饰品
 function equipAccessoryFromInv(acc) {
-  if (!acc || !acc.part) return
-  const slot = acc.part
+  const realAcc = store.inventory.find(i => i.id === acc.id)
+  if (!realAcc || !realAcc.part) return
+  const slot = realAcc.part
   if (store.equipment[slot]) {
     if (!confirm('该部位已有饰品，是否替换？')) return
   }
-  store.equipAccessory(acc, slot)
+  store.equipAccessory(realAcc, slot)
 }
 function unequip(slot) {
   if (store.equipment[slot]) store.unequip(slot)
@@ -318,6 +366,7 @@ function showTooltip(item, event) {
   tooltip.x = event.clientX + 10
   tooltip.y = event.clientY + 10
   tooltip.name = item.name || ''
+   tooltip.level = item.level || 1    // 新增
   tooltip.quality = item.quality || ''
   tooltip.qualityColor = qualityColor(item.quality)
   tooltip.atk = item.atk || 0
@@ -366,6 +415,11 @@ function hideTooltip() { tooltip.visible = false }
 .pixel-btn.primary { background: rgba(255,215,0,0.2); border-color: #ffd700; }
 .acc-card .danger {
   margin-top: 6px;
+}
+.acc-level {
+  font-size: 7px;
+  color: #aaa;
+  margin-left: 4px;
 }
 /* 保留原有布局（省略，来自 InventoryPanel.css） */
 </style>
