@@ -29,7 +29,7 @@
                 <span v-else class="cross">✖️</span>
               </div>
             </div>
-            <button class="pixel-btn primary" :disabled="!canCraft(recipe)" @click="craft(recipe)">
+           <button class="pixel-btn primary" @click="craft(recipe)">
               <Icon icon="mdi:hammer" /> 制作
             </button>
           </div>
@@ -57,7 +57,7 @@
 <script setup>
 import { useGameStore } from '../store/gameStore'
 import { Icon } from '@iconify/vue'
-
+import { AFFIX_EFFECTS, QUALITY_STATS_MULTIPLIER, QUALITY_AFFIX_LEVEL_MIN } from '../config/accessoryConfig'
 const store = useGameStore()
 
 function materialIcon(id) {
@@ -79,41 +79,88 @@ function canCraft(recipe) {
   return recipe.materials.every(mat => hasMaterial(mat.id, mat.qty))
 }
 
+// 在 <script setup> 开头引入词条相关配置
+
+
+// 替换原有的 craft 函数
 function craft(recipe) {
-  if (!canCraft(recipe)) return alert('材料不足或金币不够！')
+  if (!canCraft(recipe)) return window.showToast('材料不足或金币不够！')
   store.addGold(-recipe.goldCost)
   for (const mat of recipe.materials) store.addMaterial(mat.id, '', -mat.qty)
 
-  // 随机附加副词条（从词条池中选1~2个，每个等级1）
-  const affixes = []
-  const pool = (recipe.affixPool || []).filter(Boolean)
-  if (pool.length) {
-    const count = Math.min(2, pool.length)
-    const shuffled = [...pool].sort(() => Math.random() - 0.5)
-    for (let i = 0; i < count; i++) {
-      affixes.push({ id: shuffled[i], level: 1 })
-    }
-  }
+  // 1. 随机品质（根据配方的 quality 或低概率升级）
+  const quality = rollQualityForCraft(recipe.quality || 'white')
+  
+  // 2. 随机装备等级（基于玩家等级，上下浮动）
+  const playerLv = store.player.level
+  const itemLevel = Math.max(1, playerLv + Math.floor(Math.random() * 5) - 2) // 玩家等级 -2 ~ +2
 
-  // 生成装备对象
-const item = {
-  id: `equip_${Date.now()}`,
-  name: recipe.name,
-  icon: recipe.icon || (recipe.type === 'weapon' ? 'mdi:sword' : 'mdi:shield'),
-  type: recipe.type,
-  part: recipe.type || 'armor', // 直接用配方中的 type 字段作为槽位
-  levelRequired: recipe.levelRequired || 1,
-  quality: recipe.quality || 'white',
-  atk: recipe.baseAtk || 0,
-  def: recipe.baseDef || 0,
-  gemSlots: recipe.gemSlots || 0,
-  setId: recipe.setId || '',
-  affixes,
-}
+  // 3. 计算基础属性（参考饰品系统）
+  const baseAtk = recipe.baseAtk || 1
+  const baseDef = recipe.baseDef || 0
+  const qualityMult = QUALITY_STATS_MULTIPLIER[quality] || 1
+  // 让等级也参与一点属性成长，但主要看品质
+  const atk = Math.floor(baseAtk * qualityMult * (1 + (itemLevel - 1) * 0.05))
+  const def = Math.floor(baseDef * qualityMult * (1 + (itemLevel - 1) * 0.05))
+
+  // 4. 生成随机副词条（参考饰品系统的词条生成算法）
+  const affixes = generateAffixesForCraft(quality, itemLevel)
+
+  // 5. 生成装备对象
+  const item = {
+    id: `equip_${Date.now()}`,
+    name: recipe.name,
+    icon: recipe.icon || (recipe.type === 'weapon' ? 'mdi:sword' : 'mdi:shield'),
+    type: recipe.type,
+    part: recipe.type || 'armor',
+    level: itemLevel,
+    quality: quality,
+    atk: atk,
+    def: def,
+    affixes: affixes,
+    levelRequired: recipe.levelRequired || 1,
+    gemSlots: recipe.gemSlots || 0,
+    setId: recipe.setId || '',
+  }
 
   store.inventory.push(item)
   store.save()
-  alert(`成功制作 ${item.name}！已放入背包。`)
+  window.showToast(`成功制作 ${item.name}！已放入背包。`)
+}
+
+// 增加两个辅助函数
+function rollQualityForCraft(baseQuality) {
+  // 90% 概率保持原品质，10% 概率提升一级（最高红色）
+  if (Math.random() < 0.1) {
+    const qualities = ['white', 'green', 'blue', 'purple', 'red']
+    const currentIdx = qualities.indexOf(baseQuality)
+    if (currentIdx < qualities.length - 1) {
+      return qualities[currentIdx + 1]
+    }
+  }
+  return baseQuality
+}
+
+function generateAffixesForCraft(quality, itemLevel) {
+  const affixKeys = Object.keys(AFFIX_EFFECTS)
+  if (affixKeys.length === 0) return []
+
+  const count = Math.min(2, 1 + Math.floor(Math.random() * 2)) // 1~2 个词条
+  const result = []
+  const used = new Set()
+  const minLevel = QUALITY_AFFIX_LEVEL_MIN[quality] || 1
+
+  for (let i = 0; i < count; i++) {
+    const key = affixKeys[Math.floor(Math.random() * affixKeys.length)]
+    if (used.has(key)) continue
+    used.add(key)
+
+    // 词条等级：基于装备等级 + 品质保底
+    const level = Math.min(5, Math.max(minLevel, Math.floor(itemLevel / 10) + 1))
+    result.push({ id: key, level })
+  }
+
+  return result
 }
 function qualityColor(q) {
   const map = { white: '#ccc', green: '#4caf50', blue: '#2196f3', purple: '#9c27b0', red: '#ff4444' }

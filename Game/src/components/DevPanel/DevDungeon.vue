@@ -71,16 +71,16 @@ function importConfig() {
     const parsed = JSON.parse(jsonText.value)
     store.config.dungeonConfigs = parsed
     store.save()
-    alert('地下城配置导入成功！')
+    showToast('地下城配置导入成功！')
     showImport.value = false
   } catch (e) {
-    alert('JSON 格式错误: ' + e.message)
+    showToast('JSON 格式错误: ' + e.message)
   }
 }
 
 function exportConfig() {
   navigator.clipboard.writeText(jsonText.value)
-  alert('已复制到剪贴板')
+  showToast('已复制到剪贴板')
 }
 
 // 把用户输入的字符串转成数组
@@ -106,7 +106,7 @@ function deleteDungeon(id) {
 
 function saveConfig() {
   store.save()
-  alert('地下城配置已保存')
+  showToast('地下城配置已保存')
 }
 </script>
 

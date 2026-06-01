@@ -49,7 +49,8 @@ const weather = ref('晴')
 
 const grid = ref(generateTownGrid(rows, cols))
 const flatCells = computed(() => grid.value.flat())
-
+import { inject } from 'vue'
+const showToast = inject('showToast', (msg) => alert(msg))
 function handleClick(building) {
   console.log('点击了建筑:', building)
   if (!building || !building.action) return
@@ -64,13 +65,13 @@ function handleClick(building) {
       store.player.hp = store.player.maxHp
       store.player.mp = store.player.maxMp
       store.save()
-      alert('泉水的恩泽恢复了体力！')
+      showToast('泉水的恩泽恢复了体力！')
       break
     case 'plaza':
       emit('triggerStory', 'plaza_event')
       break
     default:
-      alert(`${building.label}：功能开发中，敬请期待！`)
+      showToast(`${building.label}：功能开发中，敬请期待！`)
   }
 }
 </script>

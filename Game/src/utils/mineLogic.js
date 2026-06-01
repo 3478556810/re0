@@ -76,18 +76,24 @@ export function moveMonsters(grid, rows, cols) {
  * @returns {string} 矿石 ID
  */
 export function rollOreDynamic(materialDefinitions, floor = 1) {
-  const ores = materialDefinitions.filter(m => m.type === 'ore' && m.dropRate > 0)
+  // 过滤出矿石类型，且 dropRate > 0
+  let ores = materialDefinitions.filter(m => m.type === 'ore' && m.dropRate > 0)
   if (ores.length === 0) return 'waste_stone'
   
-  // 层数越高，稀有矿石权重越大
-  // dropRate 越低的矿越稀有，floor 越高时给它们额外加权
-  const floorFactor = Math.min(floor, 50) // 50层封顶
+  // 5层以下只出铁矿石和铜矿石
+  if (floor < 5) {
+    ores = ores.filter(m => m.id === 'iron_ore' || m.id === 'copper_ore')
+    if (ores.length === 0) {
+      // 如果找不到铁和铜，才用所有常见矿石兜底
+      ores = materialDefinitions.filter(m => m.type === 'ore' && m.dropRate >= 15)
+    }
+  }
+  
+  // 计算权重（越高层稀有矿权重越大）
+  const floorFactor = Math.min(floor, 50)
   const weighted = ores.map(ore => {
-    // 基础权重 = dropRate（本身越高越容易出）
-    // 稀有度补偿 = (50 - dropRate) * floorFactor * 0.02
-    // 层数越高，低dropRate的矿石获得越大的补偿权重
     const baseWeight = ore.dropRate
-    const rarityBonus = Math.max(0, (50 - ore.dropRate) * floorFactor * 0.02)
+    const rarityBonus = Math.max(0, (50 - ore.dropRate) * floorFactor * 0.01)
     return { ...ore, weight: baseWeight + rarityBonus }
   })
   
@@ -99,7 +105,6 @@ export function rollOreDynamic(materialDefinitions, floor = 1) {
   }
   return weighted[weighted.length - 1].id
 }
-
 /**
  * 根据楼层获取可能的怪物列表（从怪物模板筛选）
  * @param {number} floor 当前楼层

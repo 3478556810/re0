@@ -287,14 +287,15 @@ function nextDialog() {
     closeDialog()
   }
 }
-
+import { inject } from 'vue'
+const showConfirm = inject('showConfirm', (msg) => Promise.resolve(confirm(msg)))
 // ========== 选择选项 ==========
 function selectChoice(idx) {
   const choice = currentChoices.value[idx]
   if (!choice) return
 
   if (choice.affection) store.applyAffection(choice.affection)
-  if (choice.keyChoice && !confirm('这个选择会影响后续剧情，确定吗？')) return
+  if (choice.keyChoice && !showConfirm('这个选择会影响后续剧情，确定吗？')) return
 
   if (choice.battle) {
     emit('startBattle', choice.battle, currentNodeId.value, choice.nextId)
@@ -354,13 +355,20 @@ defineExpose({ startScene })
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  background: #000;     /* 去掉 blur，仅保留半透明遮罩 */
+  background: #000;
   display: flex;
   justify-content: center;
   align-items: flex-end;
   z-index: 300;
   cursor: pointer;
   overflow: visible;
+  
+  /* 彻底消除移动端点击高亮和透明遮罩 */
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+  outline: none;
 }
 
 /* 背景图（清晰无模糊） */
@@ -636,5 +644,11 @@ defineExpose({ startScene })
 
 .dialog-background.next.active {
   opacity: 1;
+}
+
+.dialog-box,
+.floating-choices {
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
 }
 </style>

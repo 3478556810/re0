@@ -9,10 +9,10 @@
         <!-- 左侧技能池（所有技能） -->
         <div class="skill-pool">
           <h3>技能池</h3>
-          <div
-            v-for="skill in store.config.skillPool"
-            :key="skill.id"
-            class="skill-card"
+      <div
+  v-for="skill in sortedSkillPool"
+  :key="skill.id"
+  class="skill-card"
             :class="{ locked: !isUnlocked(skill.id) }"
             @mouseenter="showTooltip(skill, $event)"
             @mouseleave="hideTooltip"
@@ -141,7 +141,14 @@ const equippedSkills = computed(() => {
     .map(id => store.config.skillPool.find(s => s.id === id))
     .filter(Boolean)
 })
-
+// 技能池排序：已解锁的排在前面
+const sortedSkillPool = computed(() => {
+  return [...store.config.skillPool].sort((a, b) => {
+    const aUnlocked = isUnlocked(a.id) ? 1 : 0
+    const bUnlocked = isUnlocked(b.id) ? 1 : 0
+    return bUnlocked - aUnlocked  // 已解锁的靠前
+  })
+})
 // 监听装备技能变化，初始化三角架选择
 watch(equippedSkills, (skills) => {
   if (!store.player.tripodChoices) store.player.tripodChoices = {}
@@ -205,10 +212,13 @@ function upgradeSkill(skillId) {
 
   hideTooltip()  // 关闭悬浮提示，让玩家重新悬停查看新倍率
 }
+
+import { inject } from 'vue'
+const showToast = inject('showToast', (msg) => alert(msg))
 function equipSkill(skillId) {
   if (isEquipped(skillId)) return
   if (store.player.equippedSkills.length >= 4) {
-    alert('最多装备4个技能')
+   showToast('最多装备4个技能')
     return
   }
   store.player.equippedSkills.push(skillId)

@@ -257,7 +257,8 @@ function getCount(key) {
 }
 
 import { loadContentPacks } from '../../utils/contentLoader'
-
+import { inject } from 'vue'
+const showToast = inject('showToast', (msg) => alert(msg))
 async function importAllDefaults() {
   if (!confirm('将重新加载 public/data/ 中的配置，当前配置将被覆盖。确定？')) return
   const packConfig = await loadContentPacks()
@@ -265,7 +266,7 @@ async function importAllDefaults() {
     store.config[key] = packConfig[key]
   }
   store.save()
-  alert('✅ 已从文件重新加载配置')
+  showToast('✅ 已从文件重新加载配置')
   location.reload()
 }
 
@@ -280,7 +281,7 @@ function clearAllConfigs() {
     }
   }
   store.save()
-  alert('✅ 全部配置已清空')
+  showToast('✅ 全部配置已清空')
   location.reload()
 }
 
@@ -289,9 +290,9 @@ function importModuleDefaults(key) {
   if (defaultConfigs[key] !== undefined) {
     store.config[key] = JSON.parse(JSON.stringify(defaultConfigs[key]))
     store.save()
-    alert('✅ 已导入默认配置')
+    showToast('✅ 已导入默认配置')
   } else {
-    alert('⚠️ 该模块暂无默认配置数据')
+    showToast('⚠️ 该模块暂无默认配置数据')
   }
 }
 
@@ -299,7 +300,7 @@ function exportModule(key) {
   const data = store.config[key]
   if (!data) return
   navigator.clipboard.writeText(JSON.stringify(data, null, 2))
-  alert(`✅ ${modules.find(m => m.key === key)?.label || key} 配置已复制到剪贴板`)
+  showToast(`✅ ${modules.find(m => m.key === key)?.label || key} 配置已复制到剪贴板`)
 }
 
 function clearModule(key) {
@@ -310,7 +311,7 @@ function clearModule(key) {
     store.config[key] = {}
   }
   store.save()
-  alert('✅ 已清空')
+  showToast('✅ 已清空')
 }
 
 function exportAllConfigs() {
@@ -319,7 +320,7 @@ function exportAllConfigs() {
     allData[mod.key] = store.config[mod.key]
   }
   navigator.clipboard.writeText(JSON.stringify(allData, null, 2))
-  alert('✅ 全部配置已复制到剪贴板')
+  showToast('✅ 全部配置已复制到剪贴板')
 }
 
 function importAllFromJson() {
@@ -334,9 +335,9 @@ function importAllFromJson() {
     }
     store.save()
     allJsonText.value = ''
-    alert(`✅ 已导入 ${importedCount} 个模块的配置`)
+    showToast(`✅ 已导入 ${importedCount} 个模块的配置`)
   } catch (e) {
-    alert('❌ JSON 格式错误: ' + e.message)
+    showToast('❌ JSON 格式错误: ' + e.message)
   }
 }
 </script>

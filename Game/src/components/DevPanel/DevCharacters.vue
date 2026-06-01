@@ -48,7 +48,7 @@ function deleteCharacter(id) {
   }
 }
 
-function saveConfig() { store.save(); alert('配置已保存') }
+function saveConfig() { store.save(); showToast('配置已保存') }
 </script>
 
 

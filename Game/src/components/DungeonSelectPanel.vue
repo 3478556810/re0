@@ -62,7 +62,7 @@ function selectDungeon(id) {
   if (store.startDungeon(id)) {
     emit('select', id)
   } else {
-    alert('地下城冷却中或无法进入')
+    showToast('地下城冷却中或无法进入')
   }
 }
 </script>

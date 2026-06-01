@@ -169,6 +169,18 @@
           <div class="tooltip-stat-row"><Icon icon="mdi:sword" /> 攻击 +{{ tooltip.atk }}</div>
           <div class="tooltip-stat-row"><Icon icon="mdi:shield" /> 防御 +{{ tooltip.def }}</div>
         </div>
+        <!-- 套装信息 -->
+<div v-if="tooltip.setBonus" class="tooltip-set">
+  <div class="tooltip-set-header">
+    {{ tooltip.setBonus.name }} ({{ tooltip.setBonus.count }}/{{ tooltip.setBonus.required }})
+  </div>
+  <div class="tooltip-set-desc">{{ tooltip.setBonus.desc }}</div>
+  <div class="tooltip-set-bonuses">
+    <span v-for="[key, val] in tooltipFilteredSetBonus" :key="key" class="tooltip-set-stat">
+      {{ setStatLabel(key) }} +{{ val }}
+    </span>
+  </div>
+</div>
         <div v-if="tooltip.affixes.length" class="tooltip-affixes">
           <div v-for="aff in tooltip.affixes" :key="aff.id" class="tooltip-affix-line">
             {{ aff.name }} Lv.{{ aff.level }} — {{ aff.desc }}
@@ -186,15 +198,36 @@ import { computed, ref, reactive } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
 import { AFFIX_EFFECTS } from '../config/accessoryConfig'
-
+const tooltipFilteredSetBonus = computed(() => {
+  if (!tooltip.setBonus || !tooltip.setBonus.bonus) return []
+  return Object.entries(tooltip.setBonus.bonus).filter(([key]) => key !== 'desc')
+})
 const props = defineProps({ sellMode: Boolean })
 const emit = defineEmits(['close'])
 const store = useGameStore()
+import { inject } from 'vue'
+// 套装名称映射（中文）
+const setNames = {
+  iron_set: '铁之意志',
+  spider_set: '蛛丝暗影',
+  stone_set: '石魔之力'
+}
 
+// 套装属性标签映射
+function setStatLabel(key) {
+  const map = {
+    atk: '攻击', def: '防御', hp: '最大生命',
+    speed: '速度', critRate: '暴击率', critDmg: '暴击伤害',
+    rockDmg: '岩属性'
+  }
+  return map[key] || key
+}
+const showConfirm = inject('showConfirm', (msg) => Promise.resolve(confirm(msg)))
 // 饰品槽位列表（关键！修复前缺少这个定义）
 const accessorySlots = ['necklace', 'ring1', 'ring2', 'earring1', 'earring2']
-function deleteEquipment(item) {
-  if (!confirm(`确定要删除 ${item.name} 吗？`)) return
+async function deleteEquipment(item) {
+  const ok = await showConfirm(`确定要删除 ${item.name} 吗？`)
+  if (!ok) return
   const idx = store.inventory.indexOf(item)
   if (idx > -1) {
     store.inventory.splice(idx, 1)
@@ -227,7 +260,7 @@ function equipAccessoryLocal(acc) {
   if (idx === -1) return
 
   if (store.equipment[slot]) {
-    if (!confirm('该部位已有饰品，是否替换？')) return
+    if (!showConfirm('该部位已有饰品，是否替换？')) return
     store.inventory.push(store.equipment[slot])
   }
 
@@ -338,15 +371,16 @@ function equipAccessoryFromInv(acc) {
   if (!realAcc || !realAcc.part) return
   const slot = realAcc.part
   if (store.equipment[slot]) {
-    if (!confirm('该部位已有饰品，是否替换？')) return
+    if (!showConfirm('该部位已有饰品，是否替换？')) return
   }
   store.equipAccessory(realAcc, slot)
 }
 function unequip(slot) {
   if (store.equipment[slot]) store.unequip(slot)
 }
-function deleteAccessory(acc) {
-  if (!confirm(`确定要删除饰品 ${acc.name} 吗？`)) return
+async function deleteAccessory(acc) {
+  const ok = await showConfirm(`确定要删除饰品 ${acc.name} 吗？`)
+  if (!ok) return
   const idx = store.inventory.indexOf(acc)
   if (idx > -1) {
     store.inventory.splice(idx, 1)
@@ -358,7 +392,8 @@ function deleteAccessory(acc) {
 const tooltip = reactive({
   visible: false, x: 0, y: 0,
   name: '', quality: '', atk: 0, def: 0,
-  qualityColor: '#fff', affixes: []
+  qualityColor: '#fff', affixes: [],
+  setBonus: null   // 新增
 })
 function showTooltip(item, event) {
   if (!item) return
@@ -366,7 +401,7 @@ function showTooltip(item, event) {
   tooltip.x = event.clientX + 10
   tooltip.y = event.clientY + 10
   tooltip.name = item.name || ''
-   tooltip.level = item.level || 1    // 新增
+  tooltip.level = item.level || 1
   tooltip.quality = item.quality || ''
   tooltip.qualityColor = qualityColor(item.quality)
   tooltip.atk = item.atk || 0
@@ -376,6 +411,20 @@ function showTooltip(item, event) {
     name: getAffixName(a.id),
     desc: getAffixDesc(a.id, a.level)
   }))
+
+  // 套装信息
+  if (item.setId && store.activeSetBonuses?.[item.setId]) {
+    const setInfo = store.activeSetBonuses[item.setId]
+    tooltip.setBonus = {
+      name: setNames[item.setId] || item.setId,
+      count: setInfo.count,
+      required: setInfo.required,
+      bonus: setInfo.bonus,
+      desc: setInfo.bonus.desc  // 新增描述
+    }
+  } else {
+    tooltip.setBonus = null
+  }
 }
 function showSlotTooltip(slotKey, event) {
   const item = store.equipment[slotKey]
@@ -420,6 +469,38 @@ function hideTooltip() { tooltip.visible = false }
   font-size: 7px;
   color: #aaa;
   margin-left: 4px;
+}
+.tooltip-set {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed rgba(255,215,0,0.3);
+}
+
+.tooltip-set-header {
+  font-size: 12px;
+  color: #ffd700;
+  margin-bottom: 6px;
+}
+
+.tooltip-set-bonuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tooltip-set-stat {
+  font-size: 10px;
+  color: #4caf50;
+  background: rgba(76,175,80,0.15);
+  padding: 4px 10px;
+  border-radius: 6px;
+}
+
+.tooltip-set-desc {
+  font-size: 10px;
+  color: #ff9800;
+  margin-bottom: 6px;
+  font-style: italic;
 }
 /* 保留原有布局（省略，来自 InventoryPanel.css） */
 </style>

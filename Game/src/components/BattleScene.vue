@@ -663,6 +663,12 @@ async function enemyTurn() {
     await showMessage(msg, 5000)
     syncStateFromEngine()
   }
+// 伙伴行动后自动切换当前选中的目标
+const nextAlive = engine.enemies.findIndex(e => e.hp > 0)
+if (nextAlive !== -1) {
+  currentTargetIndex.value = nextAlive
+}
+syncStateFromEngine()
 
   // 6. 同伴行动后再次检查
   if (engine.getAliveEnemies().length === 0) {

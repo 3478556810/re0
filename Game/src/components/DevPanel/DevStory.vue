@@ -47,15 +47,15 @@ function replaceJson() {
     store.config.storyScript = fixed
     store.save()
     jsonText.value = JSON.stringify(fixed, null, 2)
-    alert('剧情已替换！')
+    showToast('剧情已替换！')
   } catch (e) {
-    alert('JSON 格式错误: ' + e.message)
+    showToast('JSON 格式错误: ' + e.message)
   }
 }
 
 function appendJson() {
   if (!appendJsonText.value.trim()) {
-    alert('请先在追加框中粘贴新节点JSON')
+    showToast('请先在追加框中粘贴新节点JSON')
     return
   }
   try {
@@ -82,15 +82,15 @@ function appendJson() {
     store.save()
     jsonText.value = JSON.stringify(fixed, null, 2)
     appendJsonText.value = ''
-    alert('新节点已追加！')
+    showToast('新节点已追加！')
   } catch (e) {
-    alert('JSON 格式错误: ' + e.message)
+    showToast('JSON 格式错误: ' + e.message)
   }
 }
 
 function exportJson() {
   navigator.clipboard.writeText(jsonText.value)
-  alert('已复制到剪贴板')
+  showToast('已复制到剪贴板')
 }
 </script>
 
