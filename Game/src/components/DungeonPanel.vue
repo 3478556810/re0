@@ -40,18 +40,7 @@
 
           <!-- 篝火动画 + 同伴区域 -->
           <div class="camp-center">
-            <div class="campfire-area">
-              <div class="campfire">
-                <div class="fire">
-                  <div class="fire-particle"></div>
-                  <div class="fire-particle"></div>
-                  <div class="fire-particle"></div>
-                  <div class="fire-particle"></div>
-                </div>
-                <div class="logs"></div>
-              </div>
-              <p class="campfire-hint">篝火噼啪作响...</p>
-            </div>
+          
             <div class="companions-section">
               <p class="section-label"><Icon icon="mdi:account-group" /> 同行伙伴</p>
               <div class="companion-avatars">

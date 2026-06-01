@@ -68,6 +68,10 @@
         <button v-if="!isFullscreen" class="icon-btn" @click="enterFullscreen">
           <Icon icon="mdi:fullscreen" /><span>全屏</span>
         </button>
+
+<button v-if="!storyMode" class="icon-btn" @click="openPanel('dev')">
+    <Icon icon="mdi:cog" /><span>开发</span>
+  </button>
       </div>
     </div>
 
@@ -113,21 +117,18 @@ import SkillPanel from './SkillPanel.vue'
 import DungeonSelectPanel from './DungeonSelectPanel.vue'
 import AffectionPanel from './AffectionPanel.vue'
 
-const store = useGameStore()   // ← 必须放在最前面，所有使用 store 的代码之前
+const store = useGameStore()
 const emit = defineEmits(['startBattle'])
 
 const showToast = inject('showToast', (msg) => alert(msg))
-const showConfirm = inject('showConfirm', async (msg) => {
-  showToast(msg + ' (需要确认)')
-  return false
-})
+const showConfirm = inject('showConfirm', async (msg) => { alert(msg); return true })
+
 const appVersion = window.__APP_VERSION__ || '0.0.0'
 const storyMode = ref(false)
-const showDevButton = ref(false)
 const storyTimerDisplay = ref('00:00:00')
 let storyTimerInterval = null
-let versionClickTimer = null
 let versionClickCount = 0
+let versionClickTimer = null
 
 const showBgmPanel = ref(false)
 const bgmFiles = ['AspiralMoon.mp3', 'Bamboo.mp3', 'CopyMemory.mp3']
@@ -140,57 +141,64 @@ const showDungeonSelect = ref(false)
 const panelStack = ref([])
 const isFullscreen = ref(false)
 const inventorySellMode = ref(false)
-const previousPanel = ref(null)
 
 function pauseBgm() {
-  const audio = document.querySelector('#game-root audio')
-  if (audio) audio.pause()
+  const a = document.querySelector('#game-root audio')
+  if (a) a.pause()
+}
+function resumeBgm() {
+  const a = document.querySelector('#game-root audio')
+  if (a?.paused) a.play().catch(() => {})
 }
 
-function resumeBgm() {
-  const audio = document.querySelector('#game-root audio')
-  if (audio && audio.paused) {
-    audio.play().catch(() => {})
-  }
-}
-function enterStoryMode() {
+function enterStoryModeDirect() {
   pauseBgm()
-  
-  showDevButton.value = false
   storyMode.value = true
   store.isStoryMode = true
   store.startStoryTime = Date.now()
-  
-  // 直接开始计时
   storyTimerDisplay.value = '00:00:00'
-  const start = store.startStoryTime
   if (storyTimerInterval) clearInterval(storyTimerInterval)
   storyTimerInterval = setInterval(() => {
-    const elapsed = Math.floor((Date.now() - start) / 1000)
-    const h = Math.floor(elapsed / 3600)
-    const m = Math.floor((elapsed % 3600) / 60)
-    const s = elapsed % 60
-    storyTimerDisplay.value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+    const e = Math.floor((Date.now() - store.startStoryTime) / 1000)
+    const h = Math.floor(e / 3600), m = Math.floor((e % 3600) / 60), s = e % 60
+    storyTimerDisplay.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
   }, 1000)
-  
-  // 不再强制触发剧情，玩家自己选
+}
+
+function enterStoryMode() {
+  localStorage.removeItem('star-trails-save')
+  localStorage.setItem('start_story_mode', '1')
+  location.reload()
 }
 
 function exitStoryMode() {
   resumeBgm()
   storyMode.value = false
-  showDevButton.value = false          // 不要恢复 showDevButton，保持隐藏
-  // 如果用户通过点击版本号退出，才恢复开发者按钮。因此这里不改变 showDevButton
   store.isStoryMode = false
   if (storyTimerInterval) clearInterval(storyTimerInterval)
   storyTimerDisplay.value = '00:00:00'
 }
 
-function formatTime(seconds) {
-  const h = Math.floor(seconds / 3600)
-  const m = Math.floor((seconds % 3600) / 60)
-  const s = seconds % 60
-  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
+function formatTime(s) {
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60
+  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`
+}
+
+function handleVersionClick() {
+  versionClickCount++
+  window.showToast?.(`${versionClickCount}/5`)
+  if (versionClickTimer) clearTimeout(versionClickTimer)
+  if (versionClickCount >= 5) {
+    versionClickCount = 0
+    if (storyMode.value) exitStoryMode()
+    window.showToast?.('开发者面板已恢复')
+  } else {
+    versionClickTimer = setTimeout(() => { versionClickCount = 0 }, 4000)
+  }
+}
+
+function enterFullscreen() {
+  document.documentElement.requestFullscreen?.().catch(() => {})
 }
 
 function selectBgm(index) {
@@ -212,27 +220,6 @@ function resumeRandomBgm() {
   }
 }
 
-function handleVersionClick() {
-  versionClickCount++
-  if (versionClickTimer) clearTimeout(versionClickTimer)
-  if (versionClickCount >= 5) {
-    versionClickCount = 0
-    showDevButton.value = true         // 只有这里才恢复
-    localStorage.setItem('dev_mode', '1')
-    if (storyMode.value) {
-      storyMode.value = false
-      store.isStoryMode = false
-    }
-    showToast('已恢复开发者面板')
-  } else {
-    versionClickTimer = setTimeout(() => { versionClickCount = 0 }, 4000)
-  }
-}
-
-function enterFullscreen() {
-  document.documentElement.requestFullscreen?.().catch(() => {})
-}
-
 function pushPanel(panelName) {
   if (currentPanel.value && currentPanel.value !== panelName) {
     panelStack.value.push(currentPanel.value)
@@ -250,7 +237,6 @@ function popPanel() {
 
 function openSellBackpack() {
   inventorySellMode.value = true
-  previousPanel.value = currentPanel.value
   pushPanel('inventory')
 }
 
@@ -288,8 +274,6 @@ function onDungeonSelected(dungeonId) {
   pushPanel('dungeon')
 }
 
-function handleAction(action) { if (action.type === 'panel') openPanel(action.id) }
-
 function openPanel(name) {
   if (name === 'inventory') {
     panelStack.value = []
@@ -303,8 +287,8 @@ function openPanel(name) {
       pushPanel('dungeon')
       return
     }
-    const firstDungeonId = Object.keys(store.config.dungeonConfigs)[0]
-    if (firstDungeonId && store.startDungeon(firstDungeonId)) {
+    const firstId = Object.keys(store.config.dungeonConfigs)[0]
+    if (firstId && store.startDungeon(firstId)) {
       pushPanel('dungeon')
       return
     }
@@ -314,11 +298,10 @@ function openPanel(name) {
   pushPanel(name)
 }
 
-// ========== 天气/日期 ==========
+// 天气/日期
 const weekNames = ['月曜', '火曜', '水曜', '木曜', '金曜', '土曜', '日曜']
 const seasonNames = ['春', '夏', '秋', '冬']
 const weatherPool = ['晴', '晴', '阴', '雨', '雪', '大风']
-
 const dateInfo = computed(() => {
   const day = store.world.day
   const year = Math.floor((day - 1) / 120) + 1
@@ -327,7 +310,6 @@ const dateInfo = computed(() => {
   const week = weekNames[(day - 1) % 7]
   return { year, season: seasonNames[seasonIndex], day: dayOfSeason, week }
 })
-
 const weather = computed(() => weatherPool[(store.world.day * 7 + Math.floor(store.world.gameTime / 60)) % weatherPool.length])
 const dateStr = computed(() => `${dateInfo.value.year}年 ${dateInfo.value.season}${dateInfo.value.day}日 ${dateInfo.value.week}`)
 const timeStr = computed(() => {
@@ -336,103 +318,39 @@ const timeStr = computed(() => {
   return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`
 })
 
-const sceneTitle = computed(() => '城镇')
-const sceneDesc = computed(() => '你身处热闹的城镇，地下城入口就在附近。')
-
-const availableActions = computed(() => [
-  { id: 'inn', name: '旅馆休息', icon: 'mdi:bed', type: 'panel' },
-  { id: 'guild', name: '冒险者协会', icon: 'mdi:town-hall', type: 'panel' },
-  { id: 'bank', name: '银行', icon: 'mdi:bank', type: 'panel' },
-  { id: 'stock', name: '股市', icon: 'mdi:chart-line', type: 'panel' },
-  { id: 'forge', name: '铁匠铺', icon: 'mdi:anvil', type: 'panel' },
-  { id: 'dungeon', name: '地下城', icon: 'mdi:castle', type: 'panel' }
-])
-
-const SimplePanel = {
-  props: { title: String, icon: String },
-  template: `<div class="overlay" @click.self="$emit('close')"><div class="panel pixel-panel" @click.stop><h3><Icon :icon="icon" /> {{ title }}</h3><slot /><button class="pixel-btn" @click="$emit('close')">关闭</button></div></div>`,
-  components: { Icon }
-}
-
-// ========== Watchers ==========
-watch(() => storyMode.value, (val) => {
-  if (val) {
-    const start = store.startStoryTime
-    storyTimerInterval = setInterval(() => {
-      const elapsed = Math.floor((Date.now() - start) / 1000)
-      const h = Math.floor(elapsed / 3600)
-      const m = Math.floor((elapsed % 3600) / 60)
-      const s = elapsed % 60
-      storyTimerDisplay.value = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`
-    }, 1000)
-  } else {
-    if (storyTimerInterval) clearInterval(storyTimerInterval)
-    storyTimerDisplay.value = '00:00:00'
-  }
-})
-
-watch(() => store.storyEndTime, async (val) => {
-  if (!val || !storyMode.value) return
-
-  const elapsed = Math.floor((val - store.startStoryTime) / 1000)
-  const best = store.storyBestTime
-  const isNewRecord = !best || elapsed < best
-
-  if (isNewRecord) {
-    store.storyBestTime = elapsed
-  }
-
-  const playerLv = store.player.level
-  const floorsCleared = store.dungeon.floorsCleared || 0
-  const bossKills = Math.floor(floorsCleared / 5)
-
-  const summary = [
-    `通关时间：${formatTime(elapsed)}`,
-    isNewRecord ? '新纪录！' : '',
-    `等级：Lv.${playerLv}`,
-    `到达层数：${floorsCleared}`,
-    `击败Boss：${bossKills}`,
-  ].filter(Boolean).join('\n')
-
-  store.storyEndTime = null
-
-  await showConfirm(summary )
-  exitStoryMode()
-})
-
-watch(() => store.pendingStoryNodeAfterBattle, (nodeId) => {
-  if (nodeId && store.config.storyScript[nodeId]) {
-    currentPanel.value = null
-    panelStack.value = []
-    nextTick(() => {
-      dialogRef.value?.startScene(nodeId)
-      store.pendingStoryNodeAfterBattle = null
-    })
-  } else if (nodeId && !store.config.storyScript[nodeId]) {
-    store.pendingStoryNodeAfterBattle = null
-  }
-}, { immediate: true })
-
-// ========== 生命周期 ==========
 onMounted(() => {
-
-  // 如果处于剧情模式，强制隐藏
-  if (store.isStoryMode) {
-    storyMode.value = true
-    showDevButton.value = false
-  } else {
-    showDevButton.value = localStorage.getItem('dev_mode') === '1'
+  if (localStorage.getItem('start_story_mode') === '1') {
+    localStorage.removeItem('start_story_mode')
+    setTimeout(() => enterStoryModeDirect(), 200)
+    return
   }
-  
   if (store.pendingDungeonPanel) {
     store.pendingDungeonPanel = false
     pushPanel('dungeon')
   }
-  const syncFullscreen = () => {
-    isFullscreen.value = !!document.fullscreenElement
-  }
-  document.addEventListener('fullscreenchange', syncFullscreen)
-  document.addEventListener('webkitfullscreenchange', syncFullscreen)
+  document.addEventListener('fullscreenchange', () => isFullscreen.value = !!document.fullscreenElement)
+  document.addEventListener('webkitfullscreenchange', () => isFullscreen.value = !!document.fullscreenElement)
+})
+
+watch(() => storyMode.value, (v) => {
+  if (!v) { clearInterval(storyTimerInterval); storyTimerDisplay.value = '00:00:00' }
+})
+
+watch(() => store.storyEndTime, async (val) => {
+  if (!val || !storyMode.value) return
+  const elapsed = Math.floor((val - store.startStoryTime) / 1000)
+  const best = store.storyBestTime
+  if (!best || elapsed < best) store.storyBestTime = elapsed
+  const summary = [
+    `通关时间：${formatTime(elapsed)}`,
+    (best && elapsed >= best) ? '' : '新纪录！',
+    `等级：Lv.${store.player.level}`,
+    `层数：${store.dungeon.floorsCleared}`,
+    `Boss：${Math.floor(store.dungeon.floorsCleared / 5)}`
+  ].filter(Boolean).join('\n')
+  store.storyEndTime = null
+  await showConfirm(summary)
+  exitStoryMode()
 })
 </script>
 
@@ -577,4 +495,77 @@ onMounted(() => {
 .bgm-list h3 { margin-bottom: 15px; font-size: 12px; color: #1e293b; }
 .bgm-list button { display: block; width: 100%; margin: 5px 0; }
 .bgm-list button.active { background: rgba(255,215,0,0.2); border-color: #ffd700; }
+
+
+/* ========== 全屏内容区（压缩版） ========== */
+.fullscreen-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 12px 20px;
+  gap: 16px;
+  overflow-y: auto;
+}
+
+/* ========== 标题（缩小） ========== */
+.title-section { text-align: center; }
+.game-title {
+  font-size: 20px;
+  letter-spacing: 4px;
+  margin-bottom: 4px;
+}
+.game-subtitle { font-size: 7px; }
+
+/* ========== 三个核心入口（缩小） ========== */
+.main-entrance {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.entrance-card {
+  width: 160px;
+  padding: 16px 12px;
+  border-radius: 16px;
+  gap: 8px;
+}
+.entrance-icon { font-size: 32px; }
+.entrance-title { font-size: 10px; letter-spacing: 2px; }
+.entrance-desc { font-size: 6px; }
+
+/* ========== 底部工具栏（缩小 + 固定不溢出） ========== */
+.bottom-toolbar {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: center;
+  padding: 8px 16px;
+  background: rgba(255,255,255,0.7);
+  backdrop-filter: blur(8px);
+  border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.05);
+  flex-shrink: 0;
+  max-width: 100%;
+}
+
+.icon-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  font-size: 6px;
+}
+.icon-btn :first-child { font-size: 18px; }
+
+/* ========== 状态栏（缩小） ========== */
+.status-bar {
+  padding: 6px 16px;
+  font-size: 7px;
+}
 </style>
