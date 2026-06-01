@@ -1,9 +1,30 @@
 <template>
   <div id="game-root">
+<!-- 全局浮动提示 -->
+<Transition name="fade">
+  <div v-if="globalToast.visible" class="global-toast">{{ globalToast.message }}</div>
+</Transition>
+<!-- 自定义确认弹窗 -->
+<div v-if="confirmDialog.visible" class="confirm-overlay">
+  <div class="confirm-box pixel-panel">
+    <p>{{ confirmDialog.message }}</p>
+    <div class="confirm-buttons">
+      <button class="pixel-btn small primary" @click="onConfirmOk">确定</button>
+      <button class="pixel-btn small" @click="onConfirmCancel">取消</button>
+    </div>
+  </div>
+</div>
+   <audio ref="bgmAudio" volume="0.5"></audio>
+
+
     <MainScreen
       v-if="!inBattle"
       @start-battle="onStartBattle"
     />
+
+
+
+
 <BattleScene
   v-else
   :key="battleKey"
@@ -20,11 +41,111 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, reactive, provide, onMounted, onUnmounted, watch } from 'vue'
 import MainScreen from './components/MainScreen.vue'
 import BattleScene from './components/BattleScene.vue'
 import { useGameStore } from './store/gameStore'
 import { spawnEnemy } from './config/biomeConfig'
+const confirmDialog = reactive({ visible: false, message: '', resolve: null })
+
+function showConfirm(msg) {
+  return new Promise((resolve) => {
+    confirmDialog.message = msg
+    confirmDialog.visible = true
+    confirmDialog.resolve = resolve
+  })
+}
+
+function onConfirmOk() {
+  confirmDialog.visible = false
+  if (confirmDialog.resolve) confirmDialog.resolve(true)
+}
+
+function onConfirmCancel() {
+  confirmDialog.visible = false
+  if (confirmDialog.resolve) confirmDialog.resolve(false)
+}
+
+// 提供给子组件使用
+provide('showConfirm', showConfirm)
+const globalToast = reactive({ visible: false, message: '' })
+let toastTimer = null
+
+function showToast(msg) {
+  globalToast.message = msg
+  globalToast.visible = true
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => {
+    globalToast.visible = false
+  }, 2000)
+}
+window.showToast = showToast
+
+// 暴露给全局使用
+provide('showToast', showToast)
+// ========== BGM 管理 ==========
+const bgmAudio = ref(null)
+
+// 音乐列表（文件名，放在 public/audio/ 下）
+const bgmFiles = ['AspiralMoon.mp3', 'Bamboo.mp3', 'CopyMemory.mp3']
+
+const currentTrackIndex = ref(0)               // 当前播放的索引
+const isAutoRandom = ref(true)                 // 是否自动随机切歌
+
+// 随机获取下一首（不同索引）
+function getRandomTrack() {
+  if (bgmFiles.length <= 1) return 0
+  let idx = Math.floor(Math.random() * bgmFiles.length)
+  if (idx === currentTrackIndex.value) {
+    idx = (idx + 1) % bgmFiles.length
+  }
+  return idx
+}
+
+// 自动下一首（自动模式时使用）
+function playNextBgm() {
+  if (!bgmAudio.value || !isAutoRandom.value) return
+  const nextIndex = getRandomTrack()
+  currentTrackIndex.value = nextIndex
+  bgmAudio.value.src = '/audio/' + bgmFiles[nextIndex]
+  bgmAudio.value.play().catch(() => {})
+}
+
+// 手动切歌（可从外部调用）
+function playTrack(index) {
+  if (!bgmAudio.value || index < 0 || index >= bgmFiles.length) return
+  currentTrackIndex.value = index
+  isAutoRandom.value = false          // 手动选歌时关闭自动随机
+  bgmAudio.value.src = '/audio/' + bgmFiles[index]
+  bgmAudio.value.play().catch(() => {})
+  // 当前歌曲放完后恢复自动随机
+  bgmAudio.value.onended = () => {
+    isAutoRandom.value = true
+    playNextBgm()
+  }
+}
+
+// 恢复自动随机
+function resumeAutoRandom() {
+  isAutoRandom.value = true
+  playNextBgm()
+}
+
+// 挂载时设置 ended 监听
+onMounted(() => {
+  if (bgmAudio.value) {
+    bgmAudio.value.onended = () => playNextBgm()
+  }
+  
+  // 首次用户交互后激活音频
+  const activateAudio = () => {
+    if (bgmAudio.value) {
+      playNextBgm()
+    }
+    document.removeEventListener('click', activateAudio)
+  }
+  document.addEventListener('click', activateAudio)
+})
 
 const battleKey = ref(0)
 const store = useGameStore()
@@ -128,12 +249,22 @@ function onKeyDebug(e) {
 // 战斗结束处理
 function onVictory(reward) {
   inBattle.value = false
+   // 剧情模式通关检测
+  if (store.isStoryMode && store.dungeon.completed) {
+    store.storyEndTime = Date.now()
+    store.dungeon.completed = false
+    store.dungeon.active = false
+  }
+
   if (storyBattleConfig.value) {
     // 剧情战斗胜利：跳转到 winNext
     const nextNode = storyBattleConfig.value.winNext
     storyBattleConfig.value = null
     startStoryAfterBattle(nextNode)
   }
+
+
+
 }
 
 function onBattleExit() {
@@ -272,5 +403,89 @@ function onNextFloor() {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+}
+
+
+.global-toast {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(0, 0, 0, 0.85);
+  border: 1px solid #ffd700;
+  color: #ffd;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 10px;
+  z-index: 9999;
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+.fade-enter-active, .fade-leave-active {
+  transition: opacity 0.3s;
+}
+.fade-enter-from, .fade-leave-to {
+  opacity: 0;
+}
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9998;
+}
+
+.confirm-box {
+  background: rgba(20, 28, 40, 0.95);
+  border: 2px solid #ffd700;
+  border-radius: 16px;
+  padding: 20px;
+  min-width: 280px;
+  text-align: center;
+  color: #ffd;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 9px;
+}
+
+.confirm-box p {
+  margin-bottom: 15px;
+  line-height: 1.5;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+.confirm-box {
+  background: rgba(20, 28, 40, 0.95);
+  border: 2px solid #ffd700;
+  border-radius: 16px;
+  padding: 24px;
+  min-width: 300px;
+  text-align: left;             /* 左对齐，竖排显示 */
+  color: #ffd;
+  font-family: 'Press Start 2P', cursive;
+  font-size: 9px;
+  line-height: 2.0;             /* 行距加大，易读 */
+  white-space: pre-wrap;        /* 保留换行符 */
+}
+
+.confirm-box p {
+  margin-bottom: 20px;
+  line-height: 2.0;
+}
+
+.confirm-buttons {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 10px;
 }
 </style>

@@ -61,9 +61,10 @@ function addAffix() {
     ]
   }
 }
-
+import { inject } from 'vue'
+const showConfirm = inject('showConfirm', (msg) => Promise.resolve(confirm(msg)))
 function deleteAffix(id) {
-  if (confirm(`删除词条 ${id}？`)) {
+  if (showConfirm(`删除词条 ${id}？`)) {
     delete store.config.affixEffects[id]
   }
 }
@@ -89,7 +90,7 @@ function addBonusField(threshold) {
   }
 }
 
-function saveConfig() { store.save(); alert('词条效果已保存') }
+function saveConfig() { store.save(); showToast('词条效果已保存') }
 </script>
 
 <style scoped>

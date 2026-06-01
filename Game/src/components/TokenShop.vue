@@ -34,11 +34,12 @@ const store = useGameStore()
 const emit = defineEmits(['close'])
 
 const tokenCount = computed(() => store.materials['dungeon_token']?.qty || 0)
-
+import { inject } from 'vue'
+const showToast = inject('showToast', (msg) => alert(msg))
 function buy(item) {
   const token = store.materials['dungeon_token']
   if (!token || token.qty < item.cost) {
-    alert('徽记不足！')
+   showToast('徽记不足！')
     return
   }
 
@@ -54,7 +55,7 @@ function buy(item) {
         store.addMaterial(item.rewardId, item.rewardName || item.rewardId, item.rewardQty || 1)
         success = true
       } else {
-        alert('配置错误：材料 ID 为空')
+        showToast('配置错误：材料 ID 为空')
       }
       break
 
@@ -64,7 +65,7 @@ function buy(item) {
         store.inventory.push(acc)
         success = true
       } else {
-        alert('饰品生成失败')
+        showToast('饰品生成失败')
       }
       break
 
@@ -84,18 +85,18 @@ function buy(item) {
         store.addMaterial(item.rewardId, item.rewardName || item.rewardId, item.rewardQty || 1)
         success = true
       } else {
-        alert('配置错误：消耗品 ID 为空')
+        showToast('配置错误：消耗品 ID 为空')
       }
       break
 
     default:
-      alert('未知物品类型')
+      showToast('未知物品类型')
       break
   }
 
   if (success) {
     store.save()
-    alert(`成功兑换 ${item.name}！`)
+    showToast(`成功兑换 ${item.name}！`)
   } else {
     // 兑换失败，退回徽记
     token.qty = (token.qty || 0) + item.cost

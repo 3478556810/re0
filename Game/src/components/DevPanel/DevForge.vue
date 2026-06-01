@@ -128,12 +128,12 @@ function addRecipe() {
 
 function saveConfig() {
   store.save()
-  alert('锻造配方已保存')
+  showToast('锻造配方已保存')
 }
 
 function exportRecipes() {
   navigator.clipboard.writeText(JSON.stringify(store.config.forgeRecipes, null, 2))
-  alert('已复制到剪贴板')
+  showToast('已复制到剪贴板')
 }
 
 function importRecipes() {
@@ -144,9 +144,9 @@ function importRecipes() {
     store.save()
     jsonImport.value = ''
     showImport.value = false
-    alert('导入成功')
+    showToast('导入成功')
   } catch (e) {
-    alert('JSON 格式错误')
+    showToast('JSON 格式错误')
   }
 }
 </script>
