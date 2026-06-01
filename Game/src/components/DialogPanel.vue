@@ -1,14 +1,10 @@
 <template>
   <div class="dialog-overlay" v-if="visible" @click="handleOverlayClick">
     <!-- 背景图（清晰） -->
-    <div
-      class="dialog-background"
-      :style="{
-        backgroundImage: currentNode?.background
-          ? `url('/images/bg/${currentNode.background}')`
-          : 'none'
-      }"
-    ></div>
+ <!-- 当前背景（淡出） -->
+<div class="dialog-background current" :style="currentBgStyle"></div>
+<!-- 下一个背景（预加载后淡入） -->
+<div class="dialog-background next" :class="{ active: bgTransitioning }" :style="nextBgStyle"></div>
 
     <!-- 立绘（基于 portrait 字段显示） -->
     <Transition name="speaker-fade">
@@ -93,14 +89,64 @@ const speakerData = computed(() => (currentSpeaker.value ? defaultCharacters[cur
 const speakerIcon = computed(() => speakerData.value?.icon || 'mdi:account')
 const speakerImage = ref(null)
 
-// 加载立绘
 watch(currentPortrait, (portrait) => {
   speakerImage.value = portrait ? `/images/portrait/${portrait}.png` : null
 }, { immediate: true })
 
 const showChoices = computed(() => currentChoices.value.length > 0 && !isTyping.value)
+const currentBg = ref('')
+const nextBg = ref('')
+const bgTransitioning = ref(false)
 
-// ========== 本地音频播放（日语配音） ==========
+const currentBgStyle = computed(() => ({
+  backgroundImage: currentBg.value ? `url('/images/bg/${currentBg.value}')` : 'none'
+}))
+
+const nextBgStyle = computed(() => ({
+  backgroundImage: nextBg.value ? `url('/images/bg/${nextBg.value}')` : 'none'
+}))
+
+// 预加载图片
+function preloadImage(name) {
+  return new Promise((resolve) => {
+    if (!name) return resolve()
+    const img = new Image()
+    img.onload = () => resolve()
+    img.onerror = () => resolve() // 失败也继续
+    img.src = `/images/bg/${name}`
+  })
+}
+
+// 监听节点变化，平滑切换背景
+watch(currentNode, async (newNode) => {
+  const newBg = newNode?.background || ''
+  if (newBg === currentBg.value) return
+
+  // 预加载新图
+  await preloadImage(newBg)
+
+  // 设置下一层背景并开始淡入
+  nextBg.value = newBg
+  bgTransitioning.value = true
+
+  // 等待过渡完成后，将新层切换为当前层，并关闭过渡状态
+  setTimeout(() => {
+    currentBg.value = newBg
+    bgTransitioning.value = false
+    nextBg.value = ''
+  }, 600) // 与 CSS transition 时间一致
+})
+// ========== 音频上下文激活 ==========
+function activateAudioContext() {
+  const tempAudio = new Audio()
+  tempAudio.volume = 0.01
+  tempAudio.play().then(() => {
+    tempAudio.pause()
+    tempAudio.remove()
+  }).catch(() => {})
+}
+
+// ========== 本地音频播放 ==========
 let currentAudio = null
 
 function playVoice(speaker, nodeId) {
@@ -108,24 +154,36 @@ function playVoice(speaker, nodeId) {
     currentAudio.pause()
     currentAudio = null
   }
-  if (!speaker || !nodeId) return
+  // 跳过旁白
+  if (!speaker || speaker === 'narrator' || !nodeId) return
 
   const voicePath = `/voice/${speaker}_${nodeId}.wav`
+  console.log(`🎵 尝试播放语音: ${voicePath}`)
+  
   const audio = new Audio(voicePath)
   currentAudio = audio
 
+  audio.onloadeddata = () => {
+    console.log(`✅ 语音文件加载成功: ${voicePath}`)
+    audio.play().then(() => {
+      console.log(`🔊 正在播放: ${voicePath}`)
+    }).catch(e => {
+      console.warn(`❌ 播放失败: ${voicePath}`, e)
+    })
+  }
+
   audio.onended = () => {
     currentAudio = null
-    // 自动播放且无选项时，语音结束后自动下一句
+    console.log(`⏹️ 语音播放结束: ${voicePath}`)
     if (autoPlay.value && currentChoices.value.length === 0) {
       autoPlayTimer.value = setTimeout(() => nextDialog(), 300)
     }
   }
+
   audio.onerror = () => {
+    console.warn(`🚫 语音文件不存在或无法加载: ${voicePath}`)
     currentAudio = null
-    // 文件不存在时静默，不影响游戏
   }
-  audio.play().catch(() => {})
 }
 
 function stopVoice() {
@@ -138,7 +196,6 @@ function stopVoice() {
 // ========== 打字机 + 自动播放 ==========
 watch(currentNodeId, () => startTyping())
 
-// 播放语音（跳过旁白）
 function startTyping() {
   if (!currentNode.value) {
     store.pendingStoryNodeAfterBattle = null
@@ -152,18 +209,13 @@ function startTyping() {
   displayedText.value = ''
   isTyping.value = true
 
-  // 背景过渡
-  const bgEl = document.querySelector('.dialog-background')
-  if (bgEl) {
-    bgEl.style.opacity = '0.6'
-    setTimeout(() => { bgEl.style.opacity = '1' }, 150)
-  }
+  
 
-  // 播放当前节点的日语配音（speaker + nodeId）
- const speaker = currentSpeaker.value
+  // 只给有说话人的节点播放语音（旁白跳过）
+  const speaker = currentSpeaker.value
   if (speaker && speaker !== 'narrator') {
     const nodeId = currentNode.value?.id || ''
-    playVoice(speaker, nodeId)
+    if (nodeId) playVoice(speaker, nodeId)
   }
 
   let index = 0
@@ -173,10 +225,13 @@ function startTyping() {
       displayedText.value += fullText.charAt(index)
       index++
       typingTimer.value = setTimeout(typeNext, speed)
-    } else {
-      isTyping.value = false
-      // 如果没有自动播放、且语音已结束，这里不需额外处理（语音回调会处理）
-    }
+  } else {
+  isTyping.value = false
+  // 如果没有语音文件（旁白或语音缺失），自动跳转
+  if (autoPlay.value && currentChoices.value.length === 0 && !currentAudio) {
+    autoPlayTimer.value = setTimeout(() => nextDialog(), 1500)
+  }
+}
   }
   typeNext()
 }
@@ -239,10 +294,8 @@ function selectChoice(idx) {
   if (!choice) return
 
   if (choice.affection) store.applyAffection(choice.affection)
-
   if (choice.keyChoice && !confirm('这个选择会影响后续剧情，确定吗？')) return
 
-  // 触发剧情战斗
   if (choice.battle) {
     emit('startBattle', choice.battle, currentNodeId.value, choice.nextId)
     closeDialog()
@@ -287,6 +340,7 @@ function skipToChoices() {
 
 // ========== 外部调用入口 ==========
 function startScene(nodeId = 'start') {
+  activateAudioContext()
   currentNodeId.value = nodeId
   visible.value = true
   startTyping()
@@ -300,7 +354,7 @@ defineExpose({ startScene })
 .dialog-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(20, 10, 30, 0.6);   /* 去掉 blur，仅保留半透明遮罩 */
+  background: #000;     /* 去掉 blur，仅保留半透明遮罩 */
   display: flex;
   justify-content: center;
   align-items: flex-end;
@@ -317,8 +371,7 @@ defineExpose({ startScene })
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  opacity: 1;
-  transition: opacity 0.6s ease;    /* 加上这行 */
+  transition: opacity 1s ease;   /* 核心：1秒渐变 */
 }
 
 /* ========== 立绘容器（加大尺寸） ========== */
@@ -539,5 +592,49 @@ defineExpose({ startScene })
 @keyframes keyGlow {
   from { box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); }
   to { box-shadow: 0 0 16px rgba(255, 215, 0, 0.6); }
+}
+
+
+.dialog-background,
+.dialog-background-next {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 1;
+}
+
+.dialog-background-next {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.dialog-background-next.active {
+  opacity: 1;
+}
+
+.dialog-background {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.dialog-background.current {
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+
+.dialog-background.next {
+  opacity: 0;
+  transition: opacity 0.6s ease;
+}
+
+.dialog-background.next.active {
+  opacity: 1;
 }
 </style>

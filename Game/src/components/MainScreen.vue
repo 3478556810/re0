@@ -7,6 +7,7 @@
       <span class="status-item"><Icon icon="mdi:weather-partly-cloudy" /> {{ weather }}</span>
       <span class="status-item"><Icon icon="mdi:calendar-range" /> {{ dateStr }}</span>
       <span class="status-item"><Icon icon="mdi:clock-outline" /> {{ timeStr }}</span>
+      <span class="version-text" @click="handleVersionClick">ver {{ appVersion }}</span>
     </div>
 
     <div class="content-wrapper">
@@ -23,9 +24,18 @@
   <Icon icon="mdi:heart" /> 羁绊
 </button>
 
-          <button class="pixel-btn dev-btn" @click="openPanel('dev')"><Icon icon="mdi:cog" /> 开发者</button>
+          <button v-if="showDevButton && !storyMode" class="pixel-btn dev-btn" @click="openPanel('dev')">
+  <Icon icon="mdi:cog" /> 开发者
+</button>
+          <button v-if="!isFullscreen" class="pixel-btn fullscreen-btn" @click="enterFullscreen">
+  <Icon icon="mdi:fullscreen" /> 全屏
+</button>
         </div>
         <div class="action-buttons">
+<button class="pixel-btn story-btn" @click="enterStoryMode">
+  <Icon icon="mdi:book-open-variant" /> 剧情模式
+</button>
+
           <button v-for="action in availableActions" :key="action.id" class="pixel-btn action-btn" @click="handleAction(action)"><Icon :icon="action.icon" /> {{ action.name }}</button>
           <button class="pixel-btn action-btn" @click="triggerDialog"><Icon icon="mdi:chat" /> 探索剧情</button>
         </div>
@@ -42,7 +52,7 @@
     <CharacterPanel v-if="currentPanel === 'character'" @close="popPanel" />
     <SkillPanel v-if="currentPanel === 'skills'" @close="popPanel" />
     <SimplePanel v-if="currentPanel === 'party'" title="伙伴" icon="mdi:account-group" @close="popPanel"><p class="text-sm text-center py-8">伙伴系统即将上线，敬请期待！</p></SimplePanel>
-    <SimplePanel v-if="currentPanel === 'pet'" title="宠物" icon="mdi:paw" @close="popPanel"><p class="text-sm text-center py-8">宠物系统开发中，很快就能见面啦！</p></SimplePanel>
+
     <BankPanel v-if="currentPanel === 'bank'" @close="popPanel" />
     <StockPanel v-if="currentPanel === 'stock'" @close="popPanel" />
     <ForgePanel v-if="currentPanel === 'forge'" @close="popPanel" />
@@ -91,8 +101,52 @@ import SkillPanel from './SkillPanel.vue'
 import DungeonSelectPanel from './DungeonSelectPanel.vue'
 
 import AffectionPanel from './AffectionPanel.vue'
+const appVersion = window.__APP_VERSION__ || '0.0.0'
+const storyMode = ref(false)
 
+const showDevButton = ref(false)
+let versionClickTimer = null
+let versionClickCount = 0
 
+function handleVersionClick() {
+  versionClickCount++
+  if (versionClickTimer) clearTimeout(versionClickTimer)
+  
+  if (versionClickCount >= 5) {
+    versionClickCount = 0
+    // 强制显示开发者按钮，并写入 localStorage
+    showDevButton.value = true
+    localStorage.setItem('dev_mode', '1')
+    if (storyMode.value) {
+      storyMode.value = false
+      store.isStoryMode = false
+    }
+    alert('已恢复开发者面板')
+  } else {
+    versionClickTimer = setTimeout(() => {
+      versionClickCount = 0
+    }, 2000)
+  }
+}
+// 退出剧情模式
+function exitStoryMode() {
+  storyMode.value = false
+  showDevButton.value = localStorage.getItem('dev_mode') === '1'
+  store.isStoryMode = false
+}
+onMounted(() => {
+  showDevButton.value = localStorage.getItem('dev_mode') === '1'
+})
+function enterStoryMode() {
+  storyMode.value = true
+  // 隐藏开发者按钮
+  showDevButton.value = false
+  // 重置剧情进度（如果需要）
+  store.isStoryMode = true
+  store.startStoryTime = Date.now()
+  // 自动触发序章剧情
+  triggerDialog()
+}
 const inventoryRefreshKey = ref(0)
 const dialogRef = ref(null)
 const store = useGameStore()
@@ -101,7 +155,19 @@ const currentPanel = ref(null)
 const showDungeonSelect = ref(false)
 // 面板堆栈
 const panelStack = ref([])
+const isFullscreen = ref(false)
 
+function enterFullscreen() {
+  document.documentElement.requestFullscreen?.().catch(() => {})
+}
+
+onMounted(() => {
+  const syncFullscreen = () => {
+    isFullscreen.value = !!document.fullscreenElement
+  }
+  document.addEventListener('fullscreenchange', syncFullscreen)
+  document.addEventListener('webkitfullscreenchange', syncFullscreen)
+})
 function pushPanel(panelName) {
   // 避免重复压入相同面板
   if (currentPanel.value && currentPanel.value !== panelName) {
