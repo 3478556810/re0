@@ -71,9 +71,16 @@
               <button class="pixel-btn primary" @click="explore">
                 <Icon icon="mdi:sword-cross" /> 深入探索
               </button>
+
+
+              <button class="pixel-btn small" @click="showDungeonElevator = true" v-if="store.dungeon.unlockedFloors.length > 1">
+  <Icon icon="mdi:elevator" /> 电梯 ({{ store.dungeon.unlockedFloors.join(', ') }}F)
+</button>
               <button class="pixel-btn" @click="rest">
                 <Icon icon="mdi:bed" /> 休息 (50G)
               </button>
+
+
               <button class="pixel-btn" @click="retreat" v-if="canRetreat">
                 <Icon icon="mdi:exit-run" /> 撤退
               </button>
@@ -115,7 +122,14 @@
         <button class="pixel-btn" @click="showLocalDungeonSelect = false">关闭</button>
       </div>
     </div>
-
+<div v-if="showDungeonElevator" class="elevator-panel">
+  <h3>选择楼层</h3>
+  <button v-for="floor in store.dungeon.unlockedFloors" :key="floor"
+    class="pixel-btn small" @click="goToDungeonFloor(floor)">
+    第 {{ floor }} 层
+  </button>
+  <button class="pixel-btn small" @click="showDungeonElevator = false">关闭</button>
+</div>
   <MinePanel
   v-if="currentView === 'mine'"
   @close="currentView = 'map'"
@@ -180,7 +194,14 @@ const companions = computed(() => {
   const chars = store.config?.characters || defaultCharacters
   return Object.values(chars).filter(c => c.id !== 'hero' && c.name)
 })
+const showDungeonElevator = ref(false)
 
+function goToDungeonFloor(floor) {
+  store.dungeon.currentFloor = floor
+  showDungeonElevator.value = false
+  // 需要重新触发探索
+   explore()
+}
 function explore() {
 
     // 记录本次探索的地下城
@@ -505,4 +526,34 @@ function talkToCompanion(char) {
 .dungeon-card:hover { background: rgba(255,215,0,0.15); }
 .name { font-size: 11px; margin-bottom: 6px; color: #ffd; }
 .info { font-size: 9px; color: #b89aa5; }
+
+
+
+.elevator-panel {
+  position: fixed;          /* 固定在整个屏幕之上 */
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(20, 28, 40, 0.95);
+  border: 2px solid #ffd700;
+  border-radius: 16px;
+  padding: 20px;
+  z-index: 400;             /* 确保在所有内容上方 */
+  min-width: 200px;
+  text-align: center;
+  color: #ffd;
+  font-family: 'Press Start 2P', cursive;
+}
+
+.elevator-panel h3 {
+  margin-bottom: 15px;
+  font-size: 14px;
+  color: #ffd700;
+}
+
+.elevator-panel button {
+  display: block;
+  width: 100%;
+  margin: 5px 0;
+}
 </style>

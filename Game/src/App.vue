@@ -55,22 +55,62 @@ function fallbackSpawnEnemy(template, playerLevel) {
 
 // 全局时间流逝
 let timeInterval
+
+
+
 onMounted(() => {
-  // 请求全屏（需在用户手势中触发）
-document.addEventListener('click', () => {
-  if (document.fullscreenElement) return
-  document.documentElement.requestFullscreen?.().catch(() => {})
-}, { once: true })
-    // 页面刷新后，清理可能残留的战斗状态
+  // 仅在非开发环境启用强制全屏
+  if (!import.meta.env.DEV) {
+    // 标记全屏状态
+    const setFullscreenState = () => {
+      isFullscreen.value = !!document.fullscreenElement
+    }
+
+    // 进入全屏
+    const requestFullscreen = () => {
+      document.documentElement.requestFullscreen?.().catch(() => {})
+    }
+
+    // 首次用户交互时立即进入全屏
+    const onFirstInteraction = () => {
+      requestFullscreen()
+      document.removeEventListener('click', onFirstInteraction)
+      document.removeEventListener('touchstart', onFirstInteraction)
+    }
+    document.addEventListener('click', onFirstInteraction)
+    document.addEventListener('touchstart', onFirstInteraction)
+
+    // 监听全屏状态变化，退出全屏后再次显示全屏按钮
+    document.addEventListener('fullscreenchange', setFullscreenState)
+    document.addEventListener('webkitfullscreenchange', setFullscreenState)
+
+    // 可选：如果用户退出全屏，可以自动弹出全屏按钮，但重新进入仍需用户手势
+    // 因此建议在界面上保留一个明显的全屏按钮（仅在非全屏时显示）
+  }
+
+  // 页面刷新后，清理可能残留的战斗状态
   if (!inBattle.value) {
     storyBattleConfig.value = null
     storyNodeBeforeBattle.value = null
     store.pendingStoryNodeAfterBattle = null
     sessionStorage.removeItem('storyBattleConfig')
   }
+
+  // 清除顽固的 Service Worker 缓存
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then(registrations => {
+      for (const registration of registrations) {
+        registration.unregister()
+      }
+    })
+  }
+
+  // 时间流逝
   timeInterval = setInterval(() => {
     store.advanceTime(1)
   }, 1000)
+
+  // 键盘调试
   window.addEventListener('keydown', onKeyDebug)
 })
 

@@ -30,9 +30,12 @@
       <div class="row"><label>属性</label>
         <input v-model="mon.element" class="pixel-input" placeholder="fire,water" />
       </div>
-      <div class="row"><label>特性</label>
-        <input v-model="mon.trait" class="pixel-input" placeholder="硬化, 猛火" />
-      </div>
+<div class="row">
+  <label>新特性</label>
+  <input :value="mon.traits ? mon.traits.join(',') : ''"
+       @input="mon.traits = $event.target.value.split(',').map(s => s.trim())"
+       class="pixel-input" placeholder="特性（逗号分隔）" />
+</div>
       <div class="row"><label>技能(JSON)</label>
         <textarea v-model="mon.skillsText" class="pixel-textarea" rows="3" placeholder='[{"name":"火球","mpCost":5}]'></textarea>
       </div>

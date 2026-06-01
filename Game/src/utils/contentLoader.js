@@ -1,6 +1,4 @@
-// 从 public/data/ 加载配置包，返回合并后的配置对象
 export async function loadContentPacks() {
-  // 默认清单：default 和 dlc 两个包，包含以下配置文件
   const manifest = {
     packs: ['default', 'dlc'],
     files: [
@@ -10,11 +8,11 @@ export async function loadContentPacks() {
       'materials.json',
       'dungeons.json',
       'storyScript.json',
-      'tokenShop.json'
+      'tokenShop.json',
+      'characters.json'           // ← 添加角色文件
     ]
   }
 
-  // 最终配置容器
   const config = {
     monsterTemplates: [],
     skillPool: [],
@@ -23,10 +21,10 @@ export async function loadContentPacks() {
     dungeonConfigs: {},
     storyScript: {},
     tokenShopItems: [],
-    materialPrices: {}
+    materialPrices: {},
+    characters: {}                // ← 添加角色容器
   }
 
-  // 依次加载 default 和 dlc（后者覆盖前者）
   for (const pack of manifest.packs) {
     for (const file of manifest.files) {
       const url = `/data/${pack}/${file}`
@@ -35,7 +33,6 @@ export async function loadContentPacks() {
         if (!res.ok) continue
         const data = await res.json()
 
-        // 根据文件名合并到 config 对应字段
         switch (file) {
           case 'monsters.json':
             config.monsterTemplates = data
@@ -58,7 +55,9 @@ export async function loadContentPacks() {
           case 'tokenShop.json':
             config.tokenShopItems = data
             break
-          // 材料价格暂时用代码默认值，也可扩展
+          case 'characters.json':            // ← 处理角色文件
+            config.characters = data
+            break
         }
       } catch (e) {
         console.warn(`加载 ${url} 失败`, e)
