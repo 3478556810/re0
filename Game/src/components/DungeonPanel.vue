@@ -158,14 +158,15 @@ const availableDungeons = computed(() => {
   const configs = store.config.dungeonConfigs || {}
   return Object.keys(configs).map(id => ({ id, ...configs[id] }))
 })
-
+import { inject } from 'vue'
+const showToast = inject('showToast', (msg) => alert(msg))
 // 切换地下城
 function switchToDungeon(id) {
   if (store.startDungeon(id)) {
     showLocalDungeonSelect.value = false
     // 重置当前楼层等视图
   } else {
-    alert('该地下城暂时无法进入')
+    showToast('该地下城暂时无法进入')
   }
 }
 
@@ -231,8 +232,8 @@ function rest() {
     store.player.hp = store.player.maxHp
     store.player.mp = store.player.maxMp
     store.save()
-    alert('在篝火旁小憩片刻，体力恢复了。')
-  } else alert('金币不足。')
+   showToast('在篝火旁小憩片刻，体力恢复了。')
+  } else showToast('金币不足。')
 }
 
 function retreat() {
@@ -245,7 +246,7 @@ function talkToCompanion(char) {
   if (store.config.storyScript?.[nodeId]) {
     emit('triggerStory', nodeId)
   } else {
-    alert(`与${char.name}简短交谈，她微笑着鼓励你继续前进。`)
+    showToast(`与${char.name}简短交谈，她微笑着鼓励你继续前进。`)
   }
 }
 </script>

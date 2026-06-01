@@ -97,9 +97,9 @@ function importMonsters() {
     }))
     store.config.monsterTemplates = fixed
     store.save()
-    alert('导入成功')
+    showToast('导入成功')
   } catch (e) {
-    alert('JSON 格式错误')
+    showToast('JSON 格式错误')
   }
 }
 
@@ -110,10 +110,10 @@ function toggleImport() { showImport.value = !showImport.value }
 
 function exportMonsters() {
   navigator.clipboard.writeText(JSON.stringify(store.config.monsterTemplates, null, 2))
-  alert('已复制到剪贴板')
+  showToast('已复制到剪贴板')
 }
 
-function saveConfig() { store.save(); alert('配置已保存') }
+function saveConfig() { store.save(); showToast('配置已保存') }
 </script>
 
 

@@ -141,7 +141,7 @@ function setMarketClose() {
   store.advanceTime(diff)
 }
 
-function saveConfig() { store.save(); alert('配置已保存') }
+function saveConfig() { store.save(); showToast('配置已保存') }
 
  
 async function resetConfig() {
@@ -184,7 +184,7 @@ async function resetConfig() {
   // 重置游戏状态到默认值
   store.$reset()
 
-  alert('✅ 已重置为初始状态')
+  showToast('✅ 已重置为初始状态')
 }
 
 function addStock() {

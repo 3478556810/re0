@@ -9,6 +9,24 @@ import { storyTree as defaultStoryTree } from '../config/storyScript'
 import { defaultSkillDatabase } from '../config/skillDatabase'
 import { AFFIX_EFFECTS, QUALITY_RULES, QUALITY_WEIGHTS, getLootTable } from '../config/accessoryConfig'
 export const useGameStore = defineStore('game', () => {
+
+  const setBonuses = {
+  // 铁之意志：生存向
+  iron_set: {
+    3: { def: 20, hp: 80, desc: '受到伤害降低10%' },
+    6: { def: 50, hp: 200, atk: 15, desc: '每回合恢复5%最大生命值' }
+  },
+  // 蛛丝暗影：速度暴击向
+  spider_set: {
+    3: { speed: 15, critRate: 10, desc: '暴击时额外造成30%伤害' },
+    6: { speed: 30, critRate: 20, critDmg: 50, desc: '击败敌人后获得一回合额外行动' }
+  },
+  // 石魔之力：攻击向
+  stone_set: {
+    3: { atk: 25, rockDmg: 25, desc: '攻击时20%概率触发额外岩属性伤害(攻击力×0.5)' },
+    6: { atk: 60, rockDmg: 50, trueDmg: 20, desc: '岩属性伤害无视防御' }
+  }
+}
   // ========== 玩家 ==========
   const player = reactive({
     name: '冒险者', emoji: '',
@@ -352,6 +370,7 @@ tokenShopItems: [
 
   // ========== 地下城状态 ==========
   const dungeon = reactive({
+      completed: false,    
       unlockedFloors: [1],        // 已解锁的楼层
   savedFloors: { 1: true },   // 已保存的楼层
     active: false,
@@ -382,7 +401,8 @@ const pendingStoryNodeAfterBattle = ref(null)
 
   // 好感度存储器
 const affection = reactive({})
-
+const storyBestTime = ref(null)   // 最佳通关时间（秒）
+const storyEndTime = ref(null)    // 本次通关时间（临时）
 // 角色称号映射表（策划可配）
 const affectionTitles = {
   freyja: [
@@ -484,6 +504,13 @@ function applyAffection(changes) {
         if (key in base) base[key] += value
       }
     })
+
+    // 套装加成
+  for (const [, set] of Object.entries(activeSetBonuses.value)) {
+    for (const [key, val] of Object.entries(set.bonus)) {
+      if (key in base) base[key] += val
+    }
+  }
     return base
   })
 
@@ -579,11 +606,14 @@ function applyAffection(changes) {
         quality: item.quality,
         atk: item.atk || 0,
         def: item.def || 0,
+         setId: item.setId || '',   // 👈 加这一行
         affixes: item.affixes ? item.affixes.map(a => ({ id: a.id, level: a.level })) : []
       }
     }
   }
     const state = {
+
+      storyBestTime: storyBestTime.value,
       affection: { ...affection },
         mine: {
     currentFloor: mine.currentFloor,
@@ -636,7 +666,26 @@ tokenShopItems: config.tokenShopItems.map(i => ({ ...i })),
 
 
 
-
+const activeSetBonuses = computed(() => {
+  const counts = {}
+  for (const slot of Object.values(equipment)) {
+    if (!slot || !slot.setId) continue
+    counts[slot.setId] = (counts[slot.setId] || 0) + 1
+  }
+  const bonuses = {}
+  for (const [setId, count] of Object.entries(counts)) {
+    const setConfig = setBonuses[setId]
+    if (!setConfig) continue
+    let best = null
+    for (const [required, bonus] of Object.entries(setConfig)) {
+      if (count >= Number(required)) {
+        best = { count, bonus, required: Number(required) }
+      }
+    }
+    if (best) bonuses[setId] = best
+  }
+  return bonuses
+})
 // ========== 保存初始默认状态快照（用于重置） ==========
 const initialState = {
   player: JSON.parse(JSON.stringify(player)),
@@ -725,8 +774,14 @@ const defaults = JSON.parse(JSON.stringify(initialState))
     const saved = localStorage.getItem('star-trails-save')
     if (!saved) return
     try {
-      
+
       const data = JSON.parse(saved)
+
+
+
+            if (data.storyBestTime != null) {
+  storyBestTime.value = data.storyBestTime
+}
 if (data.activeHuntQuest) {
   activeHuntQuest.value = data.activeHuntQuest
 }
@@ -937,7 +992,7 @@ function equipItem(item) {
        player.mp = player.maxMp // 升级时回满 MP
       player.attack += 3
       player.defense += 2
-      player.skillPoints = (player.skillPoints || 0) + 2     // ← 新增：每级给 1 技能点
+      player.skillPoints = (player.skillPoints || 0) + 3     // ← 新增：每级给 1 技能点
     }
     save()
   }
@@ -1093,6 +1148,7 @@ function equipItem(item) {
   
   if (dungeon.currentFloor >= dungeon.maxFloors) {
     dungeon.bossDefeated = true
+    dungeon.completed = true    
     completeDungeon()
   } else {
     dungeon.currentFloor++
@@ -1137,19 +1193,19 @@ function getRandomMonsterForFloor() {
 
   const floor = dungeon.currentFloor
   const maxFloors = dg.maxFloors || 5
-  const wLv = worldLevel.value   // 世界等级（确保 worldLevel 已定义并导出）
+  const wLv = worldLevel.value
 
-  // 怪物数量
+  // 怪物数量：5的倍数层只出1个Boss
   let count = 1
-if (floor === maxFloors) {
-  count = 1  // Boss层只生成1个
-} else if (floor >= 4) {
-  count = 2 + Math.floor(Math.random() * 2)
-} else if (floor >= 2) {
-  count = 1 + Math.floor(Math.random() * 2)
-} else {
-  count = 1 + Math.floor(Math.random() * 2)
-}
+  if (floor % 5 === 0) {
+    count = 1
+  } else if (floor >= 7) {
+    count = 2 + Math.floor(Math.random() * 2)
+  } else if (floor >= 4) {
+    count = 1 + Math.floor(Math.random() * 2)
+  } else {
+    count = 1 + Math.floor(Math.random() * 2)
+  }
 
   const pool = dg.monstersByFloor[floor] || dg.monstersByFloor[1] || ['slime']
   const uniquePool = [...new Set(pool)]
@@ -1231,7 +1287,8 @@ if (floor === maxFloors) {
     save, load, fixGhostEquipment,pendingStoryNodeAfterBattle,
     dungeon, pendingDungeonPanel, getMaterialName,equipItem,
     startDungeon, clearFloor, retreat, getRandomMonsterForFloor,
-    getSkillById, getPlayerSkills, equipSkill, unequipSkill,
+    getSkillById, getPlayerSkills, equipSkill, unequipSkill,storyBestTime,
+  storyEndTime,activeSetBonuses,
     moveSkillUp, moveSkillDown,  $reset,mine, worldLevel,activeHuntQuest, acceptHuntQuest, updateHuntProgress,affection, applyAffection, getAffectionLevel, getAffectionTitle, affectionTitles
   }
 })

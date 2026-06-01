@@ -238,6 +238,13 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
+  // 把筐里的东西全部存入主背包
+  for (const [id, qty] of Object.entries(store.mine.basket)) {
+    store.addMaterial(id, store.getMaterialName(id), qty)
+  }
+  store.mine.basket = {}
+  store.save()
+
   window.removeEventListener('keydown', handleKeydown)
   window.removeEventListener('resize', updateContainerSize)
   clearInterval(monsterTimer)

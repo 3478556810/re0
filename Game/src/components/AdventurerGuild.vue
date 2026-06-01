@@ -110,7 +110,8 @@ const canRankUp = computed(() => expInRank.value >= currentRank.value.maxExp)
 
 const activeBossQuest = ref(null)
 const quests = ref([])
-
+import { inject } from 'vue'
+const showToast = inject('showToast', (msg) => alert(msg))
 
 function acceptQuest(quest) {
   if (quest.target === 'boss') {
@@ -120,14 +121,14 @@ function acceptQuest(quest) {
       killed: 0,
       target: quest.bossId  // Boss 的怪物 ID
     })
-    alert(`已接受升段讨伐：${quest.desc}。去地下城击败 Boss！`)
+   showToast(`已接受升段讨伐：${quest.desc}。去地下城击败 Boss！`)
     return
   }
 
   if (quest.target) {
     // 怪物讨伐：调用 store 方法
     store.acceptHuntQuest({ ...quest, killed: 0 })
-    alert(`已接受委托：${quest.desc}。去地下城讨伐吧！`)
+    showToast(`已接受委托：${quest.desc}。去地下城讨伐吧！`)
     return
   }
 
@@ -140,9 +141,9 @@ function acceptQuest(quest) {
       store.save()
       quests.value = quests.value.filter(q => q.id !== quest.id)
       addRandomQuest()
-      alert('委托完成！')
+      showToast('委托完成！')
     } else {
-      alert('材料不足！')
+      showToast('材料不足！')
     }
   }
 }

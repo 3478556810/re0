@@ -276,16 +276,16 @@ function importSkills() {
     if (Array.isArray(data)) {
       store.config.skillPool = data
       store.save()
-      alert('导入成功')
+      showToast('导入成功')
     }
   } catch (e) {
-    alert('JSON 格式错误')
+    showToast('JSON 格式错误')
   }
 }
 
 function exportSkills() {
   navigator.clipboard.writeText(JSON.stringify(store.config.skillPool, null, 2))
-  alert('已复制到剪贴板')
+  showToast('已复制到剪贴板')
 }
 </script>
 

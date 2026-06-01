@@ -51,11 +51,11 @@ function removeItem(idx) {
   store.config.tokenShopItems.splice(idx, 1)
 }
 
-function saveConfig() { store.save(); alert('兑换商店已保存') }
+function saveConfig() { store.save(); showToast('兑换商店已保存') }
 
 function exportItems() {
   const json = JSON.stringify(store.config.tokenShopItems, null, 2)
-  navigator.clipboard.writeText(json).then(() => alert('已复制到剪贴板'))
+  navigator.clipboard.writeText(json).then(() => showToast('已复制到剪贴板'))
 }
 
 function importItems() {
@@ -66,9 +66,9 @@ function importItems() {
     store.save()
     jsonImport.value = ''
     showImport.value = false
-    alert('导入成功')
+    showToast('导入成功')
   } catch (e) {
-    alert('JSON 格式错误，需要数组')
+    showToast('JSON 格式错误，需要数组')
   }
 }
 </script>
