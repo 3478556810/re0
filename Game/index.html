@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+  <script>
+  window.__APP_VERSION__ = '1.0.4'; // 每次部署新版本时改这个数字
+</script>
   <meta charset="UTF-8">
  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, orientation=landscape">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -33,6 +36,35 @@
     }
   }
 </style>
+<script>
+  
+  // 强制清除所有缓存并刷新到最新版本
+  (function() {
+    var currentVersion = window.__APP_VERSION__; // 每次部署新版本时修改这个数字
+    var savedVersion = localStorage.getItem('app_version');
+    if (currentVersion !== savedVersion) {
+      localStorage.setItem('app_version', currentVersion);
+      // 注销所有 Service Worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (var i = 0; i < registrations.length; i++) {
+            registrations[i].unregister();
+          }
+        });
+      }
+      // 清除所有 Cache Storage
+      if ('caches' in window) {
+        caches.keys().then(function(names) {
+          for (var i = 0; i < names.length; i++) {
+            caches.delete(names[i]);
+          }
+        });
+      }
+      // 强制刷新
+      location.reload(true);
+    }
+  })();
+</script>
 </head>
 <body>
   <div id="app"></div>

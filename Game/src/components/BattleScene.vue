@@ -571,7 +571,7 @@ const effectiveSkill = {
 
   const nextAlive = engine.enemies.findIndex(e => e.hp > 0)
   if (nextAlive !== -1) currentTargetIndex.value = nextAlive
-
+syncStateFromEngine() // 更新一下界面
   playerTurn.value = false
   await enemyTurn()
 }

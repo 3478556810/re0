@@ -2,21 +2,24 @@ $voicevoxUrl = "http://localhost:50021"
 $storyPath = "public/data/dlc/storyScript_ja.json"
 $outputDir = "public/voice"
 
-# 角色默认音色映射
+# 角色音色映射（中英文都支持）
 $characterVoice = @{
-    "ain" = 14         # 冥鳴ひまり（女主）
-    "freyja" = 8       # 春日部つむぎ
-    "liz" = 2          # 四国めたん
+    "ain" = 14
+    "艾因" = 14
+    "freyja" = 8
+    "芙蕾雅" = 8
+    "liz" = 2
+    "莉兹" = 2
     "default" = 14
 }
 
-# 各角色在不同语气下的风格 ID
+# 语气映射（中英文都支持）
 $voiceStyleMap = @{
-    "normal"   = @{ "ain" = 14; "freyja" = 8; "liz" = 2  }
-    "sweet"    = @{ "ain" = 14; "freyja" = 8; "liz" = 0  }
-    "angry"    = @{ "ain" = 14; "freyja" = 8; "liz" = 6  }
-    "sexy"     = @{ "ain" = 14; "freyja" = 8; "liz" = 4  }
-    "whisper"  = @{ "ain" = 14; "freyja" = 8; "liz" = 36 }
+    "normal"   = @{ "ain" = 14; "艾因" = 14; "freyja" = 8; "芙蕾雅" = 8; "liz" = 2; "莉兹" = 2 }
+    "sweet"    = @{ "ain" = 14; "艾因" = 14; "freyja" = 8; "芙蕾雅" = 8; "liz" = 0; "莉兹" = 0 }
+    "angry"    = @{ "ain" = 14; "艾因" = 14; "freyja" = 8; "芙蕾雅" = 8; "liz" = 6; "莉兹" = 6 }
+    "sexy"     = @{ "ain" = 14; "艾因" = 14; "freyja" = 8; "芙蕾雅" = 8; "liz" = 4; "莉兹" = 4 }
+    "whisper"  = @{ "ain" = 14; "艾因" = 14; "freyja" = 8; "芙蕾雅" = 8; "liz" = 36; "莉兹" = 36 }
 }
 
 New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
@@ -30,7 +33,6 @@ foreach ($nodeId in $story.PSObject.Properties.Name) {
     $text = if ($node.text_ja) { $node.text_ja } else { $node.text }
     $speaker = if ($node.speaker) { $node.speaker } else { "narrator" }
 
-    # 跳过旁白，不生成语音
     if ($speaker -eq "narrator") {
         Write-Host "[$current/$total] 跳过旁白: $nodeId"
         continue
@@ -44,7 +46,6 @@ foreach ($nodeId in $story.PSObject.Properties.Name) {
         continue
     }
 
-    # 根据 voiceStyle 选择语气 ID，没有则用 normal
     $style = if ($node.voiceStyle) { $node.voiceStyle } else { "normal" }
     $styleId = $voiceStyleMap[$style][$speaker]
     if (-not $styleId) { $styleId = $characterVoice[$speaker] }
@@ -52,7 +53,9 @@ foreach ($nodeId in $story.PSObject.Properties.Name) {
 
     Write-Host "[$current/$total] 生成: ${speaker}_${nodeId}.wav (语气:$style, ID:$styleId)"
 
-    $queryUrl = "${voicevoxUrl}/audio_query?text=${text}&speaker=${styleId}"
+    $encodedText = [System.Uri]::EscapeDataString($text)
+    $queryUrl = "${voicevoxUrl}/audio_query?text=${encodedText}&speaker=${styleId}"
+
     try {
         $queryResp = Invoke-RestMethod -Uri $queryUrl -Method Post -ContentType "application/json"
     } catch {

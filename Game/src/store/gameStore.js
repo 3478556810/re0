@@ -352,6 +352,8 @@ tokenShopItems: [
 
   // ========== 地下城状态 ==========
   const dungeon = reactive({
+      unlockedFloors: [1],        // 已解锁的楼层
+  savedFloors: { 1: true },   // 已保存的楼层
     active: false,
     currentDungeon: null,
     currentFloor: 1,
@@ -620,7 +622,11 @@ tokenShopItems: config.tokenShopItems.map(i => ({ ...i })),
         monsterTags: [...config.monsterTags],
         skillPool: JSON.parse(JSON.stringify(config.skillPool))
       },
-      dungeon: { ...dungeon },
+      dungeon: {
+  ...dungeon,
+  unlockedFloors: [...dungeon.unlockedFloors],
+  savedFloors: { ...dungeon.savedFloors }
+},
       defeated: Array.from(defeatedEnemies.value),
       explored: Array.from(exploredTiles.value),
       currentEvent: currentEvent.value ? { ...currentEvent.value } : null
@@ -820,7 +826,11 @@ if (Array.isArray(savedImages)) {
         if (data.config.monsterTags) config.monsterTags = data.config.monsterTags
         if (data.config.skillPool) config.skillPool = data.config.skillPool
       }
-      if (data.dungeon) Object.assign(dungeon, data.dungeon)
+    if (data.dungeon) {
+  Object.assign(dungeon, data.dungeon)
+  dungeon.unlockedFloors = Array.isArray(data.dungeon.unlockedFloors) ? data.dungeon.unlockedFloors : [1]
+  dungeon.savedFloors = data.dungeon.savedFloors || { 1: true }
+}
       defeatedEnemies.value = new Set(data.defeated || [])
       exploredTiles.value = new Set(data.explored || [])
       if (data.currentEvent) currentEvent.value = data.currentEvent
@@ -834,10 +844,13 @@ if (Array.isArray(savedImages)) {
   }
 
   load()
+
 loadContentPacks().then(packConfig => {
-  // 合并内容包数据（覆盖存档中的旧配置）
-  Object.assign(config, packConfig)
-  save() // 保存合并后的配置
+  // 完整覆盖 config 中所有从 JSON 加载的字段
+  for (const key of Object.keys(packConfig)) {
+    config[key] = packConfig[key]
+  }
+  save()
 })
   // ========== 方法 ==========
   function equipAccessory(accessory, slot) {
@@ -1066,33 +1079,57 @@ function equipItem(item) {
     return true
   }
 
-  function clearFloor() {
-    dungeon.floorsCleared++
-    if (dungeon.currentFloor >= dungeon.maxFloors) {
-      dungeon.bossDefeated = true
-      completeDungeon()
-    } else {
-      dungeon.currentFloor++
+ function clearFloor() {
+  dungeon.floorsCleared++
+  
+  // 每5层自动存档（保存的是下一层，让玩家跳过 Boss）
+  if (dungeon.currentFloor % 5 === 0) {
+    const nextFloor = dungeon.currentFloor + 1
+    if (!dungeon.unlockedFloors.includes(nextFloor)) {
+      dungeon.unlockedFloors.push(nextFloor)
     }
-    save()
+    dungeon.savedFloors[nextFloor] = true
   }
+  
+  if (dungeon.currentFloor >= dungeon.maxFloors) {
+    dungeon.bossDefeated = true
+    completeDungeon()
+  } else {
+    dungeon.currentFloor++
+  }
+  save()
+}
+function retreat() {
+  const dg = config.dungeonConfigs[dungeon.currentDungeon] || DUNGEONS[dungeon.currentDungeon]
+  dungeon.lastRetreatDay = world.day
+  dungeon.retreatCooldown = dg ? dg.cooldown : 1
+  dungeon.lastDungeonId = dungeon.currentDungeon
+  // 撤退时也保留已解锁楼层
+  if (dungeon.currentFloor % 5 === 0) {
+    if (!dungeon.unlockedFloors.includes(dungeon.currentFloor)) {
+      dungeon.unlockedFloors.push(dungeon.currentFloor)
+    }
+    dungeon.savedFloors[dungeon.currentFloor] = true
+  }
+  dungeon.active = false
+  save()
+}
 
-  function retreat() {
-    const dg = config.dungeonConfigs[dungeon.currentDungeon] || DUNGEONS[dungeon.currentDungeon]
-    dungeon.lastRetreatDay = world.day
-    dungeon.retreatCooldown = dg ? dg.cooldown : 1
-    dungeon.lastDungeonId = dungeon.currentDungeon
-     dungeon.lastDungeonId = dungeon.currentDungeon   // 确保撤退也记录
-    dungeon.active = false
-    save()
+function completeDungeon() {
+  // 通关时也保存下一层（如果还有的话）
+  if (dungeon.currentFloor % 5 === 0) {
+    const nextFloor = dungeon.currentFloor + 1
+    if (!dungeon.unlockedFloors.includes(nextFloor)) {
+      dungeon.unlockedFloors.push(nextFloor)
+    }
+    dungeon.savedFloors[nextFloor] = true
   }
-
-  function completeDungeon() {
-    dungeon.active = false
-    dungeon.lastRetreatDay = world.day
-    dungeon.lastDungeonId = dungeon.currentDungeon
-    save()
-  }
+  
+  dungeon.active = false
+  dungeon.lastRetreatDay = world.day
+  dungeon.lastDungeonId = dungeon.currentDungeon
+  save()
+}
 
 function getRandomMonsterForFloor() {
   const dg = config.dungeonConfigs[dungeon.currentDungeon] || DUNGEONS[dungeon.currentDungeon]

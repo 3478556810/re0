@@ -1,11 +1,10 @@
 import json
-from translate import Translator
+from deep_translator import GoogleTranslator
 
-print("正在读取剧情文件...")
 with open('public/data/dlc/storyScript.json', 'r', encoding='utf-8') as f:
     story = json.load(f)
 
-translator = Translator(from_lang="zh-CN", to_lang="ja")
+translator = GoogleTranslator(source='zh-CN', target='ja')
 total = len(story)
 current = 0
 
