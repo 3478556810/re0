@@ -189,7 +189,14 @@ const combatModule = useCombatStats(inventoryModule.equipment, config, playerMod
     retreat: () => dungeonModule.retreat(worldModule.world.day),
     getRandomMonsterForFloor: () => dungeonModule.getRandomMonsterForFloor(playerModule.worldLevel.value),
     acceptHuntQuest: (quest) => huntQuestModule.acceptHuntQuest(quest, save),
-    updateHuntProgress: (enemyIds) => huntQuestModule.updateHuntProgress(enemyIds, rankModule.addRankExperience, (amount) => playerModule.addGold(amount, save), rankModule.completeRankUp, save),
+updateHuntProgress: (enemyIds) => huntQuestModule.updateHuntProgress(
+  enemyIds,
+  rankModule.addRankExperience,
+  (amount) => playerModule.addGold(amount, save),
+  rankModule.completeRankUp,
+  (points) => { playerModule.player.skillPoints += points },   // ← 新增
+  save
+),
     abandonHuntQuest: (questId) => huntQuestModule.abandonHuntQuest(questId, save),
     getAffectionLevel: affectionModule.getAffectionLevel,
     getAffectionTitle: affectionModule.getAffectionTitle,

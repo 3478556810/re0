@@ -77,7 +77,7 @@ let floatId = 0;
       comp = {
         id: companionData.id,
         name: companionData.name,
-        attack: Math.floor(baseAttack + playerLevel * 3 + store.getAffectionLevel(companionId) * 8),
+       attack: Math.floor(store.playerStats.attack * 0.7 + store.getAffectionLevel(companionId) * 20),
         defense: Math.floor(store.playerStats.defense * 0.8),
         hp: Math.floor(store.playerStats.maxHp * 0.8) + store.getAffectionLevel(companionId) * 50,
         maxHp: Math.floor(store.playerStats.maxHp * 0.8) + store.getAffectionLevel(companionId) * 50,
@@ -116,13 +116,13 @@ let floatId = 0;
     window.__engine = engine.value
     syncStateFromEngine()
   }
-function addFloatingNumber(targetIndex, amount, type = 'normal') {
+function addFloatingNumber(targetIndex, amount, type = 'normal', offsetY = 0) {
   const id = ++floatId;
-  floatingNumbers.value.push({ id, targetIndex, amount, type });
+  floatingNumbers.value.push({ id, targetIndex, amount, type, offsetY });
   setTimeout(() => {
     const idx = floatingNumbers.value.findIndex(f => f.id === id);
     if (idx !== -1) floatingNumbers.value.splice(idx, 1);
-  }, 1200); // 1.2秒后移除
+  }, 3500); // 1.5秒后移除
 }
   function syncStateFromEngine() {
     if (!engine.value) return
@@ -222,24 +222,46 @@ function addFloatingNumber(targetIndex, amount, type = 'normal') {
       })
     }
 
-    const effectiveSkill = {
-      ...skill,
-      baseMul: currentMul,
-      effects: [...(skill.effects || []), ...extraEffects],
-      extraActions,
-      mpCost: actualMpCost,
-    }
+// 合并效果：三脚架效果会覆盖同类型的基础效果（如 trueDmg、buff 等）
+let mergedEffects = [...(skill.effects || [])];
+
+for (const extra of extraEffects) {
+  // 如果三脚架效果的类型是 trueDmg、buff、debuff 等需要覆盖的，则移除基础中同类型效果
+  if (extra.type === 'trueDmg' || extra.type === 'buff' || extra.type === 'debuff' || extra.type === 'dot' || extra.type === 'shield') {
+    mergedEffects = mergedEffects.filter(e => !(e.type === extra.type && e.stat === extra.stat));
+  }
+  mergedEffects.push(extra);
+}
+
+const effectiveSkill = {
+  ...skill,
+  baseMul: currentMul,
+  effects: mergedEffects,
+  extraActions,
+  mpCost: actualMpCost,
+};
 
     const result = engine.value.executePlayerAction(effectiveSkill, targetIdx, { noMpCost: isTrainingRoom.value })
     if (!result) return
 // 处理浮动伤害数字
 if (result.hitDetails && result.hitDetails.length > 0) {
   result.hitDetails.forEach(hit => {
-    let type = 'normal';
-    if (hit.crit) type = 'crit';
-    else if (hit.multiplier > 1) type = 'effective';   // 效果拔群
-    else if (hit.multiplier < 1) type = 'resisted';     // 效果不理想
-    addFloatingNumber(hit.targetIndex, hit.damage, type);
+    // 普通伤害（无暴击、无特殊倍率、无真伤）绝对不显示
+    if (!hit.crit && hit.multiplier === 1 && !hit.trueDmg) return;
+
+    // 暴击/效果拔群等主伤害数字
+    if (hit.crit || hit.multiplier !== 1) {
+      let type = 'normal';
+      if (hit.crit) type = 'crit';
+      else if (hit.multiplier > 1) type = 'effective';
+      else if (hit.multiplier < 1) type = 'resisted';
+      addFloatingNumber(hit.targetIndex, hit.damage, type);
+    }
+
+    // 真伤数字（独立显示，向上偏移20px避免重叠）
+    if (hit.trueDmg && hit.trueDmg > 0) {
+      addFloatingNumber(hit.targetIndex, hit.trueDmg, 'trueDmg', -20);
+    }
   });
 }
     // 敌人受击闪白

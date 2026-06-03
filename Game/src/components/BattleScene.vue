@@ -85,14 +85,15 @@
             class="big-sprite-icon"
           />
   <div class="floating-damage-container" v-if="floatingNumbers.length">
-      <div
-        v-for="floatNum in floatingNumbers.filter(f => f.targetIndex === idx)"
-        :key="floatNum.id"
-        class="float-damage"
-        :class="'dmg-type-' + floatNum.type"
-      >
-        -{{ floatNum.amount }}
-      </div>
+   <div
+  v-for="floatNum in floatingNumbers.filter(f => f.targetIndex === idx)"
+  :key="floatNum.id"
+  class="float-damage"
+  :class="'dmg-type-' + floatNum.type"
+  :style="{ marginTop: floatNum.offsetY ? floatNum.offsetY + 'px' : '0' }"
+>
+  -{{ floatNum.amount }}
+</div>
     </div>
   </div>
       </div>
@@ -942,28 +943,59 @@ function onRetreat() {
 
 
 /* 浮动伤害数字 */
+/* 浮动伤害数字容器 */
 .floating-damage-container {
   position: absolute;
   top: 0;
-  left: 50%;
+  left: 0;            /* 从左上角开始 */
   pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start; /* 左对齐 */
+  gap: 6px;
 }
+
+/* 单个浮动数字 */
+@import url('https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap');
+
 .float-damage {
-  position: absolute;
-  font-size: 18px;
-  font-weight: bold;
+  font-family: 'Great Vibes', 'Brush Script MT', cursive;
+  font-size: 36px;
+  font-weight: normal;
+  font-style: italic;
   color: #fff;
   text-shadow: 2px 2px 0 #000;
-  animation: floatUp 1s ease-out forwards;
   white-space: nowrap;
-  transform: translateX(-50%);
+  animation: floatUp 3.5s ease-out forwards; /* 3.5秒动画 */
+  position: relative;
 }
+
+/* 左上角飘动动画 */
 @keyframes floatUp {
-  0% { opacity: 1; transform: translate(-50%, 0); }
-  100% { opacity: 0; transform: translate(-50%, -40px); }
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(-5deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-80px, -80px) rotate(10deg); /* 向左上飘走 */
+  }
 }
-.dmg-type-normal { color: #ffffff; }
-.dmg-type-crit { color: #ffd700; font-size: 22px; }
-.dmg-type-effective { color: #4caf50; }
-.dmg-type-resisted { color: #aaa; }
+
+/* 真伤数字颜色 */
+.dmg-type-trueDmg {
+  color: #ff8c00;
+  font-size: 42px;
+  font-weight: bold;
+  text-shadow: 0 0 10px #ff8c00, 2px 2px 0 #000;
+}
+
+/* 暴击数字颜色 */
+.dmg-type-crit {
+  color: #ffd700;
+  font-size: 38px;
+  font-weight: bold;
+  text-shadow: 0 0 8px #ffd700, 2px 2px 0 #000;
+}
+
 </style>

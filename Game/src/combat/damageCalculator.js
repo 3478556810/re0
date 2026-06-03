@@ -94,7 +94,16 @@ export function calculateDamage(attacker, defender, skill, options = {}) {
     if (holyMark && holyMark.value > 0) {
       damage = Math.floor(damage * (1 + holyMark.value));
     }
+  }  
+  
+  
+  
+    let trueDmg = 0;
+  // 巫毒娃娃：伤害百分比转为真伤
+  if (attacker.trueDmgPercent && damage > 0) {
+    trueDmg = Math.floor(damage * attacker.trueDmgPercent / 100);
+    damage += trueDmg;
   }
 
-  return { damage: Math.max(0, damage), crit, multiplier: elemMult };
+  return { damage: Math.max(0, damage), crit, multiplier: elemMult, trueDmg };
 }

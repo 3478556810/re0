@@ -2,155 +2,153 @@ import { Icon } from '@iconify/vue'
 
 // ========== 全新词条效果表（机制化设计）==========
 export const AFFIX_EFFECTS = {
-  // ========== T1 输出核心（大幅削弱） ==========
-
-  // 1. 怨恨：攻击加成砍半
+  // ========== T0 输出核心 ==========
+  
+  // 1. 怨恨：风险换高攻击
   grudge: {
     name: '怨恨', loreName: '怨恨',
     thresholds: [
-      { level: 1, desc: '攻+8%，受伤+10%', bonus: { attack: 8, dmgTaken: 10 } },
-      { level: 3, desc: '攻+15%，受伤+20%', bonus: { attack: 15, dmgTaken: 20 } },
-      { level: 5, desc: '攻+25%，受伤+30%', bonus: { attack: 25, dmgTaken: 30 } },
-      { level: 7, desc: '攻+40%，受伤+35%', bonus: { attack: 40, dmgTaken: 35 } },
-      { level: 10, desc: '攻+60%，受伤+40%', bonus: { attack: 60, dmgTaken: 40 } }
+      { level: 1, desc: '攻+10%，受伤+8%', bonus: { attack: 10, dmgTaken: 8 } },
+      { level: 3, desc: '攻+20%，受伤+15%', bonus: { attack: 20, dmgTaken: 15 } },
+      { level: 5, desc: '攻+35%，受伤+22%', bonus: { attack: 35, dmgTaken: 22 } },
+      { level: 7, desc: '攻+55%，受伤+28%', bonus: { attack: 55, dmgTaken: 28 } },
+      { level: 10, desc: '攻+80%，受伤+35%', bonus: { attack: 80, dmgTaken: 35 } }
     ]
   },
 
-  // 2. 巫毒娃娃：真伤转化减半
+  // 2. 巫毒娃娃：真伤转化（基于最终伤害的百分比，收益极高）
   voodooDoll: {
     name: '巫毒娃娃', loreName: '巫毒',
     thresholds: [
-      { level: 1, desc: '攻击的 5% 转真伤', bonus: { trueDmgPercent: 5 } },
-      { level: 3, desc: '攻击的 10% 转真伤', bonus: { trueDmgPercent: 10 } },
-      { level: 5, desc: '攻击的 18% 转真伤', bonus: { trueDmgPercent: 18 } },
-      { level: 7, desc: '攻击的 28% 转真伤', bonus: { trueDmgPercent: 28 } },
-      { level: 10, desc: '攻击的 40% 转真伤', bonus: { trueDmgPercent: 40 } }
+      { level: 1, desc: '伤害的 8% 转为真伤', bonus: { trueDmgPercent: 8 } },
+      { level: 3, desc: '伤害的 15% 转为真伤', bonus: { trueDmgPercent: 15 } },
+      { level: 5, desc: '伤害的 25% 转为真伤', bonus: { trueDmgPercent: 25 } },
+      { level: 7, desc: '伤害的 35% 转为真伤', bonus: { trueDmgPercent: 35 } },
+      { level: 10, desc: '伤害的 50% 转为真伤', bonus: { trueDmgPercent: 50 } }
     ]
   },
 
-  // 3. 钝器：暴伤加成砍半
+  // 3. 钝器：暴伤特化，暴率惩罚降低
   bluntWeapon: {
     name: '钝器', loreName: '钝器',
     thresholds: [
-      { level: 1, desc: '暴伤+15%, 暴率-3%', bonus: { critDmg: 15, critRate: -3 } },
-      { level: 3, desc: '暴伤+40%, 暴率-6%', bonus: { critDmg: 40, critRate: -6 } },
-      { level: 5, desc: '暴伤+90%, 暴率-10%', bonus: { critDmg: 90, critRate: -10 } },
-      { level: 7, desc: '暴伤+180%, 暴率-13%', bonus: { critDmg: 180, critRate: -13 } },
-      { level: 10, desc: '暴伤+300%, 暴率-15%', bonus: { critDmg: 300, critRate: -15 } }
+      { level: 1, desc: '暴伤+25%, 暴率-2%', bonus: { critDmg: 25, critRate: -2 } },
+      { level: 3, desc: '暴伤+60%, 暴率-4%', bonus: { critDmg: 60, critRate: -4 } },
+      { level: 5, desc: '暴伤+120%, 暴率-6%', bonus: { critDmg: 120, critRate: -6 } },
+      { level: 7, desc: '暴伤+220%, 暴率-8%', bonus: { critDmg: 220, critRate: -8 } },
+      { level: 10, desc: '暴伤+350%, 暴率-10%', bonus: { critDmg: 350, critRate: -10 } }
     ]
   },
 
-  // ========== T1.5 辅助刻印（削弱） ==========
+  // ========== T1 稳定输出/辅助 ==========
 
-  // 4. 破甲：无视防御减半
+  // 4. 破甲：无视防御，对护盾特攻
   armorBreak: {
     name: '破甲', loreName: '破甲',
     thresholds: [
-      { level: 1, desc: '无视防御 8%', bonus: { ignoreDef: 8 } },
-      { level: 3, desc: '无视防御 15%', bonus: { ignoreDef: 15 } },
-      { level: 5, desc: '无视防御 22%', bonus: { ignoreDef: 22 } },
-      { level: 7, desc: '无视防御 32%，对护盾伤害+15%', bonus: { ignoreDef: 32, shieldDmg: 15 } },
-      { level: 10, desc: '无视防御 45%，对护盾伤害+30%', bonus: { ignoreDef: 45, shieldDmg: 30 } }
+      { level: 1, desc: '无视防御 12%，对护盾伤害+20%', bonus: { ignoreDef: 12, shieldDmg: 20 } },
+      { level: 3, desc: '无视防御 22%，对护盾伤害+30%', bonus: { ignoreDef: 22, shieldDmg: 30 } },
+      { level: 5, desc: '无视防御 35%，对护盾伤害+45%', bonus: { ignoreDef: 35, shieldDmg: 45 } },
+      { level: 7, desc: '无视防御 50%，对护盾伤害+65%', bonus: { ignoreDef: 50, shieldDmg: 65 } },
+      { level: 10, desc: '无视防御 70%，对护盾伤害+90%', bonus: { ignoreDef: 70, shieldDmg: 90 } }
     ]
   },
 
-  // 5. 法力共鸣：减耗和回蓝削弱
+  // 5. 法力共鸣：大幅提高续航
   manaResonance: {
     name: '法力共鸣', loreName: '法力',
     thresholds: [
-      { level: 1, desc: '技能MP消耗 -5%，伤害回1蓝', bonus: { mpCostReduction: 5, mpOnHit: 1 } },
-      { level: 3, desc: '技能MP消耗 -10%，伤害回2蓝', bonus: { mpCostReduction: 10, mpOnHit: 2 } },
-      { level: 5, desc: '技能MP消耗 -15%，伤害回3蓝', bonus: { mpCostReduction: 15, mpOnHit: 3 } },
-      { level: 7, desc: '技能MP消耗 -20%，伤害回5蓝，击杀回10蓝', bonus: { mpCostReduction: 20, mpOnHit: 5, mpOnKill: 10 } },
-      { level: 10, desc: '技能MP消耗 -25%，伤害回7蓝，击杀回15蓝', bonus: { mpCostReduction: 25, mpOnHit: 7, mpOnKill: 15 } }
+      { level: 1, desc: 'MP消耗-5%，伤害回蓝3', bonus: { mpCostReduction: 5, mpOnHit: 3 } },
+      { level: 3, desc: 'MP消耗-10%，伤害回蓝5', bonus: { mpCostReduction: 10, mpOnHit: 5 } },
+      { level: 5, desc: 'MP消耗-15%，伤害回蓝8，击杀回蓝10', bonus: { mpCostReduction: 15, mpOnHit: 8, mpOnKill: 10 } },
+      { level: 7, desc: 'MP消耗-20%，伤害回蓝12，击杀回蓝15', bonus: { mpCostReduction: 20, mpOnHit: 12, mpOnKill: 15 } },
+      { level: 10, desc: 'MP消耗-25%，伤害回蓝20，击杀回蓝25', bonus: { mpCostReduction: 25, mpOnHit: 20, mpOnKill: 25 } }
     ]
   },
 
-  // ========== T2 对策刻印（保持机制，削弱数值） ==========
-
-  // 6. 肾上腺素：成长速度减半
+  // 6. 肾上腺素：基于最终攻击力百分比成长
   adrenaline: {
     name: '肾上腺素', loreName: '肾上腺素',
     thresholds: [
-      { level: 1, desc: '每回合攻+2% (最多12%)', bonus: { stackingAtk: 2, maxStacks: 5 } },
-      { level: 3, desc: '每回合攻+3% (最多24%)', bonus: { stackingAtk: 3, maxStacks: 6 } },
-      { level: 5, desc: '每回合攻+5% (最多40%)', bonus: { stackingAtk: 5, maxStacks: 8 } },
-      { level: 7, desc: '每回合攻+8% (最多65%)', bonus: { stackingAtk: 8, maxStacks: 10 } },
-      { level: 10, desc: '每回合攻+10% (最多100%)', bonus: { stackingAtk: 10, maxStacks: 12 } }
+      { level: 1, desc: '每回合攻+3%（基于最终攻击），最多4层', bonus: { stackingAtk: 3, maxStacks: 4 } },
+      { level: 3, desc: '每回合攻+4%，最多5层', bonus: { stackingAtk: 4, maxStacks: 5 } },
+      { level: 5, desc: '每回合攻+6%，最多6层', bonus: { stackingAtk: 6, maxStacks: 6 } },
+      { level: 7, desc: '每回合攻+8%，最多7层', bonus: { stackingAtk: 8, maxStacks: 7 } },
+      { level: 10, desc: '每回合攻+12%，最多8层', bonus: { stackingAtk: 12, maxStacks: 8 } }
     ]
   },
 
-  // 7. Boss猎人：削弱约60%
+  // 7. Boss猎人：大幅提高对Boss伤害
   bossHunter: {
     name: 'Boss猎人', loreName: '猎王',
     thresholds: [
-      { level: 1, desc: '对Boss增伤 5%', bonus: { bossDmg: 5 } },
-      { level: 3, desc: '对Boss增伤 10%', bonus: { bossDmg: 10 } },
-      { level: 5, desc: '对Boss增伤 18%', bonus: { bossDmg: 18 } },
-      { level: 7, desc: '对Boss增伤 28%', bonus: { bossDmg: 28 } },
-      { level: 10, desc: '对Boss增伤 40%', bonus: { bossDmg: 40 } }
+      { level: 1, desc: '对Boss增伤 10%', bonus: { bossDmg: 10 } },
+      { level: 3, desc: '对Boss增伤 20%', bonus: { bossDmg: 20 } },
+      { level: 5, desc: '对Boss增伤 35%', bonus: { bossDmg: 35 } },
+      { level: 7, desc: '对Boss增伤 55%', bonus: { bossDmg: 55 } },
+      { level: 10, desc: '对Boss增伤 80%', bonus: { bossDmg: 80 } }
     ]
   },
 
-  // 8. 属性大师：数值减半
+  // 8. 属性大师：全元素加成提升
   elementMaster: {
     name: '属性大师', loreName: '元素',
     thresholds: [
-      { level: 1, desc: '全元素+5%', bonus: { allElemDmg: 5 } },
-      { level: 3, desc: '全元素+12%', bonus: { allElemDmg: 12 } },
-      { level: 5, desc: '全元素+22%', bonus: { allElemDmg: 22 } },
-      { level: 7, desc: '全元素+38%', bonus: { allElemDmg: 38 } },
-      { level: 10, desc: '全元素+60%', bonus: { allElemDmg: 60 } }
+      { level: 1, desc: '全元素+8%', bonus: { allElemDmg: 8 } },
+      { level: 3, desc: '全元素+18%', bonus: { allElemDmg: 18 } },
+      { level: 5, desc: '全元素+32%', bonus: { allElemDmg: 32 } },
+      { level: 7, desc: '全元素+50%', bonus: { allElemDmg: 50 } },
+      { level: 10, desc: '全元素+75%', bonus: { allElemDmg: 75 } }
     ]
   },
 
-  // 9. 天运：暴击率加成减半
+  // 9. 天运：暴击率与掉落双倍概率
   fortune: {
     name: '天运', loreName: '天运',
     thresholds: [
-      { level: 1, desc: '幸运+15, 暴率+4%', bonus: { luck: 15, critRate: 4 } },
-      { level: 3, desc: '幸运+30, 暴率+8%', bonus: { luck: 30, critRate: 8 } },
-      { level: 5, desc: '幸运+50, 暴率+13%', bonus: { luck: 50, critRate: 13 } },
-      { level: 7, desc: '幸运+80, 暴率+20%', bonus: { luck: 80, critRate: 20 } },
-      { level: 10, desc: '幸运+120, 暴率+28%，掉落双倍概率+5%', bonus: { luck: 120, critRate: 28, doubleDrop: 5 } }
+      { level: 1, desc: '暴率+6%，掉落双倍概率+3%', bonus: { critRate: 6, doubleDrop: 3 } },
+      { level: 3, desc: '暴率+12%，掉落双倍概率+6%', bonus: { critRate: 12, doubleDrop: 6 } },
+      { level: 5, desc: '暴率+20%，掉落双倍概率+10%', bonus: { critRate: 20, doubleDrop: 10 } },
+      { level: 7, desc: '暴率+30%，掉落双倍概率+15%', bonus: { critRate: 30, doubleDrop: 15 } },
+      { level: 10, desc: '暴率+45%，掉落双倍概率+25%', bonus: { critRate: 45, doubleDrop: 25 } }
     ]
   },
 
-  // ========== T2.5 机制刻印（保持相对强度） ==========
+  // ========== T2 机制/生存刻印（全面强化） ==========
 
-  // 10. 奇袭大师：保持机制，略微削弱
+  // 10. 奇袭大师：半血以上敌人特攻
   ambushMaster: {
     name: '奇袭大师', loreName: '奇袭',
     thresholds: [
-      { level: 1, desc: '对半血以上敌人暴率+6%', bonus: { halfHpCrit: 6 } },
-      { level: 3, desc: '对半血以上敌人暴率+12%', bonus: { halfHpCrit: 12 } },
-      { level: 5, desc: '对半血以上敌人暴率+20%', bonus: { halfHpCrit: 20 } },
-      { level: 7, desc: '对半血以上敌人暴率+32%，且暴伤+12%', bonus: { halfHpCrit: 32, halfHpCritDmg: 12 } },
-      { level: 10, desc: '对半血以上敌人暴率+48%，且暴伤+25%', bonus: { halfHpCrit: 48, halfHpCritDmg: 25 } }
+      { level: 1, desc: '对半血以上敌人暴率+12%', bonus: { halfHpCrit: 12 } },
+      { level: 3, desc: '对半血以上敌人暴率+22%', bonus: { halfHpCrit: 22 } },
+      { level: 5, desc: '对半血以上敌人暴率+35%，暴伤+15%', bonus: { halfHpCrit: 35, halfHpCritDmg: 15 } },
+      { level: 7, desc: '对半血以上敌人暴率+50%，暴伤+25%', bonus: { halfHpCrit: 50, halfHpCritDmg: 25 } },
+      { level: 10, desc: '对半血以上敌人暴率+70%，暴伤+40%', bonus: { halfHpCrit: 70, halfHpCritDmg: 40 } }
     ]
   },
 
-  // 11. 顽强：免死概率下调
+  // 11. 顽强：锁血带护盾，冷却减半
   tenacity: {
     name: '顽强', loreName: '顽强',
     thresholds: [
-      { level: 1, desc: '受致命伤害时，8%概率锁血1点', bonus: { deathSave: 8 } },
-      { level: 3, desc: '受致命伤害时，18%概率锁血1点', bonus: { deathSave: 18 } },
-      { level: 5, desc: '受致命伤害时，35%概率锁血1点', bonus: { deathSave: 35 } },
-      { level: 7, desc: '受致命伤害时，锁血1点，并立即获得20%HP护盾', bonus: { deathSave: 100, deathShield: 20 } },
-      { level: 10, desc: '锁血时，护盾提升至40%HP，且冷却减半', bonus: { deathSave: 100, deathShield: 40 } }
+      { level: 1, desc: '受致命伤害时，15%概率锁血，获得10%HP护盾', bonus: { deathSave: 15, deathShield: 10 } },
+      { level: 3, desc: '受致命伤害时，30%概率锁血，获得20%HP护盾', bonus: { deathSave: 30, deathShield: 20 } },
+      { level: 5, desc: '受致命伤害时，50%概率锁血，获得30%HP护盾', bonus: { deathSave: 50, deathShield: 30 } },
+      { level: 7, desc: '受致命伤害时，100%锁血，获得40%HP护盾，冷却8回合', bonus: { deathSave: 100, deathShield: 40 } },
+      { level: 10, desc: '锁血时护盾提升至60%HP，冷却4回合', bonus: { deathSave: 100, deathShield: 60 } }
     ]
   },
 
-  // 12. 不死鸟：复活概率下调
+  // 12. 不死鸟：强力复活，附带爆发
   phoenix: {
     name: '不死鸟', loreName: '不死鸟',
     thresholds: [
-      { level: 1, desc: '死亡时20%概率复活(25%HP)', bonus: { reviveChance: 20 } },
-      { level: 3, desc: '死亡时35%概率复活(35%HP)', bonus: { reviveChance: 35 } },
-      { level: 5, desc: '死亡时55%概率复活(50%HP)', bonus: { reviveChance: 55 } },
-      { level: 7, desc: '死亡时100%复活(65%HP)，冷却12回合', bonus: { reviveChance: 100, reviveCD: 12 } },
-      { level: 10, desc: '复活冷却减至7回合，且复活后伤害+20%', bonus: { reviveChance: 100, reviveCD: 7, reviveDmg: 20 } }
+      { level: 1, desc: '死亡时30%概率复活(35%HP)，复活后攻击+15%', bonus: { reviveChance: 30, reviveDmg: 15 } },
+      { level: 3, desc: '死亡时50%概率复活(50%HP)，复活后攻击+25%', bonus: { reviveChance: 50, reviveDmg: 25 } },
+      { level: 5, desc: '死亡时75%概率复活(65%HP)，复活后攻击+35%', bonus: { reviveChance: 75, reviveDmg: 35 } },
+      { level: 7, desc: '死亡时100%复活(80%HP)，冷却10回合', bonus: { reviveChance: 100, reviveCD: 10 } },
+      { level: 10, desc: '复活冷却减至5回合，复活后伤害+50%', bonus: { reviveChance: 100, reviveCD: 5, reviveDmg: 50 } }
     ]
   }
 }

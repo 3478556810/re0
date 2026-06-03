@@ -1,7 +1,6 @@
 {
- 
-  "goblin_cave": {
-    "name": "哥布林深渊",
+  "shadow_abyss": {
+    "name": "暗渊裂隙",
     "icon": "mdi:castle",
     "maxFloors": 20,
     "cooldown": 0,
