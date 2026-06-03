@@ -4,7 +4,7 @@
       <button class="close-btn" @click="$emit('close')"><Icon icon="mdi:close" /></button>
       <h2><Icon icon="mdi:castle" /> 徽记兑换</h2>
       <p class="tip">当前徽记：{{ tokenCount }} 个</p>
-      <p class="discount-tip" v-if="discount < 1">段位折扣：{{ Math.floor((1 - discount) * 100) }}% off</p>
+      <p class="discount-tip" v-if="discountPercent > 0">段位折扣：{{ discountPercent }}% off</p>
 
       <div class="shop-list">
         <div v-for="item in store.config.tokenShopItems" :key="item.id" class="shop-card">
@@ -15,14 +15,13 @@
           <div class="item-cost">
             <Icon icon="mdi:castle" />
             <span v-if="discount < 1">
-              <s>{{ item.cost }}</s> {{ Math.max(1, Math.floor(item.cost * discount)) }}
+              <s>{{ item.cost }}</s> {{ actualCost(item) }}
             </span>
             <span v-else>{{ item.cost }}</span>
             徽记
           </div>
           <button
             class="pixel-btn small"
-            :class="{ disabled: tokenCount < actualCost(item) }"
             :disabled="tokenCount < actualCost(item)"
             @click="buy(item)"
           >
@@ -46,29 +45,14 @@ const showToast = inject('showToast', (msg) => alert(msg))
 
 const tokenCount = computed(() => store.materials['dungeon_token']?.qty || 0)
 
-const ranks = [
-  { minLevel: 1, discount: 0 },
-  { minLevel: 5, discount: 5 },
-  { minLevel: 10, discount: 10 },
-  { minLevel: 15, discount: 15 },
-  { minLevel: 20, discount: 20 },
-  { minLevel: 25, discount: 25 },
-  { minLevel: 30, discount: 30 },
-  { minLevel: 35, discount: 35 }
-]
-
-const currentRank = computed(() => {
-  let idx = 0
-  for (let i = ranks.length - 1; i >= 0; i--) {
-    if (store.player.level >= ranks[i].minLevel) {
-      idx = i
-      break
-    }
-  }
-  return ranks[idx]
+// 从段位配置获取当前折扣
+const currentRankConfig = computed(() => {
+  const rankName = store.player.rank
+  return store.rankConfig?.find(r => r.name === rankName) || store.rankConfig?.[0] || { discount: 0 }
 })
 
-const discount = computed(() => 1 - currentRank.value.discount / 100)
+const discountPercent = computed(() => currentRankConfig.value.discount || 0)
+const discount = computed(() => 1 - discountPercent.value / 100)
 
 function actualCost(item) {
   return Math.max(1, Math.floor(item.cost * discount.value))
@@ -136,8 +120,8 @@ function buy(item) {
 .panel { 
   width: 500px; 
   max-width: 95vw; 
-  max-height: 85vh;       /* 限制面板高度 */
-  overflow-y: auto;       /* 面板整体可滚动 */
+  max-height: 85vh;
+  overflow-y: auto;
   padding: 24px; 
 }
 .tip { font-size: 10px; color: #ffd700; margin-bottom: 15px; }
@@ -147,9 +131,9 @@ function buy(item) {
   display: flex; 
   flex-direction: column; 
   gap: 12px; 
-  max-height: 60vh;       /* 列表最大高度，超出滚动 */
+  max-height: 60vh;
   overflow-y: auto;
-  padding-right: 4px;     /* 为滚动条留空间 */
+  padding-right: 4px;
 }
 
 .shop-card { 
@@ -158,7 +142,7 @@ function buy(item) {
   border-radius: 12px; 
   padding: 12px; 
   display: flex; 
-  flex-wrap: wrap;        /* 小屏幕换行 */
+  flex-wrap: wrap;
   justify-content: space-between; 
   align-items: center; 
   font-size: 10px; 
@@ -174,9 +158,8 @@ function buy(item) {
 .item-desc { color: #aaa; font-size: 8px; }
 .item-cost { color: #ffd700; font-size: 8px; white-space: nowrap; }
 .item-cost s { color: #999; margin-right: 4px; }
-.pixel-btn.small.disabled { opacity: 0.4; cursor: not-allowed; }
+.pixel-btn.small:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* 手机端优化 */
 @media (max-width: 500px) {
   .panel { padding: 16px; }
   .shop-card { 

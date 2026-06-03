@@ -38,49 +38,79 @@
           </div>
         </div>
 
-        <!-- 基础属性 (完整显示) -->
+        <!-- 基础属性 (带绿色加成) -->
         <div class="section">
           <h3><Icon icon="mdi:shield-account" /> 基础属性</h3>
           <div class="stat-list">
             <div class="stat-item">
               <span class="stat-label"><Icon icon="mdi:heart" /> HP</span>
-              <span class="stat-value">{{ store.player.hp }} / {{ store.player.maxHp }}</span>
+              <span class="stat-value">
+                {{ store.player.hp }} / {{ store.player.maxHp }}
+                <span v-if="hpBonus > 0" style="color: #4caf50;"> (+{{ hpBonus }})</span>
+              </span>
             </div>
             <div class="stat-item">
               <span class="stat-label"><Icon icon="mdi:water" /> MP</span>
-              <span class="stat-value">{{ store.player.mp }} / {{ store.player.maxMp }}</span>
+              <span class="stat-value">
+                {{ store.player.mp }} / {{ store.player.maxMp }}
+                <span v-if="mpBonus > 0" style="color: #4caf50;"> (+{{ mpBonus }})</span>
+              </span>
             </div>
             <div class="stat-item">
               <span class="stat-label"><Icon icon="mdi:sword-cross" /> 攻击力</span>
-              <span class="stat-value">{{ store.playerStats.attack }}</span>
+              <span class="stat-value">
+                {{ store.playerStats.attack }}
+                <span v-if="attackBonus > 0" style="color: #4caf50;"> (+{{ attackBonus }})</span>
+              </span>
             </div>
             <div class="stat-item">
               <span class="stat-label"><Icon icon="mdi:shield" /> 防御力</span>
-              <span class="stat-value">{{ store.playerStats.defense }}</span>
+              <span class="stat-value">
+                {{ store.playerStats.defense }}
+                <span v-if="defenseBonus > 0" style="color: #4caf50;"> (+{{ defenseBonus }})</span>
+              </span>
             </div>
             <div class="stat-item">
               <span class="stat-label"><Icon icon="mdi:speedometer" /> 速度</span>
-              <span class="stat-value">{{ store.playerStats.speed }}</span>
+              <span class="stat-value">
+                {{ store.playerStats.speed }}
+                <span v-if="speedBonus > 0" style="color: #4caf50;"> (+{{ speedBonus }})</span>
+              </span>
             </div>
             <div class="stat-item">
               <span class="stat-label"><Icon icon="mdi:dice-multiple" /> 幸运</span>
-              <span class="stat-value">{{ store.playerStats.luck }}</span>
+              <span class="stat-value">
+                {{ store.playerStats.luck }}
+                <span v-if="luckBonus > 0" style="color: #4caf50;"> (+{{ luckBonus }})</span>
+              </span>
             </div>
             <div class="stat-item">
               <span class="stat-label"><Icon icon="mdi:alert-circle" /> 暴击率</span>
-              <span class="stat-value">{{ store.playerStats.critRate }}%</span>
+              <span class="stat-value">
+                {{ store.playerStats.critRate }}%
+                <span v-if="critRateBonus > 0" style="color: #4caf50;"> (+{{ critRateBonus }}%)</span>
+              </span>
             </div>
             <div class="stat-item">
               <span class="stat-label"><Icon icon="mdi:flash-circle" /> 暴击伤害</span>
-              <span class="stat-value">{{ store.playerStats.critDmg }}%</span>
+              <span class="stat-value">
+                {{ store.playerStats.critDmg }}%
+                <span v-if="critDmgBonus > 0" style="color: #4caf50;"> (+{{ critDmgBonus }}%)</span>
+              </span>
             </div>
             <div class="stat-item">
               <span class="stat-label"><Icon icon="mdi:sword" /> 真实伤害</span>
-              <span class="stat-value">{{ store.playerStats.trueDmg }}</span>
+              <span class="stat-value">
+                {{ store.playerStats.trueDmg }}
+                <span v-if="trueDmgBonus > 0" style="color: #4caf50;"> (+{{ trueDmgBonus }})</span>
+              </span>
             </div>
             <div class="stat-item">
               <span class="stat-label"><Icon icon="mdi:blood-bag" /> 吸血</span>
-              <span class="stat-value">{{ store.playerStats.lifesteal }}%</span>
+              <span class="stat-value">
+                {{ store.playerStats.lifesteal }}%
+                <span v-if="lifestealBonus > 0" style="color: #4caf50;"> (+{{ lifestealBonus }}%)</span>
+              </span>
             </div>
           </div>
         </div>
@@ -91,7 +121,10 @@
           <div class="stat-list">
             <div v-for="elem in elements" :key="elem.key" class="stat-item">
               <span class="stat-label"><Icon :icon="elem.icon" /> {{ elem.name }}</span>
-              <span class="stat-value">{{ store.playerStats[elem.key] || 0 }}%</span>
+              <span class="stat-value">
+                {{ store.playerStats[elem.key] || 0 }}%
+                <span v-if="getElemBonus(elem.key) > 0" style="color: #4caf50;"> (+{{ getElemBonus(elem.key) }}%)</span>
+              </span>
             </div>
           </div>
         </div>
@@ -110,7 +143,7 @@
               <div class="engrave-info">
                 <div class="engrave-name">{{ effect.affixName }}</div>
                 <div class="engrave-level">
-                <span v-for="i in 10" :key="i" class="level-dot" :class="{ filled: i <= effect.level }"></span>
+                  <span v-for="i in 10" :key="i" class="level-dot" :class="{ filled: i <= effect.level }"></span>
                 </div>
                 <div class="engrave-desc">{{ effect.desc }}</div>
               </div>
@@ -131,11 +164,50 @@ const store = useGameStore()
 const activeTab = ref('stats')
 const fileInput = ref(null)
 
+// 基础属性（角色自身，不含装备）
+const baseStats = computed(() => ({
+  hp: store.player.maxHp || 100,
+  mp: store.player.maxMp || 30,
+  attack: store.player.attack || 10,
+  defense: store.player.defense || 5,
+  speed: store.player.speed || 10,
+  luck: store.player.luck || 0,
+  critRate: store.player.critRate || 5,
+  critDmg: store.player.critDmg || 150,
+  trueDmg: store.player.trueDmg || 0,
+  lifesteal: store.player.lifesteal || 0,
+}))
+
+// 各属性加成（最终 - 基础）
+const hpBonus = computed(() => (store.playerStats.maxHp || 100) - baseStats.value.hp)
+const mpBonus = computed(() => (store.playerStats.maxMp || 30) - baseStats.value.mp)
+const attackBonus = computed(() => (store.playerStats.attack || 10) - baseStats.value.attack)
+const defenseBonus = computed(() => (store.playerStats.defense || 5) - baseStats.value.defense)
+const speedBonus = computed(() => (store.playerStats.speed || 10) - baseStats.value.speed)
+const luckBonus = computed(() => (store.playerStats.luck || 0) - baseStats.value.luck)
+const critRateBonus = computed(() => (store.playerStats.critRate || 5) - baseStats.value.critRate)
+const critDmgBonus = computed(() => (store.playerStats.critDmg || 150) - baseStats.value.critDmg)
+const trueDmgBonus = computed(() => (store.playerStats.trueDmg || 0) - baseStats.value.trueDmg)
+const lifestealBonus = computed(() => (store.playerStats.lifesteal || 0) - baseStats.value.lifesteal)
+
+// 元素加成（装备/刻印提供的额外值）
+const baseElemDmg = computed(() => {
+  const base = {}
+  const elems = ['fire','water','thunder','wind','grass','ice','holy','dark','rock','steel']
+  elems.forEach(e => { base[e + 'Dmg'] = store.player[e + 'Dmg'] || 0 })
+  return base
+})
+
+function getElemBonus(key) {
+  const final = store.playerStats[key] || 0
+  const base = baseElemDmg.value[key] || 0
+  return final - base
+}
+
 const playerImage = computed(() => {
   const imgs = store.config?.customImages
   if (imgs?.hero) return imgs.hero
   if (imgs?.player) return imgs.player
-  // ✅ 默认立绘
   return '/images/portrait/hero.png'
 })
 
@@ -276,7 +348,6 @@ const elements = [
   background: rgba(255,215,0,0.2); border: 1px solid rgba(255,215,0,0.4);
 }
 .level-dot.filled { background: #ffd700; border-color: #ffd700; }
-.level-text { font-size: 8px; color: #ffd700; margin-left: 4px; }
 .engrave-desc { font-size: 8px; color: #aaa; line-height: 1.5; }
 
 .empty { text-align: center; color: #888; font-size: 9px; padding: 30px; }

@@ -110,7 +110,7 @@ export function getRewards(engine) {
       // 装备掉落
       const isBoss = e.isBoss === true || (e.base && e.base.isBoss === true)
       if (!isBoss) {
-        const dropRate = 0.2 + level * 0.01
+        const dropRate = 0.1 + level * 0.01
         if (Math.random() < dropRate) {
           const eq = generateRandomEquipment(e.base?.tag || 'normal', level)
           if (eq) equipments.push(eq)

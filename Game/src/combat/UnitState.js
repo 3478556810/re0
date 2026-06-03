@@ -74,7 +74,8 @@ const specialFields = [
   'specialLowHpDmg',        // 新增
   'holyMarkOnHit',          // 新增
   'lowHpLifestealOnMark',   // 新增
-  'critDmgOnMark'           // 新增
+  'critDmgOnMark',           // 新增
+    'trueDmgPercent', // 新增
 ];
 specialFields.forEach(field => {
   this[field] = baseStats[field] || 0;
@@ -91,6 +92,12 @@ specialFields.forEach(field => {
       else if (eff.type === EFFECT_TYPES.ATK_DOWN) atk *= (1 + eff.value)
       else if (eff.type === EFFECT_TYPES.WEAK) atk *= (1 + eff.value)
     })
+
+  // ✅ 肾上腺素：基于最终攻击力的百分比加成
+  if (this.stackingAtk && this._adrenalineStacks > 0) {
+    atk *= (1 + (this._adrenalineStacks * this.stackingAtk) / 100);
+  }
+
     return Math.max(1, Math.floor(atk))
   }
 
