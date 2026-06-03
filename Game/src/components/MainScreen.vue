@@ -1,16 +1,14 @@
 <template>
   <div class="main-screen">
-    <!-- 状态栏（增高） -->
-    <div class="status-bar">
-      <span class="status-item">Lv.{{ store.player.level }}</span>
-      <span class="status-item">{{ store.player.gold }}G</span>
-      <span class="status-item">{{ store.player.hp }}/{{ store.player.maxHp }}</span>
-      <span v-if="storyMode" class="story-timer">{{ storyTimerDisplay }}</span>
-      <span class="status-item bgm-btn" @click="showBgmPanel = !showBgmPanel">
-        <Icon icon="mdi:music" />
-      </span>
-      <span class="version-text" @click="handleVersionClick">ver {{ appVersion }}</span>
-    </div>
+   <div class="status-bar">
+  <span class="status-item">世界等级 {{ store.worldLevel }}</span>
+  <span class="status-item">Lv.{{ store.player.level }}</span>
+  <span class="status-item">{{ store.player.gold }}G</span>
+  <span class="status-item">HP {{ store.player.hp }}/{{ store.player.maxHp }}</span>
+  <span class="status-item"><Icon icon="mdi:weather-partly-cloudy" /> {{ weather }}</span>
+  <span v-if="storyMode" class="story-timer">{{ storyTimerDisplay }}</span>
+  <span class="version-text" @click="handleVersionClick">ver {{ appVersion }}</span>
+</div>
 
     <!-- 全屏内容区 -->
     <div class="fullscreen-area">
@@ -62,6 +60,9 @@
         <button class="icon-btn" @click="openPanel('guild')">
           <Icon icon="mdi:town-hall" /><span>协会</span>
         </button>
+        <button class="icon-btn" @click="openPanel('stock')">
+  <Icon icon="mdi:chart-line" /><span>股市</span>
+</button>
         <button class="icon-btn" @click="openPanel('affection')">
           <Icon icon="mdi:heart" /><span>羁绊</span>
         </button>
@@ -84,18 +85,13 @@
     <AdventurerGuild v-if="currentPanel === 'guild'" @close="popPanel" @open-backpack="openSellBackpack" />
     <InventoryPanel v-if="currentPanel === 'inventory'" :key="'inv-' + inventoryRefreshKey" :sellMode="inventorySellMode" @close="onCloseInventory" />
     <AffectionPanel v-if="currentPanel === 'affection'" @close="popPanel" />
+    <StockPanel v-if="currentPanel === 'stock'" @close="popPanel" />
     <DialogPanel ref="dialogRef" @close="onDialogClose" @update="onStoryUpdate" @startBattle="(config, nodeId) => emit('startBattle', config, nodeId)" />
     <DungeonPanel v-if="currentPanel === 'dungeon'" @close="popPanel" @startBattle="emit('startBattle', $event)" @triggerStory="startStory" @openInventory="openInventory" @switchDungeon="showDungeonSelect = true" />
 
-    <!-- BGM -->
-    <div v-if="showBgmPanel" class="bgm-panel" @click.self="showBgmPanel = false">
-      <div class="bgm-list">
-        <h3>音乐选择</h3>
-        <button v-for="(name, idx) in bgmFiles" :key="idx" class="pixel-btn small" :class="{ active: idx === currentBgmIndex }" @click="selectBgm(idx)">{{ name.replace('.mp3', '') }}</button>
-        <button class="pixel-btn small" @click="resumeRandomBgm">随机播放</button>
-        <button class="pixel-btn small" @click="showBgmPanel = false">关闭</button>
-      </div>
-    </div>
+
+
+
   </div>
 </template>
 
@@ -105,7 +101,7 @@ import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
 import CharacterPanel from './CharacterPanel.vue'
 import InventoryPanel from './InventoryPanel.vue'
-import BankPanel from './BankPanel.vue'
+
 import StockPanel from './StockPanel.vue'
 import ForgePanel from './ForgePanel.vue'
 import AdventurerGuild from './AdventurerGuild.vue'
@@ -141,12 +137,24 @@ const showDungeonSelect = ref(false)
 const panelStack = ref([])
 const isFullscreen = ref(false)
 const inventorySellMode = ref(false)
+function stopBgm() {
+  const audio = document.querySelector('#game-root audio')
+  if (audio) audio.pause()
+  bgmPlaying.value = false
+  showBgmPanel.value = false
+  // 设置全局静音标记
+  const bgmMuted = inject('bgmMuted', ref(false))
+   bgmMuted.value = true
+  sessionStorage.setItem('bgm_muted', '1')
 
+
+}
 function pauseBgm() {
   const a = document.querySelector('#game-root audio')
   if (a) a.pause()
 }
 function resumeBgm() {
+  if (bgmMuted.value) return
   const a = document.querySelector('#game-root audio')
   if (a?.paused) a.play().catch(() => {})
 }
@@ -155,29 +163,49 @@ function enterStoryModeDirect() {
   pauseBgm()
   storyMode.value = true
   store.isStoryMode = true
-  store.startStoryTime = Date.now()
-  storyTimerDisplay.value = '00:00:00'
+
+  // 如果 sessionStorage 中已有开始时间（刷新后恢复），使用它
+  const savedStart = sessionStorage.getItem('story_start_time')
+  if (savedStart) {
+    store.startStoryTime = parseInt(savedStart)
+  } else {
+    store.startStoryTime = Date.now()
+    sessionStorage.setItem('story_start_time', store.startStoryTime.toString())
+  }
+
+  // 立即计算并显示当前时间（不等 setInterval）
+  const elapsed = Math.floor((Date.now() - store.startStoryTime) / 1000)
+  const h = Math.floor(elapsed / 3600)
+  const m = Math.floor((elapsed % 3600) / 60)
+  const s = elapsed % 60
+  storyTimerDisplay.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+
   if (storyTimerInterval) clearInterval(storyTimerInterval)
   storyTimerInterval = setInterval(() => {
     const e = Math.floor((Date.now() - store.startStoryTime) / 1000)
-    const h = Math.floor(e / 3600), m = Math.floor((e % 3600) / 60), s = e % 60
-    storyTimerDisplay.value = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`
+    const hh = Math.floor(e / 3600), mm = Math.floor((e % 3600) / 60), ss = e % 60
+    storyTimerDisplay.value = `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}:${String(ss).padStart(2,'0')}`
   }, 1000)
 }
 
 function enterStoryMode() {
+  sessionStorage.setItem('story_mode_active', '1')
+  sessionStorage.setItem('story_start_time', Date.now().toString())
   localStorage.removeItem('star-trails-save')
-  localStorage.setItem('start_story_mode', '1')
   location.reload()
 }
 
-function exitStoryMode() {
+function forceExitStoryMode() {
+  sessionStorage.removeItem('story_mode_active')
+  sessionStorage.removeItem('story_start_time')
   resumeBgm()
   storyMode.value = false
   store.isStoryMode = false
   if (storyTimerInterval) clearInterval(storyTimerInterval)
   storyTimerDisplay.value = '00:00:00'
 }
+
+
 
 function formatTime(s) {
   const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60
@@ -186,15 +214,16 @@ function formatTime(s) {
 
 function handleVersionClick() {
   versionClickCount++
-  window.showToast?.(`${versionClickCount}/5`)
-  if (versionClickTimer) clearTimeout(versionClickTimer)
   if (versionClickCount >= 5) {
     versionClickCount = 0
-    if (storyMode.value) exitStoryMode()
-    window.showToast?.('开发者面板已恢复')
-  } else {
-    versionClickTimer = setTimeout(() => { versionClickCount = 0 }, 4000)
+    if (storyMode.value) {
+      forceExitStoryMode()
+      showToast('已退出剧情模式')
+    }
   }
+  // 重置计数定时器
+  if (versionClickTimer) clearTimeout(versionClickTimer)
+  versionClickTimer = setTimeout(() => { versionClickCount = 0 }, 2000)
 }
 
 function enterFullscreen() {
@@ -202,15 +231,22 @@ function enterFullscreen() {
 }
 
 function selectBgm(index) {
+  const bgmMuted = inject('bgmMuted', ref(false))
+ bgmMuted.value = false
+  sessionStorage.removeItem('bgm_muted')
   const audioEl = document.querySelector('#game-root audio')
   if (audioEl) {
     audioEl.src = '/audio/' + bgmFiles[index]
     audioEl.play().catch(() => {})
     currentBgmIndex.value = index
+    bgmPlaying.value = true
   }
 }
 
+
 function resumeRandomBgm() {
+  const bgmMuted = inject('bgmMuted', ref(false))
+  bgmMuted.value = false  // 恢复随机播放时取消静音
   const audioEl = document.querySelector('#game-root audio')
   if (audioEl) {
     const idx = Math.floor(Math.random() * bgmFiles.length)
@@ -228,6 +264,7 @@ function pushPanel(panelName) {
 }
 
 function popPanel() {
+  
   if (panelStack.value.length > 0) {
     currentPanel.value = panelStack.value.pop()
   } else {
@@ -319,6 +356,16 @@ const timeStr = computed(() => {
 })
 
 onMounted(() => {
+   // 刷新后恢复剧情模式
+// 刷新后恢复剧情模式
+  if (sessionStorage.getItem('story_mode_active') === '1') {
+    const savedStart = sessionStorage.getItem('story_start_time')
+    if (savedStart) {
+      store.startStoryTime = parseInt(savedStart)
+    }
+    enterStoryModeDirect()
+    return
+  }
   if (localStorage.getItem('start_story_mode') === '1') {
     localStorage.removeItem('start_story_mode')
     setTimeout(() => enterStoryModeDirect(), 200)
@@ -332,8 +379,11 @@ onMounted(() => {
   document.addEventListener('webkitfullscreenchange', () => isFullscreen.value = !!document.fullscreenElement)
 })
 
-watch(() => storyMode.value, (v) => {
-  if (!v) { clearInterval(storyTimerInterval); storyTimerDisplay.value = '00:00:00' }
+watch(() => storyMode.value, (newVal, oldVal) => {
+  if (newVal === false && oldVal === true && !store.storyEndTime) {
+    // 非正常退出（不是通关），强制恢复
+    storyMode.value = true
+  }
 })
 
 watch(() => store.storyEndTime, async (val) => {

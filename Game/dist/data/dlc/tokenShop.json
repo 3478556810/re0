@@ -1,0 +1,65 @@
+[
+  {
+    "id": "t1",
+    "name": "技能药水",
+    "desc": "获得 1 点技能点",
+    "type": "skillPoint",
+    "cost": 15,
+    "rewardQty": 1
+  },
+  {
+    "id": "t2",
+    "name": "经验药水",
+    "desc": "获得 100 点经验",
+    "type": "exp",
+    "cost": 8,
+    "rewardQty": 100
+  },
+  {
+    "id": "t3",
+    "name": "随机饰品",
+    "desc": "获得一件随机品质饰品",
+    "type": "accessory",
+    "cost": 20
+  },
+  {
+    "id": "t4",
+    "name": "龙鳞 x3",
+    "desc": "稀有锻造材料",
+    "type": "material",
+    "cost": 20,
+    "rewardId": "dragon_scale",
+    "rewardName": "龙鳞",
+    "rewardQty": 3
+  },
+  {
+    "id": "t5",
+    "name": "铁矿石 x5",
+    "desc": "基础锻造材料",
+    "type": "material",
+    "cost": 5,
+    "rewardId": "iron_ore",
+    "rewardName": "铁矿石",
+    "rewardQty": 5
+  },
+  {
+    "id": "t6",
+    "name": "蝙蝠翅膀 x3",
+    "desc": "锻造材料",
+    "type": "material",
+    "cost": 8,
+    "rewardId": "bat_wing",
+    "rewardName": "蝙蝠翅膀",
+    "rewardQty": 3
+  },
+  {
+    "id": "t7",
+    "name": "恢复药水",
+    "desc": "战斗中使用，恢复30HP",
+    "type": "consumable",
+    "cost": 2,
+    "rewardId": "potion",
+    "rewardName": "恢复药水",
+    "rewardQty": 1
+  }
+]

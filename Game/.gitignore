@@ -5,7 +5,7 @@
 
 # 依赖
 node_modules
-dist
+
 
 # 编辑器
 .vscode

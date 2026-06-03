@@ -2,181 +2,552 @@
   {
     "id": "normal_attack",
     "name": "普通攻击",
-    "desc": "无属性基础攻击",
+    "desc": "无属性基础攻击，零消耗稳定输出",
     "icon": "mdi:sword-cross",
     "type": "active",
     "target": "single",
     "element": "",
     "mpCost": 0,
-    "baseMul": 1.0,
+    "baseMul": 0.9,
     "maxLevel": 10,
     "upgradeCost": 2,
     "learnCost": 0,
-    "levelScaling": { "baseMul": 0.1, "mpCost": 0 },
+    "levelScaling": { "baseMul": 0.1 },
     "effects": [],
     "tripods": [
-      { "name": "连击强化", "desc": "增加攻击次数", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 10, "stat": "atk", "duration": 2, "chance": 30 }] },
-      { "name": "会心", "desc": "提高暴击率", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 15, "stat": "critRate", "duration": 2, "chance": 100 }] },
-      { "name": "吸血", "desc": "造成伤害回复生命", "unlockLevel": 10, "effects": [{ "type": "lifesteal", "value": 15, "duration": 0, "chance": 100 }] }
+      { "name": "连击强化", "unlockLevel": 4, "effects": [{ "type": "extraAction", "value": 40, "note": "追加攻击", "chance": 50 }] },
+      { "name": "会心", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.3, "stat": "critDmg", "duration": 5, "chance": 100, "target": "self" }] },
+      { "name": "吸血", "unlockLevel": 10, "effects": [{ "type": "lifestealBuff", "value": 15, "duration": 5, "chance": 100, "target": "self" }] }
+    ]
+  },
+  {
+    "id": "quick_strike",
+    "name": "迅击",
+    "desc": "无属性快速二连击，低消耗",
+    "icon": "mdi:sword",
+    "type": "active",
+    "target": "single",
+    "element": "",
+    "mpCost": 3,
+    "baseMul": 0.7,
+    "maxLevel": 10,
+    "upgradeCost": 2,
+    "learnCost": 1,
+    "levelScaling": { "baseMul": 0.06 },
+    "effects": [
+      { "type": "extraAction", "value": 70, "note": "二次攻击", "chance": 100 }
+    ],
+    "tripods": [
+      { "name": "精准", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.10, "stat": "critRate", "duration": 5, "chance": 100, "target": "self" }] },
+      { "name": "破绽", "unlockLevel": 7, "effects": [{ "type": "debuff", "value": -0.1, "stat": "def", "duration": 5, "chance": 50 }] },
+      { "name": "乱舞", "unlockLevel": 10, "effects": [{ "type": "extraAction", "value": 50, "note": "追加攻击", "chance": 40 }] }
     ]
   },
   {
     "id": "fire_slash",
     "name": "火焰斩",
-    "desc": "火属性单体攻击，30%概率附加灼烧",
+    "desc": "火属性单体攻击，高概率灼烧",
     "icon": "mdi:fire",
     "type": "active",
     "target": "single",
     "element": "fire",
-    "mpCost": 5,
-    "baseMul": 1.8,
-    "maxLevel": 10,
-    "upgradeCost": 3,
-    "learnCost": 2,
-    "levelScaling": { "baseMul": 0.15, "mpCost": -1 },
-    "effects": [
-      { "type": "dot", "element": "fire", "value": 5, "duration": 3, "chance": 30 }
-    ],
-    "tripods": [
-      { "name": "烈焰", "desc": "灼烧伤害提升", "unlockLevel": 4, "effects": [{ "type": "dot", "value": 10, "duration": 3, "chance": 50 }] },
-      { "name": "蔓延", "desc": "灼烧扩散至其他敌人", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 8, "duration": 2, "chance": 40, "target": "aoe" }] },
-      { "name": "焦土", "desc": "攻击后附加防御降低", "unlockLevel": 10, "effects": [{ "type": "debuff", "value": 20, "stat": "def", "duration": 2, "chance": 100 }] }
-    ]
-  },
-  {
-    "id": "ice_bolt",
-    "name": "冰冻术",
-    "desc": "冰属性单体攻击，20%概率冻结",
-    "icon": "mdi:snowflake",
-    "type": "active",
-    "target": "single",
-    "element": "ice",
-    "mpCost": 8,
-    "baseMul": 2.0,
-    "maxLevel": 10,
-    "upgradeCost": 3,
-    "learnCost": 2,
-    "levelScaling": { "baseMul": 0.2, "mpCost": 0 },
-    "effects": [
-      { "type": "debuff", "value": 0, "stat": "freeze", "duration": 1, "chance": 20 }
-    ],
-    "tripods": [
-      { "name": "深寒", "desc": "冻结概率提高", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": 0, "stat": "freeze", "duration": 1, "chance": 40 }] },
-      { "name": "冰刺", "desc": "额外造成真实伤害", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 8, "duration": 2, "chance": 100 }] },
-      { "name": "冰甲", "desc": "使用后获得护盾", "unlockLevel": 10, "effects": [{ "type": "shield", "value": 30, "duration": 2, "chance": 100 }] }
-    ]
-  },
-  {
-    "id": "thunder_shock",
-    "name": "雷电",
-    "desc": "雷属性全体攻击，10%麻痹",
-    "icon": "mdi:lightning-bolt",
-    "type": "active",
-    "target": "aoe",
-    "element": "thunder",
-    "mpCost": 10,
-    "baseMul": 1.6,
-    "maxLevel": 10,
-    "upgradeCost": 3,
-    "learnCost": 3,
-    "levelScaling": { "baseMul": 0.12, "mpCost": 0 },
-    "effects": [
-      { "type": "debuff", "value": 0, "stat": "paralyze", "duration": 1, "chance": 10 }
-    ],
-    "tripods": [
-      { "name": "高压", "desc": "麻痹概率提升", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": 0, "stat": "paralyze", "duration": 1, "chance": 25 }] },
-      { "name": "连锁", "desc": "重复攻击一次（50%伤害）", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 50, "duration": 1, "chance": 100, "note": "重复攻击" }] },
-      { "name": "电磁场", "desc": "自身速度提升", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 15, "stat": "speed", "duration": 3, "chance": 100 }] }
-    ]
-  },
-  {
-    "id": "heal_light",
-    "name": "治愈术",
-    "desc": "恢复自身HP",
-    "icon": "mdi:heart-pulse",
-    "type": "active",
-    "target": "self",
-    "element": "holy",
-    "mpCost": 8,
-    "baseMul": 0,
-    "maxLevel": 10,
-    "upgradeCost": 2,
-    "learnCost": 1,
-    "levelScaling": { "healAmount": 10 },
-    "effects": [
-      { "type": "heal", "value": 30, "duration": 0, "chance": 100 }
-    ],
-    "tripods": [
-      { "name": "快速治愈", "desc": "额外恢复MP", "unlockLevel": 4, "effects": [{ "type": "mpDrain", "value": 10, "duration": 0, "chance": 100 }] },
-      { "name": "净化", "desc": "解除一个负面状态", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0, "stat": "cleanse", "duration": 0, "chance": 100 }] },
-      { "name": "生命链接", "desc": "为全队恢复少量HP", "unlockLevel": 10, "effects": [{ "type": "heal", "value": 15, "duration": 0, "chance": 100, "target": "ally" }] }
-    ]
-  },
-  {
-    "id": "wind_blade",
-    "name": "风刃",
-    "desc": "风属性单体攻击，概率追加一次",
-    "icon": "mdi:weather-windy",
-    "type": "active",
-    "target": "single",
-    "element": "wind",
     "mpCost": 6,
     "baseMul": 1.5,
     "maxLevel": 10,
     "upgradeCost": 3,
     "learnCost": 2,
-    "levelScaling": { "baseMul": 0.12, "mpCost": 0 },
+    "levelScaling": { "baseMul": 0.12 },
+    "effects": [{ "type": "dot", "value": 0.3, "duration": 5, "chance": 80 }],
+    "tripods": [
+      { "name": "烈焰", "unlockLevel": 4, "effects": [{ "type": "dot", "value": 0.45, "duration": 5, "chance": 100 }] },
+      { "name": "蔓延", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 0.25, "duration": 5, "chance": 100, "target": "aoe" }] },
+      { "name": "焦土", "unlockLevel": 10, "effects": [{ "type": "debuff", "value": -0.25, "stat": "def", "duration": 5, "chance": 100 }] }
+    ]
+  },
+  {
+    "id": "fire_storm",
+    "name": "烈焰风暴",
+    "desc": "火属性全体攻击，点燃所有敌人",
+    "icon": "mdi:fire-alert",
+    "type": "active",
+    "target": "aoe",
+    "element": "fire",
+    "mpCost": 14,
+    "baseMul": 0.9,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 3,
+    "levelScaling": { "baseMul": 0.07 },
+    "effects": [{ "type": "dot", "value": 0.2, "duration": 5, "chance": 70 }],
+    "tripods": [
+      { "name": "灼热", "unlockLevel": 4, "effects": [{ "type": "dot", "value": 0.3, "duration": 5, "chance": 90 }] },
+      { "name": "余烬", "unlockLevel": 7, "effects": [{ "type": "debuff", "value": -0.15, "stat": "atk", "duration": 5, "chance": 60 }] },
+      { "name": "凤凰", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.2, "stat": "atk", "duration": 5, "chance": 100, "target": "self" }] }
+    ]
+  },
+  {
+    "id": "ice_bolt",
+    "name": "冰冻术",
+    "desc": "冰属性单体攻击，冻结控制",
+    "icon": "mdi:snowflake",
+    "type": "active",
+    "target": "single",
+    "element": "ice",
+    "mpCost": 8,
+    "baseMul": 1.6,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.13 },
+    "effects": [{ "type": "freeze", "duration": 1, "chance": 50 }],
+    "tripods": [
+      { "name": "深寒", "unlockLevel": 4, "effects": [{ "type": "freeze", "duration": 1, "chance": 70 }] },
+      { "name": "冰刺", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 0.4, "duration": 5, "chance": 100 }] },
+      { "name": "冰甲", "unlockLevel": 10, "effects": [{ "type": "shield", "value": 0.25, "duration": 5, "chance": 100, "target": "self" }] }
+    ]
+  },
+  {
+    "id": "blizzard",
+    "name": "暴风雪",
+    "desc": "冰属性全体攻击，概率冻结所有敌人",
+    "icon": "mdi:weather-snowy-heavy",
+    "type": "active",
+    "target": "aoe",
+    "element": "ice",
+    "mpCost": 15,
+    "baseMul": 0.85,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 3,
+    "levelScaling": { "baseMul": 0.07 },
+    "effects": [{ "type": "freeze", "duration": 1, "chance": 25 }],
+    "tripods": [
+      { "name": "极寒", "unlockLevel": 4, "effects": [{ "type": "freeze", "duration": 1, "chance": 35 }] },
+      { "name": "冰霜护体", "unlockLevel": 7, "effects": [{ "type": "shield", "value": 0.15, "duration": 5, "chance": 100, "target": "self" }] },
+      { "name": "永冻", "unlockLevel": 10, "effects": [{ "type": "debuff", "value": -0.25, "stat": "atk", "duration": 5, "chance": 100 }] }
+    ]
+  },
+  {
+    "id": "thunder_shock",
+    "name": "雷电",
+    "desc": "雷属性全体攻击，概率麻痹",
+    "icon": "mdi:lightning-bolt",
+    "type": "active",
+    "target": "aoe",
+    "element": "thunder",
+    "mpCost": 12,
+    "baseMul": 1.0,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 3,
+    "levelScaling": { "baseMul": 0.08 },
+    "effects": [{ "type": "stun", "duration": 1, "chance": 30 }],
+    "tripods": [
+      { "name": "高压", "unlockLevel": 4, "effects": [{ "type": "stun", "duration": 1, "chance": 40 }] },
+      { "name": "溅射", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 30, "note": "追加全体伤害", "chance": 100, "target": "aoe" }] },
+      { "name": "电磁场", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.20, "stat": "critRate", "duration": 5, "chance": 100, "target": "self" }] }
+    ]
+  },
+  {
+    "id": "lightning_spear",
+    "name": "雷枪",
+    "desc": "雷属性单体高伤，必定暴击并附加真实伤害",
+    "icon": "mdi:lightning-bolt-outline",
+    "type": "active",
+    "target": "single",
+    "element": "thunder",
+    "mpCost": 18,
+    "baseMul": 2.5,
+    "maxLevel": 10,
+    "upgradeCost": 4,
+    "learnCost": 4,
+    "levelScaling": { "baseMul": 0.2 },
+    "effects": [
+      { "type": "buff", "value": 100, "stat": "critRate", "duration": 1, "chance": 100, "target": "self", "note": "本次攻击必暴击" },
+      { "type": "trueDmg", "value": 0.15, "chance": 100, "note": "附加攻击力15%的真实伤害" }
+    ],
+    "tripods": [
+      { "name": "穿透", "unlockLevel": 4, "effects": [{ "type": "trueDmg", "value": 0.25, "chance": 100, "note": "真伤比例提升至25%" }] },
+      { "name": "闪电链", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 40, "note": "对相邻敌人造成伤害", "chance": 100, "target": "aoe" }] },
+      { "name": "雷神", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.3, "stat": "atk", "duration": 5, "chance": 100, "target": "self" }] }
+    ]
+  },
+  {
+    "id": "wind_blade",
+    "name": "风刃",
+    "desc": "风属性单体攻击，高几率追加攻击",
+    "icon": "mdi:weather-windy",
+    "type": "active",
+    "target": "single",
+    "element": "wind",
+    "mpCost": 6,
+    "baseMul": 1.4,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.11 },
     "effects": [],
     "tripods": [
-      { "name": "连风", "desc": "追加攻击概率提升", "unlockLevel": 4, "effects": [{ "type": "dot", "value": 60, "duration": 1, "chance": 40, "note": "追加攻击" }] },
-      { "name": "风暴", "desc": "对全体造成少量伤害", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 15, "duration": 1, "chance": 100, "target": "aoe" }] },
-      { "name": "顺风", "desc": "自身速度提升", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 10, "stat": "speed", "duration": 3, "chance": 100 }] }
+      { "name": "连风", "unlockLevel": 4, "effects": [{ "type": "extraAction", "value": 50, "note": "追加攻击", "chance": 60 }] },
+      { "name": "风暴", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 30, "note": "追加全体伤害", "chance": 100, "target": "aoe" }] },
+      { "name": "顺风", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.20, "stat": "critRate", "duration": 5, "chance": 100, "target": "self" }] }
+    ]
+  },
+  {
+    "id": "swift_step",
+    "name": "疾风步",
+    "desc": "风属性辅助，提升攻击与暴击率",
+    "icon": "mdi:run-fast",
+    "type": "active",
+    "target": "self",
+    "element": "wind",
+    "mpCost": 6,
+    "baseMul": 0,
+    "maxLevel": 10,
+    "upgradeCost": 2,
+    "learnCost": 2,
+    "levelScaling": { "buffValue": 4 },
+    "effects": [
+      { "type": "buff", "value": 0.25, "stat": "atk", "duration": 5, "chance": 100 },
+      { "type": "buff", "value": 0.20, "stat": "critRate", "duration": 5, "chance": 100 }
+    ],
+    "tripods": [
+      { "name": "顺风", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.30, "stat": "critRate", "duration": 5, "chance": 100 }] },
+      { "name": "残影", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.25, "stat": "dodge", "duration": 5, "chance": 100 }] },
+      { "name": "暴风", "unlockLevel": 10, "effects": [{ "type": "extraAction", "value": 60, "note": "追加风属性伤害", "chance": 100 }] }
+    ]
+  },
+  {
+    "id": "water_jet",
+    "name": "水枪术",
+    "desc": "水属性单体攻击，概率降低防御",
+    "icon": "mdi:water",
+    "type": "active",
+    "target": "single",
+    "element": "water",
+    "mpCost": 6,
+    "baseMul": 1.5,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.12 },
+    "effects": [{ "type": "debuff", "value": -0.15, "stat": "def", "duration": 5, "chance": 60 }],
+    "tripods": [
+      { "name": "高压水刃", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": -0.25, "stat": "def", "duration": 5, "chance": 80 }] },
+      { "name": "水流环绕", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.15, "stat": "def", "duration": 5, "chance": 100, "target": "self" }] },
+      { "name": "洪水", "unlockLevel": 10, "effects": [{ "type": "extraAction", "value": 25, "note": "追加全体伤害", "chance": 100, "target": "aoe" }] }
+    ]
+  },
+  {
+    "id": "healing_rain",
+    "name": "治愈之雨",
+    "desc": "水属性群体治疗，附带持续回复",
+    "icon": "mdi:weather-rainy",
+    "type": "active",
+    "target": "all",
+    "element": "water",
+    "mpCost": 10,
+    "baseMul": 0,
+    "maxLevel": 10,
+    "upgradeCost": 2,
+    "learnCost": 2,
+    "levelScaling": { "healAmount": 15 },
+    "effects": [
+      { "type": "heal", "value": 0.8, "chance": 100, "target": "all" },
+      { "type": "regen", "value": 0.05, "duration": 5, "chance": 100, "target": "all" }
+    ],
+    "tripods": [
+      { "name": "甘霖", "unlockLevel": 4, "effects": [{ "type": "regen", "value": 0.08, "duration": 5, "chance": 100, "target": "all" }] },
+      { "name": "净化之雨", "unlockLevel": 7, "effects": [{ "type": "cleanse", "chance": 100 }] },
+      { "name": "潮汐", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.15, "stat": "def", "duration": 5, "chance": 100, "target": "all" }] }
+    ]
+  },
+  {
+    "id": "rock_fall",
+    "name": "岩崩",
+    "desc": "岩属性单体攻击，概率眩晕",
+    "icon": "mdi:terrain",
+    "type": "active",
+    "target": "single",
+    "element": "rock",
+    "mpCost": 7,
+    "baseMul": 1.6,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.13 },
+    "effects": [{ "type": "stun", "duration": 1, "chance": 40 }],
+    "tripods": [
+      { "name": "重击", "unlockLevel": 4, "effects": [{ "type": "stun", "duration": 1, "chance": 55 }] },
+      { "name": "碎石", "unlockLevel": 7, "effects": [{ "type": "debuff", "value": -0.25, "stat": "def", "duration": 5, "chance": 100 }] },
+      { "name": "岩盾", "unlockLevel": 10, "effects": [{ "type": "shield", "value": 0.25, "duration": 5, "chance": 100, "target": "self" }] }
+    ]
+  },
+  {
+    "id": "earthquake",
+    "name": "地震",
+    "desc": "岩属性全体攻击，概率降低敌人攻击力",
+    "icon": "mdi:waves",
+    "type": "active",
+    "target": "aoe",
+    "element": "rock",
+    "mpCost": 13,
+    "baseMul": 0.95,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 3,
+    "levelScaling": { "baseMul": 0.08 },
+    "effects": [{ "type": "debuff", "value": -0.20, "stat": "atk", "duration": 5, "chance": 60 }],
+    "tripods": [
+      { "name": "地裂", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": -0.15, "stat": "def", "duration": 5, "chance": 80 }] },
+      { "name": "岩铠", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.2, "stat": "def", "duration": 5, "chance": 100, "target": "self" }] },
+      { "name": "地动", "unlockLevel": 10, "effects": [{ "type": "stun", "duration": 1, "chance": 30 }] }
+    ]
+  },
+  {
+    "id": "grass_whip",
+    "name": "草藤",
+    "desc": "草属性单体攻击，附加生命汲取",
+    "icon": "mdi:leaf",
+    "type": "active",
+    "target": "single",
+    "element": "grass",
+    "mpCost": 6,
+    "baseMul": 1.4,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.11 },
+    "effects": [
+      { "type": "debuff", "value": -0.20, "stat": "atk", "duration": 5, "chance": 100 },
+      { "type": "lifestealBuff", "value": 10, "duration": 5, "chance": 100, "target": "self" }
+    ],
+    "tripods": [
+      { "name": "缠绕", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": -0.30, "stat": "atk", "duration": 5, "chance": 100 }] },
+      { "name": "生命汲取", "unlockLevel": 7, "effects": [{ "type": "lifestealBuff", "value": 20, "duration": 5, "chance": 100, "target": "self" }] },
+      { "name": "荆棘", "unlockLevel": 10, "effects": [{ "type": "reflect", "value": 0.2, "duration": 5, "chance": 100, "target": "self" }] }
+    ]
+  },
+  {
+    "id": "forest_heal",
+    "name": "森林祝福",
+    "desc": "草属性单体治疗，附带解毒",
+    "icon": "mdi:flower",
+    "type": "active",
+    "target": "single",
+    "element": "grass",
+    "mpCost": 7,
+    "baseMul": 0,
+    "maxLevel": 10,
+    "upgradeCost": 2,
+    "learnCost": 2,
+    "levelScaling": { "healAmount": 25 },
+    "effects": [
+      { "type": "heal", "value": 1.5, "chance": 100 },
+      { "type": "cleanse", "chance": 100 }
+    ],
+    "tripods": [
+      { "name": "大恢复", "unlockLevel": 4, "effects": [{ "type": "heal", "value": 2.0, "chance": 100 }] },
+      { "name": "自然庇佑", "unlockLevel": 7, "effects": [{ "type": "shield", "value": 0.2, "duration": 5, "chance": 100 }] },
+      { "name": "生命之种", "unlockLevel": 10, "effects": [{ "type": "regen", "value": 0.1, "duration": 5, "chance": 100 }] }
+    ]
+  },
+  {
+    "id": "holy_light",
+    "name": "圣光",
+    "desc": "圣属性单体攻击，附加光之烙印使目标受到伤害增加",
+    "icon": "mdi:white-balance-sunny",
+    "type": "active",
+    "target": "single",
+    "element": "holy",
+    "mpCost": 10,
+    "baseMul": 1.8,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.15 },
+    "effects": [
+      { "type": "debuff", "stat": "holyMark", "value": 0.5, "duration": 5, "chance": 100 }
+    ],
+    "tripods": [
+      { "name": "神罚", "unlockLevel": 4, "effects": [{ "type": "debuff", "stat": "holyMark", "value": 0.75, "duration": 5, "chance": 100 }] },
+      { "name": "净化", "unlockLevel": 7, "effects": [{ "type": "cleanse", "chance": 100 }] },
+      { "name": "审判", "unlockLevel": 10, "effects": [{ "type": "debuff", "stat": "holyMark", "value": 1.0, "duration": 5, "chance": 100 }] }
+    ]
+  },
+  {
+    "id": "heal_light",
+    "name": "治愈术",
+    "desc": "圣属性群体治疗，附带净化",
+    "icon": "mdi:heart-pulse",
+    "type": "active",
+    "target": "all",
+    "element": "holy",
+    "mpCost": 12,
+    "baseMul": 0,
+    "maxLevel": 10,
+    "upgradeCost": 2,
+    "learnCost": 1,
+    "levelScaling": { "healAmount": 20 },
+    "effects": [
+      { "type": "heal", "value": 1.5, "chance": 100, "target": "all" },
+      { "type": "cleanse", "chance": 100 }
+    ],
+    "tripods": [
+      { "name": "快速治愈", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.15, "stat": "def", "duration": 5, "chance": 100, "target": "self" }] },
+      { "name": "圣光护佑", "unlockLevel": 7, "effects": [{ "type": "shield", "value": 0.2, "duration": 5, "chance": 100, "target": "all" }] },
+      { "name": "神圣赞美诗", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.2, "stat": "atk", "duration": 5, "chance": 100, "target": "all" }] }
     ]
   },
   {
     "id": "dark_ball",
     "name": "暗影球",
-    "desc": "暗属性单体攻击，概率降低敌人攻击",
+    "desc": "暗属性单体攻击，降低敌人攻击力",
     "icon": "mdi:circle-opacity",
     "type": "active",
     "target": "single",
     "element": "dark",
-    "mpCost": 7,
-    "baseMul": 1.7,
+    "mpCost": 8,
+    "baseMul": 1.6,
     "maxLevel": 10,
     "upgradeCost": 3,
     "learnCost": 2,
-    "levelScaling": { "baseMul": 0.15, "mpCost": 0 },
+    "levelScaling": { "baseMul": 0.12 },
+    "effects": [{ "type": "debuff", "value": -0.2, "stat": "atk", "duration": 5, "chance": 100 }],
+    "tripods": [
+      { "name": "黑暗", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": -0.3, "stat": "atk", "duration": 5, "chance": 100 }] },
+      { "name": "吞噬", "unlockLevel": 7, "effects": [{ "type": "lifestealBuff", "value": 25, "duration": 5, "chance": 100, "target": "self" }] },
+      { "name": "湮灭", "unlockLevel": 10, "effects": [{ "type": "death", "chance": 15, "note": "即死非boss敌人" }] }
+    ]
+  },
+  {
+    "id": "shadow_step",
+    "name": "暗影步",
+    "desc": "暗属性辅助，进入隐匿状态，必定暴击",
+    "icon": "mdi:moon-waning-crescent",
+    "type": "active",
+    "target": "self",
+    "element": "dark",
+    "mpCost": 8,
+    "baseMul": 0,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 3,
+    "levelScaling": { "critDmgBuff": 5 },
     "effects": [
-      { "type": "debuff", "value": 10, "stat": "atk", "duration": 2, "chance": 30 }
+      { "type": "buff", "value": 100, "stat": "critRate", "duration": 5, "chance": 100 },
+      { "type": "lifestealBuff", "value": 25, "duration": 5, "chance": 100 }
     ],
     "tripods": [
-      { "name": "黑暗", "desc": "降攻效果增强", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": 20, "stat": "atk", "duration": 2, "chance": 50 }] },
-      { "name": "吞噬", "desc": "造成伤害恢复MP", "unlockLevel": 7, "effects": [{ "type": "mpDrain", "value": 8, "duration": 0, "chance": 100 }] },
-      { "name": "湮灭", "desc": "概率即死(对Boss无效)", "unlockLevel": 10, "effects": [{ "type": "debuff", "value": 0, "stat": "death", "duration": 0, "chance": 5 }] }
+      { "name": "暗杀", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.5, "stat": "critDmg", "duration": 5, "chance": 100 }] },
+      { "name": "潜行", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.3, "stat": "dodge", "duration": 5, "chance": 100 }] },
+      { "name": "影遁", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.25, "stat": "critDmg", "duration": 5, "chance": 100 }] }
+    ]
+  },
+  {
+    "id": "steel_armor",
+    "name": "钢甲",
+    "desc": "钢属性辅助，提升全队防御与护盾",
+    "icon": "mdi:cube-outline",
+    "type": "active",
+    "target": "all",
+    "element": "steel",
+    "mpCost": 12,
+    "baseMul": 0,
+    "maxLevel": 10,
+    "upgradeCost": 2,
+    "learnCost": 2,
+    "levelScaling": { "shieldValue": 10 },
+    "effects": [
+      { "type": "buff", "value": 0.25, "stat": "def", "duration": 5, "chance": 100 },
+      { "type": "shield", "value": 0.2, "duration": 5, "chance": 100 }
+    ],
+    "tripods": [
+      { "name": "坚韧", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.15, "stat": "maxHp", "duration": 5, "chance": 100, "target": "all" }] },
+      { "name": "反伤光环", "unlockLevel": 7, "effects": [{ "type": "reflect", "value": 0.2, "duration": 5, "chance": 100, "target": "all" }] },
+      { "name": "钢之意志", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.2, "stat": "atk", "duration": 5, "chance": 100, "target": "all" }] }
+    ]
+  },
+  {
+    "id": "steel_blade",
+    "name": "钢刃",
+    "desc": "钢属性单体攻击，无视部分防御并附加真实伤害",
+    "icon": "mdi:sword-cross",
+    "type": "active",
+    "target": "single",
+    "element": "steel",
+    "mpCost": 7,
+    "baseMul": 1.5,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.12 },
+    "effects": [
+      { "type": "buff", "value": 0.2, "stat": "ignoreDef", "duration": 1, "chance": 100, "target": "self", "note": "本次攻击无视20%防御" },
+      { "type": "trueDmg", "value": 0.1, "chance": 100, "note": "附加攻击力10%的真伤" }
+    ],
+    "tripods": [
+      { "name": "锋利", "unlockLevel": 4, "effects": [{ "type": "trueDmg", "value": 0.2, "chance": 100, "note": "真伤比例提升至20%" }] },
+      { "name": "破甲", "unlockLevel": 7, "effects": [{ "type": "debuff", "value": -0.2, "stat": "def", "duration": 5, "chance": 100 }] },
+      { "name": "钢躯", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.15, "stat": "def", "duration": 5, "chance": 100, "target": "self" }] }
+    ]
+  },
+  {
+    "id": "poison_fang",
+    "name": "毒牙",
+    "desc": "单体中毒，基于敌人最大生命值造成持续伤害",
+    "icon": "mdi:snake",
+    "type": "active",
+    "target": "single",
+    "element": "",
+    "mpCost": 5,
+    "baseMul": 1.1,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.09 },
+    "effects": [{
+      "type": "dot",
+      "value": 0.03,
+      "duration": 5,
+      "chance": 100,
+      "stackable": true,
+      "maxStacks": 9,
+      "note": "每层基于敌人最大生命值3%的伤害"
+    }],
+    "tripods": [
+      { "name": "猛毒", "unlockLevel": 4, "effects": [{ "type": "dot", "value": 0.05, "duration": 5, "chance": 100, "stackable": true, "maxStacks": 9 }] },
+      { "name": "扩散", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 0.02, "duration": 5, "chance": 100, "target": "aoe", "stackable": true, "maxStacks": 9 }] },
+      { "name": "虚弱之毒", "unlockLevel": 10, "effects": [{ "type": "debuff", "value": -0.2, "stat": "def", "duration": 5, "chance": 100 }] }
     ]
   },
   {
     "id": "poison_mist",
     "name": "毒雾",
-    "desc": "对全体敌人施加中毒",
+    "desc": "全体中毒，基于敌人最大生命值造成持续伤害",
     "icon": "mdi:skull-crossbones",
     "type": "active",
     "target": "aoe",
     "element": "",
-    "mpCost": 9,
-    "baseMul": 0.6,
+    "mpCost": 10,
+    "baseMul": 0.75,
     "maxLevel": 10,
     "upgradeCost": 3,
     "learnCost": 3,
-    "levelScaling": { "baseMul": 0.05, "mpCost": 0 },
-    "effects": [
-      { "type": "dot", "value": 4, "duration": 4, "chance": 80 }
-    ],
+    "levelScaling": { "baseMul": 0.06 },
+    "effects": [{
+      "type": "dot",
+      "value": 0.02,
+      "duration": 5,
+      "chance": 100,
+      "stackable": true,
+      "maxStacks": 9,
+      "note": "每层基于敌人最大生命值2%的伤害"
+    }],
     "tripods": [
-      { "name": "猛毒", "desc": "中毒伤害提升", "unlockLevel": 4, "effects": [{ "type": "dot", "value": 8, "duration": 4, "chance": 90 }] },
-      { "name": "传染", "desc": "中毒概率扩散至额外目标", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 6, "duration": 3, "chance": 100, "note": "扩散" }] },
-      { "name": "毒爆", "desc": "中毒结束时造成一次额外伤害", "unlockLevel": 10, "effects": [{ "type": "dot", "value": 15, "duration": 0, "chance": 100, "note": "爆炸伤害" }] }
+      { "name": "猛毒", "unlockLevel": 4, "effects": [{ "type": "dot", "value": 0.03, "duration": 5, "chance": 100, "stackable": true, "maxStacks": 9 }] },
+      { "name": "传染", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 0.02, "duration": 5, "chance": 100, "target": "aoe", "stackable": true, "maxStacks": 9 }] },
+      { "name": "毒爆", "unlockLevel": 10, "effects": [{ "type": "dotBurst", "value": 1.5, "chance": 100 }] }
     ]
   }
 ]

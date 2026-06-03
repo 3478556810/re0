@@ -4,25 +4,9 @@
       <button class="close-btn" @click="$emit('close')"><Icon icon="mdi:close" /></button>
       <div class="dungeon-bg"></div>
       <div class="dungeon-content">
-        <div class="view-tabs">
-          <button
-            class="pixel-btn small"
-            :class="{ active: currentView === 'camp' }"
-            @click="currentView = 'camp'"
-          >
-            <Icon icon="mdi:campfire" /> 营地
-          </button>
-          <button
-            class="pixel-btn small"
-            :class="{ active: currentView === 'map' }"
-            @click="currentView = 'map'"
-          >
-            <Icon icon="mdi:map" /> 地图
-          </button>
-        </div>
-
-        <!-- 营地视图 -->
-        <div v-if="currentView === 'camp'" class="camp-view">
+        
+        <!-- 营地视图（直接显示，不再需要标签切换） -->
+        <div class="camp-view">
           <div class="top-row">
             <div class="title-area">
               <h2 class="dungeon-title">{{ dungeonName }}</h2>
@@ -40,7 +24,7 @@
 
           <!-- 篝火动画 + 同伴区域 -->
           <div class="camp-center">
-          
+     
             <div class="companions-section">
               <p class="section-label"><Icon icon="mdi:account-group" /> 同行伙伴</p>
               <div class="companion-avatars">
@@ -56,47 +40,30 @@
           <!-- 操作按钮 -->
           <div class="actions">
             <div class="main-actions">
-              <button class="pixel-btn" @click="currentView = 'mine'">🪨 测试矿洞</button>
               <button class="pixel-btn primary" @click="explore">
                 <Icon icon="mdi:sword-cross" /> 深入探索
               </button>
-
-
-              <button class="pixel-btn small" @click="showDungeonElevator = true" v-if="store.dungeon.unlockedFloors.length > 1">
-  <Icon icon="mdi:elevator" /> 电梯 ({{ store.dungeon.unlockedFloors.join(', ') }}F)
-</button>
               <button class="pixel-btn" @click="rest">
                 <Icon icon="mdi:bed" /> 休息 (50G)
               </button>
-
-
               <button class="pixel-btn" @click="retreat" v-if="canRetreat">
                 <Icon icon="mdi:exit-run" /> 撤退
               </button>
             </div>
             <div class="sub-actions">
-              <!-- 切换地下城按钮：触发本地选择面板 -->
-              <button class="pixel-btn" @click="showLocalDungeonSelect = true">
+              <button class="pixel-btn small" @click="showDungeonElevator = true" v-if="store.dungeon.unlockedFloors.length > 1">
+                <Icon icon="mdi:elevator" /> 电梯 ({{ store.dungeon.unlockedFloors.join(', ') }}F)
+              </button>
+              <button class="pixel-btn small" @click="showLocalDungeonSelect = true">
                 <Icon icon="mdi:swap-horizontal" /> 切换地下城
               </button>
-              <button class="pixel-btn" @click="$emit('openInventory')">
+              <button class="pixel-btn small" @click="$emit('openInventory')">
                 <Icon icon="mdi:bag-personal" /> 背包
               </button>
             </div>
           </div>
           <p v-if="cooldownMsg" class="cooldown">{{ cooldownMsg }}</p>
         </div>
-
-        <!-- 地图视图 -->
-        <TownMap
-          v-else-if="currentView === 'map'"
-          :dungeon-name="dungeonName"
-          :current-floor="store.dungeon.currentFloor"
-          @close="$emit('close')"
-          @startBattle="emit('startBattle', $event)"
-          @triggerStory="emit('triggerStory', $event)"
-          @openMine="currentView = 'mine'"
-        />
       </div>
     </div>
 
@@ -111,19 +78,16 @@
         <button class="pixel-btn" @click="showLocalDungeonSelect = false">关闭</button>
       </div>
     </div>
-<div v-if="showDungeonElevator" class="elevator-panel">
-  <h3>选择楼层</h3>
-  <button v-for="floor in store.dungeon.unlockedFloors" :key="floor"
-    class="pixel-btn small" @click="goToDungeonFloor(floor)">
-    第 {{ floor }} 层
-  </button>
-  <button class="pixel-btn small" @click="showDungeonElevator = false">关闭</button>
-</div>
-  <MinePanel
-  v-if="currentView === 'mine'"
-  @close="currentView = 'map'"
-  @startBattle="emit('startBattle', $event)"
-/>
+
+    <!-- 电梯面板 -->
+    <div v-if="showDungeonElevator" class="elevator-panel">
+      <h3>选择楼层</h3>
+      <button v-for="floor in store.dungeon.unlockedFloors" :key="floor"
+        class="pixel-btn small" @click="goToDungeonFloor(floor)">
+        第 {{ floor }} 层
+      </button>
+      <button class="pixel-btn small" @click="showDungeonElevator = false">关闭</button>
+    </div>
   </div>
 </template>
 
@@ -133,27 +97,25 @@ import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
 import { DUNGEONS } from '../config/dungeonConfig'
 import { defaultCharacters } from '../config/characters'
-import TownMap from './TownMap.vue'
-import MinePanel from './MinePanel.vue'
+import { inject } from 'vue'
 
 const store = useGameStore()
 const emit = defineEmits(['close', 'startBattle', 'triggerStory', 'openInventory'])
+const showToast = inject('showToast', (msg) => alert(msg))
 
-const currentView = ref('camp')
 const showLocalDungeonSelect = ref(false)
+const showDungeonElevator = ref(false)
 
 // 可用地下城列表
 const availableDungeons = computed(() => {
   const configs = store.config.dungeonConfigs || {}
   return Object.keys(configs).map(id => ({ id, ...configs[id] }))
 })
-import { inject } from 'vue'
-const showToast = inject('showToast', (msg) => alert(msg))
+
 // 切换地下城
 function switchToDungeon(id) {
   if (store.startDungeon(id)) {
     showLocalDungeonSelect.value = false
-    // 重置当前楼层等视图
   } else {
     showToast('该地下城暂时无法进入')
   }
@@ -184,17 +146,18 @@ const companions = computed(() => {
   const chars = store.config?.characters || defaultCharacters
   return Object.values(chars).filter(c => c.id !== 'hero' && c.name)
 })
-const showDungeonElevator = ref(false)
 
 function goToDungeonFloor(floor) {
   store.dungeon.currentFloor = floor
   showDungeonElevator.value = false
-  // 需要重新触发探索
-   explore()
+  explore()
 }
-function explore() {
 
-    // 记录本次探索的地下城
+function explore() {
+  if (store.player.hp <= 0) {
+  store.player.hp = store.player.maxHp;
+  store.player.mp = store.player.maxMp;
+}
   store.dungeon.lastDungeonId = store.dungeon.currentDungeon
   store.save()
   const floor = store.dungeon.currentFloor
@@ -206,8 +169,6 @@ function explore() {
     emit('triggerStory', storyId)
     return
   }
-
-  // 统一使用随机生成函数，不再硬编码第一层
   const monsters = store.getRandomMonsterForFloor()
   if (monsters && monsters.length > 0) {
     store.dungeon.isDungeonBattle = true
@@ -221,7 +182,7 @@ function rest() {
     store.player.hp = store.player.maxHp
     store.player.mp = store.player.maxMp
     store.save()
-   showToast('在篝火旁小憩片刻，体力恢复了。')
+    showToast('在篝火旁小憩片刻，体力恢复了。')
   } else showToast('金币不足。')
 }
 
@@ -240,10 +201,8 @@ function talkToCompanion(char) {
 }
 </script>
 
-
-
 <style scoped>
-/* 防止全局滚动条 */
+/* 保留全部原有样式，仅移除地图/矿洞相关 CSS（如果没有引用到会自动忽略） */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; justify-content: center; align-items: center; z-index: 200; }
 
 .dungeon-panel {
@@ -256,7 +215,7 @@ function talkToCompanion(char) {
   border-radius: 24px;
   box-shadow: 0 20px 50px rgba(0,0,0,0.6);
   position: relative;
-  overflow: hidden;            /* 面板本身不滚动 */
+  overflow: hidden;
   color: #ffd;
   font-family: 'Press Start 2P', cursive;
 }
@@ -279,7 +238,7 @@ function talkToCompanion(char) {
   flex-direction: column;
   padding: 20px;
   box-sizing: border-box;
-  overflow: hidden;            /* 内部滚动区域自行处理 */
+  overflow: hidden;
 }
 
 .close-btn {
@@ -291,11 +250,8 @@ function talkToCompanion(char) {
   color: #ffd;
   font-size: 24px;
   cursor: pointer;
-  z-index: 20;                 /* 确保在最上层 */
+  z-index: 20;
 }
-
-.view-tabs { display: flex; gap: 10px; margin-bottom: 15px; }
-.view-tabs .pixel-btn.small.active { background: rgba(255,215,0,0.2); }
 
 .camp-view { flex: 1; display: flex; flex-direction: column; gap: 15px; overflow: hidden; }
 
@@ -305,7 +261,7 @@ function talkToCompanion(char) {
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 20px;
-  padding-right: 40px;        /* 避免关闭按钮遮挡 */
+  padding-right: 40px;
 }
 
 .title-area { }
@@ -317,90 +273,6 @@ function talkToCompanion(char) {
 .progress-bar { height: 8px; background: #3a2a2a; border-radius: 4px; overflow: hidden; margin-top: 5px; width: 100%; }
 .fill { height: 100%; background: #ffd700; transition: width 0.3s; }
 
-.main-area { display: flex; gap: 20px; flex: 1; min-height: 0; }
-
-.companions-section {
-  width: 200px;
-  background: rgba(0,0,0,0.2);
-  border-radius: 12px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.tavern-section {
-  flex: 1;
-  background: rgba(0,0,0,0.2);
-  border-radius: 12px;
-  padding: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-height: 0;
-}
-
-.section-label { font-size: 10px; color: #ffd700; display: flex; align-items: center; gap: 6px; margin: 0; }
-.companion-avatars { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
-.companion-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
-.companion-item:hover { transform: scale(1.1); }
-.companion-img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #b89a6a; object-fit: cover; }
-.companion-icon { font-size: 28px; color: #ffd700; }
-.companion-name { font-size: 8px; margin-top: 4px; color: #ffd; }
-
-.chat-box {
-  flex: 1;
-  background: rgba(0,0,0,0.3);
-  border-radius: 8px;
-  padding: 10px;
-  overflow-y: auto;
-  font-size: 9px;
-  line-height: 1.8;
-  max-height: 220px;
-}
-.chat-msg { margin-bottom: 6px; }
-.chat-msg.user { color: #cce5ff; }
-.chat-msg.ai { color: #ffd9b3; }
-
-.chat-input-row { display: flex; gap: 8px; margin-top: auto; }
-.chat-input {
-  flex: 1;
-  background: rgba(0,0,0,0.5);
-  border: 1px solid #b89a6a;
-  color: #ffd;
-  padding: 6px 10px;
-  font-size: 9px;
-  border-radius: 8px;
-  font-family: 'Press Start 2P', cursive;
-}
-
-.actions { display: flex; flex-direction: column; gap: 12px; }
-.main-actions { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
-.sub-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
-.pixel-btn.small { font-size: 8px; padding: 6px 12px; }
-.pixel-btn.primary { background: rgba(255,215,0,0.2); border-color: #ffd700; }
-.cooldown { color: #f44336; font-size: 10px; text-align: center; }
-
-/* 地图视图 */
-.map-view { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
-.map-header { margin-bottom: 20px; }
-.map-desc { font-size: 10px; color: #b89aa5; }
-.map-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; }
-.map-room {
-  background: rgba(0,0,0,0.3);
-  border: 1px solid rgba(255,215,0,0.2);
-  border-radius: 12px;
-  padding: 15px;
-  text-align: center;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-.map-room:hover { background: rgba(255,215,0,0.1); }
-.map-room.explored { border-color: #ffd700; }
-.room-label { font-size: 9px; display: block; margin-top: 8px; }
-/* 之前的样式保持，额外添加以下 */
 .camp-center {
   display: flex;
   align-items: center;
@@ -410,12 +282,8 @@ function talkToCompanion(char) {
   min-height: 0;
 }
 
-.campfire-area {
-  text-align: center;
-}
+.campfire-area { text-align: center; }
 
-/* 篝火动画 */
-/* 篝火容器 */
 .campfire {
   position: relative;
   width: 80px;
@@ -423,7 +291,6 @@ function talkToCompanion(char) {
   margin: 0 auto 10px;
 }
 
-/* 木柴 */
 .logs {
   position: absolute;
   bottom: 0;
@@ -445,47 +312,42 @@ function talkToCompanion(char) {
   border-radius: 2px;
 }
 
-/* 火焰粒子 */
-.fire {
-  position: absolute;
-  bottom: 15px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 60px;
-}
-
-.fire-particle {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  width: 8px;
-  height: 20px;
-  background: #ff6600;
-  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
-  transform-origin: center bottom;
-  animation: flicker 0.8s infinite alternate;
-  opacity: 0.9;
-}
-
-.fire-particle:nth-child(1) { margin-left: -12px; animation-delay: 0s; height: 25px; background: #ffaa00; }
-.fire-particle:nth-child(2) { margin-left: -4px; animation-delay: 0.2s; height: 30px; background: #ff8800; }
-.fire-particle:nth-child(3) { margin-left: 4px; animation-delay: 0.4s; height: 28px; background: #ff6600; }
-.fire-particle:nth-child(4) { margin-left: 12px; animation-delay: 0.6s; height: 22px; background: #ff4400; }
 
 @keyframes flicker {
   0% { transform: scaleY(1) translateY(0); opacity: 0.8; }
   100% { transform: scaleY(1.3) translateY(-5px); opacity: 1; }
 }
 
-.campfire-hint {
-  font-size: 9px;
-  color: #b89aa5;
+.campfire-hint { font-size: 9px; color: #b89aa5; }
+
+.companions-section {
+  width: 200px;
+  background: rgba(0,0,0,0.2);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
 }
 
+.section-label { font-size: 10px; color: #ffd700; display: flex; align-items: center; gap: 6px; margin: 0; }
+.companion-avatars { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.companion-item { display: flex; flex-direction: column; align-items: center; cursor: pointer; }
+.companion-item:hover { transform: scale(1.1); }
+.companion-img { width: 40px; height: 40px; border-radius: 50%; border: 2px solid #b89a6a; object-fit: cover; }
+.companion-icon { font-size: 28px; color: #ffd700; }
+.companion-name { font-size: 8px; margin-top: 4px; color: #ffd; }
 
+.actions { display: flex; flex-direction: column; gap: 12px; }
+.main-actions { display: flex; justify-content: center; gap: 15px; flex-wrap: wrap; }
+.sub-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.pixel-btn { font-family: inherit; padding: 8px 16px; background: #2a2a3a; border: 2px solid #b89a6a; color: #ffd; cursor: pointer; border-radius: 8px; }
+.pixel-btn.small { font-size: 8px; padding: 6px 12px; }
+.pixel-btn.primary { background: rgba(255,215,0,0.2); border-color: #ffd700; }
+.cooldown { color: #f44336; font-size: 10px; text-align: center; }
 
-/* 原有所有样式保持不变，新增本地选择面板样式 */
 .local-select-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.7);
@@ -517,10 +379,8 @@ function talkToCompanion(char) {
 .name { font-size: 11px; margin-bottom: 6px; color: #ffd; }
 .info { font-size: 9px; color: #b89aa5; }
 
-
-
 .elevator-panel {
-  position: fixed;          /* 固定在整个屏幕之上 */
+  position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -528,22 +388,12 @@ function talkToCompanion(char) {
   border: 2px solid #ffd700;
   border-radius: 16px;
   padding: 20px;
-  z-index: 400;             /* 确保在所有内容上方 */
+  z-index: 400;
   min-width: 200px;
   text-align: center;
   color: #ffd;
   font-family: 'Press Start 2P', cursive;
 }
-
-.elevator-panel h3 {
-  margin-bottom: 15px;
-  font-size: 14px;
-  color: #ffd700;
-}
-
-.elevator-panel button {
-  display: block;
-  width: 100%;
-  margin: 5px 0;
-}
+.elevator-panel h3 { margin-bottom: 15px; font-size: 14px; color: #ffd700; }
+.elevator-panel button { display: block; width: 100%; margin: 5px 0; }
 </style>
