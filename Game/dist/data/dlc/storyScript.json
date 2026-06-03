@@ -1,0 +1,457 @@
+{
+  "start": {
+    "id": "start",
+    "text": "时间流转",
+    "speaker": "",
+    "nextId": "c0_s1"
+  },
+  "c0_s1": {
+    "id": "c0_s1",
+    "speaker": "",
+    "text": "破晓前的欧拉希昂。公会大厅塔楼上的辉石散发着幽蓝的光。你站在地下城的青铜巨门前，已经站了很久。",
+    "background": "guild_dawn.png",
+    "nextId": "c0_s2"
+  },
+  "c0_s2": {
+    "id": "c0_s2",
+    "speaker": "",
+    "text": "秋夜的风带着苔藓的湿气和若有若无的血腥味。你低头看着自己的手——关节处有握剑磨出的薄茧。这柄短剑是用祖父的怀表换来的。",
+    "background": "guild_dawn.png",
+    "nextId": "c0_s3"
+  },
+  "c0_s3": {
+    "id": "c0_s3",
+    "speaker": "艾因",
+    "portrait": "heroine_glance_away",
+    "speakerPosition": "left",
+    "text": "「三个月前，我还在托尔村。」",
+    "voiceStyle": "normal",
+    "background": "guild_dawn.png",
+    "nextId": "c0_s4"
+  },
+  "c0_s4": {
+    "id": "c0_s4",
+    "speaker": "艾因",
+    "portrait": "heroine_glance_away",
+    "speakerPosition": "left",
+    "text": "「父亲说女孩子的手不是用来挥锤子的。明年就该嫁人，然后在某个冬天死在床上。」",
+    "voiceStyle": "normal",
+    "background": "guild_dawn.png",
+    "nextId": "c0_s5"
+  },
+  "c0_s5": {
+    "id": "c0_s5",
+    "speaker": "艾因",
+    "portrait": "heroine_thinking",
+    "speakerPosition": "left",
+    "text": "「那种日子，光是想想就觉得喉咙被堵住了。」",
+    "voiceStyle": "normal",
+    "background": "guild_dawn.png",
+    "nextId": "c0_s6"
+  },
+  "c0_s6": {
+    "id": "c0_s6",
+    "speaker": "",
+    "text": "三个月前的雨夜。一辆来自欧拉希昂的马车陷进了村口的泥沼。车厢里躺着一个浑身缠满绷带的女人。",
+    "background": "guild_dawn.png",
+    "nextId": "c0_s7"
+  },
+  "c0_s7": {
+    "id": "c0_s7",
+    "speaker": "",
+    "text": "她断了一条腿，肋骨断了三根，右眼还在渗血。可她笑着对同伴说了一句话。",
+    "background": "guild_dawn.png",
+    "nextId": "c0_s8"
+  },
+  "c0_s8": {
+    "id": "c0_s8",
+    "speaker": "艾因",
+    "portrait": "heroine_thinking",
+    "speakerPosition": "left",
+    "text": "「『下次一定能到第五层。』伤成那样，已经在想『下次』了。」",
+    "voiceStyle": "normal",
+    "background": "guild_dawn.png",
+    "nextId": "c0_s9"
+  },
+  "c0_s9": {
+    "id": "c0_s9",
+    "speaker": "艾因",
+    "portrait": "heroine_glance_away",
+    "speakerPosition": "left",
+    "text": "「我问她，地下城真的有吗。她看了我很久，然后笑了。」",
+    "voiceStyle": "normal",
+    "background": "guild_dawn.png",
+    "nextId": "c0_s10"
+  },
+  "c0_s10": {
+    "id": "c0_s10",
+    "speaker": "艾因",
+    "portrait": "heroine_thinking",
+    "speakerPosition": "left",
+    "text": "「『那里很黑，很冷。每走一步都有可能死。但也很美。那种美，地面上没有。』」",
+    "voiceStyle": "normal",
+    "background": "guild_dawn.png",
+    "nextId": "c0_s11"
+  },
+  "c0_s11": {
+    "id": "c0_s11",
+    "speaker": "艾因",
+    "portrait": "heroine_glance_away",
+    "speakerPosition": "left",
+    "text": "「她把一颗魔石塞进我手里。第二天清晨，我离开了村子。」",
+    "voiceStyle": "normal",
+    "background": "guild_dawn.png",
+    "nextId": "c0_s12"
+  },
+  "c0_s12": {
+    "id": "c0_s12",
+    "speaker": "",
+    "text": "青铜门缓缓推开，门轴发出低沉的轰鸣。门缝里涌出的空气冷得像从冰窖里倒出来的。你踏出了第一步。",
+    "background": "cave_entrance.png",
+    "nextId": "c0_s13"
+  },
+  "c0_s13": {
+    "id": "c0_s13",
+    "speaker": "艾因",
+    "portrait": "heroine_glance_away",
+    "speakerPosition": "left",
+    "text": "「空气好粘稠……每一次呼吸都能尝到铁锈和腐败的甜味。」",
+    "voiceStyle": "normal",
+    "background": "cave_entrance.png",
+    "nextId": "c0_s14"
+  },
+  "c0_s14": {
+    "id": "c0_s14",
+    "speaker": "",
+    "text": "岩壁上爬满了发光的苔藓，幽蓝光晕微微脉动。水珠从洞顶滴落，在绝对寂静中格外清晰。",
+    "background": "cave_entrance.png",
+    "nextId": "c0_s15"
+  },
+  "c0_s15": {
+    "id": "c0_s15",
+    "speaker": "艾因",
+    "portrait": "heroine_glance_away",
+    "speakerPosition": "left",
+    "text": "「苔藓的光只能照亮十步。十步以外，是纯粹的黑暗。」",
+    "voiceStyle": "normal",
+    "background": "cave_entrance.png",
+    "nextId": "c0_s16"
+  },
+  "c0_s16": {
+    "id": "c0_s16",
+    "speaker": "艾因",
+    "portrait": "heroine_thinking",
+    "speakerPosition": "left",
+    "text": "「在村子里望着山脊线的每一个黄昏，偷偷咬住嘴唇的每一个夜晚——我所想象的『别处』，就是这里。」",
+    "voiceStyle": "normal",
+    "background": "cave_entrance.png",
+    "nextId": "c0_s17"
+  },
+  "c0_s17": {
+    "id": "c0_s17",
+    "speaker": "",
+    "text": "通道在前方分成三条岔路。你蹲下身，借着魔石的微光检视地面。左右岔路积着薄灰。中间那条散落着细小的白骨。",
+    "background": "cave_crossroad.png",
+    "nextId": "c0_s18"
+  },
+  "c0_s18": {
+    "id": "c0_s18",
+    "speaker": "艾因",
+    "portrait": "heroine_thinking",
+    "speakerPosition": "left",
+    "text": "「骨头的断口是新的。有什么东西在这条路里捕猎。」",
+    "voiceStyle": "normal",
+    "background": "cave_crossroad.png",
+    "choices": [
+      {
+        "text": "「走中间。」",
+        "nextId": "c0_s19",
+        "affection": {}
+      },
+      {
+        "text": "「先看看两侧的情况。」",
+        "nextId": "c0_s18b",
+        "affection": {}
+      }
+    ]
+  },
+  "c0_s18b": {
+    "id": "c0_s18b",
+    "speaker": "艾因",
+    "portrait": "heroine_glance_away",
+    "speakerPosition": "left",
+    "text": "「右边岔路有干涸的魔物血迹。几天前的。哪条路都不安全……走中间吧。」",
+    "voiceStyle": "normal",
+    "background": "cave_crossroad.png",
+    "nextId": "c0_s19"
+  },
+  "c0_s19": {
+    "id": "c0_s19",
+    "speaker": "",
+    "text": "通道越来越窄。天花板在降低，苔藓蓝光越来越稀疏。然后你听到了——咔哒。咔哒。爪子在石头上摩擦。不止一只。",
+    "background": "cave_narrow.png",
+    "nextId": "c0_s20"
+  },
+  "c0_s20": {
+    "id": "c0_s20",
+    "speaker": "",
+    "text": "三对猩红的光点在黑暗中浮现。狗头人。中间那只额头有旧伤疤，歪着头打量你，发出一声低沉的咕噜。然后它尖啸了一声。",
+    "background": "cave_narrow.png",
+    "nextId": "c0_s21"
+  },
+  "c0_s21": {
+    "id": "c0_s21",
+    "speaker": "",
+    "text": "一道银白色的弧光从你右侧闪过。那一剑精确地切过跃起的狗头人，一刀两断。绿色血雾在黑暗中炸开。",
+    "background": "cave_narrow.png",
+    "nextId": "c0_s22"
+  },
+  "c0_s22": {
+    "id": "c0_s22",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "「不要站着发呆。深呼吸，重心下沉。」",
+    "voiceStyle": "normal",
+    "background": "cave_narrow.png",
+    "nextId": "c0_s23"
+  },
+  "c0_s23": {
+    "id": "c0_s23",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "「还有两只。左边那只交给你。这算你欠我的第一个人情。」",
+    "voiceStyle": "normal",
+    "background": "cave_narrow.png",
+    "nextId": "c0_s24"
+  },
+  "c0_s24": {
+    "id": "c0_s24",
+    "speaker": "",
+    "text": "她侧过头，淡紫色眼眸扫了你一眼。眼角有一道浅疤。左边那只狗头人已经扑过来了。",
+    "background": "cave_narrow.png",
+    "choices": [
+      {
+        "text": "「挥剑迎上去！」",
+        "nextId": "c0_s25",
+        "affection": { "freyja": 2 }
+      },
+      {
+        "text": "「先闪避，再找机会。」",
+        "nextId": "c0_s25b",
+        "affection": { "freyja": 1 }
+      }
+    ]
+  },
+  "c0_s25": {
+    "id": "c0_s25",
+    "speaker": "",
+    "text": "你拧腰、转胯、挥臂。不是剑术，是劈柴。短剑刺入狗头人的腹部，绿色血涌出来，浸湿了你的手指。是热的。",
+    "background": "cave_narrow.png",
+    "nextId": "c0_s26"
+  },
+  "c0_s25b": {
+    "id": "c0_s25b",
+    "speaker": "",
+    "text": "你侧身闪过扑咬，后背撞上岩壁。狗头人一爪落空，身体失去平衡。你双手握剑刺入它暴露的侧腹。它尖叫着倒下。",
+    "background": "cave_narrow.png",
+    "nextId": "c0_s26"
+  },
+  "c0_s26": {
+    "id": "c0_s26",
+    "speaker": "",
+    "text": "狗头人抽搐了几下，再也没动。另一只已经被女剑士钉死在地上。三只全灭。你跪在地上，吐了。",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s27"
+  },
+  "c0_s27": {
+    "id": "c0_s27",
+    "speaker": "",
+    "text": "她没有嘲讽，也没有安慰。只是站在原地等着，直到你用袖口擦干净嘴，才蹲下来用小刀剖开尸体。动作熟练得像在切肉。",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s28"
+  },
+  "c0_s28": {
+    "id": "c0_s28",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "「芙蕾雅。口头感谢不如魔石实在。这三只的魔石归我，你有意见吗？」",
+    "voiceStyle": "normal",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s29"
+  },
+  "c0_s29": {
+    "id": "c0_s29",
+    "speaker": "艾因",
+    "portrait": "heroine_glance_away",
+    "speakerPosition": "left",
+    "text": "「我叫艾因。刚才……谢谢。没有意见。」",
+    "voiceStyle": "normal",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s30"
+  },
+  "c0_s30": {
+    "id": "c0_s30",
+    "speaker": "",
+    "text": "她看了看三颗魔石，又看了看你。然后叹了口气，把最小那颗扔了过来。",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s31"
+  },
+  "c0_s31": {
+    "id": "c0_s31",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "「这颗，算你新手期的启动资金。」",
+    "voiceStyle": "normal",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s32"
+  },
+  "c0_s32": {
+    "id": "c0_s32",
+    "speaker": "",
+    "text": "魔石只有小拇指指甲盖大小，表面还残留着尸体的余温。你把它和怀里那颗放在一起。两颗魔石并排躺着，一大一小。",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s33"
+  },
+  "c0_s33": {
+    "id": "c0_s33",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "「你刚才那一剑，只有蛮力，没有心。刺进去就闭眼，是等着怪物自己死吗？」",
+    "voiceStyle": "normal",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s34"
+  },
+  "c0_s34": {
+    "id": "c0_s34",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "「不过第一次能刺中，算及格。至少你挥了剑。大部分人第一次连剑都拔不出来。」",
+    "voiceStyle": "normal",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s35"
+  },
+  "c0_s35": {
+    "id": "c0_s35",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "「你打算继续往下走？为什么？」",
+    "voiceStyle": "normal",
+    "background": "cave_aftermath.png",
+    "choices": [
+      {
+        "text": "「因为不想在田埂上老死。」",
+        "nextId": "c0_s36a",
+        "affection": { "freyja": 3 },
+        "keyChoice": true
+      },
+      {
+        "text": "「我也不知道。就是觉得该继续走。」",
+        "nextId": "c0_s36b",
+        "affection": { "freyja": 1 }
+      },
+      {
+        "text": "「那你又是为什么在这里？」",
+        "nextId": "c0_s36c",
+        "affection": { "freyja": 0 }
+      }
+    ]
+  },
+  "c0_s36a": {
+    "id": "c0_s36a",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "「不想在田埂上老死……有意思。很多人来这里是为了钱、名声、或者逃避什么。你不一样。」",
+    "voiceStyle": "normal",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s37"
+  },
+  "c0_s36b": {
+    "id": "c0_s36b",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "「不知道还往前走，说明你至少是清醒的。地下城里最危险的不是怪物，是搞不清楚自己在干什么的人。」",
+    "voiceStyle": "normal",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s37"
+  },
+  "c0_s36c": {
+    "id": "c0_s36c",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "「问别人之前先报上自己的，我告诉过你了。至于我……有些债总要还的。」",
+    "voiceStyle": "normal",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s37"
+  },
+  "c0_s37": {
+    "id": "c0_s37",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "「随你。如果你一定要往下走，就跟着我的脚印。别踩我没踩过的地方。」",
+    "voiceStyle": "normal",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s38"
+  },
+  "c0_s38": {
+    "id": "c0_s38",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "「别死在我后面。我没空回头。」",
+    "voiceStyle": "normal",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s39"
+  },
+  "c0_s39": {
+    "id": "c0_s39",
+    "speaker": "",
+    "text": "她转身朝更深处走去。银发在幽蓝苔藓的光晕中像一道落在地上的月亮。你握紧沾满血的短剑，跟了上去。",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s40"
+  },
+  "c0_s40": {
+    "id": "c0_s40",
+    "speaker": "",
+    "text": "前方的黑暗中隐约传来翅膀扑腾的声音。两只巨型蝙蝠从洞顶俯冲下来，猩红的眼睛在黑暗中拖出残影。",
+    "background": "cave_aftermath.png",
+    "choices": [
+      {
+        "text": "「准备战斗！」",
+        "battle": {
+          "enemies": ["giant_bat", "giant_bat"],
+          "winNext": "c0_s41"
+        },
+        "affection": { "freyja": 2 }
+      }
+    ]
+  },
+  "c0_s41": {
+    "id": "c0_s41",
+    "speaker": "芙蕾雅",
+    "portrait": "silver_sword",
+    "speakerPosition": "right",
+    "text": "「你确实挥了剑。及格了。下次战斗，睁开眼。」",
+    "voiceStyle": "normal",
+    "background": "cave_aftermath.png",
+    "nextId": "c0_s42"
+  },
+  "c0_s42": {
+    "id": "c0_s42",
+    "speaker": "",
+    "text": "地下迷宫深处传来古老的低鸣，仿佛在回应某个微不足道的誓言。",
+    "background": "cave_aftermath.png",
+    "nextId": null,
+    "partner": "freyja"
+  }
+}

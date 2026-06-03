@@ -1,28 +1,22 @@
 /* ========== 背景与装饰 ========== */
 .battle-container {
   position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
   font-family: 'Press Start 2P', 'Courier New', monospace;
   overflow: hidden;
   z-index: 10;
 }
 .sky {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 60%;
+  top: 0; left: 0;
+  width: 100%; height: 60%;
   background: linear-gradient(180deg, #87CEEB 0%, #B0E0E6 100%);
 }
 .ground {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 100%;
-  height: 40%;
+  bottom: 0; left: 0;
+  width: 100%; height: 40%;
   background: linear-gradient(180deg, #7CB342 0%, #558B2F 100%);
   border-top: 4px solid #6B8E23;
 }
@@ -32,232 +26,220 @@
   background-repeat: no-repeat;
   opacity: 0.6;
 }
-.tree1 { top: 30%; left: 35%; width: 100px; height: 120px; background-image: url("data:image/svg+xml,..."); }
-.tree2 { top: 55%; left: 70%; width: 80px; height: 100px; background-image: url("data:image/svg+xml,..."); }
-.rock { bottom: 12%; left: 45%; width: 60px; height: 40px; background-image: url("data:image/svg+xml,..."); }
+.tree1 { top: 30%; left: 35%; width: 100px; height: 120px; }
+.tree2 { top: 55%; left: 70%; width: 80px; height: 100px; }
+.rock { bottom: 12%; left: 45%; width: 60px; height: 40px; }
 
-/* ========== 敌我包裹器 ========== */
-.enemy-wrapper {
-  position: absolute;
-  top: 5%;
-  right: 3%;
+/* ========== 敌人区域 ========== */
+.enemy-area {
+  position: absolute; top: 5%; right: 2%;
+  display: flex; flex-direction: column; align-items: flex-end;
+  z-index: 10; gap: 12px;
 }
-
-.player-wrapper {
-  position: absolute;
-  bottom: 10%;
-  left: 3%;
+.enemy-cards { display: flex; flex-direction: column; gap: 8px; }
+.enemy-card {
+  background: rgba(0,0,0,0.5); border-radius: 16px; padding: 8px 12px;
+  border: 2px solid transparent; cursor: pointer;
+  transition: border-color 0.2s; width: 260px;
 }
+.enemy-card.target-selected { border-color: #ffd700; }
+.enemy-sprites { display: flex; flex-direction: row; gap: 15px; justify-content: flex-end; }
+.enemy-sprite {
+  width: 80px; height: 80px;
+  display: flex; align-items: center; justify-content: center;
+  border: 3px solid transparent; border-radius: 12px;
+  background: rgba(0,0,0,0.3); cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.enemy-sprite.target-sprite { border-color: #ffd700; transform: scale(1.1); }
+.enemy-sprite:hover { border-color: rgba(255,255,255,0.6); }
+.big-sprite-img { width: 100%; height: 100%; object-fit: contain; }
+.big-sprite-icon { font-size: 50px; color: #ffd; }
 
-/* ========== 状态卡片（保留之前所有样式） ========== */
-.enemy-status-card,
+/* ========== 玩家状态卡 ========== */
 .player-status-card {
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(6px);
-  border-radius: 20px;
-  padding: 12px 18px;
-  color: #ffd;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+  border-radius: 20px; padding: 12px 18px;
+  color: #ffd; display: flex; flex-direction: column; gap: 6px;
   min-width: 260px;
 }
-
 .name-box {
-  background: #f0e0b0;
-  border: 2px solid #a08040;
-  border-radius: 12px;
-  padding: 4px 14px;
-  font-size: 16px;
-  font-weight: bold;
-  color: #2a2a0a;
+  background: #f0e0b0; border: 2px solid #a08040;
+  border-radius: 12px; padding: 4px 14px;
+  font-size: 16px; font-weight: bold; color: #2a2a0a;
   display: inline-block;
 }
-
-.level-tag {
-  font-size: 13px;
-  color: #ffd;
-  margin: 0;
-}
-
-.buff-area {
-  display: flex;
-  gap: 5px;
-  min-height: 20px;
-}
-
-/* ========== 条形容器（带左侧文字） ========== */
-.bar-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.bar-text {
-  width: 30px;
-  font-size: 11px;
-  color: #fff;
-  text-align: right;
-  flex-shrink: 0;
-}
-
+.level-tag { font-size: 13px; color: #ffd; }
+.bar-row { display: flex; align-items: center; gap: 8px; margin-top: 3px; }
+.bar-text { width: 30px; font-size: 11px; color: #fff; text-align: right; flex-shrink: 0; }
 .hp-bar, .mp-bar, .exp-bar {
-  flex: 1;
-  background: #603020;
-  border-radius: 8px;
-  height: 18px;
-  position: relative;
-  overflow: hidden;
+  flex: 1; background: #603020; border-radius: 8px;
+  height: 18px; position: relative; overflow: hidden;
 }
-
-.hp-fill { background: #4caf50; width: 100%; height: 100%; }
-.mp-fill { background: #4488ff; width: 100%; height: 100%; }
-.exp-fill { background: #ffffff; width: 100%; height: 100%; }  /* 经验条白色 */
-
+.hp-fill { background: #4caf50; height: 100%; }
+.mp-fill { background: #4488ff; height: 100%; }
+.exp-fill { background: #ffffff; height: 100%; }
 .hp-bar span, .mp-bar span, .exp-bar span {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  text-align: center;
-  font-size: 11px;
-  line-height: 18px;
-  color: white;
-  text-shadow: 1px 1px 0 #000;
+  position: absolute; top: 0; left: 0; right: 0;
+  text-align: center; font-size: 11px; line-height: 18px;
+  color: white; text-shadow: 1px 1px 0 #000;
 }
+.shield-fill {
+  position: absolute; top: 0; left: 0; height: 100%;
+  background: rgba(0, 150, 255, 0.6); border-radius: 8px; z-index: 2;
+}
+.hp-fill, .mp-fill, .exp-fill { position: relative; z-index: 1; }
+.hp-bar span, .mp-bar span, .exp-bar span { z-index: 3; }
 
-/* ========== 立绘（独立、放大、偏移） ========== */
-
-
+/* ========== 玩家立绘 ========== */
+.player-wrapper {
+  position: absolute; bottom: 5%; left: 2%;
+  display: flex; flex-direction: column; align-items: flex-start;
+  gap: 10px; z-index: 20;
+}
+.player-bottom-area { display: flex; align-items: flex-end; gap: 10px; }
 .player-sprite {
-  position: absolute;
-  top: -260px;     /* 左上偏移 */
-  left: 6%;
-  width: 240px;
-  height: 240px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 140px; height: 140px;
+  display: flex; align-items: center; justify-content: center;
   filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
   transition: transform 0.1s, filter 0.2s;
+  margin-left: 15%;
 }
+.big-sprite { font-size: 280px; color: #ffd; }
+.flash-white { filter: brightness(2) drop-shadow(0 0 12px white); }
 
-.big-sprite {
-  font-size: 280px;
-  color: #ffd;
+/* ========== 效果图标 ========== */
+.effect-icons { display: flex; gap: 4px; flex-wrap: wrap; }
+.effect-badge {
+  background: rgba(0,0,0,0.6); border-radius: 8px;
+  padding: 2px 6px; display: flex; align-items: center; gap: 3px;
+  font-size: 12px; color: #ffd;
 }
-.big-sprite-img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
+.effect-icon { font-size: 16px; }
+.effect-info { display: flex; flex-direction: column; align-items: center; line-height: 1.2; }
+.effect-dur { font-size: 10px; color: #fff; }
+.effect-stacks { color: #ffd700; margin-left: 3px; font-size: 10px; }
 
-/* ========== 闪光、浮动消息等保持不变 ========== */
-.flash-white {
-  filter: brightness(2) drop-shadow(0 0 12px white);
+/* ========== 伙伴卡 ========== */
+.companion-card {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(0,0,0,0.7); border-radius: 12px;
+  padding: 8px 12px; color: #fff;
+  font-family: 'Press Start 2P', cursive;
 }
+.companion-portrait {
+  width: 60px; height: 60px; border-radius: 50%;
+  object-fit: cover; border: 2px solid #ffd700;
+}
+.companion-icon { font-size: 28px; color: #ffd700; }
+.companion-info { flex: 1; }
+.companion-name { font-size: 7px; color: #ffd; margin-bottom: 2px; }
 
-/* ========== 浮动消息 ========== */
+/* ========== 底部技能栏 ========== */
+.skill-bar {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+  z-index: 30;
+}
+.skill-card {
+  background: rgba(0,0,0,0.7); border: 2px solid #b89a6a;
+  border-radius: 16px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; transition: all 0.2s;
+  color: #ffd; font-family: 'Press Start 2P', cursive; min-width: 140px;
+}
+.skill-card:hover { background: rgba(255,215,0,0.15); border-color: #ffd700; }
+.skill-card:active { transform: scale(0.95); }
+.skill-disabled { opacity: 0.4; cursor: not-allowed; border-color: #555; }
+.skill-icon { font-size: 28px; color: #ffd700; flex-shrink: 0; }
+.skill-info { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.skill-name { font-size: 9px; white-space: nowrap; }
+.skill-mp { font-size: 7px; color: #aaa; }
+
+/* ========== 技能预览浮层 ========== */
+.skill-preview {
+  position: fixed; z-index: 50;
+  background: rgba(0,0,0,0.9); border: 1px solid #ffd700;
+  border-radius: 12px; padding: 10px 14px;
+  color: #ffd; font-family: 'Press Start 2P', cursive;
+  font-size: 8px; pointer-events: none;
+  display: flex; flex-direction: column; gap: 6px;
+  min-width: 160px;
+}
+.preview-name { font-size: 10px; color: #ffd700; }
+.preview-desc { color: #ccc; font-size: 9px; white-space: normal; line-height: 1.5; }
+.preview-dmg { color: #ff9800; font-size: 10px; }
+.preview-mul { color: #4caf50; }
+
+/* ========== 浮动消息 & 遮罩 ========== */
 .floating-message {
-  position: absolute;
-  bottom: 20%;
-  left: 50%;
+  position: absolute; bottom: 20%; left: 50%;
   transform: translateX(-50%);
-  background: #000000aa;
-  backdrop-filter: blur(8px);
-  border: 2px solid #c9a87b;
-  border-radius: 40px;
-  padding: 12px 30px;
-  color: #ffffcc;
-  font-size: 18px;
-  z-index: 25;
-  pointer-events: none;
+  background: #000000aa; backdrop-filter: blur(8px);
+  border: 2px solid #c9a87b; border-radius: 40px;
+  padding: 12px 30px; color: #ffffcc; font-size: 18px;
+  z-index: 25; pointer-events: none;
   text-shadow: 1px 1px 0 #000;
 }
+.message-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 19; background: transparent; pointer-events: auto;
+}
+
+/* ========== 效果气泡 ========== */
+.effect-bubble {
+  position: fixed; z-index: 100;
+  background: rgba(0,0,0,0.9); border: 1px solid #ffd700;
+  border-radius: 10px; padding: 8px 14px;
+  font-size: 9px; color: #ffd; font-family: 'Press Start 2P', cursive;
+  pointer-events: none; max-width: 220px;
+  word-break: break-all; line-height: 1.4;
+}
+
+/* ========== 委托完成提示 ========== */
+.quest-hint-fixed {
+  position: fixed; top: 25%; left: 12px;
+  background: rgba(0,0,0,0.9); border: 2px solid #ffd700;
+  border-radius: 14px; padding: 12px 20px;
+  color: #ffd; font-size: 10px; font-family: 'Press Start 2P', cursive;
+  display: flex; align-items: center; gap: 8px;
+  z-index: 1000; box-shadow: 0 0 20px rgba(255,215,0,0.4);
+  pointer-events: none; max-width: 300px;
+  white-space: normal; word-break: break-all;
+}
+
+/* ========== 游戏结束面板 ========== */
+.game-over-panel {
+  color: #ffd; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: #1a1a2e; border: 4px solid gold;
+  border-radius: 20px; padding: 30px;
+  text-align: center; z-index: 30; font-size: 16px;
+}
+.pixel-btn {
+  background: #5a3a2a; border: none; color: white;
+  padding: 8px 18px; cursor: pointer; font-size: 14px;
+}
+
+/* ========== 过渡动画 ========== */
 .fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
 .fade-enter-from, .fade-leave-to { opacity: 0; }
 
-/* ========== 行动菜单 ========== */
-.action-menu {
-  position: absolute;
-  bottom: 4%;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 30px;
-  background: rgba(0,0,0,0.85);
-  padding: 14px 36px;
-  border-radius: 60px;
-  border: 2px solid #c9a87b;
-}
-.action-btn {
-  background: #2a2a3a;
-  border: 2px solid #b89a6a;
-  color: #ffd;
-  padding: 10px 28px;
-  font-family: monospace;
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.action-btn:hover { background: #4a4a6a; }
-
-/* ========== 技能面板 ========== */
-.popup-panel {
-  position: absolute;
-  bottom: 25%;
-  left: 50%;
-  transform: translateX(-50%);
-  background: #0a0a12;
-  border: 4px solid #c0a060;
-  border-radius: 24px;
-  padding: 20px;
-  width: 320px;
-  text-align: center;
-  z-index: 20;
-}
-.skill-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
-.skill-btn {
-  background: #2a2a3a;
-  border: 2px solid #8b6a4a;
-  color: #ffd;
-  padding: 10px;
-  cursor: pointer;
-  border-radius: 16px;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.close-btn { background: #5a3a2a; border: none; color: white; padding: 8px 18px; cursor: pointer; font-size: 14px; }
-
-/* ========== 结束面板 ========== */
-.game-over-panel {
-    color: #ffd;   
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: #1a1a2e;
-  border: 4px solid gold;
-  border-radius: 20px;
-  padding: 30px;
-  text-align: center;
-  z-index: 30;
-  font-size: 16px;
+/* ========== 响应式 ========== */
+@media (max-width: 900px) and (max-height: 500px) {
+  .enemy-sprite { width: 60px !important; height: 60px !important; }
+  .enemy-card { width: 180px !important; padding: 4px 8px !important; }
+  .player-sprite { width: 100px; height: 100px; }
+  .big-sprite, .big-sprite-icon { font-size: 80px !important; }
+  .skill-card { min-width: 100px; padding: 6px 10px; }
 }
 
-.close-btn {
-  background: #5a3a2a;
-  border: none;
-  color: white;
-  padding: 4px 12px;
-  cursor: pointer;
-  font-size: 10px;
-  border-radius: 8px;
-  position: absolute;
-  top: 8px;
-  right: 8px;
-}
+
+/* 浮动消息颜色 */
+.msg-dmg { color: #ffffff; }
+.msg-crit { color: #ffd700; text-shadow: 0 0 5px #ffd700; }
+.msg-buff { color: #4caf50; }
+.msg-debuff { color: #ff4444; }
+.msg-special { color: #ff9800; }
+.msg-info { color: #cccccc; }

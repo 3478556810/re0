@@ -14,7 +14,7 @@
     </div>
   </div>
 </div>
-   <audio ref="bgmAudio" volume="0.5"></audio>
+   <!-- <audio ref="bgmAudio" volume="0.5"></audio> -->
 
 
     <MainScreen
@@ -101,18 +101,25 @@ function getRandomTrack() {
   }
   return idx
 }
-
+const bgmMuted = ref(sessionStorage.getItem('bgm_muted') === '1')
 // 自动下一首（自动模式时使用）
 function playNextBgm() {
+
+
+
+   if (bgmMuted.value) return   // 静音时不播放
+  
   if (!bgmAudio.value || !isAutoRandom.value) return
   const nextIndex = getRandomTrack()
   currentTrackIndex.value = nextIndex
   bgmAudio.value.src = '/audio/' + bgmFiles[nextIndex]
   bgmAudio.value.play().catch(() => {})
 }
-
+// 暴露给 MainScreen 使用
+provide('bgmMuted', bgmMuted)
 // 手动切歌（可从外部调用）
 function playTrack(index) {
+  if (bgmMuted.value) return
   if (!bgmAudio.value || index < 0 || index >= bgmFiles.length) return
   currentTrackIndex.value = index
   isAutoRandom.value = false          // 手动选歌时关闭自动随机
@@ -127,12 +134,16 @@ function playTrack(index) {
 
 // 恢复自动随机
 function resumeAutoRandom() {
+
+  if (bgmMuted.value) return
   isAutoRandom.value = true
   playNextBgm()
 }
 
 // 挂载时设置 ended 监听
 onMounted(() => {
+
+  const bgmMuted = ref(true)  // 改为 true，默认关闭
   if (bgmAudio.value) {
     bgmAudio.value.onended = () => playNextBgm()
   }
