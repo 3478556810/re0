@@ -13,13 +13,21 @@ export function useHuntQuests() {
       killed: 0,
       rewardExp: quest.rewardExp,
       goldReward: quest.goldReward,
-      isBossQuest: quest.isBossQuest || false
+      isBossQuest: quest.isBossQuest || false,
+      skillPointReward: quest.skillPointReward || 0   // ← 新增
     })
     if (saveFn) saveFn()
     return true
   }
 
-  function updateHuntProgress(enemyIds, addRankExperience, addGold, completeRankUp, saveFn) {
+  function updateHuntProgress(
+    enemyIds,
+    addRankExperience,
+    addGold,
+    completeRankUp,
+    addSkillPoints,    // ← 新参数：发放技能点的回调
+    saveFn
+  ) {
     if (!enemyIds || enemyIds.length === 0 || activeHuntQuests.value.length === 0)
       return { anyCompleted: false, completedQuests: [] }
     let anyCompleted = false
@@ -32,7 +40,13 @@ export function useHuntQuests() {
       if (quest.killed >= quest.count) {
         addRankExperience(quest.rewardExp)
         addGold(quest.goldReward)
-        if (quest.isBossQuest) completeRankUp()
+        if (quest.isBossQuest) {
+          completeRankUp()
+          // 发放升段讨伐的技能点奖励
+          if (quest.skillPointReward && quest.skillPointReward > 0 && addSkillPoints) {
+            addSkillPoints(quest.skillPointReward)
+          }
+        }
         anyCompleted = true
         completedQuests.push(quest)
       }

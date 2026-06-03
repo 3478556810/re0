@@ -37,12 +37,13 @@ case 'reflect':
   break;
 
 case 'trueDmg':
-  // ✅ 基于最近一次造成的伤害（需要从外部传入）
-  const baseTrueDmg = source._lastDamageDealt || source.getEffectiveAttack()
-  const trueDmgAmount = Math.floor(baseTrueDmg * (value || 0.15))
-  target.hp = Math.max(0, target.hp - trueDmgAmount)
-  messages.push(`造成 ${trueDmgAmount} 点真实伤害`)
-  break
+  const trueDmg = Math.floor(source.getEffectiveAttack() * (value || 0.1));
+  target.takeDamage(trueDmg, source);
+  // ✅ 临时存储真伤值，供 playerAction 读取
+  if (!source._pendingTrueDmg) source._pendingTrueDmg = 0;
+  source._pendingTrueDmg += trueDmg;
+  messages.push(`造成 ${trueDmg} 点真实伤害`);
+  break;
 
       case 'cleanseEnemy':
   // 清除敌人所有增益效果

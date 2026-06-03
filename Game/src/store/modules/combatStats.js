@@ -148,6 +148,11 @@ function applySpecialAffixBonuses(stats, affixEffects) {
     }
   }
 
+
+
+
+
+
   stats.stackingAtk = stackingAtk
   stats.specialBossDmg = bossDmg
   stats.specialFullHpDmg = fullHpDmg
@@ -162,6 +167,8 @@ function applySpecialAffixBonuses(stats, affixEffects) {
   stats.shieldDmg = shieldDmg
   stats.halfHpCrit = halfHpCrit
   stats.halfHpCritDmg = halfHpCritDmg
+   // ✅ 新增：将 trueDmgPercent 写入 stats，供巫毒娃娃刻印使用
+  stats.trueDmgPercent = trueDmgPercent;
   stats.deathSave = Math.min(deathSave, 100)
   stats.deathShield = deathShield
   stats.reviveChance = Math.min(reviveChance, 100)
