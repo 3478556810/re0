@@ -1,0 +1,75 @@
+[
+  {
+    "id": "dragon_blade", "name": "龙牙大剑", "type": "weapon", "icon": "mdi:sword-cross",
+    "goldCost": 1500, "quality": "purple",
+    "baseAtk": 45, "baseDef": 0, "setId": "dragon_set",
+    "materials": [{ "id": "dragon_ore", "qty": 6 }, { "id": "iron_ore", "qty": 10 }]
+  },
+  {
+    "id": "dragon_armor", "name": "龙鳞战甲", "type": "armor", "icon": "mdi:shield-star",
+    "goldCost": 1800, "quality": "purple",
+    "baseAtk": 0, "baseDef": 40, "setId": "dragon_set",
+    "materials": [{ "id": "dragon_ore", "qty": 8 }, { "id": "iron_ore", "qty": 12 }]
+  },
+  {
+    "id": "dragon_pants", "name": "龙息护腿", "type": "pants", "icon": "mdi:pants",
+    "goldCost": 1200, "quality": "purple",
+    "baseAtk": 0, "baseDef": 30, "setId": "dragon_set",
+    "materials": [{ "id": "dragon_ore", "qty": 5 }, { "id": "iron_ore", "qty": 8 }]
+  },
+  {
+    "id": "dragon_boots", "name": "龙炎战靴", "type": "shoes", "icon": "mdi:shoe-print",
+    "goldCost": 1000, "quality": "purple",
+    "baseAtk": 10, "baseDef": 20, "setId": "dragon_set",
+    "materials": [{ "id": "dragon_ore", "qty": 4 }, { "id": "iron_ore", "qty": 6 }]
+  },
+  {
+    "id": "dragon_helmet", "name": "龙角头盔", "type": "helmet", "icon": "mdi:crown",
+    "goldCost": 1100, "quality": "purple",
+    "baseAtk": 0, "baseDef": 25, "setId": "dragon_set",
+    "materials": [{ "id": "dragon_ore", "qty": 5 }, { "id": "iron_ore", "qty": 7 }]
+  },
+  {
+    "id": "dragon_gauntlet", "name": "龙爪手套", "type": "gauntlet", "icon": "mdi:arm-flex",
+    "goldCost": 900, "quality": "purple",
+    "baseAtk": 15, "baseDef": 10, "setId": "dragon_set",
+    "materials": [{ "id": "dragon_ore", "qty": 4 }, { "id": "iron_ore", "qty": 5 }]
+  },
+  
+  {
+    "id": "shadow_blade", "name": "终焉之暗", "type": "weapon", "icon": "mdi:knife",
+    "goldCost": 1500, "quality": "purple",
+    "baseAtk": 40, "baseDef": 0, "setId": "shadow_set",
+    "materials": [{ "id": "obsidian", "qty": 6 }, { "id": "iron_ore", "qty": 10 }]
+  },
+  {
+    "id": "shadow_armor", "name": "幽魂之握", "type": "armor", "icon": "mdi:tshirt-crew-outline",
+    "goldCost": 1800, "quality": "purple",
+    "baseAtk": 0, "baseDef": 35, "setId": "shadow_set",
+    "materials": [{ "id": "obsidian", "qty": 8 }, { "id": "iron_ore", "qty": 12 }]
+  },
+  {
+    "id": "shadow_pants", "name": "永夜之影", "type": "pants", "icon": "mdi:pants",
+    "goldCost": 1200, "quality": "purple",
+    "baseAtk": 0, "baseDef": 28, "setId": "shadow_set",
+    "materials": [{ "id": "obsidian", "qty": 5 }, { "id": "iron_ore", "qty": 8 }]
+  },
+  {
+    "id": "shadow_boots", "name": "湮灭之痕", "type": "shoes", "icon": "mdi:shoe-print",
+    "goldCost": 1000, "quality": "purple",
+    "baseAtk": 8, "baseDef": 18, "setId": "shadow_set",
+    "materials": [{ "id": "obsidian", "qty": 4 }, { "id": "iron_ore", "qty": 6 }]
+  },
+  {
+    "id": "shadow_helmet", "name": "寂灭之眼", "type": "helmet", "icon": "mdi:head-outline",
+    "goldCost": 1100, "quality": "purple",
+    "baseAtk": 0, "baseDef": 22, "setId": "shadow_set",
+    "materials": [{ "id": "obsidian", "qty": 5 }, { "id": "iron_ore", "qty": 7 }]
+  },
+  {
+    "id": "shadow_gauntlet", "name": "幽魂手套", "type": "gauntlet", "icon": "mdi:hand-back-right",
+    "goldCost": 900, "quality": "purple",
+    "baseAtk": 12, "baseDef": 8, "setId": "shadow_set",
+    "materials": [{ "id": "obsidian", "qty": 4 }, { "id": "iron_ore", "qty": 5 }]
+  }
+]

@@ -10,6 +10,9 @@
   "freyja": {
     "id": "freyja",
     "name": "芙蕾雅",
+    "baseAttack": 45,
+    "baseDefense": 30,
+    "baseHp": 200,
     "icon": "mdi:sword-cross",
     "portrait": "freyja.png",
     "color": "#C4A3D4",

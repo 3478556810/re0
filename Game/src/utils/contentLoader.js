@@ -1,4 +1,5 @@
 export async function loadContentPacks() {
+  
   const manifest = {
     packs: ['default', 'dlc'],
     files: [
@@ -37,9 +38,10 @@ export async function loadContentPacks() {
           case 'monsters.json':
             config.monsterTemplates = data
             break
-          case 'skills.json':
-            config.skillPool = data
-            break
+       case 'skills.json':
+  config.skillPool = []; // ✅ 先清空
+  config.skillPool = data;
+  break;
           case 'forgeRecipes.json':
             config.forgeRecipes = data
             break
@@ -58,6 +60,9 @@ export async function loadContentPacks() {
           case 'characters.json':            // ← 处理角色文件
             config.characters = data
             break
+
+
+
         }
       } catch (e) {
         console.warn(`加载 ${url} 失败`, e)

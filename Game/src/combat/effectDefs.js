@@ -7,13 +7,17 @@ export const EFFECT_TYPES = {
   ATK_DOWN: 'atkDown',
   DEF_DOWN: 'defDown',
   SPD_DOWN: 'spdDown',
-  CRIT_UP: 'critUp',
-  CRIT_DOWN: 'critDown',
+  REFLECT: 'reflect',           // ← 新增
   SHIELD: 'shield',
   STUN: 'stun',
+  MAXHP_UP: 'maxHpUp',          // ← 新增
+  DODGE_UP: 'dodgeUp',          // ← 新增
+  TRUE_DMG: 'trueDmg',           // ← 新增
   SILENCE: 'silence',
   REFLECT: 'reflect',
-    
+      // ... 其他效果类型 ...
+  CRIT_UP: 'critRateUp',
+  CRIT_DOWN: 'critDown',
   // 新增
   FREEZE: 'freeze',        // 冻结：无法行动，受到物理攻击时额外伤害
   BLEED: 'bleed',          // 流血：每回合损失固定比例生命
@@ -21,10 +25,11 @@ export const EFFECT_TYPES = {
   WEAK: 'weak',            // 虚弱：造成的伤害降低
   REGEN: 'regen',          // 再生：每回合恢复固定生命
   LIFESTEAL_BUFF: 'lifestealBuff',  // 吸血强化：攻击时额外吸血
+   HOLY_MARK: 'holyMark',
 };
 
 export const effectDefaults = {
-  [EFFECT_TYPES.DOT]: { duration: 3, stackable: true, maxStacks: 3, value: 0.15 },
+   [EFFECT_TYPES.DOT]: { duration: 3, stackable: true, maxStacks: 99, value: 0.15 },
   [EFFECT_TYPES.HOT]: { duration: 3, stackable: false, value: 0.1 },
   [EFFECT_TYPES.ATK_UP]: { duration: 3, stackable: false, value: 0.2 },
   [EFFECT_TYPES.DEF_UP]: { duration: 3, stackable: false, value: 0.2 },

@@ -1,20 +1,115 @@
 [
-  {"id":"iron_sword","name":"铁剑","type":"weapon","icon":"mdi:sword","goldCost":100,"quality":"white","baseAtk":15,"baseDef":0,"setId":"iron_set","materials":[{"id":"iron_ore","qty":3},{"id":"slime_gel","qty":2}]},
-  {"id":"iron_gauntlet","name":"铁臂甲","type":"gauntlet","icon":"mdi:arm-flex","goldCost":80,"quality":"white","baseAtk":6,"baseDef":4,"setId":"iron_set","materials":[{"id":"iron_ore","qty":2},{"id":"goblin_fang","qty":2}]},
-  {"id":"iron_helmet","name":"铁盔","type":"helmet","icon":"mdi:hat-fedora","goldCost":90,"quality":"white","baseAtk":0,"baseDef":10,"setId":"iron_set","materials":[{"id":"iron_ore","qty":3},{"id":"slime_gel","qty":2}]},
-  {"id":"iron_armor","name":"铁甲","type":"armor","icon":"mdi:tshirt-crew","goldCost":120,"quality":"white","baseAtk":0,"baseDef":15,"setId":"iron_set","materials":[{"id":"iron_ore","qty":5},{"id":"goblin_fang","qty":3}]},
-  {"id":"iron_pants","name":"铁护腿","type":"pants","icon":"mdi:pants","goldCost":90,"quality":"white","baseAtk":0,"baseDef":12,"setId":"iron_set","materials":[{"id":"iron_ore","qty":4},{"id":"slime_gel","qty":3}]},
-  {"id":"iron_shoes","name":"铁靴","type":"shoes","icon":"mdi:shoe-sneaker","goldCost":70,"quality":"white","baseAtk":3,"baseDef":6,"setId":"iron_set","materials":[{"id":"iron_ore","qty":3},{"id":"slime_gel","qty":2}]},
-  {"id":"spider_dagger","name":"蛛牙短匕","type":"weapon","icon":"mdi:knife","goldCost":200,"quality":"green","baseAtk":25,"baseDef":0,"setId":"spider_set","materials":[{"id":"spider_silk","qty":3},{"id":"bat_wing","qty":2},{"id":"iron_ore","qty":3}],"affixPool":["critBoost","lifestealBoost"]},
-  {"id":"spider_gloves","name":"蛛丝手套","type":"gauntlet","icon":"mdi:hand-back-right","goldCost":160,"quality":"green","baseAtk":8,"baseDef":6,"setId":"spider_set","materials":[{"id":"spider_silk","qty":2},{"id":"goblin_fang","qty":2},{"id":"iron_ore","qty":2}]},
-  {"id":"spider_hood","name":"蛛丝兜帽","type":"helmet","icon":"mdi:head-outline","goldCost":180,"quality":"green","baseAtk":0,"baseDef":18,"setId":"spider_set","materials":[{"id":"spider_silk","qty":4},{"id":"iron_ore","qty":2}],"affixPool":["speedBoost"]},
-  {"id":"spider_armor","name":"蛛丝外衣","type":"armor","icon":"mdi:tshirt-crew-outline","goldCost":220,"quality":"green","baseAtk":0,"baseDef":22,"setId":"spider_set","materials":[{"id":"spider_silk","qty":5},{"id":"iron_ore","qty":3},{"id":"slime_gel","qty":3}],"affixPool":["defenseBoost","hpBoost"]},
-  {"id":"spider_leggings","name":"蛛丝护腿","type":"pants","icon":"mdi:pants","goldCost":180,"quality":"green","baseAtk":0,"baseDef":16,"setId":"spider_set","materials":[{"id":"spider_silk","qty":4},{"id":"bat_wing","qty":2}]},
-  {"id":"spider_boots","name":"蛛丝之靴","type":"shoes","icon":"mdi:shoe-print","goldCost":160,"quality":"green","baseAtk":5,"baseDef":10,"setId":"spider_set","materials":[{"id":"spider_silk","qty":3},{"id":"iron_ore","qty":2},{"id":"slime_gel","qty":2}],"affixPool":["speedBoost"]},
-  {"id":"stone_sword","name":"石魔大剑","type":"weapon","icon":"mdi:sword-cross","goldCost":350,"quality":"blue","baseAtk":40,"baseDef":5,"setId":"stone_set","materials":[{"id":"small_magic_stone","qty":3},{"id":"iron_ore","qty":5},{"id":"bat_wing","qty":3}],"affixPool":["rockAttack","trueDmgBoost"]},
-  {"id":"stone_gauntlet","name":"石肤臂甲","type":"gauntlet","icon":"mdi:arm-flex-outline","goldCost":280,"quality":"green","baseAtk":10,"baseDef":12,"setId":"stone_set","materials":[{"id":"small_magic_stone","qty":2},{"id":"iron_ore","qty":3},{"id":"bat_wing","qty":2}]},
-  {"id":"stone_helmet","name":"石魔头冠","type":"helmet","icon":"mdi:crown","goldCost":300,"quality":"blue","baseAtk":0,"baseDef":25,"setId":"stone_set","materials":[{"id":"small_magic_stone","qty":3},{"id":"iron_ore","qty":3},{"id":"goblin_fang","qty":4}],"affixPool":["defenseBoost","hpBoost"]},
-  {"id":"stone_armor","name":"石魔铠甲","type":"armor","icon":"mdi:shield-star","goldCost":380,"quality":"blue","baseAtk":0,"baseDef":35,"setId":"stone_set","materials":[{"id":"small_magic_stone","qty":5},{"id":"iron_ore","qty":5},{"id":"spider_silk","qty":3}],"affixPool":["defenseBoost","hpBoost","rockAttack"]},
-  {"id":"stone_pants","name":"石魔护腿","type":"pants","icon":"mdi:pants","goldCost":300,"quality":"blue","baseAtk":0,"baseDef":28,"setId":"stone_set","materials":[{"id":"small_magic_stone","qty":4},{"id":"iron_ore","qty":4},{"id":"bat_wing","qty":2}]},
-  {"id":"stone_boots","name":"石魔战靴","type":"shoes","icon":"mdi:shoe-print","goldCost":260,"quality":"blue","baseAtk":8,"baseDef":18,"setId":"stone_set","materials":[{"id":"small_magic_stone","qty":3},{"id":"iron_ore","qty":3},{"id":"spider_silk","qty":2}],"affixPool":["speedBoost","rockAttack"]}
+  { "id": "copper_blade", "name": "淬火铜刃", "type": "weapon", "icon": "mdi:sword", "goldCost": 300, "quality": "green", "baseAtk": 18, "baseDef": 0, "materials": [{ "id": "copper_ore", "qty": 5 }, { "id": "iron_ore", "qty": 5 }] },
+  { "id": "silver_armor", "name": "银鳞胸甲", "type": "armor", "icon": "mdi:shield-outline", "goldCost": 500, "quality": "blue", "baseAtk": 0, "baseDef": 22, "materials": [{ "id": "silver_ore", "qty": 5 }, { "id": "iron_ore", "qty": 5 }] },
+
+  {
+    "id": "crimson_blade", "name": "血怒巨剑", "type": "weapon", "icon": "mdi:sword-cross",
+    "goldCost": 800, "quality": "blue",
+    "baseAtk": 28, "baseDef": 0, "setId": "crimson_set",
+    "materials": [{ "id": "gold_ore", "qty": 5 }, { "id": "crystal_shard", "qty": 2 }]
+  },
+  {
+    "id": "crimson_armor", "name": "血怒战甲", "type": "armor", "icon": "mdi:shield-star",
+    "goldCost": 900, "quality": "blue",
+    "baseAtk": 0, "baseDef": 30, "setId": "crimson_set",
+    "materials": [{ "id": "gold_ore", "qty": 6 }, { "id": "crystal_shard", "qty": 2 }]
+  },
+  {
+    "id": "crimson_pants", "name": "血怒腿甲", "type": "pants", "icon": "mdi:pants",
+    "goldCost": 700, "quality": "blue",
+    "baseAtk": 0, "baseDef": 22, "setId": "crimson_set",
+    "materials": [{ "id": "gold_ore", "qty": 5 }, { "id": "crystal_shard", "qty": 1 }]
+  },
+  {
+    "id": "crimson_boots", "name": "血怒战靴", "type": "shoes", "icon": "mdi:shoe-print",
+    "goldCost": 600, "quality": "blue",
+    "baseAtk": 6, "baseDef": 15, "setId": "crimson_set",
+    "materials": [{ "id": "gold_ore", "qty": 4 }, { "id": "crystal_shard", "qty": 1 }]
+  },
+  {
+    "id": "crimson_helmet", "name": "血怒头盔", "type": "helmet", "icon": "mdi:head-outline",
+    "goldCost": 650, "quality": "blue",
+    "baseAtk": 0, "baseDef": 20, "setId": "crimson_set",
+    "materials": [{ "id": "gold_ore", "qty": 4 }, { "id": "crystal_shard", "qty": 1 }]
+  },
+  {
+    "id": "crimson_gauntlet", "name": "血怒手套", "type": "gauntlet", "icon": "mdi:hand-back-right",
+    "goldCost": 550, "quality": "blue",
+    "baseAtk": 10, "baseDef": 8, "setId": "crimson_set",
+    "materials": [{ "id": "gold_ore", "qty": 4 }, { "id": "crystal_shard", "qty": 1 }]
+  },
+
+  {
+    "id": "dragon_blade", "name": "渊龙牙", "type": "weapon", "icon": "mdi:sword-cross",
+    "goldCost": 1500, "quality": "purple",
+    "baseAtk": 45, "baseDef": 0, "setId": "dragon_set",
+    "materials": [{ "id": "dragon_ore", "qty": 6 }, { "id": "iron_ore", "qty": 10 }]
+  },
+  {
+    "id": "dragon_armor", "name": "龙骸重甲", "type": "armor", "icon": "mdi:shield-star",
+    "goldCost": 1800, "quality": "purple",
+    "baseAtk": 0, "baseDef": 40, "setId": "dragon_set",
+    "materials": [{ "id": "dragon_ore", "qty": 8 }, { "id": "iron_ore", "qty": 12 }]
+  },
+  {
+    "id": "dragon_pants", "name": "龙焰腿甲", "type": "pants", "icon": "mdi:pants",
+    "goldCost": 1200, "quality": "purple",
+    "baseAtk": 0, "baseDef": 30, "setId": "dragon_set",
+    "materials": [{ "id": "dragon_ore", "qty": 5 }, { "id": "iron_ore", "qty": 8 }]
+  },
+  {
+    "id": "dragon_boots", "name": "龙魂战靴", "type": "shoes", "icon": "mdi:shoe-print",
+    "goldCost": 1000, "quality": "purple",
+    "baseAtk": 10, "baseDef": 20, "setId": "dragon_set",
+    "materials": [{ "id": "dragon_ore", "qty": 4 }, { "id": "iron_ore", "qty": 6 }]
+  },
+  {
+    "id": "dragon_helmet", "name": "龙角盔", "type": "helmet", "icon": "mdi:crown",
+    "goldCost": 1100, "quality": "purple",
+    "baseAtk": 0, "baseDef": 25, "setId": "dragon_set",
+    "materials": [{ "id": "dragon_ore", "qty": 5 }, { "id": "iron_ore", "qty": 7 }]
+  },
+  {
+    "id": "dragon_gauntlet", "name": "龙爪", "type": "gauntlet", "icon": "mdi:arm-flex",
+    "goldCost": 900, "quality": "purple",
+    "baseAtk": 15, "baseDef": 10, "setId": "dragon_set",
+    "materials": [{ "id": "dragon_ore", "qty": 4 }, { "id": "iron_ore", "qty": 5 }]
+  },
+  
+  {
+    "id": "shadow_blade", "name": "暗魇之刃", "type": "weapon", "icon": "mdi:knife",
+    "goldCost": 1500, "quality": "purple",
+    "baseAtk": 40, "baseDef": 0, "setId": "shadow_set",
+    "materials": [{ "id": "obsidian", "qty": 6 }, { "id": "iron_ore", "qty": 10 }]
+  },
+  {
+    "id": "shadow_armor", "name": "暗影咒甲", "type": "armor", "icon": "mdi:tshirt-crew-outline",
+    "goldCost": 1800, "quality": "purple",
+    "baseAtk": 0, "baseDef": 35, "setId": "shadow_set",
+    "materials": [{ "id": "obsidian", "qty": 8 }, { "id": "iron_ore", "qty": 12 }]
+  },
+  {
+    "id": "shadow_pants", "name": "永夜咒腿", "type": "pants", "icon": "mdi:pants",
+    "goldCost": 1200, "quality": "purple",
+    "baseAtk": 0, "baseDef": 28, "setId": "shadow_set",
+    "materials": [{ "id": "obsidian", "qty": 5 }, { "id": "iron_ore", "qty": 8 }]
+  },
+  {
+    "id": "shadow_boots", "name": "湮灭咒靴", "type": "shoes", "icon": "mdi:shoe-print",
+    "goldCost": 1000, "quality": "purple",
+    "baseAtk": 8, "baseDef": 18, "setId": "shadow_set",
+    "materials": [{ "id": "obsidian", "qty": 4 }, { "id": "iron_ore", "qty": 6 }]
+  },
+  {
+    "id": "shadow_helmet", "name": "寂灭咒盔", "type": "helmet", "icon": "mdi:head-outline",
+    "goldCost": 1100, "quality": "purple",
+    "baseAtk": 0, "baseDef": 22, "setId": "shadow_set",
+    "materials": [{ "id": "obsidian", "qty": 5 }, { "id": "iron_ore", "qty": 7 }]
+  },
+  {
+    "id": "shadow_gauntlet", "name": "暗影咒手", "type": "gauntlet", "icon": "mdi:hand-back-right",
+    "goldCost": 900, "quality": "purple",
+    "baseAtk": 12, "baseDef": 8, "setId": "shadow_set",
+    "materials": [{ "id": "obsidian", "qty": 4 }, { "id": "iron_ore", "qty": 5 }]
+  }
 ]
