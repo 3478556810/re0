@@ -1,0 +1,45 @@
+[
+  {
+    "_comment": "===== 冰系技能 =====",
+    "id": "ice_bolt",
+    "name": "冰冻术",
+    "desc": "冰属性单体攻击，冻结控制",
+    "icon": "mdi:snowflake",
+    "type": "active",
+    "target": "single",
+    "element": "ice",
+    "mpCost": 8,
+    "baseMul": 1.6,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.13 },
+    "effects": [{ "type": "freeze", "duration": 1, "chance": 50 }],
+    "tripods": [
+      { "name": "深寒", "unlockLevel": 4, "effects": [{ "type": "freeze", "duration": 1, "chance": 70 }] },
+      { "name": "冰刺", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 0.4, "duration": 5, "chance": 100 }] },
+      { "name": "冰甲", "unlockLevel": 10, "effects": [{ "type": "shield", "value": 0.25, "duration": 5, "chance": 100, "target": "self" }] }
+    ]
+  },
+  {
+    "id": "blizzard",
+    "name": "暴风雪",
+    "desc": "冰属性全体攻击，概率冻结所有敌人",
+    "icon": "mdi:weather-snowy-heavy",
+    "type": "active",
+    "target": "aoe",
+    "element": "ice",
+    "mpCost": 16,
+    "baseMul": 0.85,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 3,
+    "levelScaling": { "baseMul": 0.07 },
+    "effects": [{ "type": "freeze", "duration": 1, "chance": 25 }],
+    "tripods": [
+      { "name": "极寒", "unlockLevel": 4, "effects": [{ "type": "freeze", "duration": 1, "chance": 35 }] },
+      { "name": "冰霜护体", "unlockLevel": 7, "effects": [{ "type": "shield", "value": 0.15, "duration": 5, "chance": 100, "target": "self" }] },
+      { "name": "永冻", "unlockLevel": 10, "effects": [{ "type": "debuff", "value": -0.25, "stat": "atk", "duration": 5, "chance": 100 }] }
+    ]
+  }
+]

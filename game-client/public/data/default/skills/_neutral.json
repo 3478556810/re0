@@ -1,0 +1,48 @@
+[
+  {
+    "_comment": "===== 无属性技能 =====",
+    "id": "normal_attack",
+    "name": "普通攻击",
+    "desc": "无属性基础攻击，零消耗稳定输出",
+    "icon": "mdi:sword-cross",
+    "type": "active",
+    "target": "single",
+    "element": "",
+    "mpCost": 0,
+    "baseMul": 0.9,
+    "maxLevel": 10,
+    "upgradeCost": 2,
+    "learnCost": 0,
+    "levelScaling": { "baseMul": 0.1 },
+    "effects": [],
+    "tripods": [
+      { "name": "连击强化", "unlockLevel": 4, "effects": [{ "type": "extraAction", "value": 40, "note": "追加攻击", "chance": 50 }] },
+      { "name": "会心", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.3, "stat": "critDmg", "duration": 5, "chance": 100, "target": "self" }] },
+      { "name": "吸血", "unlockLevel": 10, "effects": [{ "type": "lifestealBuff", "value": 15, "duration": 5, "chance": 100, "target": "self" }] }
+    ]
+  },
+  {
+    "id": "quick_strike",
+    "name": "迅击",
+    "desc": "无属性快速二连击，低消耗",
+    "icon": "mdi:sword",
+    "type": "active",
+    "target": "single",
+    "element": "",
+    "mpCost": 3,
+    "baseMul": 0.7,
+    "maxLevel": 10,
+    "upgradeCost": 2,
+    "learnCost": 1,
+    "levelScaling": { "baseMul": 0.06 },
+    "effects": [
+      { "type": "extraAction", "value": 70, "note": "二次攻击", "chance": 100 }
+    ],
+    "tripods": [
+      { "name": "精准", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.10, "stat": "critRate", "duration": 5, "chance": 100, "target": "self" }] },
+      { "name": "破绽", "unlockLevel": 7, "effects": [{ "type": "debuff", "value": -0.1, "stat": "def", "duration": 5, "chance": 50 }] },
+      { "name": "乱舞", "unlockLevel": 10, "effects": [{ "type": "extraAction", "value": 50, "note": "追加攻击", "chance": 40 }] }
+    ]
+  }
+
+]

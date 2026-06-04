@@ -1,0 +1,419 @@
+@import url('https://fonts.googleapis.com/css2?family=Uncial+Antiqua&display=swap');
+
+/* ========== 全局与背景 ========== */
+.battle-container {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100%; height: 100%;
+  font-family: 'Press Start 2P', 'Courier New', monospace;
+  overflow: hidden;
+  z-index: 10;
+}
+.sky {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%; height: 60%;
+  background: linear-gradient(180deg, #87CEEB 0%, #B0E0E6 100%);
+}
+.ground {
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 100%; height: 40%;
+  background: linear-gradient(180deg, #7CB342 0%, #558B2F 100%);
+  border-top: 4px solid #6B8E23;
+}
+.decoration {
+  position: absolute;
+  background-size: contain;
+  background-repeat: no-repeat;
+  opacity: 0.6;
+}
+.tree1 { top: 30%; left: 35%; width: 100px; height: 120px; }
+.tree2 { top: 55%; left: 70%; width: 80px; height: 100px; }
+.rock { bottom: 12%; left: 45%; width: 60px; height: 40px; }
+
+/* ========== 敌人区域 ========== */
+.enemy-area {
+  position: absolute; top: 5%; right: 2%;
+  display: flex; flex-direction: column; align-items: flex-end;
+  z-index: 10; gap: 12px;
+}
+.enemy-cards { display: flex; flex-direction: column; gap: 8px; }
+.enemy-card {
+  background: rgba(0,0,0,0.5); border-radius: 16px; padding: 8px 12px;
+  border: 2px solid transparent; cursor: pointer;
+  transition: border-color 0.2s; width: 260px;
+}
+.enemy-card.target-selected { border-color: #ffd700; }
+.enemy-info .name-box {
+  background: #f0e0b0; border: 1px solid #a08040;
+  padding: 2px 6px; font-size: 9px; margin-bottom: 2px;
+  display: inline-block;
+}
+.level-tag { font-size: 8px; color: #ffd; }
+.bar-row {
+  display: flex; align-items: center; gap: 5px; margin-top: 3px;
+}
+.bar-text {
+  width: 25px; font-size: 8px; color: #fff;
+}
+.enemy-sprites {
+  display: flex; flex-direction: row; gap: 15px; justify-content: flex-end;
+}
+.enemy-sprite {
+  width: 80px; height: 80px;
+  display: flex; align-items: center; justify-content: center;
+  border: 3px solid transparent; border-radius: 12px;
+  background: rgba(0,0,0,0.3); cursor: pointer;
+  transition: border-color 0.2s, transform 0.2s;
+}
+.enemy-sprite.target-sprite { border-color: #ffd700; transform: scale(1.1); }
+.enemy-sprite:hover { border-color: rgba(255,255,255,0.6); }
+.big-sprite-img { width: 100%; height: 100%; object-fit: contain; }
+.big-sprite-icon { font-size: 50px; color: #ffd; }
+
+/* ========== 效果图标 ========== */
+.effect-icons { display: flex; gap: 4px; flex-wrap: wrap; }
+.effect-badge {
+  background: rgba(0,0,0,0.6); border-radius: 8px;
+  padding: 2px 6px; display: flex; align-items: center; gap: 3px;
+  font-size: 12px; color: #ffd; white-space: nowrap;
+}
+.effect-icon { font-size: 16px; }
+.effect-dur { font-size: 10px; color: #fff; }
+.enemy-effect { background: rgba(200,0,0,0.4); }
+.effect-info {
+  display: flex; flex-direction: column; align-items: center; line-height: 1.2;
+}
+.effect-stacks {
+  color: #ffd700; margin-left: 3px; font-weight: bold; font-size: 10px;
+}
+
+/* ========== 玩家区域 ========== */
+.player-wrapper {
+  position: absolute; bottom: 5%; left: 1%;
+  display: flex; flex-direction: column; align-items: flex-start;
+  gap: 10px; z-index: 20;
+}
+.player-bottom-area {
+  display: flex; align-items: flex-end; gap: 10px;
+}
+.player-sprite {
+  width: 140px; height: 140px;
+  display: flex; align-items: center; justify-content: center;
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+  transition: transform 0.1s, filter 0.2s;
+}
+.big-sprite { font-size: 280px; color: #ffd; }
+.flash-white { filter: brightness(2) drop-shadow(0 0 12px white); }
+
+/* 玩家状态卡片 */
+.player-status-card {
+  background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+  border-radius: 20px; padding: 12px 18px;
+  color: #ffd; display: flex; flex-direction: column; gap: 6px;
+  min-width: 260px;
+}
+.name-box {
+  background: #f0e0b0; border: 2px solid #a08040;
+  border-radius: 12px; padding: 4px 14px;
+  font-size: 16px; font-weight: bold; color: #2a2a0a;
+  display: inline-block;
+}
+/* 血条、魔条、经验条统一定义 */
+.hp-bar, .mp-bar, .exp-bar {
+  flex: 1; background: #603020;
+  height: 12px; border-radius: 6px;
+  position: relative; overflow: hidden;
+}
+.hp-bar { background: #603020; }
+.mp-bar { background: #2c3e66; }
+.exp-bar { background: #2c2c2c; }
+.hp-fill { background: #4caf50; height: 100%; transition: width 0.3s; }
+.mp-fill { background: #4488ff; height: 100%; }
+.exp-fill { background: #ffffff; height: 100%; }
+.hp-bar span, .mp-bar span, .exp-bar span {
+  position: absolute; top: 0; left: 0; right: 0;
+  text-align: center; font-size: 7px; line-height: 12px;
+  color: white; z-index: 3;
+}
+/* 护盾（半透明覆盖） */
+.shield-fill {
+  position: absolute; top: 0; left: 0; height: 100%;
+  background: rgba(0, 150, 255, 0.6); border-radius: 6px;
+  z-index: 2;
+}
+.hp-fill, .mp-fill, .exp-fill { position: relative; z-index: 1; }
+
+/* ========== 伙伴卡 ========== */
+.companion-card {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(0,0,0,0.7); border-radius: 12px;
+  padding: 8px 12px; color: #fff;
+  font-family: 'Press Start 2P', cursive;
+  margin-left: 0;
+}
+.companion-portrait {
+  width: 60px; height: 60px; border-radius: 50%;
+  object-fit: cover; border: 2px solid #ffd700;
+}
+.companion-icon { font-size: 28px; color: #ffd700; }
+.companion-info { flex: 1; }
+.companion-name { font-size: 7px; color: #ffd; margin-bottom: 2px; }
+.small-bar { height: 8px; width: 100px; }
+
+/* ========== 元素标签 ========== */
+.element-tag {
+  display: inline-flex; align-items: center; gap: 2px;
+  padding: 2px 6px; border-radius: 6px;
+  font-size: 7px; color: #fff; margin-top: 2px;
+}
+.element-icon { font-size: 10px; }
+
+/* ========== 技能栏 ========== */
+.skill-bar {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+  z-index: 30;
+}
+.skill-card {
+  background: rgba(0,0,0,0.7); border: 2px solid #b89a6a;
+  border-radius: 16px; padding: 10px 14px;
+  display: flex; align-items: center; gap: 10px;
+  cursor: pointer; transition: all 0.2s;
+  color: #ffd; font-family: 'Press Start 2P', cursive; min-width: 140px;
+}
+.skill-card:hover { background: rgba(255,215,0,0.15); border-color: #ffd700; }
+.skill-card:active { transform: scale(0.95); }
+.skill-disabled { opacity: 0.4; cursor: not-allowed; border-color: #555; }
+.skill-icon { font-size: 28px; color: #ffd700; flex-shrink: 0; }
+.skill-info { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.skill-name { font-size: 9px; white-space: nowrap; }
+.skill-mp { font-size: 7px; color: #aaa; }
+.skill-element-tag {
+  padding: 1px 6px; border-radius: 4px; font-size: 6px;
+  color: #fff; margin-right: 4px;
+}
+
+/* 技能预览浮层 */
+.skill-preview {
+  position: fixed; z-index: 50;
+  background: rgba(0,0,0,0.9); border: 1px solid #ffd700;
+  border-radius: 12px; padding: 10px 14px;
+  color: #ffd; font-family: 'Press Start 2P', cursive;
+  font-size: 8px; pointer-events: none;
+  display: flex; flex-direction: column; gap: 6px;
+  min-width: 160px;
+}
+.preview-name { font-size: 10px; color: #ffd700; }
+.preview-desc { color: #ccc; font-size: 9px; white-space: normal; line-height: 1.5; }
+.preview-dmg { color: #ff9800; font-size: 10px; }
+.preview-mul { color: #4caf50; }
+
+/* ========== 浮动消息 ========== */
+.floating-message {
+  position: absolute; bottom: 20%; left: 50%;
+  transform: translateX(-50%);
+  background: #000000aa; backdrop-filter: blur(8px);
+  border: 2px solid #c9a87b; border-radius: 40px;
+  padding: 12px 30px; color: #ffffcc; font-size: 18px;
+  z-index: 25; pointer-events: none;
+  text-shadow: 1px 1px 0 #000;
+}
+.message-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  z-index: 19; background: transparent; pointer-events: auto;
+}
+/* 消息颜色类型 */
+.msg-dmg { color: #ffffff; }
+.msg-crit { color: #ffd700; text-shadow: 0 0 5px #ffd700; }
+.msg-buff { color: #4caf50; }
+.msg-debuff { color: #ff4444; }
+.msg-special { color: #ff9800; }
+.msg-info { color: #cccccc; }
+
+/* ========== 效果气泡 ========== */
+.effect-bubble {
+  position: fixed; z-index: 100;
+  background: rgba(0,0,0,0.9); border: 1px solid #ffd700;
+  border-radius: 10px; padding: 8px 14px;
+  font-size: 9px; color: #ffd; font-family: 'Press Start 2P', cursive;
+  pointer-events: none; max-width: 220px;
+  word-break: break-all; line-height: 1.4;
+}
+
+/* ========== 委托完成提示 ========== */
+.quest-hint-fixed {
+  position: fixed; top: 25%; left: 12px;
+  background: rgba(0,0,0,0.9); border: 2px solid #ffd700;
+  border-radius: 14px; padding: 12px 20px;
+  color: #ffd; font-size: 10px; font-family: 'Press Start 2P', cursive;
+  display: flex; align-items: center; gap: 8px;
+  z-index: 1000; box-shadow: 0 0 20px rgba(255,215,0,0.4);
+  pointer-events: none; max-width: 300px;
+  white-space: normal; word-break: break-all;
+}
+
+/* ========== 游戏结束面板 ========== */
+.game-over-panel {
+  color: #ffd; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  background: #1a1a2e; border: 4px solid gold;
+  border-radius: 20px; padding: 30px;
+  text-align: center; z-index: 30; font-size: 16px;
+}
+.pixel-btn {
+  background: #5a3a2a; border: none; color: white;
+  padding: 8px 18px; cursor: pointer; font-size: 14px;
+}
+
+/* ========== 逃跑按钮 ========== */
+.flee-btn {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 4px; background: rgba(0,0,0,0.7); border: 2px solid rgba(255,165,0,0.6);
+  border-radius: 12px; padding: 10px 14px; color: #ffd;
+  font-family: 'Press Start 2P', cursive; font-size: 8px;
+  cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  min-width: 70px; min-height: 70px;
+}
+.flee-btn:hover {
+  background: rgba(255,165,0,0.2); border-color: #ffa500; transform: scale(1.05);
+}
+.flee-btn:active { transform: scale(0.95); }
+.flee-icon { font-size: 28px; color: #ffa500; }
+.flee-text { font-size: 7px; color: #ffd; }
+
+/* ========== 浮动伤害数字（分级） ========== */
+.floating-damage-container {
+  position: absolute; top: 0; left: 0;
+  pointer-events: none;
+  display: flex; flex-direction: column;
+  align-items: flex-start; gap: 6px;
+}
+.float-damage {
+  font-family: 'Uncial Antiqua', 'Press Start 2P', cursive;
+  font-size: 22px; font-weight: normal;
+  color: #fff; text-shadow: 2px 2px 0 #000;
+  white-space: nowrap;
+  animation: floatUp 3s ease-out forwards;
+  position: relative;
+}
+@keyframes floatUp {
+  0% { opacity: 1; transform: translate(-50%, 0); }
+  70% { opacity: 1; transform: translate(-50%, -30px); }
+  100% { opacity: 0; transform: translate(-50%, -60px); }
+}
+.dmg-type-crit {
+  color: #ffd700;
+  text-shadow: 0 0 8px #ffd700, 2px 2px 0 #000;
+}
+.dmg-type-trueDmg {
+  color: #ff8c00;
+  text-shadow: 0 0 10px #ff8c00, 2px 2px 0 #000;
+}
+.dmg-type-shadowTrue {
+  color: #c084fc;
+  text-shadow: 0 0 8px #a855f7, 0 0 16px #7c3aed;
+  font-size: 22px;
+}
+
+/* ========== 印记流光动画 ========== */
+.dragon-mark-glow {
+  border-color: rgba(255, 100, 0, 0.6) !important;
+  background: linear-gradient(135deg, rgba(255,60,0,0.15) 0%, rgba(255,120,0,0.35) 25%, rgba(255,60,0,0.15) 50%, rgba(255,100,0,0.35) 75%, rgba(255,60,0,0.15) 100%);
+  background-size: 300% 300%;
+  animation: dragonVeil 3s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(255,80,0,0.4), inset 0 0 8px rgba(255,120,0,0.2);
+}
+@keyframes dragonVeil {
+  0% { background-position: 0% 50%; box-shadow: 0 0 8px rgba(255,80,0,0.3); }
+  25% { background-position: 100% 0%; box-shadow: 0 0 14px rgba(255,120,0,0.6); }
+  50% { background-position: 100% 100%; box-shadow: 0 0 8px rgba(255,80,0,0.3); }
+  75% { background-position: 0% 100%; box-shadow: 0 0 14px rgba(255,100,0,0.6); }
+  100% { background-position: 0% 50%; box-shadow: 0 0 8px rgba(255,80,0,0.3); }
+}
+.shadow-mark-glow {
+  position: relative;
+  border-color: rgba(130, 0, 220, 0.6) !important;
+  background: linear-gradient(135deg, rgba(80,0,160,0.15) 0%, rgba(140,0,240,0.35) 25%, rgba(80,0,160,0.15) 50%, rgba(120,0,220,0.35) 75%, rgba(80,0,160,0.15) 100%);
+  background-size: 300% 300%;
+  animation: shadowAppear 0.8s ease-out forwards, starTwinkle 2s ease-in-out infinite 0.8s;
+  box-shadow: 0 0 8px rgba(130,0,220,0.4), inset 0 0 8px rgba(160,0,255,0.2);
+  overflow: visible;
+}
+.shadow-mark-glow::before,
+.shadow-mark-glow::after {
+  content: '';
+  position: absolute;
+  width: 4px; height: 4px;
+  background: #c084fc;
+  border-radius: 50%;
+  box-shadow: 0 0 6px #a855f7, 0 0 12px #7c3aed;
+  animation: starOrbit 3s linear infinite;
+}
+.shadow-mark-glow::before { top: -6px; left: 50%; animation-delay: 0s; }
+.shadow-mark-glow::after { bottom: -6px; right: 50%; animation-delay: 1.5s; }
+@keyframes shadowAppear {
+  0% { background-position: 0% 50%; box-shadow: 0 0 0px rgba(130,0,220,0); transform: scale(0.8); opacity: 0; }
+  50% { box-shadow: 0 0 20px rgba(160,0,255,0.8); transform: scale(1.2); opacity: 1; }
+  100% { background-position: 100% 100%; box-shadow: 0 0 8px rgba(130,0,220,0.4), inset 0 0 8px rgba(160,0,255,0.3); transform: scale(1); opacity: 1; }
+}
+@keyframes starTwinkle {
+  0%, 100% { box-shadow: 0 0 8px rgba(130,0,220,0.4), 0 0 0px transparent; }
+  50% { box-shadow: 0 0 16px rgba(160,0,255,0.7), 0 0 20px rgba(160,0,255,0.3); }
+}
+@keyframes starOrbit {
+  0% { transform: translate(0,0) scale(1); opacity: 0.6; }
+  25% { transform: translate(8px,-8px) scale(1.5); opacity: 1; }
+  50% { transform: translate(0,-12px) scale(1); opacity: 0.6; }
+  75% { transform: translate(-8px,-8px) scale(1.5); opacity: 1; }
+  100% { transform: translate(0,0) scale(1); opacity: 0.6; }
+}
+.holy-mark-glow {
+  animation: holyPulse 1s infinite;
+}
+@keyframes holyPulse {
+  0% { filter: drop-shadow(0 0 2px gold); }
+  100% { filter: drop-shadow(0 0 12px #ffd966); }
+}
+
+/* ========== 过渡与响应式 ========== */
+.fade-enter-active, .fade-leave-active { transition: opacity 0.3s; }
+.fade-enter-from, .fade-leave-to { opacity: 0; }
+
+@media (max-width: 900px) and (max-height: 500px) {
+  .enemy-sprite { width: 60px !important; height: 60px !important; font-size: 40px !important; }
+  .enemy-card { width: 180px !important; padding: 4px 8px !important; font-size: 7px !important; }
+  .enemy-info .name-box { font-size: 7px !important; }
+  .player-sprite { width: 100px; height: 100px; }
+  .big-sprite, .big-sprite-icon { font-size: 80px !important; }
+  .player-status-card { min-width: 100px !important; padding: 8px 12px !important; font-size: 7px !important; }
+  .action-btn { padding: 6px 14px !important; font-size: 10px !important; }
+  .floating-message { font-size: 12px !important; padding: 8px 20px !important; }
+  .skill-card { min-width: 100px; padding: 6px 10px; }
+}
+
+
+/* Boss 立绘动画 */
+.boss-glow-animate {
+  animation: bossZoomGlow 0.5s ease-out;
+}
+@keyframes bossZoomGlow {
+  0% { transform: scale(1); filter: brightness(1); }
+  50% { transform: scale(1.25); filter: brightness(1.5) drop-shadow(0 0 15px gold); }
+  100% { transform: scale(1); filter: brightness(1); }
+}
+
+/* 屏幕震动（如未定义） */
+.screen-shake {
+  animation: shakeAnim 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+}
+@keyframes shakeAnim {
+  0% { transform: translate(0,0); }
+  20% { transform: translate(-4px, 3px);}
+  40% { transform: translate(5px, -2px);}
+  60% { transform: translate(-3px, 2px);}
+  80% { transform: translate(2px, -1px);}
+  100% { transform: translate(0,0);}
+}
