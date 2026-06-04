@@ -1,0 +1,48 @@
+[
+  {
+    "_comment": "===== 风系技能 =====",
+    "id": "wind_blade",
+    "name": "风刃",
+    "desc": "风属性单体攻击，高几率追加攻击",
+    "icon": "mdi:weather-windy",
+    "type": "active",
+    "target": "single",
+    "element": "wind",
+    "mpCost": 6,
+    "baseMul": 1.4,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.11 },
+    "effects": [],
+    "tripods": [
+      { "name": "连风", "unlockLevel": 4, "effects": [{ "type": "extraAction", "value": 50, "note": "追加攻击", "chance": 60 }] },
+      { "name": "风暴", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 30, "note": "追加全体伤害", "chance": 100, "target": "aoe" }] },
+      { "name": "顺风", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.20, "stat": "critRate", "duration": 5, "chance": 100, "target": "self" }] }
+    ]
+  },
+  {
+    "id": "swift_step",
+    "name": "疾风步",
+    "desc": "风属性辅助，提升攻击与暴击率",
+    "icon": "mdi:run-fast",
+    "type": "active",
+    "target": "self",
+    "element": "wind",
+    "mpCost": 6,
+    "baseMul": 0,
+    "maxLevel": 10,
+    "upgradeCost": 2,
+    "learnCost": 2,
+    "levelScaling": { "buffValue": 4 },
+    "effects": [
+      { "type": "buff", "value": 0.25, "stat": "atk", "duration": 5, "chance": 100 },
+      { "type": "buff", "value": 0.20, "stat": "critRate", "duration": 5, "chance": 100 }
+    ],
+    "tripods": [
+      { "name": "顺风", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.30, "stat": "critRate", "duration": 5, "chance": 100 }] },
+      { "name": "残影", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.25, "stat": "dodge", "duration": 5, "chance": 100 }] },
+      { "name": "暴风", "unlockLevel": 10, "effects": [{ "type": "extraAction", "value": 60, "note": "追加风属性伤害", "chance": 100 }] }
+    ]
+  }
+]

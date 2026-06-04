@@ -1,0 +1,50 @@
+[
+  {
+    "id": "giant_bat",
+    "name": "幽暗蝠",
+    "tag": "normal",
+    "isBoss": false,
+    "baseHp": 550,
+    "baseAtk": 42,
+    "baseDef": 22,
+    "exp": 65,
+    "materials": [
+      { "id": "bat_wing", "name": "幽蝠翼膜", "dropRate": 70 },
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 20 }
+    ],
+    "icon": "mdi:bat",
+    "element": "dark",
+    "critRate": 15,
+    "critDmg": 20,
+    "lifesteal": 5,
+    "luck": 0,
+    "skillsText": "[{\"name\":\"超声波\",\"mpCost\":0,\"baseMul\":1.0,\"effects\":[{\"type\":\"debuff\",\"value\":-0.15,\"stat\":\"atk\",\"duration\":3,\"chance\":50}]}]",
+    "minLevel": 3,
+    "maxLevel": 10,
+    "levelRange": [3, 10]
+  },
+  {
+    "id": "cave_spider",
+    "name": "冰窟蛛魔",
+    "tag": "normal",
+    "isBoss": false,
+    "baseHp": 520,
+    "baseAtk": 44,
+    "baseDef": 18,
+    "exp": 70,
+    "materials": [
+      { "id": "spider_silk", "name": "蛛魔丝", "dropRate": 70 },
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 20 }
+    ],
+    "icon": "mdi:spider",
+    "element": "ice",
+    "critRate": 10,
+    "critDmg": 30,
+    "lifesteal": 0,
+    "luck": 0,
+    "skillsText": "[{\"name\":\"毒牙\",\"mpCost\":0,\"baseMul\":1.0,\"effects\":[{\"type\":\"dot\",\"value\":0.12,\"duration\":3,\"chance\":50}]}]",
+    "minLevel": 3,
+    "maxLevel": 12,
+    "levelRange": [3, 12]
+  }
+]
