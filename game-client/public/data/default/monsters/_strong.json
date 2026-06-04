@@ -1,0 +1,101 @@
+[
+  {
+    "id": "rock_golem",
+    "name": "岩石魔像",
+    "tag": "strong",
+    "isBoss": false,
+    "baseHp": 1200,
+    "baseAtk": 52,
+    "baseDef": 70,
+    "exp": 140,
+    "materials": [
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 65 },
+      { "id": "iron_ore", "name": "铁矿石", "dropRate": 45 }
+    ],
+    "icon": "mdi:stone",
+    "element": "rock",
+    "trait": "坚硬",
+    "critRate": 0,
+    "critDmg": 0,
+    "lifesteal": 0,
+    "luck": 0,
+    "skillsText": "[{\"name\":\"落石\",\"mpCost\":0,\"element\":\"rock\",\"baseMul\":1.5,\"effects\":[]}]",
+    "minLevel": 5,
+    "maxLevel": 18,
+    "levelRange": [5, 18]
+  },
+  {
+    "id": "fire_elemental",
+    "name": "灼炎之灵",
+    "tag": "strong",
+    "isBoss": false,
+    "baseHp": 950,
+    "baseAtk": 58,
+    "baseDef": 28,
+    "exp": 150,
+    "materials": [
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 70 },
+      { "id": "gold_ore", "name": "金矿石", "dropRate": 20 }
+    ],
+    "icon": "mdi:fire-circle",
+    "element": "fire",
+    "critRate": 0,
+    "critDmg": 0,
+    "lifesteal": 0,
+    "luck": 0,
+    "skillsText": "[{\"name\":\"火球\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"fire\",\"baseMul\":1.2,\"effects\":[{\"type\":\"dot\",\"value\":0.12,\"duration\":3,\"chance\":70,\"target\":\"aoe\"}]}]",
+    "minLevel": 6,
+    "maxLevel": 22,
+    "levelRange": [6, 22]
+  },
+  {
+    "id": "shadow_wraith",
+    "name": "暗影幽魂",
+    "tag": "strong",
+    "isBoss": false,
+    "baseHp": 880,
+    "baseAtk": 56,
+    "baseDef": 24,
+    "exp": 160,
+    "materials": [
+      { "id": "spider_silk", "name": "蛛魔丝", "dropRate": 55 },
+      { "id": "crystal_shard", "name": "晶簇碎片", "dropRate": 15 }
+    ],
+    "icon": "mdi:ghost",
+    "element": "dark",
+    "critRate": 25,
+    "critDmg": 60,
+    "lifesteal": 10,
+    "luck": 0,
+    "skillsText": "[{\"name\":\"暗影球\",\"mpCost\":0,\"element\":\"dark\",\"baseMul\":1.4,\"effects\":[{\"type\":\"debuff\",\"value\":-0.15,\"stat\":\"atk\",\"duration\":3,\"chance\":60}]}]",
+    "minLevel": 8,
+    "maxLevel": 25,
+    "levelRange": [8, 25]
+  },
+  {
+    "id": "rock_golem_elite",
+    "name": "磐石巨像",
+    "tag": "strong",
+    "isBoss": false,
+    "baseHp": 2200,
+    "baseAtk": 60,
+    "baseDef": 90,
+    "exp": 260,
+    "materials": [
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 80 },
+      { "id": "gold_ore", "name": "金矿石", "dropRate": 30 },
+      { "id": "silver_ore", "name": "银矿石", "dropRate": 30 }
+    ],
+    "icon": "mdi:stone",
+    "element": "rock",
+    "trait": "坚壁",
+    "critRate": 5,
+    "critDmg": 20,
+    "lifesteal": 0,
+    "luck": 0,
+    "skillsText": "[{\"name\":\"地震\",\"mpCost\":0,\"target\":\"aoe\",\"baseMul\":1.0,\"effects\":[]},{\"name\":\"石化皮肤\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"buff\",\"stat\":\"def\",\"value\":0.5,\"duration\":3,\"chance\":100}]}]",
+    "minLevel": 8,
+    "maxLevel": 22,
+    "levelRange": [8, 22]
+  }
+]
