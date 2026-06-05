@@ -1,0 +1,61 @@
+[
+  {
+    "_comment": "===== 毒系技能 =====",
+    "id": "poison_mist",
+    "name": "毒雾",
+    "desc": "全体中毒，基于敌人最大生命值造成持续伤害",
+    "icon": "mdi:skull-crossbones",
+    "type": "active",
+    "target": "aoe",
+    "element": "poison",
+    "mpCost": 12,
+    "baseMul": 0.75,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 3,
+    "levelScaling": { "baseMul": 0.06 },
+    "effects": [{
+      "type": "dot",
+      "value": 0.02,
+      "duration": 5,
+      "chance": 100,
+      "stackable": true,
+      "maxStacks": 9,
+      "note": "每层基于敌人最大生命值2%的伤害"
+    }],
+    "tripods": [
+      { "name": "猛毒", "unlockLevel": 4, "effects": [{ "type": "dot", "value": 0.03, "duration": 5, "chance": 100, "stackable": true, "maxStacks": 9 }] },
+      { "name": "传染", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 0.02, "duration": 5, "chance": 100, "target": "aoe", "stackable": true, "maxStacks": 9 }] },
+      { "name": "毒爆", "unlockLevel": 10, "effects": [{ "type": "dotBurst", "value": 1.5, "chance": 100 }] }
+    ]
+  },
+    {
+    "id": "poison_fang",
+    "name": "毒牙",
+    "desc": "单体中毒，基于敌人最大生命值造成持续伤害",
+    "icon": "mdi:snake",
+    "type": "active",
+    "target": "single",
+    "element": "poison",
+    "mpCost": 5,
+    "baseMul": 1.1,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.09 },
+    "effects": [{
+      "type": "dot",
+      "value": 0.03,
+      "duration": 5,
+      "chance": 100,
+      "stackable": true,
+      "maxStacks": 9,
+      "note": "每层基于敌人最大生命值3%的伤害"
+    }],
+    "tripods": [
+      { "name": "猛毒", "unlockLevel": 4, "effects": [{ "type": "dot", "value": 0.05, "duration": 5, "chance": 100, "stackable": true, "maxStacks": 9 }] },
+      { "name": "扩散", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 0.02, "duration": 5, "chance": 100, "target": "aoe", "stackable": true, "maxStacks": 9 }] },
+      { "name": "虚弱之毒", "unlockLevel": 10, "effects": [{ "type": "debuff", "value": -0.2, "stat": "def", "duration": 5, "chance": 100 }] }
+    ]
+  }
+]

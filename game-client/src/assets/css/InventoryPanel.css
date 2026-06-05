@@ -1,10 +1,8 @@
-/* src/assets/css/InventoryPanel.css */
-
-.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); backdrop-filter: blur(15px); display: flex; justify-content: center; align-items: center; z-index: 200; }
-.panel { width: 95vw; height: 90vh; background: rgba(15,25,45,0.95); border: 2px solid #b89a6a; border-radius: 24px; padding: 20px; color: #ffd; font-family: 'Press Start 2P', cursive; display: flex; flex-direction: column; position: relative; overflow: hidden; }
-.close-btn { position: absolute; top: 15px; right: 15px; background: none; border: none; color: #ffd; font-size: 24px; cursor: pointer; z-index: 10; }
-.close-btn:hover { transform: scale(1.2); }
-.layout { display: flex; gap: 20px; height: 100%; overflow: hidden; }
+/* ===== 背包主面板 ===== */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 200; }
+.panel { width: 90vw; height: 90vh; background: rgba(15,25,45,0.92); border: 2px solid #b89a6a; border-radius: 24px; color: #ffd; font-family: 'Press Start 2P', cursive; padding: 24px; position: relative; overflow-y: auto; }
+.close-btn { position: absolute; top: 16px; right: 16px; background: none; border: none; color: #ffd; font-size: 20px; cursor: pointer; z-index: 10; }
+.layout { display: flex; gap: 24px; height: 100%; }
 .equip-section { width: 45%; display: flex; flex-direction: column; }
 .mats-section { flex: 1; display: flex; flex-direction: column; }
 .section-title { font-size: 14px; margin-bottom: 15px; color: #ffd700; display: flex; align-items: center; gap: 10px; }
@@ -19,8 +17,6 @@
 .empty-icon { font-size: 20px; opacity: 0.3; }
 .item-icon { font-size: 18px; color: #ffd700; flex-shrink: 0; }
 .item-name { font-size: 8px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.item-remove { font-size: 14px; color: #ff4444; opacity: 0; position: absolute; right: 4px; top: 4px; }
-.slot-item:hover .item-remove { opacity: 1; }
 
 /* 品质边框 */
 .slot-item.quality-green { border-color: #4caf50; }
@@ -28,34 +24,97 @@
 .slot-item.quality-purple { border-color: #9c27b0; }
 .slot-item.quality-red { border-color: #f44336; }
 
+/* 标签栏 */
+.tab-bar { display: flex; gap: 4px; margin-bottom: 14px; }
+.tab-btn {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(184,154,106,0.5);
+  border-radius: 10px;
+  padding: 8px 16px;
+  font-size: 9px;
+  color: #ccc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tab-btn.active { background: rgba(255,215,0,0.2); border-color: #ffd700; color: #ffd700; font-weight: bold; }
+
+/* 装备/饰品网格 */
+.acc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.acc-card { background: rgba(0,0,0,0.5); border: 1px solid rgba(184,154,106,0.3); border-radius: 12px; padding: 10px 10px 8px; display: flex; flex-direction: column; gap: 6px; }
+.acc-body { cursor: pointer; display: flex; flex-direction: column; gap: 8px; }
+.acc-name { font-size: 10px; font-weight: bold; color: #ffe4b5; word-break: break-word; }
+.acc-level { font-size: 7px; color: #aaa; margin-left: 4px; }
+.acc-stats { font-size: 8px; color: #ccc; display: flex; gap: 12px; }
+.acc-actions { display: flex; gap: 5px; margin-top: 6px; }
+.acc-extra-stat { color: #aaa; font-size: 7px; }
+
+/* 按钮 */
+.pixel-btn { background: #2a2a3a; border: 2px solid #b89a6a; color: #ffd; font-family: inherit; padding: 6px 14px; font-size: 9px; cursor: pointer; border-radius: 8px; }
+.pixel-btn.small { padding: 3px 8px; font-size: 7px; border-radius: 6px; }
+.pixel-btn.primary { background: rgba(255,215,0,0.2); border-color: #ffd700; }
+.pixel-btn.danger { background: rgba(180,0,0,0.3); border-color: #ff5555; color: #ffaaaa; }
+.pixel-input { background: #1a1a2e; border: 2px solid #b89a6a; color: #ffd; padding: 4px 8px; border-radius: 6px; font-family: inherit; }
+
 /* 材料网格 */
 .materials-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; flex: 1; overflow-y: auto; align-content: start; padding-right: 5px; }
 .material-cell { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,215,0,0.2); border-radius: 12px; padding: 10px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: transform 0.2s; }
-.material-cell:hover { transform: translateY(-2px); background: rgba(255,215,0,0.1); }
+.material-cell.clickable:hover { background: rgba(255,215,0,0.1); border-color: #ffd700; cursor: pointer; }
 .mat-icon { font-size: 28px; color: #ffd700; }
 .mat-name { font-size: 7px; color: #ccc; word-break: break-all; }
 .mat-qty { font-size: 8px; font-weight: bold; color: #ffd; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 10px; }
 .empty-mats { grid-column: 1 / -1; text-align: center; font-size: 10px; color: #888; padding: 30px; }
-.sub-title { font-size: 10px; color: #ffd700; display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
 
-/* 饰品背包 */
-.accessory-inv { margin-bottom: 10px; }
-.acc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; max-height: 180px; overflow-y: auto; padding-right: 5px; }
-.acc-card { display: flex; flex-direction: column; gap: 6px; background: rgba(0,0,0,0.4); border: 1px solid rgba(184,154,106,0.4); border-radius: 10px; padding: 10px 12px; cursor: pointer; transition: all 0.2s; }
-.acc-card:hover { transform: translateY(-2px); background: rgba(255,215,0,0.1); }
-.acc-card.quality-green { border-color: #4caf50; }
-.acc-card.quality-blue { border-color: #2196f3; }
-.acc-card.quality-purple { border-color: #9c27b0; }
-.acc-card.quality-red { border-color: #f44336; box-shadow: 0 0 8px rgba(244,67,54,0.3); }
-.acc-name { font-size: 10px; font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.acc-affixes { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
-.acc-affix-tag { font-size: 7px; background: rgba(255,215,0,0.15); color: #ffd700; padding: 1px 6px; border-radius: 8px; white-space: nowrap; }
+/* 贩卖弹窗 */
+.dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 300; }
+.sell-dialog { background: rgba(15,25,45,0.95); border: 2px solid #ffd700; border-radius: 16px; padding: 20px; color: #ffd; font-family: inherit; text-align: center; }
+.dialog-price { font-size: 9px; color: #ffd700; }
+.dialog-controls { display: flex; gap: 8px; align-items: center; margin: 12px 0; }
+.qty-input { width: 60px; text-align: center; }
+.dialog-total { font-size: 10px; color: #4caf50; margin: 10px 0; }
+.dialog-actions { display: flex; gap: 10px; justify-content: center; }
 
-/* 工具提示 */
-.tooltip { position: fixed; z-index: 500; background: rgba(10,15,30,0.95); border: 2px solid #b89a6a; border-radius: 12px; padding: 12px 16px; font-size: 10px; color: #ffd; max-width: 240px; pointer-events: none; box-shadow: 0 8px 20px rgba(0,0,0,0.7); }
-.tooltip-name { font-size: 12px; font-weight: bold; margin-bottom: 6px; }
-.tooltip-quality { margin-bottom: 6px; font-size: 10px; }
-.tooltip-stats { display: flex; flex-direction: column; gap: 6px; margin: 6px 0; }
-.tooltip-stat-row { display: flex; align-items: center; gap: 6px; font-size: 8px; color: #ffd; }
-.tooltip-affixes { margin-top: 8px; border-top: 1px solid rgba(255,215,0,0.3); padding-top: 6px; }
-.tooltip-affix-line { font-size: 8px; color: #ffd700; margin: 3px 0; }
+/* 详情浮层 */
+.detail-tip-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; z-index: 500; }
+.detail-tip { background: rgba(0,0,0,0.95); border: 2px solid #ffd700; border-radius: 16px; padding: 16px; box-shadow: 0 0 30px rgba(0,0,0,0.9); max-width: 400px; font-size: 10px; color: #ffd; }
+.detail-tip-content { display: flex; gap: 12px; }
+.compare-card { width: 130px; flex-shrink: 0; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; padding: 8px; font-size: 8px; color: #ccc; }
+.compare-title { font-size: 9px; color: #ffd700; margin-bottom: 6px; border-bottom: 1px solid rgba(255,215,0,0.3); padding-bottom: 4px; }
+.compare-name { font-size: 10px; font-weight: bold; margin-bottom: 4px; }
+.detail-info { flex: 1; min-width: 0; }
+.tip-name { font-size: 12px; font-weight: bold; margin-bottom: 4px; }
+.tip-quality { font-size: 9px; margin-bottom: 8px; }
+.tip-stats { display: flex; gap: 16px; margin: 6px 0; font-size: 9px; }
+.tip-stat-row { display: flex; align-items: center; gap: 4px; }
+.tip-extra-stats { margin-top: 8px; border-top: 1px solid rgba(255,215,0,0.3); padding-top: 6px; }
+.tip-extra-stats .tip-stat-row { justify-content: space-between; }
+.tip-affixes { margin-top: 8px; border-top: 1px solid rgba(255,215,0,0.3); padding-top: 6px; }
+.tip-set { margin-top: 8px; border-top: 1px solid rgba(255,215,0,0.3); padding-top: 6px; }
+.tip-set-header { font-size: 9px; color: #ffd700; font-weight: bold; }
+.tip-set-desc { font-size: 8px; color: #aaa; margin: 4px 0; }
+.tip-actions { margin-top: 10px; display: flex; gap: 8px; }
+.affix-tag { background: rgba(0,0,0,0.5); border: 1px solid rgba(184,154,106,0.3); border-radius: 6px; padding: 2px 8px; font-size: 8px; color: #ccc; display: inline-flex; align-items: center; gap: 4px; margin-right: 4px; }
+.affix-tag.fixed { border-color: #f0c060; background: rgba(240,192,96,0.12); box-shadow: 0 0 6px rgba(240,192,96,0.3); }
+.fixed-circle { width: 8px; height: 8px; border-radius: 50%; border: 2px solid #f0c060; background: transparent; flex-shrink: 0; }
+.fixed-text { color: #f0c060; font-weight: bold; }
+
+/* 品质筛选按钮 */
+.quality-spacer { width: 8px; flex-shrink: 0; }
+.quality-chip { background: rgba(0,0,0,0.4); border: 1px solid #3a3a5a; border-radius: 6px; padding: 2px 6px; font-size: 7px; color: #888; cursor: pointer; white-space: nowrap; }
+.quality-chip.active { background: rgba(255,215,0,0.2); border-color: #ffd700; color: #ffd700; }
+.quality-chip.danger { color: #ffaaaa; border-color: #8b0000; }
+.quality-chip.danger:disabled { opacity: 0.3; cursor: not-allowed; }
+
+@media (max-width: 700px) {
+  .layout { flex-direction: column; }
+  .detail-tip { max-width: 90vw; }
+}
+
+
+.panel { display: flex; flex-direction: column; overflow: hidden; }
+.backpack-full { flex: 1; overflow-y: auto; }
+.equip-collapse { margin-bottom: 10px; }
+.collapse-toggle { width: 100%; text-align: left; padding: 8px; background: rgba(255,215,0,0.1); border: none; color: #ffd700; font-family: inherit; cursor: pointer; }
+.slide-up-enter-active, .slide-up-leave-active { transition: transform 0.3s; }
+.slide-up-enter-from, .slide-up-leave-to { transform: translateY(100%); }

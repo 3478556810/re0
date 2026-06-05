@@ -5,14 +5,13 @@
   { "id": "spider_silk", "name": "蛛魔丝", "type": "forge", "dropRate": 15, "price": 15 },
   { "id": "small_magic_stone", "name": "魔石碎片", "type": "forge", "dropRate": 10, "price": 25 },
   { "id": "dungeon_token", "name": "地下城徽记", "type": "token", "dropRate": 0, "price": 0 },
-  
   { "id": "iron_ore", "name": "铁矿石", "type": "ore", "dropRate": 30, "price": 6 },
   { "id": "copper_ore", "name": "铜矿石", "type": "ore", "dropRate": 18, "price": 8 },
-
   { "id": "silver_ore", "name": "银矿石", "type": "forge", "dropRate": 8, "price": 20 },
   { "id": "gold_ore", "name": "金矿石", "type": "forge", "dropRate": 5, "price": 50 },
   { "id": "mithril_ore", "name": "秘银矿石", "type": "forge", "dropRate": 2, "price": 120 },
   { "id": "crystal_shard", "name": "晶簇碎片", "type": "forge", "dropRate": 3, "price": 80 },
   { "id": "obsidian", "name": "黑曜石", "type": "forge", "dropRate": 1, "price": 200 },
-  { "id": "dragon_ore", "name": "龙鳞矿", "type": "forge", "dropRate": 1, "price": 500 }
+  { "id": "dragon_ore", "name": "龙鳞矿", "type": "forge", "dropRate": 1, "price": 500 },
+  { "id": "quality_stone", "name": "品质魔石", "type": "upgrade", "dropRate": 0, "price": 300 }
 ]

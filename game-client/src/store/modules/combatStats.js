@@ -120,7 +120,7 @@ export function useCombatStats(equipment, config, player) {
     activeAffixEffects.value.forEach(effect => {
       const bonus = effect.bonus || {}
       for (const [key, value] of Object.entries(bonus)) {
-        if (key in base) base[key] += value
+         base[key] = (base[key] || 0) + value 
       }
     })
 

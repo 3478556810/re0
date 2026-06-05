@@ -531,7 +531,7 @@ onUnmounted(() => document.removeEventListener('click', handleClickOutside))
 .tab-bar { display: flex; gap: 4px; margin-bottom: 14px; }
 .tab-btn {
   background: rgba(0,0,0,0.3); border: 1px solid rgba(184,154,106,0.5);
-  border-radius: 12px 12px 0 0; padding: 8px 16px; font-size: 9px;
+  border-radius: 10px; padding: 8px 16px; font-size: 9px;
   color: #ccc; cursor: pointer; display: flex; align-items: center; gap: 4px;
 }
 .tab-btn.active { background: rgba(255,215,0,0.2); border-color: #ffd700; color: #ffd700; font-weight: bold; }

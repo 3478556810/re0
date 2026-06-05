@@ -67,11 +67,12 @@ export function useDungeon(configRef) { // configRef 是 config reactive 的引�
   const wLv = worldLevel
 
   // 怪物数量
-  let count = 1
-  if (floor % 5 === 0) count = 1
-  else if (floor >= 7) count = 2 + Math.floor(Math.random() * 2)
-  else if (floor >= 4) count = 1 + Math.floor(Math.random() * 2)
-  else count = 1 + Math.floor(Math.random() * 2)
+let count = 1
+if (floor % 5 === 0) count = 1                 // Boss层 1只
+else if (floor >= 10) count = 2 + Math.floor(Math.random() * 3)  // 10层+ 2~4只
+else if (floor >= 6) count = 2 + Math.floor(Math.random() * 2)   // 6~9层 2~3只
+else if (floor >= 3) count = 2                                 // 3~5层 2只
+else count = 2 + Math.floor(Math.random() * 2)                 // 1~2层 2~3只
 
   const pool = dg.monstersByFloor[floor] || dg.monstersByFloor[1] || ['slime']
   const uniquePool = [...new Set(pool)]
@@ -83,7 +84,8 @@ export function useDungeon(configRef) { // configRef 是 config reactive 的引�
     if (!template) continue
 
     // 等级：基础每层+3，世界等级+1.5，取整避免小数
-    const baseLevel = Math.round(floor * 3 + wLv * 1.5)
+  // 从 floor * 3 + wLv * 1.5 改为 floor * 2 + wLv
+const baseLevel = Math.round(floor * 2 + wLv)
     const randomOffset = Math.floor(Math.random() * 3) - 1  // -1 到 +1
     let level = baseLevel + randomOffset
 
@@ -92,7 +94,8 @@ export function useDungeon(configRef) { // configRef 是 config reactive 的引�
     level = Math.max(minLv, Math.min(maxLv, level))
 
     // 属性成长按楼层递增（系数可以是小数，但结果取整）
-    const scale = 1 + (floor - 1) * 0.15
+    // 属性成长随怪物自身等级，每级 +8%，20级 ≈ 2.52 倍，比楼层系数温和得多
+const scale = 1 + (level - 1) * 0.06
 
     selected.push({
       ...template,

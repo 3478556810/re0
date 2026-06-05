@@ -1,86 +1,54 @@
 <template>
   <div class="enemy-area">
-    <!-- 非 Boss 模式才显示卡片（含血条、标签等） -->
+    <!-- 非 Boss 模式才显示卡片 -->
     <div class="enemy-cards" v-if="!hideHpBar">
-      <div
-        v-for="(enemy, idx) in enemies"
-        :key="enemy.id"
-        class="enemy-card"
-        :class="{ 'target-selected': idx === currentTargetIndex }"
-        @click="$emit('select-target', idx)"
-      >
+      <div v-for="(enemy, idx) in enemies" :key="enemy.id" class="enemy-card" :class="{ 'target-selected': idx === currentTargetIndex }" @click="$emit('select-target', idx)">
         <div class="enemy-info">
           <div style="display: flex; align-items: center; gap: 6px;">
             <div class="name-box">{{ enemy.name }}</div>
-            <div class="effect-icons" v-if="enemy.effects && enemy.effects.length">
-              <!-- 效果图标 -->
-              <div
-                v-for="eff in getSortedEffects(enemy)"
-                :key="eff.type"
-                class="effect-badge enemy-effect"
-                @touchstart.prevent="$emit('show-effect-bubble', eff, enemy.maxHp, $event)"
-              >
-                <Icon :icon="getEffectIcon(eff.type)" />
-                <div class="effect-info">
-                  <span class="effect-dur">{{ eff.duration }}</span>
-                  <span class="effect-stacks" v-if="eff.stacks > 1">x{{ eff.stacks }}</span>
-                </div>
-              </div>
-            </div>
+           <div class="effect-icons" v-if="enemy.effects && enemy.effects.length">
+  <div
+    v-for="eff in getSortedEffects(enemy)"
+    :key="eff.type + '_' + (eff.animKey || 0)"
+    class="effect-badge enemy-effect"
+    :class="[
+      eff.animClass || '',
+      eff.type === 'element_mark' ? getElementMarkClass(eff) : ''
+    ]"
+    :title="eff.type === 'element_mark' ? getElementMarkTooltip(eff) : getEffectTooltip(eff, enemy.maxHp)"
+    @touchstart.prevent="$emit('show-effect-bubble', eff, enemy.maxHp, $event)"
+  >
+    <Icon :icon="getEffectIcon(eff.type === 'element_mark' ? eff.element : eff.type)" />
+    <div class="effect-info">
+      <span class="effect-dur">{{ eff.duration }}</span>
+      <span class="effect-stacks" v-if="eff.stacks > 1">x{{ eff.stacks }}</span>
+    </div>
+  </div>
+</div>
           </div>
           <div class="level-tag">Lv.{{ enemy.level }}</div>
           <div class="bar-row">
-            <div
-              v-if="enemy.element"
-              class="element-tag"
-              :style="{ background: getElementColor(enemy.element) }"
-            >
-              <Icon :icon="getElementIcon(enemy.element)" class="element-icon" />
-              {{ getElementLabel(enemy.element) }}
+            <div v-if="enemy.element" class="element-tag" :style="{ background: getElementColor(enemy.element) }">
+              <Icon :icon="getElementIcon(enemy.element)" class="element-icon" />{{ getElementLabel(enemy.element) }}
             </div>
             <span class="bar-text">HP</span>
             <div class="hp-bar">
-              <div
-                v-if="enemy.shield > 0"
-                class="shield-fill"
-                :style="{ width: (enemy.shield / enemy.maxHp) * 100 + '%' }"
-              ></div>
+              <div v-if="enemy.shield > 0" class="shield-fill" :style="{ width: (enemy.shield / enemy.maxHp) * 100 + '%' }"></div>
               <div class="hp-fill" :style="{ width: (enemy.hp / enemy.maxHp) * 100 + '%' }"></div>
-              <span>{{ enemy.hp }} / {{ enemy.maxHp }}</span>
+           <span>{{ Math.floor(enemy.hp) }} / {{ enemy.maxHp }}</span>
             </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- 立绘区域（始终显示） -->
+    <!-- 立绘区域 -->
     <div class="enemy-sprites">
-      <div
-        v-for="(enemy, idx) in enemies"
-        :key="'sprite-' + enemy.id"
-        class="enemy-sprite"
-        :class="{
-          'target-sprite': idx === currentTargetIndex,
-          'flash-white': idx === hitEnemyIndex
-        }"
-        @click="$emit('select-target', idx)"
-      >
-        <img
-          v-if="getCustomImage && getCustomImage(enemy.id)"
-          :src="getCustomImage(enemy.id)"
-          class="big-sprite-img"
-        />
+      <div v-for="(enemy, idx) in enemies" :key="'sprite-'+enemy.id" class="enemy-sprite" :class="{ 'target-sprite': idx === currentTargetIndex, 'flash-white': idx === hitEnemyIndex }" @click="$emit('select-target', idx)">
+        <img v-if="getCustomImage && getCustomImage(enemy.id)" :src="getCustomImage(enemy.id)" class="big-sprite-img" />
         <Icon v-else :icon="enemy.icon || 'mdi:help-circle'" class="big-sprite-icon" />
         <div class="floating-damage-container" v-if="floatingNumbers.length">
-          <div
-            v-for="floatNum in floatingNumbers.filter(f => f.targetIndex === idx)"
-            :key="floatNum.id"
-            class="float-damage"
-            :class="'dmg-type-' + floatNum.type"
-            :style="{ marginTop: floatNum.offsetY ? floatNum.offsetY + 'px' : '0' }"
-          >
-            -{{ floatNum.amount }}
-          </div>
+          <div v-for="floatNum in floatingNumbers.filter(f => f.targetIndex === idx)" :key="floatNum.id" class="float-damage" :class="'dmg-type-' + floatNum.type" :style="{ marginTop: floatNum.offsetY ? floatNum.offsetY + 'px' : '0' }">-{{ floatNum.amount }}</div>
         </div>
       </div>
     </div>
@@ -90,14 +58,16 @@
 <script setup>
 import { ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
+// 从 useBattleHelpers 导入效果相关函数
 import {
-  getElementIcon,
-  getElementLabel,
-  getElementColor,
   getEffectIcon,
   getEffectTooltip,
-  getSortedEffects
+  getSortedEffects,
+  getElementMarkClass,
+  getElementMarkTooltip
 } from '@/composables/useBattleHelpers'
+// ✅ 补充导入元素工具函数（getElementColor, getElementLabel, getElementIcon）
+import { getElementColor, getElementLabel, getElementIcon } from '@/utils/elementUtils.js'
 
 const props = defineProps({
   enemies: Array,
@@ -105,7 +75,7 @@ const props = defineProps({
   hitEnemyIndex: Number,
   floatingNumbers: Array,
   getCustomImage: Function,
-  hideHpBar: { type: Boolean, default: false },   // Boss 战由父组件传入 true
+  hideHpBar: { type: Boolean, default: false },
   bossPhaseAnimTrigger: Number
 })
 

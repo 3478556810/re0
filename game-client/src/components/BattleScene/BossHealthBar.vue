@@ -3,27 +3,28 @@
     <div class="boss-info">
       <div class="boss-name">{{ bossData.name }}</div>
       <div class="boss-phase" :style="{ color: phaseColor }">{{ phaseText }}</div>
-      <div class="boss-hp-numbers">{{ bossData.currentHp }} / {{ bossData.maxHp }}</div>
+    <div class="boss-hp-numbers">{{ Math.floor(bossData.currentHp) }} / {{ bossData.maxHp }}</div>
     </div>
     <div class="boss-hp-bg">
       <div class="boss-hp-fill" :style="{ width: hpPercent + '%', background: phaseBarGradient }"></div>
     </div>
     <div class="phase-tip" v-if="phaseTip"><Icon :icon="phaseIcon" /> {{ phaseTip }}</div>
 
-    <!-- 效果图标区域：位于血条左下角，显示所有印记、buff、debuff -->
+    <!-- 效果图标区域 -->
     <div class="boss-effect-icons" v-if="enemyEffects && enemyEffects.length">
       <div
         v-for="eff in sortedEffects"
-        :key="eff.type"
+        :key="eff.type + '_' + (eff.animKey || 0)"
         class="effect-badge"
-        :class="getEffectClass(eff)"
-        :title="getEffectTooltip(eff, bossData.maxHp)"
+        :class="[
+          getEffectClass(eff),
+          eff.animClass || '',
+          eff.type === 'element_mark' ? getElementMarkClass(eff) : ''
+        ]"
+        :title="eff.type === 'element_mark' ? getElementMarkTooltip(eff) : getEffectTooltip(eff, bossData.maxHp)"
+        @click.stop="$emit('showEffectBubble', eff, bossData.maxHp, $event)"
       >
-        <Icon :icon="getEffectIcon(eff.type)" />
-        <div class="effect-info">
-          <span class="effect-dur">{{ eff.duration }}</span>
-          <span class="effect-stacks" v-if="eff.stacks > 1">x{{ eff.stacks }}</span>
-        </div>
+        <Icon :icon="getEffectIcon(eff.type === 'element_mark' ? eff.element : eff.type)" />
       </div>
     </div>
   </div>
@@ -32,7 +33,12 @@
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
-import { getEffectIcon, getEffectTooltip, getSortedEffects } from '@/composables/useBattleHelpers'
+import { getEffectIcon, getEffectTooltip, getSortedEffects ,
+  getElementMarkClass,       // ✅ 新增
+  getElementMarkTooltip      // ✅ 新增
+
+
+} from '@/composables/useBattleHelpers'
 
 const props = defineProps({
   bossData: Object,
@@ -44,15 +50,14 @@ const props = defineProps({
       { threshold: 0.1, name: 'P3', tip: '终焉降临', color: '#8b5cf6', icon: 'mdi:skull' }
     ]
   },
-  enemyEffects: Array   // 当前敌人的效果列表
+  enemyEffects: Array
 })
 
-const emit = defineEmits(['phaseChange'])
+const emit = defineEmits(['phaseChange', 'showEffectBubble'])  // ✅ 添加了 showEffectBubble
 
 const currentPhase = ref(0)
 const hpPercent = computed(() => (props.bossData.currentHp / props.bossData.maxHp) * 100)
 
-// 更新阶段
 const updatePhase = () => {
   const percent = hpPercent.value
   let newPhase = 0
@@ -83,10 +88,8 @@ const phaseBarGradient = computed(() => {
   return colors[phaseColor.value] || 'linear-gradient(90deg, #c2410c, #f97316)'
 })
 
-// 效果排序（印记置顶）
 const sortedEffects = computed(() => getSortedEffects({ effects: props.enemyEffects || [] }))
 
-// 效果样式类
 const getEffectClass = (eff) => {
   if (eff.type === 'dragonMark' || eff.type === 'shadowMark' || eff.type === 'holyMark') return 'effect-mark'
   if (eff.type === 'atkUp' || eff.type === 'defUp' || eff.type === 'spdUp' || eff.type === 'regen') return 'effect-buff'
@@ -94,7 +97,9 @@ const getEffectClass = (eff) => {
 }
 </script>
 
+
 <style scoped>
+/* ===== 原有样式保留（不动） ===== */
 .boss-healthbar-global {
   position: fixed;
   top: 15px;
@@ -103,12 +108,21 @@ const getEffectClass = (eff) => {
   width: 50%;
   min-width: 400px;
   z-index: 40;
-  background: rgba(0, 0, 0, 0.85);
-  backdrop-filter: blur(8px);
-  border-radius: 8px;
+
+  /* 深色半透明磨砂感，稍微提亮一点，让暗部细节可见 */
+  background: rgba(10, 15, 25, 0.72);
+  backdrop-filter: blur(8px);  /* 保留轻微模糊，配合暗底仍有磨砂感 */
+
+  border-radius: 12px;
   padding: 8px 16px;
-  border: 2px solid #dbb42c;
-  box-shadow: 0 0 20px rgba(0,0,0,0.6);
+
+  /* 关键：明显的玻璃边框 + 多层高光/阴影 */
+  border: 1px solid rgba(255, 215, 0, 0.35);
+  box-shadow:
+    0 12px 30px rgba(0, 0, 0, 0.6),          /* 外部深阴影 */
+    inset 0 1px 2px rgba(255, 255, 255, 0.2), /* 顶部内高光（玻璃边缘反光） */
+    inset 0 -2px 4px rgba(0, 0, 0, 0.3);     /* 底部内阴影增加厚度 */
+
   font-family: 'Press Start 2P', monospace;
 }
 .boss-info {
@@ -143,7 +157,6 @@ const getEffectClass = (eff) => {
   margin-left: auto;
   margin-right: auto;
 }
-/* 效果图标区域 */
 .boss-effect-icons {
   display: flex;
   flex-wrap: wrap;
@@ -153,7 +166,7 @@ const getEffectClass = (eff) => {
   border-top: 1px solid rgba(219,180,44,0.3);
 }
 .effect-badge {
-  background: rgba(0,0,0,0.6);
+  background: transparent;   /* 或者直接删掉 background 这一行 */
   border-radius: 4px;
   padding: 2px 6px;
   display: flex;
@@ -161,10 +174,91 @@ const getEffectClass = (eff) => {
   gap: 4px;
   font-size: 10px;
   color: #ffd;
+  position: relative;
 }
 .effect-mark { border-left: 3px solid #f1c40f; background: #2c2418; }
 .effect-buff { border-left: 3px solid #2ecc71; }
 .effect-debuff { border-left: 3px solid #e74c3c; }
 .effect-dur { font-size: 8px; color: #ccc; }
 .effect-stacks { font-size: 8px; color: #f1c40f; margin-left: 2px; }
+
+/* ===== 补全印记动画样式（复制自全局，确保在 scoped 中生效） ===== */
+.dragon-mark-glow {
+  border-color: rgba(255, 100, 0, 0.6) !important;
+  background: linear-gradient(135deg, rgba(255,60,0,0.15) 0%, rgba(255,120,0,0.5) 25%, rgba(255,60,0,0.15) 50%, rgba(255,100,0,0.5) 75%, rgba(255,60,0,0.15) 100%);
+  background-size: 300% 300%;
+  animation: dragonVeil 3s ease-in-out infinite;
+  box-shadow: 0 0 12px rgba(255,80,0,0.6), inset 0 0 8px rgba(255,120,0,0.3);
+}
+@keyframes dragonVeil {
+  0% { background-position: 0% 50%; box-shadow: 0 0 10px rgba(255,80,0,0.5); }
+  25% { background-position: 100% 0%; box-shadow: 0 0 18px rgba(255,120,0,0.8); }
+  50% { background-position: 100% 100%; box-shadow: 0 0 10px rgba(255,80,0,0.5); }
+  75% { background-position: 0% 100%; box-shadow: 0 0 18px rgba(255,100,0,0.8); }
+  100% { background-position: 0% 50%; box-shadow: 0 0 10px rgba(255,80,0,0.5); }
+}
+
+.shadow-mark-glow {
+  position: relative;
+  border-color: rgba(130, 0, 220, 0.6) !important;
+  background: linear-gradient(135deg, rgba(80,0,160,0.15) 0%, rgba(140,0,240,0.5) 25%, rgba(80,0,160,0.15) 50%, rgba(120,0,220,0.5) 75%, rgba(80,0,160,0.15) 100%);
+  background-size: 300% 300%;
+  animation: shadowAppear 0.8s ease-out forwards, starTwinkle 2s ease-in-out infinite 0.8s;
+  box-shadow: 0 0 12px rgba(130,0,220,0.6), inset 0 0 8px rgba(160,0,255,0.3);
+  overflow: visible;
+}
+.shadow-mark-glow::before,
+.shadow-mark-glow::after {
+  content: '';
+  position: absolute;
+  width: 6px; height: 6px;
+  background: #c084fc;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #a855f7, 0 0 16px #7c3aed;
+  animation: starOrbit 3s linear infinite;
+}
+.shadow-mark-glow::before { top: -8px; left: 50%; animation-delay: 0s; }
+.shadow-mark-glow::after { bottom: -8px; right: 50%; animation-delay: 1.5s; }
+@keyframes shadowAppear {
+  0% { background-position: 0% 50%; box-shadow: 0 0 0px rgba(130,0,220,0); transform: scale(0.8); opacity: 0; }
+  50% { box-shadow: 0 0 24px rgba(160,0,255,0.9); transform: scale(1.2); opacity: 1; }
+  100% { background-position: 100% 100%; box-shadow: 0 0 12px rgba(130,0,220,0.6), inset 0 0 8px rgba(160,0,255,0.4); transform: scale(1); opacity: 1; }
+}
+@keyframes starTwinkle {
+  0%, 100% { box-shadow: 0 0 12px rgba(130,0,220,0.6), 0 0 0px transparent; }
+  50% { box-shadow: 0 0 20px rgba(160,0,255,0.8), 0 0 28px rgba(160,0,255,0.4); }
+}
+@keyframes starOrbit {
+  0% { transform: translate(0,0) scale(1); opacity: 0.6; }
+  25% { transform: translate(10px,-10px) scale(1.6); opacity: 1; }
+  50% { transform: translate(0,-14px) scale(1); opacity: 0.6; }
+  75% { transform: translate(-10px,-10px) scale(1.6); opacity: 1; }
+  100% { transform: translate(0,0) scale(1); opacity: 0.6; }
+}
+
+.holy-mark-glow {
+  animation: holyPulse 1.2s ease-in-out infinite;
+  box-shadow: 0 0 10px rgba(255,215,0,0.7);
+}
+@keyframes holyPulse {
+  0% { filter: drop-shadow(0 0 3px gold); }
+  50% { filter: drop-shadow(0 0 16px #ffd966); }
+  100% { filter: drop-shadow(0 0 3px gold); }
+}
+
+
+/* 强制应用元素印记动画（穿透 scoped） */
+:deep(.element-mark-fire),
+:deep(.element-mark-water),
+:deep(.element-mark-thunder),
+:deep(.element-mark-wind),
+:deep(.element-mark-grass),
+:deep(.element-mark-ice),
+:deep(.element-mark-holy),
+:deep(.element-mark-dark),
+:deep(.element-mark-rock),
+:deep(.element-mark-steel),
+:deep(.element-mark-poison) {
+  /* 从全局样式复制对应的属性，或者直接留空，因为全局已经定义了 */
+}
 </style>

@@ -417,3 +417,99 @@
   80% { transform: translate(2px, -1px);}
   100% { transform: translate(0,0);}
 }
+
+/* ========== 元素印记流光爆裂动画 ========== */
+/* ========== 元素印记：半透明磨砂玻璃质感 ========== */
+.element-mark-fire,
+.element-mark-water,
+.element-mark-thunder,
+.element-mark-wind,
+.element-mark-grass,
+.element-mark-ice,
+.element-mark-holy,
+.element-mark-dark,
+.element-mark-rock,
+.element-mark-steel,
+.element-mark-poison {
+  position: relative;
+  overflow: hidden;
+  background-size: 300% 300%;
+  animation: elementFlow 3s ease-in-out infinite, elementBurst 2s ease-in-out infinite;
+  border-left-width: 3px;
+  border-left-style: solid;
+  border-radius: 4px;
+  backdrop-filter: blur(4px); /* 玻璃模糊 */
+  box-shadow: 0 0 8px currentColor;
+}
+
+/* 各元素颜色设置：背景改为半透明，文字/图标颜色保持明亮 */
+.element-mark-fire {
+  background: linear-gradient(135deg, rgba(255,69,0,0.25), rgba(255,140,0,0.35), rgba(255,69,0,0.25));
+  border-left-color: #ff4500;
+  color: #ff4500 !important;
+}
+.element-mark-water {
+  background: linear-gradient(135deg, rgba(0,102,255,0.25), rgba(102,179,255,0.35), rgba(0,102,255,0.25));
+  border-left-color: #3498db;
+  color: #3498db !important;
+}
+.element-mark-thunder {
+  background: linear-gradient(135deg, rgba(204,170,0,0.25), rgba(255,221,85,0.35), rgba(204,170,0,0.25));
+  border-left-color: #f1c40f;
+  color: #f1c40f !important;
+}
+.element-mark-wind {
+  background: linear-gradient(135deg, rgba(0,179,116,0.25), rgba(102,230,176,0.35), rgba(0,179,116,0.25));
+  border-left-color: #2ecc71;
+  color: #2ecc71 !important;
+}
+.element-mark-grass {
+  background: linear-gradient(135deg, rgba(0,153,0,0.25), rgba(102,204,102,0.35), rgba(0,153,0,0.25));
+  border-left-color: #27ae60;
+  color: #27ae60 !important;
+}
+.element-mark-ice {
+  background: linear-gradient(135deg, rgba(102,204,255,0.25), rgba(204,238,255,0.35), rgba(102,204,255,0.25));
+  border-left-color: #81ecec;
+  color: #81ecec !important;
+}
+.element-mark-holy {
+  background: linear-gradient(135deg, rgba(255,204,0,0.25), rgba(255,238,153,0.35), rgba(255,204,0,0.25));
+  border-left-color: #f39c12;
+  color: #f39c12 !important;
+}
+.element-mark-dark {
+  background: linear-gradient(135deg, rgba(102,0,204,0.25), rgba(170,102,255,0.35), rgba(102,0,204,0.25));
+  border-left-color: #8e44ad;
+  color: #8e44ad !important;
+}
+.element-mark-rock {
+  background: linear-gradient(135deg, rgba(153,102,51,0.25), rgba(204,170,102,0.35), rgba(153,102,51,0.25));
+  border-left-color: #a0522d;
+  color: #a0522d !important;
+}
+.element-mark-steel {
+  background: linear-gradient(135deg, rgba(153,153,153,0.25), rgba(204,204,204,0.35), rgba(153,153,153,0.25));
+  border-left-color: #7f8c8d;
+  color: #7f8c8d !important;
+}
+.element-mark-poison {
+  background: linear-gradient(135deg, rgba(153,0,204,0.25), rgba(204,102,255,0.35), rgba(153,0,204,0.25));
+  border-left-color: #a855f7;
+  color: #a855f7 !important;
+}
+
+/* 流光动画：移动位置 */
+@keyframes elementFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* 光晕呼吸 */
+@keyframes elementBurst {
+  0%, 100% { box-shadow: 0 0 6px currentColor; transform: scale(1); }
+  50% { box-shadow: 0 0 16px currentColor; transform: scale(1.05); }
+}
+
+

@@ -129,28 +129,28 @@ export const AFFIX_EFFECTS = {
   },
 
   // 11. 顽强：锁血带护盾，冷却减半
-  tenacity: {
-    name: '顽强', loreName: '顽强',
-    thresholds: [
-      { level: 1, desc: '受致命伤害时，15%概率锁血，获得10%HP护盾', bonus: { deathSave: 15, deathShield: 10 } },
-      { level: 3, desc: '受致命伤害时，30%概率锁血，获得20%HP护盾', bonus: { deathSave: 30, deathShield: 20 } },
-      { level: 5, desc: '受致命伤害时，50%概率锁血，获得30%HP护盾', bonus: { deathSave: 50, deathShield: 30 } },
-      { level: 7, desc: '受致命伤害时，100%锁血，获得40%HP护盾，冷却8回合', bonus: { deathSave: 100, deathShield: 40 } },
-      { level: 10, desc: '锁血时护盾提升至60%HP，冷却4回合', bonus: { deathSave: 100, deathShield: 60 } }
-    ]
-  },
+tenacity: {
+  name: '顽强', loreName: '顽强',
+  thresholds: [
+    { level: 1, desc: '受致命伤害时，15%概率锁血，获得10%HP护盾', bonus: { deathSave: 15, deathShield: 10 } },
+    { level: 3, desc: '受致命伤害时，30%概率锁血，获得20%HP护盾', bonus: { deathSave: 30, deathShield: 20 } },
+    { level: 5, desc: '受致命伤害时，50%概率锁血，获得30%HP护盾', bonus: { deathSave: 50, deathShield: 30 } },
+    { level: 7, desc: '受致命伤害时，100%锁血，获得40%HP护盾（触发后1回合冷却）', bonus: { deathSave: 100, deathShield: 40 } },
+    { level: 10, desc: '锁血时护盾提升至60%HP（触发后1回合冷却）', bonus: { deathSave: 100, deathShield: 60 } }
+  ]
+},
 
   // 12. 不死鸟：强力复活，附带爆发
-  phoenix: {
-    name: '不死鸟', loreName: '不死鸟',
-    thresholds: [
-      { level: 1, desc: '死亡时30%概率复活(35%HP)，复活后攻击+15%', bonus: { reviveChance: 30, reviveDmg: 15 } },
-      { level: 3, desc: '死亡时50%概率复活(50%HP)，复活后攻击+25%', bonus: { reviveChance: 50, reviveDmg: 25 } },
-      { level: 5, desc: '死亡时75%概率复活(65%HP)，复活后攻击+35%', bonus: { reviveChance: 75, reviveDmg: 35 } },
-      { level: 7, desc: '死亡时100%复活(80%HP)，冷却10回合', bonus: { reviveChance: 100, reviveCD: 10 } },
-      { level: 10, desc: '复活冷却减至5回合，复活后伤害+50%', bonus: { reviveChance: 100, reviveCD: 5, reviveDmg: 50 } }
-    ]
-  }
+ phoenix: {
+  name: '不死鸟', loreName: '不死鸟',
+  thresholds: [
+    { level: 1, desc: '死亡时30%概率复活(35%HP)；火焰伤害+8%，吸血+5%', bonus: { reviveChance: 30, reviveDmg: 15, fireDmg: 8, lifestealPercent: 5 } },
+    { level: 3, desc: '死亡时50%概率复活(50%HP)；火焰伤害+18%，吸血+10%', bonus: { reviveChance: 50, reviveDmg: 25, fireDmg: 18, lifestealPercent: 10 } },
+    { level: 5, desc: '死亡时75%概率复活(65%HP)；火焰伤害+30%，吸血+18%', bonus: { reviveChance: 75, reviveDmg: 35, fireDmg: 30, lifestealPercent: 18 } },
+    { level: 7, desc: '死亡时100%复活(80%HP)，冷却10回合；火焰伤害+45%，吸血+25%', bonus: { reviveChance: 100, reviveCD: 10, reviveDmg: 45, fireDmg: 45, lifestealPercent: 25 } },
+    { level: 10, desc: '复活冷却减至5回合；火焰伤害+55%，吸血+32%', bonus: { reviveChance: 100, reviveCD: 5, reviveDmg: 50, fireDmg: 55, lifestealPercent: 32 } }
+  ]
+}
 }
 
 export const AFFIX_IDS = Object.keys(AFFIX_EFFECTS)

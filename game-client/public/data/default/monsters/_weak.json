@@ -1,98 +1,49 @@
 [
   {
-    "id": "slime",
-    "name": "史莱姆",
-    "tag": "weak",
-    "isBoss": false,
-    "baseHp": 150,
-    "baseAtk": 22,
-    "baseDef": 8,
-    "exp": 25,
+    "id": "slime", "name": "史莱姆", "tag": "weak", "isBoss": false,
+    "baseHp": 250, "baseAtk": 40, "baseDef": 8, "exp": 30,
     "materials": [
-      { "id": "slime_gel", "name": "粘稠凝胶", "dropRate": 85 },
-      { "id": "iron_ore", "name": "铁矿石", "dropRate": 20 }
+      { "id": "slime_gel", "name": "粘稠凝胶", "dropRate": 85, "qty": 2 },
+      { "id": "iron_ore", "name": "铁矿石", "dropRate": 65, "qty": 3 }
     ],
-    "icon": "mdi:blur",
-    "element": "water",
-    "critRate": 0,
-    "critDmg": 0,
-    "lifesteal": 0,
-    "luck": 0,
-    "skillsText": "[]",
-    "minLevel": 1,
-    "maxLevel": 5,
-    "levelRange": [1, 5]
+    "icon": "mdi:blur", "element": "water",
+    "critRate": 0, "critDmg": 0, "lifesteal": 0, "luck": 0,
+    "skillsText": "[]", "minLevel": 1, "maxLevel": 5, "levelRange": [1, 5]
   },
   {
-    "id": "green_slime",
-    "name": "翠绿史莱姆",
-    "tag": "weak",
-    "isBoss": false,
-    "baseHp": 220,
-    "baseAtk": 26,
-    "baseDef": 10,
-    "exp": 30,
+    "id": "green_slime", "name": "翠绿史莱姆", "tag": "weak", "isBoss": false,
+    "baseHp": 300, "baseAtk": 45, "baseDef": 10, "exp": 35,
     "materials": [
-      { "id": "slime_gel", "name": "粘稠凝胶", "dropRate": 90 },
-      { "id": "iron_ore", "name": "铁矿石", "dropRate": 15 }
+      { "id": "slime_gel", "name": "粘稠凝胶", "dropRate": 90, "qty": 3 },
+      { "id": "iron_ore", "name": "铁矿石", "dropRate": 60, "qty": 2 }
     ],
-    "icon": "mdi:blur-linear",
-    "element": "grass",
-    "critRate": 0,
-    "critDmg": 0,
-    "lifesteal": 0,
-    "luck": 0,
-    "skillsText": "[{\"name\":\"毒液溅射\",\"mpCost\":0,\"baseMul\":0.8,\"effects\":[{\"type\":\"dot\",\"value\":0.08,\"duration\":2,\"chance\":40}]}]",
-    "minLevel": 1,
-    "maxLevel": 6,
-    "levelRange": [1, 6]
+    "icon": "mdi:blur-linear", "element": "grass",
+    "critRate": 0, "critDmg": 0, "lifesteal": 0, "luck": 0,
+    "skillsText": "[{\"name\":\"毒液溅射\",\"mpCost\":0,\"baseMul\":1.2,\"effects\":[{\"type\":\"dot\",\"value\":0.10,\"duration\":3,\"chance\":50}]}]",
+    "minLevel": 1, "maxLevel": 6, "levelRange": [1, 6]
   },
   {
-    "id": "goblin",
-    "name": "暗牙劫掠者",
-    "tag": "weak",
-    "isBoss": false,
-    "baseHp": 280,
-    "baseAtk": 30,
-    "baseDef": 14,
-    "exp": 40,
+    "id": "goblin", "name": "暗牙劫掠者", "tag": "weak", "isBoss": false,
+    "baseHp": 400, "baseAtk": 50, "baseDef": 14, "exp": 50,
     "materials": [
-      { "id": "goblin_fang", "name": "暗牙碎片", "dropRate": 85 },
-      { "id": "iron_ore", "name": "铁矿石", "dropRate": 25 }
+      { "id": "goblin_fang", "name": "暗牙碎片", "dropRate": 85, "qty": 2 },
+      { "id": "iron_ore", "name": "铁矿石", "dropRate": 70, "qty": 3 }
     ],
-    "icon": "mdi:alien",
-    "element": "",
-    "critRate": 5,
-    "critDmg": 0,
-    "lifesteal": 0,
-    "luck": 0,
-    "skillsText": "[{\"name\":\"投石\",\"mpCost\":0,\"baseMul\":1.2,\"effects\":[]}]",
-    "minLevel": 2,
-    "maxLevel": 8,
-    "levelRange": [2, 8]
+    "icon": "mdi:alien", "element": "",
+    "critRate": 5, "critDmg": 0, "lifesteal": 0, "luck": 0,
+    "skillsText": "[{\"name\":\"投石\",\"mpCost\":0,\"baseMul\":1.5,\"effects\":[]}]",
+    "minLevel": 2, "maxLevel": 8, "levelRange": [2, 8]
   },
   {
-    "id": "goblin_scout",
-    "name": "暗牙斥候",
-    "tag": "weak",
-    "isBoss": false,
-    "baseHp": 240,
-    "baseAtk": 32,
-    "baseDef": 12,
-    "exp": 45,
+    "id": "goblin_scout", "name": "暗牙斥候", "tag": "weak", "isBoss": false,
+    "baseHp": 350, "baseAtk": 55, "baseDef": 12, "exp": 55,
     "materials": [
-      { "id": "goblin_fang", "name": "暗牙碎片", "dropRate": 75 },
-      { "id": "iron_ore", "name": "铁矿石", "dropRate": 30 }
+      { "id": "goblin_fang", "name": "暗牙碎片", "dropRate": 75, "qty": 2 },
+      { "id": "iron_ore", "name": "铁矿石", "dropRate": 70, "qty": 2 }
     ],
-    "icon": "mdi:alien-outline",
-    "element": "wind",
-    "critRate": 15,
-    "critDmg": 20,
-    "lifesteal": 0,
-    "luck": 5,
-    "skillsText": "[{\"name\":\"飞沙走石\",\"mpCost\":0,\"baseMul\":1.3,\"effects\":[]}]",
-    "minLevel": 2,
-    "maxLevel": 9,
-    "levelRange": [2, 9]
+    "icon": "mdi:alien-outline", "element": "wind",
+    "critRate": 15, "critDmg": 20, "lifesteal": 0, "luck": 5,
+    "skillsText": "[{\"name\":\"飞沙走石\",\"mpCost\":0,\"baseMul\":1.6,\"effects\":[]}]",
+    "minLevel": 2, "maxLevel": 9, "levelRange": [2, 9]
   }
 ]

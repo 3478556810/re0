@@ -141,6 +141,9 @@ function generateRandomEquipment(tag, monsterLevel, playerLevel) {
       level: equipLevel,
       quality,
       atk, def,
+        baseAtk: baseAtk,   // ← 新增：保存基础攻击力基准值
+  baseDef: baseDef,   // ← 新增：保存基础防御力基准值
+   qualityMult: qualityMult,  // ← 必须存在
       speed: shoeSpeed,          // 鞋子基础速度
       extraStats,                // 副词条（最多1个）
       affixes,                   // 刻印词条

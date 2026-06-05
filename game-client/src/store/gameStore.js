@@ -69,9 +69,43 @@ const combatModule = useCombatStats(inventoryModule.equipment, config, playerMod
   function save() {
     const state = {
       player: { ...playerModule.player },
-      inventory: [...inventoryModule.inventory],
+     inventory: inventoryModule.inventory.map(item => {
+  if (!item) return null
+  return {
+    id: item.id, part: item.part || item.type, name: item.name,
+    quality: item.quality, level: item.level || 1,
+    atk: item.atk || 0, def: item.def || 0,
+    baseAtk: item.baseAtk || 10, baseDef: item.baseDef || 5,
+    extraStats: item.extraStats ? { ...item.extraStats } : {},
+    _initialExtraStats: item._initialExtraStats ? { ...item._initialExtraStats } : {},
+    affixes: item.affixes ? item.affixes.map(a => ({ id: a.id, level: a.level })) : [],
+    fixedAffix: item.fixedAffix ? { ...item.fixedAffix } : null,
+    bossDmgBonus: item.bossDmgBonus || 0,
+    setId: item.setId || '',
+    levelFailCount: item.levelFailCount || 0,
+    qualityFailCount: item.qualityFailCount || 0,
+    levelRequired: item.levelRequired || 1,
+    gemSlots: item.gemSlots || 0,
+    type: item.type || item.part
+  }
+}),
       materials: Object.fromEntries(Object.entries(inventoryModule.materials).map(([k,v]) => [k, { ...v }])),
-      equipment: Object.fromEntries(Object.entries(inventoryModule.equipment).map(([k,v]) => [k, v ? { id: v.id, part: v.part, name: v.name, quality: v.quality, atk: v.atk || 0, def: v.def || 0, setId: v.setId || '', affixes: v.affixes ? v.affixes.map(a => ({ id: a.id, level: a.level })) : [] } : null])),
+     equipment: Object.fromEntries(Object.entries(inventoryModule.equipment).map(([k, v]) => {
+  if (!v) return [k, null]
+  return [k, {
+    id: v.id, part: v.part || v.type, name: v.name, quality: v.quality,
+    level: v.level || 1, atk: v.atk || 0, def: v.def || 0,
+    baseAtk: v.baseAtk || 10, baseDef: v.baseDef || 5,
+    extraStats: v.extraStats ? { ...v.extraStats } : {},
+    _initialExtraStats: v._initialExtraStats ? { ...v._initialExtraStats } : {},
+    affixes: v.affixes ? v.affixes.map(a => ({ id: a.id, level: a.level })) : [],
+    fixedAffix: v.fixedAffix ? { ...v.fixedAffix } : null,
+    bossDmgBonus: v.bossDmgBonus || 0,
+    setId: v.setId || '', levelFailCount: v.levelFailCount || 0,
+    qualityFailCount: v.qualityFailCount || 0,
+    levelRequired: v.levelRequired || 1, gemSlots: v.gemSlots || 0
+  }]
+})),
       world: { ...worldModule.world },
       weather: { ...worldModule.weather },
       facilities: { bank: { ...facilities.bank }, stocks: [], farm: [] },
@@ -100,16 +134,70 @@ const combatModule = useCombatStats(inventoryModule.equipment, config, playerMod
     try {
       const data = JSON.parse(saved)
       Object.assign(playerModule.player, data.player || {})
-      inventoryModule.inventory.splice(0, inventoryModule.inventory.length, ...(data.inventory || []))
+    const savedInv = (data.inventory || []).map(item => {
+  if (!item) return null
+  return {
+    ...item,
+    part: item.part || item.type,
+    extraStats: item.extraStats || {},
+    _initialExtraStats: item._initialExtraStats || { ...(item.extraStats || {}) },
+    affixes: item.affixes || [],
+    fixedAffix: item.fixedAffix || null,
+    bossDmgBonus: item.bossDmgBonus || 0,
+    level: item.level || 1,
+    baseAtk: item.baseAtk || 10,
+    baseDef: item.baseDef || 5,
+    levelFailCount: item.levelFailCount || 0,
+    qualityFailCount: item.qualityFailCount || 0
+  }
+})
+inventoryModule.inventory.splice(0, inventoryModule.inventory.length, ...savedInv)
+inventoryModule.inventory.splice(0, inventoryModule.inventory.length, ...savedInv)
       for (const key of Object.keys(inventoryModule.materials)) delete inventoryModule.materials[key]
       Object.assign(inventoryModule.materials, data.materials || {})
-      Object.assign(inventoryModule.equipment, data.equipment || {})
+      // 恢复装备时确保所有字段完整
+const savedEquipment = data.equipment || {}
+for (const slot of Object.keys(inventoryModule.equipment)) {
+  const saved = savedEquipment[slot]
+  if (saved) {
+    inventoryModule.equipment[slot] = {
+      ...saved,
+      part: saved.part || saved.type,
+      type: saved.type || saved.part,
+      extraStats: saved.extraStats || {},
+      _initialExtraStats: saved._initialExtraStats || { ...saved.extraStats },
+      affixes: saved.affixes || [],
+      fixedAffix: saved.fixedAffix || null,
+      bossDmgBonus: saved.bossDmgBonus || 0,
+      levelFailCount: saved.levelFailCount || 0,
+      qualityFailCount: saved.qualityFailCount || 0
+    }
+  } else {
+    inventoryModule.equipment[slot] = null
+  }
+}
+
+
+
       Object.assign(worldModule.world, data.world || {})
       Object.assign(worldModule.weather, data.weather || {})
       Object.assign(facilities.bank, data.facilities?.bank || {})
       Object.assign(dungeonModule.dungeon, data.dungeon || {})
       huntQuestModule.activeHuntQuests.value = data.activeHuntQuests || []
       Object.assign(affectionModule.affection, data.affection || {})
+
+
+      // 遍历背包和装备，补全 baseAtk/baseDef
+function patchItem(item) {
+  if (!item) return item;
+  if (item.baseAtk === undefined) item.baseAtk = 10;
+  if (item.baseDef === undefined) item.baseDef = 5;
+  return item;
+}
+// 对背包应用
+inventoryModule.inventory.forEach(patchItem);
+// 对装备应用
+Object.values(inventoryModule.equipment).forEach(patchItem);
       storyBestTime.value = data.storyBestTime ?? null
       pendingRankUp.value = data.pendingRankUp ?? false
       pendingTargetRank.value = data.pendingTargetRank ?? null
