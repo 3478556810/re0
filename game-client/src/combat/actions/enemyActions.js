@@ -176,6 +176,13 @@ function buildAttackResult(engine, enemy, target, skill) {
     { ignoreDef: skill.ignoreDef || 0 }
   )
   const deathResult = target.takeDamage(damage, enemy)
+
+
+// 闪避提示
+if (deathResult?.dodged) {
+    result.messages.push(`${target.name} 闪避了攻击！`);
+}
+
   applyEnemyLifesteal(enemy, target, damage)
 
   let msg = `${enemy.name} 使用 ${skill.name}，对 ${target.name} 造成 ${damage} 伤害`
@@ -234,6 +241,10 @@ function executeSkill(engine, enemy, skill) {
       )
       damage = calc.damage; crit = calc.crit; multiplier = calc.multiplier
       deathResult = target.takeDamage(damage, enemy)
+
+
+
+
       applyEnemyLifesteal(enemy, target, damage)
       let msg = `${enemy.name} 使用 ${skill.name}，对 ${target.name} 造成 ${damage} 伤害`
       if (crit) msg += ' (暴击)'

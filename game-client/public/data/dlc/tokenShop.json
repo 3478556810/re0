@@ -2,57 +2,71 @@
   {
     "id": "t1",
     "name": "技能药水",
-    "desc": "获得 1 点技能点",
+    "desc": "获得 2 点技能点",
     "type": "skillPoint",
-    "cost": 15,
-    "rewardQty": 1
+    "cost": 20,
+    "rewardQty": 2
   },
   {
     "id": "t2",
-    "name": "经验药水",
-    "desc": "获得 100 点经验",
-    "type": "exp",
-    "cost": 8,
-    "rewardQty": 100
-  },
-  {
-    "id": "t3",
-    "name": "随机饰品",
-    "desc": "获得一件随机品质的饰品",
-    "type": "accessory",
-    "cost": 20
-  },
-  {
-    "id": "t4",
-    "name": "魔石碎片 x1",
-    "desc": "用于强化、升品、重铸词条的核心材料",
+    "name": "品质魔石",
+    "desc": "用于装备升品的核心材料（终局掉落少，值得兑换）",
     "type": "material",
-    "cost": 3,
-    "rewardId": "small_magic_stone",
-    "rewardName": "魔石碎片",
+    "cost": 25,
+    "rewardId": "quality_stone",
+    "rewardName": "品质魔石",
     "rewardQty": 1
   },
   {
+    "id": "t3",
+    "name": "青铜抽奖包",
+    "desc": "随机获得锻造材料、金币或经验。大概率出铁矿石/金币",
+    "type": "gacha",
+    "cost": 5,
+    "gachaPool": [
+      { "type": "material", "rewardId": "iron_ore", "rewardName": "铁矿石", "rewardQty": 10, "weight": 30 },
+      { "type": "material", "rewardId": "copper_ore", "rewardName": "铜矿石", "rewardQty": 8, "weight": 25 },
+      { "type": "gold", "goldQty": 500, "weight": 25 },
+      { "type": "exp", "expQty": 200, "weight": 15 },
+      { "type": "material", "rewardId": "slime_gel", "rewardName": "粘稠凝胶", "rewardQty": 5, "weight": 5 }
+    ]
+  },
+  {
+    "id": "t4",
+    "name": "白银抽奖包",
+    "desc": "随机获得稀有材料或高级货币。大概率出金矿石/品质魔石",
+    "type": "gacha",
+    "cost": 15,
+    "gachaPool": [
+      { "type": "material", "rewardId": "gold_ore", "rewardName": "金矿石", "rewardQty": 3, "weight": 30 },
+      { "type": "material", "rewardId": "quality_stone", "rewardName": "品质魔石", "rewardQty": 1, "weight": 20 },
+      { "type": "material", "rewardId": "crystal_shard", "rewardName": "晶簇碎片", "rewardQty": 2, "weight": 20 },
+      { "type": "gold", "goldQty": 2000, "weight": 15 },
+      { "type": "exp", "expQty": 500, "weight": 10 },
+      { "type": "skillPoint", "rewardQty": 1, "weight": 5 }
+    ]
+  },
+  {
     "id": "t5",
-    "name": "魔石碎片 x5",
-    "desc": "批量兑换，用于大量强化",
-    "type": "material",
-    "cost": 12,
-    "rewardId": "small_magic_stone",
-    "rewardName": "魔石碎片",
-    "rewardQty": 5
+    "name": "黄金抽奖包",
+    "desc": "有概率获得龙鳞矿、黑曜石等终局材料",
+    "type": "gacha",
+    "cost": 30,
+    "gachaPool": [
+      { "type": "material", "rewardId": "dragon_ore", "rewardName": "龙鳞矿", "rewardQty": 2, "weight": 20 },
+      { "type": "material", "rewardId": "obsidian", "rewardName": "黑曜石", "rewardQty": 2, "weight": 20 },
+      { "type": "material", "rewardId": "quality_stone", "rewardName": "品质魔石", "rewardQty": 2, "weight": 25 },
+      { "type": "gold", "goldQty": 5000, "weight": 15 },
+      { "type": "skillPoint", "rewardQty": 2, "weight": 10 },
+      { "type": "accessory", "quality": "purple", "weight": 10 }
+    ]
   },
   {
     "id": "t6",
-    "name": "神秘宝石袋",
-    "desc": "随机获得1~3个魔石碎片或稀有材料",
-    "type": "random",
-    "cost": 8,
-    "rewards": [
-      { "type": "material", "rewardId": "small_magic_stone", "rewardName": "魔石碎片", "rewardQty": 1, "weight": 60 },
-      { "type": "material", "rewardId": "small_magic_stone", "rewardName": "魔石碎片", "rewardQty": 2, "weight": 25 },
-      { "type": "material", "rewardId": "small_magic_stone", "rewardName": "魔石碎片", "rewardQty": 3, "weight": 10 },
-      { "type": "material", "rewardId": "mithril_ore", "rewardName": "秘银矿石", "rewardQty": 1, "weight": 5 }
-    ]
+    "name": "随机饰品",
+    "desc": "获得一件蓝色~紫色品质的饰品",
+    "type": "accessory",
+    "cost": 20
   }
+
 ]

@@ -95,7 +95,7 @@ const baseLevel = Math.round(floor * 2 + wLv)
 
     // 属性成长按楼层递增（系数可以是小数，但结果取整）
     // 属性成长随怪物自身等级，每级 +8%，20级 ≈ 2.52 倍，比楼层系数温和得多
-const scale = 1 + (level - 1) * 0.06
+const scale = 1 + (level - 1) * 0.04
 
     selected.push({
       ...template,

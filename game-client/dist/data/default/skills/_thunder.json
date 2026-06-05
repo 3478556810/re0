@@ -1,48 +1,49 @@
 [
   {
-    "_comment": "===== 雷系技能 =====",
     "id": "thunder_shock",
     "name": "雷电",
-    "desc": "雷属性全体攻击，概率麻痹",
+    "desc": "雷属性全体攻击，概率眩晕。击杀敌人后刷新自身冷却。",
     "icon": "mdi:lightning-bolt",
     "type": "active",
     "target": "aoe",
     "element": "thunder",
     "mpCost": 18,
-    "baseMul": 1.0,
+    "baseMul": 1.1,
     "maxLevel": 10,
     "upgradeCost": 3,
     "learnCost": 3,
-    "levelScaling": { "baseMul": 0.08 },
-    "effects": [{ "type": "stun", "duration": 1, "chance": 30 }],
+    "levelScaling": { "baseMul": 0.09 },
+    "effects": [
+      { "type": "stun", "duration": 1, "chance": 30 },
+      { "type": "resetOnKill", "note": "击杀任一敌人后，该技能冷却立即完成" }
+    ],
     "tripods": [
       { "name": "高压", "unlockLevel": 4, "effects": [{ "type": "stun", "duration": 1, "chance": 40 }] },
-      { "name": "溅射", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 30, "note": "追加全体伤害", "chance": 100, "target": "aoe" }] },
-      { "name": "电磁场", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.20, "stat": "critRate", "duration": 5, "chance": 100, "target": "self" }] }
+      { "name": "连锁闪电", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 50, "target": "aoe" }] },
+      { "name": "电磁场", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.25, "stat": "critRate", "duration": 3, "chance": 100, "target": "self" }] }
     ]
   },
   {
     "id": "lightning_spear",
     "name": "雷枪",
-    "desc": "雷属性单体高伤，必定暴击并附加真实伤害",
+    "desc": "雷属性单体高伤。击杀目标后，对随机敌人造成60%的连锁伤害。",
     "icon": "mdi:lightning-bolt-outline",
     "type": "active",
     "target": "single",
     "element": "thunder",
     "mpCost": 18,
-    "baseMul": 2.5,
+    "baseMul": 2.8,
     "maxLevel": 10,
     "upgradeCost": 4,
     "learnCost": 4,
-    "levelScaling": { "baseMul": 0.2 },
+    "levelScaling": { "baseMul": 0.22 },
     "effects": [
-      { "type": "buff", "value": 100, "stat": "critRate", "duration": 1, "chance": 100, "target": "self", "note": "本次攻击必暴击" },
-      { "type": "trueDmg", "value": 0.15, "chance": 100, "note": "附加攻击力15%的真实伤害" }
+      { "type": "chainOnKill", "value": 0.6, "note": "击杀后对随机敌人造成60%伤害" }
     ],
     "tripods": [
-      { "name": "穿透", "unlockLevel": 4, "effects": [{ "type": "trueDmg", "value": 0.25, "chance": 100, "note": "真伤比例提升至25%" }] },
-      { "name": "闪电链", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 40, "note": "对相邻敌人造成伤害", "chance": 100, "target": "aoe" }] },
-      { "name": "雷神", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.3, "stat": "atk", "duration": 5, "chance": 100, "target": "self" }] }
+      { "name": "穿透", "unlockLevel": 4, "effects": [{ "type": "trueDmg", "value": 0.2, "chance": 100 }] },
+      { "name": "连锁", "unlockLevel": 7, "effects": [{ "type": "chainOnKill", "value": 1.0, "note": "连锁伤害提升至100%" }] },
+      { "name": "雷神", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.3, "stat": "atk", "duration": 3, "chance": 100, "target": "self" }] }
     ]
   }
 ]

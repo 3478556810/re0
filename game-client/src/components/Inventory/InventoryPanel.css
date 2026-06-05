@@ -114,3 +114,32 @@
   .layout { flex-direction: column; }
   .detail-tip { max-width: 90vw; }
 }
+
+
+
+.affix-tag.fixed {
+  border-color: #f0c060;
+  background: rgba(240, 192, 96, 0.12);
+  box-shadow: 0 0 6px rgba(240, 192, 96, 0.3);
+}
+
+.fixed-circle {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid #f0c060;
+  background: transparent;
+  flex-shrink: 0;
+  animation: pulse-gold 2s infinite;
+}
+
+.fixed-text {
+  color: #f0c060;
+  font-weight: bold;
+  text-shadow: 0 0 4px rgba(240, 192, 96, 0.5);
+}
+
+@keyframes pulse-gold {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(240, 192, 96, 0.4); }
+  50% { box-shadow: 0 0 0 4px rgba(240, 192, 96, 0); }
+}

@@ -157,16 +157,32 @@ const availableMonsterIds = computed(() => {
 })
 
 const availableMonsters = computed(() => {
-  const maxFloor = currentStageMaxFloor.value
+  const { minFloor, maxFloor } = getFloorRangeForCurrentRank();
   return monsterTemplates.value.filter(m => {
-    if (!availableMonsterIds.value.has(m.id)) return false
-    if (m.isBoss) return false
-    if (m.id === 'training_dummy') return false
-    // 查找这个怪物出现的楼层，如果最低楼层超过 maxFloor，则不出现
-    const minFloor = getMonsterMinFloor(m.id)
-    return minFloor <= maxFloor
-  })
-})
+    if (!availableMonsterIds.value.has(m.id)) return false;
+    if (m.isBoss) return false;
+    if (m.id === 'training_dummy') return false;
+    const monsterMinFloor = getMonsterMinFloor(m.id);
+    return monsterMinFloor >= minFloor && monsterMinFloor <= maxFloor;
+  });
+});
+
+
+function getFloorRangeForCurrentRank() {
+  const rankIndex = rankConfig.findIndex(r => r.name === store.player.rank);
+  if (rankIndex === -1) return { minFloor: 1, maxFloor: 4 };  // 默认黑铁 1-4层
+  
+  const maxFloor = (rankIndex + 1) * 5 - 1;  // 黑铁4F，青铜9F，白银14F...
+  const minFloor = rankIndex === 0 ? 1 : rankIndex * 5;  // 黑铁1F起，青铜5F起，白银10F起...
+  
+  return { minFloor, maxFloor };
+}
+// 新增：根据段位获取最高楼层
+function getMaxFloorForCurrentRank() {
+  const rankIndex = rankConfig.findIndex(r => r.name === store.player.rank);
+  if (rankIndex === -1) return 4; // 默认1-4层
+  return (rankIndex + 1) * 5 - 1; // 黑铁→4F，青铜→9F，白银→14F...
+}
 function getMonsterMinFloor(monsterId) {
   let minFloor = 999
   for (const [dgId, dg] of Object.entries(dungeonConfigs.value)) {
@@ -179,12 +195,15 @@ function getMonsterMinFloor(monsterId) {
   return minFloor === 999 ? 1 : minFloor
 }
 function getMonsterFloor(monsterId) {
-  for (const [dgId, dg] of Object.entries(dungeonConfigs.value)) {
+  const floors = [];
+  for (const dg of Object.values(dungeonConfigs.value)) {
     for (const [floor, monsters] of Object.entries(dg.monstersByFloor || {})) {
-      if (monsters.includes(monsterId)) return parseInt(floor)
+      if (monsters.includes(monsterId)) {
+        floors.push(floor );
+      }
     }
   }
-  return null
+  return floors.length > 0 ? `${floors.join('、')}` : '';
 }
 
 function getRankExpMultiplier() {
@@ -196,21 +215,19 @@ function getRankExpMultiplier() {
 function getMonsterReward(monster) {
   const mult = { weak: 1, normal: 2, strong: 4, boss: 8 }[monster.tag] || 1
   const baseLv = monster.levelRange?.[0] || monster.minLevel || 1
-  const expMult = getRankExpMultiplier()          // 经验倍率
-  const goldMult = currentRank.value.rewardMult   // 金币倍率（段位越高越富）
+  const rankMult = currentRank.value.rewardMult || 1.0
   return {
-    exp: Math.floor((8 + baseLv * 2) * mult * expMult),
-    gold: Math.floor((40 + baseLv * 6) * mult * goldMult)
+    exp: Math.floor((25 + baseLv * 6) * mult * rankMult),
+    gold: Math.floor((40 + baseLv * 6) * mult * rankMult)
   }
 }
 
 function getMaterialReward(mat) {
   const price = mat.price || 15
-  const expMult = getRankExpMultiplier()
-  const goldMult = currentRank.value.rewardMult
+  const rankMult = currentRank.value.rewardMult || 1.0
   return {
-    exp: Math.floor((8 + price / 10) * expMult),
-    gold: Math.floor((30 + price / 3) * goldMult)
+    exp: Math.floor((25 + price / 3) * rankMult),
+    gold: Math.floor((30 + price / 3) * rankMult)
   }
 }
 

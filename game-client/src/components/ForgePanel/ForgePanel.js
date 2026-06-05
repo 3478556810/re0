@@ -156,15 +156,26 @@ export function useForgePanel() {
     return items.filter(item => item.part && item.quality)
   })
 
-  // ========== 工具函数 ==========
-  function syncEquippedItem(item) {
+  // ========== 统一同步工具 ==========
+  function syncItemEverywhere(item) {
+    // 同步已装备栏
     const equipment = store.equipment
-    if (!equipment) return
-    for (const slot in equipment) {
-      if (equipment[slot] && equipment[slot].id === item.id) {
-      Object.assign(equipment[slot], item)
-        break
+    if (equipment) {
+      for (const slot in equipment) {
+        if (equipment[slot]?.id === item.id) {
+          equipment[slot] = { ...item }
+          break
+        }
       }
+    }
+    // 同步背包
+    const invIndex = store.inventory.findIndex(i => i?.id === item.id)
+    if (invIndex !== -1) {
+      store.inventory.splice(invIndex, 1, { ...item })
+    }
+    // 同步当前选中的升级物品
+    if (selectedUpgradeItem.value?.id === item.id) {
+      selectedUpgradeItem.value = { ...item }
     }
   }
 
@@ -249,7 +260,7 @@ export function useForgePanel() {
     const qualityMult = QUALITY_STATS_MULTIPLIER[quality] || 1
     const craftedMultiplier = 1.3
     const progressLevel = Math.min(itemLevel, 20)
-    const levelBonus = 1 + (progressLevel - 1) * 0.12
+    const levelBonus = 1 + (progressLevel - 1) * 0.05
 
     const part = recipe.type || 'armor'
     const isOffensivePart = ['weapon', 'gauntlet'].includes(part)
@@ -325,7 +336,6 @@ export function useForgePanel() {
     return cost.materials.every(mat => hasMaterial(mat.id, mat.qty))
   }
 
-
   function qualityUpgradeCost(item) {
     const config = store.config.enhanceConfig?.qualityUpgrade?.[item.quality]
     if (!config) return { gold: 99999, materials: [] }
@@ -343,33 +353,51 @@ export function useForgePanel() {
     return cost.materials.every(mat => hasMaterial(mat.id, mat.qty))
   }
 
-  function upgradeQuality(item) {
-    if (!canUpgradeQuality(item)) return window.showToast('材料或金币不足！')
-    const cost = qualityUpgradeCost(item)
-    store.addGold(-cost.gold)
-    for (const mat of cost.materials) store.addMaterial(mat.id, '', -mat.qty)
+ function upgradeQuality(item) {
+  if (!canUpgradeQuality(item)) return window.showToast('材料或金币不足！')
+  const cost = qualityUpgradeCost(item)
+  store.addGold(-cost.gold)
+  for (const mat of cost.materials) store.addMaterial(mat.id, '', -mat.qty)
 
-    const successRate = getQualitySuccessRate(item)
-    if (Math.random() < successRate) {
-      const qualities = ['white', 'green', 'blue', 'purple', 'red']
-      const idx = qualities.indexOf(item.quality)
-      item.quality = qualities[idx + 1]
-      item.level = 1
-      const mult = QUALITY_STATS_MULTIPLIER[item.quality] || 1
-      item.atk = Math.floor((item.baseAtk || 10) * mult)
-      item.def = Math.floor((item.baseDef || 5) * mult)
-      item.qualityFailCount = 0
-      syncEquippedItem(item)
-      store.save()
-      window.showToast(`${item.name} 品质提升为 ${qualityLabel(item.quality)}！`)
+  const successRate = getQualitySuccessRate(item)
+  if (Math.random() < successRate) {
+    // 保存升品前的属性
+    const oldAtk = item.atk
+    const oldDef = item.def
+
+    const qualities = ['white', 'green', 'blue', 'purple', 'red']
+    const idx = qualities.indexOf(item.quality)
+    item.quality = qualities[idx + 1]
+    item.qualityMult = QUALITY_STATS_MULTIPLIER[item.quality] || 1
+    item.level = 1
+    item.qualityFailCount = 0
+
+    const part = item.part || item.type || 'armor'
+    const isOffensive = ['weapon', 'gauntlet'].includes(part)
+    const isDefensive = ['armor', 'helmet', 'pants', 'shoes'].includes(part)
+
+    // 升品直接提升 20%
+    if (isOffensive) {
+      item.atk = Math.floor(oldAtk * 1.2)
+      item.def = 0
+    } else if (isDefensive) {
+      item.atk = 0
+      item.def = Math.floor(oldDef * 1.2)
     } else {
-      item.qualityFailCount = (item.qualityFailCount || 0) + 1
-      syncEquippedItem(item)
-      store.save()
-      window.showToast(`升品失败！下次成功率 ${Math.floor(getQualitySuccessRate(item) * 100)}%`)
+      item.atk = Math.floor(oldAtk * 1.2)
+      item.def = Math.floor(oldDef * 1.2)
     }
-  }
 
+    syncItemEverywhere(item)
+    store.save()
+    window.showToast(`${item.name} 品质提升为 ${qualityLabel(item.quality)}！攻击力提升了 20%`)
+  } else {
+    item.qualityFailCount = (item.qualityFailCount || 0) + 1
+    syncItemEverywhere(item)
+    store.save()
+    window.showToast(`升品失败！下次成功率 ${Math.floor(getQualitySuccessRate(item) * 100)}%`)
+  }
+}
   function reforgeCost(item) {
     const config = store.config.enhanceConfig?.affixReroll
     if (!config) return { gold: 99999, materials: [] }
@@ -402,80 +430,73 @@ export function useForgePanel() {
       newRandomAffixes.push({ id: key, level })
     }
     item.affixes = newRandomAffixes
-    syncEquippedItem(item)
+    syncItemEverywhere(item)
     store.save()
     window.showToast(`${item.name} 的词条已重铸！`)
   }
-function upgradeLevel(item) {
-  if (!canUpgradeLevel(item)) return window.showToast('材料或金币不足！');
-  const cost = levelUpgradeCost(item);
-  store.addGold(-cost.gold);
-  for (const mat of cost.materials) store.addMaterial(mat.id, '', -mat.qty);
 
-  const successRate = getLevelSuccessRate(item);
-  if (Math.random() < successRate) {
-    item.level += 1;
+  function upgradeLevel(item) {
+    if (!canUpgradeLevel(item)) return window.showToast('材料或金币不足！');
+    const cost = levelUpgradeCost(item);
+    store.addGold(-cost.gold);
+    for (const mat of cost.materials) store.addMaterial(mat.id, '', -mat.qty);
 
-    // ===== 使用与制作完全相同的计算公式 =====
-  const mult = item.qualityMult || QUALITY_STATS_MULTIPLIER[item.quality] || 1;
-    const craftedMultiplier = 1.3;                    // 和 craft 一样
-    const progressLevel = Math.min(item.level, 20);    // 封顶20级
-    const levelBonus = 1 + (progressLevel - 1) * 0.12; // 和 craft 一样
+    const successRate = getLevelSuccessRate(item);
+    if (Math.random() < successRate) {
+      item.level += 1;
 
-    // 使用物品自带的 baseAtk/baseDef（制作时已固化）
-  const baseAtk = item.baseAtk ?? 10;
-const baseDef = item.baseDef ?? 5;
-    const part = item.part || item.type || 'armor';
-    const isOffensive = ['weapon', 'gauntlet'].includes(part);
-    const isDefensive = ['armor', 'helmet', 'pants', 'shoes'].includes(part);
+      const growthFixed = 5;
+      const growthPercent = 0.04;
+      const atkGrowth = Math.floor(growthFixed + item.atk * growthPercent);
+      const defGrowth = Math.floor(3 + item.def * 0.04);
 
-    if (isOffensive) {
-      item.atk = Math.floor(baseAtk * mult * levelBonus * craftedMultiplier);
-      item.def = 0;
-    } else if (isDefensive) {
-      item.atk = 0;
-      item.def = Math.floor(baseDef * mult * levelBonus * craftedMultiplier);
-    } else {
-      // 饰品（双属性）
-      item.atk = Math.floor(baseAtk * mult * levelBonus * craftedMultiplier);
-      item.def = Math.floor(baseDef * mult * levelBonus * craftedMultiplier);
-    }
-    // ==========================================
+      const part = item.part || item.type || 'armor';
+      const isOffensive = ['weapon', 'gauntlet'].includes(part);
+      const isDefensive = ['armor', 'helmet', 'pants', 'shoes'].includes(part);
 
-    // 副词条成长（保持不变）
-    if (item.extraStats) {
-      const limitedKeys = ['critRate', 'critDmg', 'dodge', 'lifesteal', 'speed'];
-      const limitedPercentKeys = ['critRatePercent', 'dodgePercent'];
-      if (!item._initialExtraStats) item._initialExtraStats = {};
-      for (const key of Object.keys(item.extraStats)) {
-        const val = item.extraStats[key];
-        if (!item._initialExtraStats[key]) item._initialExtraStats[key] = val;
-        const initial = item._initialExtraStats[key];
-        const maxVal = initial * 3;
-        if (limitedPercentKeys.includes(key)) {
-          item.extraStats[key] = Math.min(15, val + 0.8);
-        } else if (limitedKeys.includes(key)) {
-          const hardMax = key === 'critRate' ? 30 : key === 'critDmg' ? 200 : 40;
-          item.extraStats[key] = Math.min(hardMax, Math.floor(val * 1.02));
-        } else if (key.endsWith('Percent')) {
-          item.extraStats[key] = Math.min(50, val + 1.5);
-        } else {
-          item.extraStats[key] = Math.min(maxVal, Math.floor(val * 1.06));
+      if (isOffensive) {
+        item.atk += atkGrowth;
+      } else if (isDefensive) {
+        item.def += defGrowth;
+      } else {
+        item.atk += Math.floor(3 + item.atk * 0.03);
+        item.def += Math.floor(2 + item.def * 0.03);
+      }
+
+      if (item.extraStats) {
+        const limitedKeys = ['critRate', 'critDmg', 'dodge', 'lifesteal', 'speed'];
+        const limitedPercentKeys = ['critRatePercent', 'dodgePercent'];
+        if (!item._initialExtraStats) item._initialExtraStats = {};
+        for (const key of Object.keys(item.extraStats)) {
+          const val = item.extraStats[key];
+          if (!item._initialExtraStats[key]) item._initialExtraStats[key] = val;
+          const initial = item._initialExtraStats[key];
+          const maxVal = initial * 3;
+          if (limitedPercentKeys.includes(key)) {
+            item.extraStats[key] = Math.min(15, val + 0.5);
+          } else if (limitedKeys.includes(key)) {
+            const hardMax = key === 'critRate' ? 30 : key === 'critDmg' ? 200 : 40;
+            item.extraStats[key] = Math.min(hardMax, Math.floor(val + 0.5));
+          } else if (key.endsWith('Percent')) {
+            item.extraStats[key] = Math.min(50, val + 1);
+          } else {
+            item.extraStats[key] = Math.min(maxVal, Math.floor(val * 1.03));
+          }
         }
       }
-    }
 
-    item.levelFailCount = 0;
-    syncEquippedItem(item);
-    store.save();
-    window.showToast(`${item.name} 升级为 Lv.${item.level}！`);
-  } else {
-    item.levelFailCount = (item.levelFailCount || 0) + 1;
-    syncEquippedItem(item);
-    store.save();
-    window.showToast(`升级失败！下次成功率 ${Math.floor(getLevelSuccessRate(item) * 100)}%`);
+      item.levelFailCount = 0;
+      syncItemEverywhere(item);
+      store.save();
+      window.showToast(`${item.name} 升级为 Lv.${item.level}！攻击+${atkGrowth}`);
+    } else {
+      item.levelFailCount = (item.levelFailCount || 0) + 1;
+      syncItemEverywhere(item);
+      store.save();
+      window.showToast(`升级失败！下次成功率 ${Math.floor(getLevelSuccessRate(item) * 100)}%`);
+    }
   }
-}
+
   return {
     store,
     forgeMode,

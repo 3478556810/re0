@@ -145,9 +145,9 @@
               </div>
             </div>
             <div class="upgrade-actions">
-              <button class="pixel-btn primary" @click="upgradeLevel(selectedUpgradeItem)" :disabled="!canUpgradeLevel(selectedUpgradeItem)">
-                <Icon icon="mdi:arrow-up-bold" /> 升级 ({{ levelUpgradeCost(selectedUpgradeItem).gold }}G) - {{ Math.floor(getLevelSuccessRate(selectedUpgradeItem) * 100) }}%
-              </button>
+          <button class="pixel-btn primary" @click="upgradeLevel(selectedUpgradeItem)">
+  <Icon icon="mdi:arrow-up-bold" /> 升级 ({{ levelUpgradeCost(selectedUpgradeItem).gold }}G) - {{ Math.floor(getLevelSuccessRate(selectedUpgradeItem) * 100) }}%
+</button>
 
               <button class="pixel-btn primary" @click="upgradeQuality(selectedUpgradeItem)" :disabled="!canUpgradeQuality(selectedUpgradeItem)">
                 <Icon icon="mdi:star" /> 升品 ({{ qualityUpgradeCost(selectedUpgradeItem).gold }}G) - {{ Math.floor(getQualitySuccessRate(selectedUpgradeItem) * 100) }}%

@@ -196,20 +196,28 @@ export function getRewards(engine) {
       }
 
       // 副本Boss特殊掉落（品质魔石 + 概率装备）
-     if (e.isRaidBoss || e.base?.isRaidBoss) {
-        const bossId = e.id || e.base?.id
-        let qualityStoneQty = 2
-        if (bossId === 'boss_shadow_lord') qualityStoneQty = 4
-        else if (bossId === 'boss_fire_dragon') qualityStoneQty = 3
-        else if (bossId === 'boss_goblin_king') qualityStoneQty = 2
-        
-        materials.push({ id: 'quality_stone', name: '品质魔石', qty: qualityStoneQty })
+ if (e.isRaidBoss || e.base?.isRaidBoss) {
+    const bossId = e.id || e.base?.id;
+    let qualityStoneQty = 2;
+    if (bossId === 'boss_fire_dragon') qualityStoneQty = 5;      // 20层炎龙奖励最多
+    else if (bossId === 'boss_shadow_lord') qualityStoneQty = 3; // 15层永夜领主
+    else if (bossId === 'boss_goblin_king') qualityStoneQty = 2; // 10层猩红暴君
+    
+    materials.push({ id: 'quality_stone', name: '品质魔石', qty: qualityStoneQty });
 
-        if (Math.random() < 0.4) {
-          const eq = generateRandomEquipment('boss', 21, playerLevel)
-          if (eq) equipments.push(eq)
-        }
-      }
+    // 永夜领主额外掉落暗影套材料
+    if (bossId === 'boss_shadow_lord') {
+        materials.push(
+            { id: 'obsidian', name: '黑曜石', qty: 3, dropRate: 100 },
+            { id: 'crystal_shard', name: '晶簇碎片', qty: 3, dropRate: 100 }
+        );
+    }
+
+    if (Math.random() < 0.4) {
+        const eq = generateRandomEquipment('boss', 21, playerLevel);
+        if (eq) equipments.push(eq);
+    }
+}
 
       // 普通小怪装备掉落
       if (!e.isBoss && !(e.base && e.base.isBoss)) {

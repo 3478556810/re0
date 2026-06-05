@@ -96,7 +96,7 @@
       <div class="stat-item">
         <span class="stat-label"><Icon icon="mdi:target" /> Boss 伤害</span>
         <span class="stat-value">
-          {{ bossDmg }}%
+           {{ store.playerStats.specialBossDmg || 0 }}%
           <span v-if="bossDmgBonus > 0" style="color: #4caf50;"> (+{{ bossDmgBonus }}%)</span>
         </span>
       </div>
@@ -236,7 +236,7 @@ function getAffixIcon(affixId) {
     grudge: 'mdi:skull',
     voodooDoll: 'mdi:drama-masks',
     bluntWeapon: 'mdi:hammer',
-    armorBreak: 'mdi:shield-broken',
+    armorBreak: 'uil:heart-break',
     manaResonance: 'mdi:magic-staff',
     adrenaline: 'mdi:lightning-bolt',
     bossHunter: 'mdi:target',
@@ -244,7 +244,7 @@ function getAffixIcon(affixId) {
     fortune: 'mdi:clover',
     ambushMaster: 'mdi:ninja',
     tenacity: 'mdi:shield-star',
-    phoenix: 'mdi:phoenix',
+    phoenix: 'file-icons:phoenix',
   }
   return iconMap[affixId] || 'mdi:circle'
 }

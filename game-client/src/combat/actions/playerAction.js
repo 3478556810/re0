@@ -5,25 +5,26 @@ import { applySkillEffects } from '../effects/skillEffects'
 
 // ======================= 元素反应表 =======================
 const ELEMENT_REACTIONS = {
-  'fire_water': { name: '蒸发', dmgMul: 3.0 },
-  'fire_thunder': { name: '超载', aoeDmgMul: 2.5 },
-  'fire_grass': { name: '燃烧', dotValue: 1.5, dotDuration: 3 },
-  'water_thunder': { name: '感电', chainDmgMul: 2.0, chainCount: 3 },
-  'water_ice': { name: '冻结', dmgMul: 2.5, freeze: true },
-  'ice_thunder': { name: '超导', dmgMul: 2.0, defReduce: 0.6, defDuration: 3 },
+  'fire_water': { name: '蒸发', dmgMul: 1.5 },
+  'fire_thunder': { name: '超载', aoeDmgMul: 1.2 },
+  'fire_grass': { name: '燃烧', dotValue: 0.6, dotDuration: 3 },
+  'thunder_water': { name: '感电', chainDmgMul: 1.0, chainCount: 3 },
+  'ice_water': { name: '冻结', dmgMul: 1.3, freeze: true },
+  'ice_thunder': { name: '超导', dmgMul: 1.0, defReduce: 0.6, defDuration: 3 },
   'grass_water': { name: '生长', healPercent: 0.25 },
-  'holy_dark': { name: '湮灭', maxHpPercent: 0.12 },
-  'rock_fire': { name: '熔岩', dotValue: 1.5, dotDuration: 3 },
-  'poison_fire': { name: '毒爆', burstPerStack: 0.05 },
-'fire_wind': { name: '扩散', spread: true },
-  'water_wind': { name: '扩散', spread: true },
-  'thunder_wind': { name: '扩散', spread: true },
+  'dark_holy': { name: '湮灭', maxHpPercent: 0.12 },
+  'fire_rock': { name: '熔岩', dotValue: 0.6, dotDuration: 3 },
+  'fire_poison': { name: '毒爆', burstPerStack: 0.05 },
+  // 扩散系列
+  'fire_wind': { name: '扩散', spread: true },
   'grass_wind': { name: '扩散', spread: true },
   'ice_wind': { name: '扩散', spread: true },
-  'holy_wind': { name: '扩散', spread: true },
   'dark_wind': { name: '扩散', spread: true },
+  'holy_wind': { name: '扩散', spread: true },
+  'poison_wind': { name: '扩散', spread: true },
   'rock_wind': { name: '扩散', spread: true },
-  'poison_wind': { name: '扩散', spread: true }
+  'thunder_wind': { name: '扩散', spread: true },
+  'water_wind': { name: '扩散', spread: true }
 };
 function getElementLabel(element) {
   const map = {
@@ -33,11 +34,11 @@ function getElementLabel(element) {
   };
   return map[element] || element;
 }
-function checkElementReaction(engine, attacker, target, skill, result) {
+function checkElementReaction(engine, attacker, target, skill, result, damage) {
   const skills = engine.playerSkills || {};
   const skillState = skills[skill.id];
   const skillLevel = skillState ? skillState.level : 0;
-  if (skillLevel < 15) return;
+  if (skillLevel < 10) return;
   if (!skill.element) return;
 
   const existingMark = target.effects.find(e =>
@@ -49,47 +50,46 @@ function checkElementReaction(engine, attacker, target, skill, result) {
     const reaction = ELEMENT_REACTIONS[key];
     if (!reaction) return;
 
-    // === 扩散：把“另一个元素”的印记扩散到全体 ===
-if (reaction.spread) {
-  const allEnemies = engine.getAliveEnemies();
-  const spreadElement = existingMark.element === 'wind' ? skill.element : existingMark.element;
-  
-  // 1. 扩散本身结算一次小AOE伤害
-  const scale = 1 + Math.max(0, skillLevel - 15) * 0.1;
-  const spreadDmg = Math.floor(attacker.getEffectiveAttack() * 0.8 * scale);
-  for (const enemy of allEnemies) {
-    enemy.takeDamage(spreadDmg, attacker);
-  }
+    // 扩散
+    if (reaction.spread) {
+      const allEnemies = engine.getAliveEnemies();
+      const spreadElement = existingMark.element === 'wind' ? skill.element : existingMark.element;
+      const scale = 1 + Math.max(0, skillLevel - 10) * 0.1;
+      const spreadDmg = Math.floor(attacker.getEffectiveAttack() * 0.8 * scale);
+      for (const enemy of allEnemies) {
+        enemy.takeDamage(spreadDmg, attacker);
+      }
+      let spreadCount = 0;
+      for (const enemy of allEnemies) {
+        const existing = enemy.effects.find(e => e.type === 'element_mark');
+        if (existing) enemy.removeEffect('element_mark');
+        enemy.addEffect({
+          type: 'element_mark',
+          element: spreadElement,
+          duration: 5,
+          stackable: false
+        });
+        spreadCount++;
+      }
+      if (existingMark.element === 'wind') {
+        target.removeEffect('element_mark');
+      }
+      result.messages.push(`触发元素反应：扩散！造成 ${spreadDmg} 伤害，并扩散${getElementLabel(spreadElement)}印记`);
+      return;
+    }
 
-  // 2. 扩散印记到所有敌人
-  let spreadCount = 0;
-  for (const enemy of allEnemies) {
-    const existing = enemy.effects.find(e => e.type === 'element_mark');
-    if (existing) enemy.removeEffect('element_mark');
-    enemy.addEffect({
-      type: 'element_mark',
-      element: spreadElement,
-      duration: 5,
-      stackable: false
-    });
-    spreadCount++;
-  }
-  
-  result.messages.push(`触发元素反应：扩散！造成 ${spreadDmg} 点伤害，并将${getElementLabel(spreadElement)}印记扩散至 ${spreadCount} 个敌人`);
-  return;
-}
-    // === 其他伤害反应 ===
-    const scale = 1 + Math.max(0, skillLevel - 15) * 0.1;
+    // 伤害反应
+    const scale = 1 + Math.max(0, skillLevel - 10) * 0.1;
     let reactionDamage = 0;
 
     if (reaction.dmgMul) {
-      reactionDamage = Math.floor(attacker.getEffectiveAttack() * reaction.dmgMul * scale);
+      reactionDamage = Math.floor(damage * reaction.dmgMul * scale);
       target.takeDamage(reactionDamage, attacker);
     } else if (reaction.maxHpPercent) {
       reactionDamage = Math.floor(target.maxHp * reaction.maxHpPercent * scale);
       target.takeDamage(reactionDamage, attacker);
     } else if (reaction.aoeDmgMul) {
-      reactionDamage = Math.floor(attacker.getEffectiveAttack() * reaction.aoeDmgMul * scale);
+      reactionDamage = Math.floor(damage * reaction.aoeDmgMul * scale);
       target.takeDamage(reactionDamage, attacker);
     }
 
@@ -101,16 +101,15 @@ if (reaction.spread) {
     target.removeEffect('element_mark');
 
   } else {
-    // 附加元素印记
-   // 附加元素印记（只有单体技能才能挂印记）
-if (skill.target !== 'aoe') {
-    target.addEffect({
+    // 只有单体技能可挂印记
+    if (skill.target !== 'aoe') {
+      target.addEffect({
         type: 'element_mark',
         element: skill.element,
         duration: 5,
         stackable: false
-    });
-}
+      });
+    }
   }
 }
 // ======================= 原函数结束 =======================
@@ -169,13 +168,15 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
     if (target.hp <= 0) continue
 
     const attackerSnap = {
+      highHpBoost: skill.highHpBoost || 0,
       attack: player.getEffectiveAttack(),
       critRate: player.critRate,
       critDmg: player.critDmg,
       trueDmg: player.trueDmg,
       trueDmgPercent: player.trueDmgPercent || 0,
       element: skill.element || '',
-      effects: player.effects || []
+      effects: player.effects || [],
+        fireStackBonus: skill.fireStackBonus || 0,  // 从技能配置读取
     }
 
     ;['fire','water','thunder','wind','grass','ice','holy','dark','rock','steel'].forEach(elem => {
@@ -200,7 +201,41 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
       critDmgOnMark: player.critDmgOnMark || 0
     }
 
-    const { damage, crit, multiplier, shadowTrueDmg, trueDmg } = calculateDamage(attackerSnap, defenderSnap, skill, specialOptions)
+    // ===== 三脚架状态增伤（冻结/眩晕追击） =====
+let conditionalBonus = 1.0
+
+// 碎冰：对冻结目标额外增伤
+if (skill.effects?.some(e => e.type === 'shatter') && target.effects?.some(e => e.type === 'freeze')) {
+  conditionalBonus *= 2.0
+  target.removeEffect('freeze')
+}
+
+// 冻结追击：对冻结目标必暴 + 增伤
+if (skill.effects?.some(e => e.type === 'freezeBonus') && target.effects?.some(e => e.type === 'freeze')) {
+  conditionalBonus *= 1.5
+  player._forceCritNext = true
+}
+
+// 眩晕追击：对眩晕目标增伤
+if (skill.effects?.some(e => e.type === 'stunBonus') && target.effects?.some(e => e.type === 'stun')) {
+  conditionalBonus *= 2.0
+}
+
+// 眩晕必暴：对眩晕目标必定暴击
+if (skill.effects?.some(e => e.type === 'stunCrit') && target.effects?.some(e => e.type === 'stun')) {
+  player._forceCritNext = true
+}
+
+// 斩杀：对低血量目标增伤
+if (skill.effects?.some(e => e.type === 'executioner') && target.hp / target.maxHp < 0.3) {
+  conditionalBonus *= 2.0
+}
+
+// 应用条件增伤到技能倍率
+const effectiveMul = skill.baseMul * conditionalBonus
+const effectiveSkill = { ...skill, baseMul: effectiveMul }
+
+    const { damage, crit, multiplier, shadowTrueDmg, trueDmg } = calculateDamage(attackerSnap, defenderSnap, effectiveSkill, specialOptions)
     result.shadowTrueDmg = (result.shadowTrueDmg || 0) + (shadowTrueDmg || 0)
 
     if (shadowTrueDmg > 0) {
@@ -215,10 +250,21 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
 
     const hpBefore = target.hp
     const deathResult = target.takeDamage(damage, player)
+
+
+// 闪避提示
+if (deathResult?.dodged) {
+    result.messages.push(`${target.name} 闪避了攻击！`);
+}
+
     player._lastDamageDealt = damage
 
+
+    
+
     // ---------- 元素反应：技能等级 >=15 时触发 ----------
-    checkElementReaction(engine, player, target, skill, result)
+  // 元素反应检测（传入本次伤害）
+checkElementReaction(engine, player, target, skill, result, damage);
 
     if (window.recordDamage) {
       window.recordDamage(damage, crit, shadowTrueDmg || 0)

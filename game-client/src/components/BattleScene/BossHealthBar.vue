@@ -12,21 +12,19 @@
 
     <!-- 效果图标区域 -->
     <div class="boss-effect-icons" v-if="enemyEffects && enemyEffects.length">
-      <div
-        v-for="eff in sortedEffects"
-        :key="eff.type + '_' + (eff.animKey || 0)"
-        class="effect-badge"
-        :class="[
-          getEffectClass(eff),
-          eff.animClass || '',
-          eff.type === 'element_mark' ? getElementMarkClass(eff) : ''
-        ]"
-        :title="eff.type === 'element_mark' ? getElementMarkTooltip(eff) : getEffectTooltip(eff, bossData.maxHp)"
-        @click.stop="$emit('showEffectBubble', eff, bossData.maxHp, $event)"
-      >
-        <Icon :icon="getEffectIcon(eff.type === 'element_mark' ? eff.element : eff.type)" />
-      </div>
-    </div>
+  <div
+  v-for="eff in sortedEffects"
+  :key="eff.type"
+  class="effect-badge"
+:class="[getEffectClass(eff), eff.animClass || '', eff.type === 'element_mark' ? getElementMarkClass(eff) : '']"
+  @click.stop="$emit('showEffectBubble', eff, bossData.maxHp, $event)"
+>
+  <Icon :icon="getEffectIcon(eff.type === 'element_mark' ? eff.element : eff.type)" />
+  <div class="eff-meta">
+    <span class="eff-dur" v-if="eff.duration > 0">T{{ eff.duration }}</span>
+    <span class="eff-stacks" v-if="eff.stacks > 1">×{{ eff.stacks }}</span>
+  </div>
+</div></div>
   </div>
 </template>
 

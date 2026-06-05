@@ -23,7 +23,16 @@ export function applySkillEffects(source, target, effects, engine) {
 
     switch (effDef.type) {
 
-
+case 'burn':
+  target.addEffect({
+    type: EFFECT_TYPES.BURN,
+    value: effDef.value || 0.2,
+    duration: effDef.duration || 3,
+    stackable: effDef.stackable ?? true,
+    maxStacks: effDef.maxStacks || 99,
+    casterAttack: source.getEffectiveAttack()
+  });
+  break;
 
 case 'reflect':
   // 为目标（可以是自己或全体）附加反伤效果
@@ -76,16 +85,43 @@ case 'trueDmg':
   debuffTypes.forEach(type => source.removeEffect(type));
   messages.push(`${source.name} 的所有减益效果被净化了！`);
   break;
-        case 'dotBurst': {
-  // 基于目标当前中毒层数造成额外伤害，不清除层数
-  const dotEffect = target.effects.find(e => e.type === EFFECT_TYPES.DOT);
-  if (dotEffect) {
-    const burstMultiplier = value; // 例如2.0表示每层2倍攻击力的伤害
-    const burstDmg = Math.floor(source.getEffectiveAttack() * burstMultiplier * (dotEffect.stacks || 1));
+       case 'dotBurst': {
+  // 支持引爆中毒(dot)和灼烧(burn)两种持续伤害
+  let targetEffect = target.effects.find(e => e.type === EFFECT_TYPES.DOT);
+  let effectType = 'dot';
+  
+  // 如果没有中毒，尝试找灼烧
+  if (!targetEffect) {
+    targetEffect = target.effects.find(e => e.type === EFFECT_TYPES.BURN);
+    effectType = 'burn';
+  }
+  
+  if (targetEffect) {
+    const stacks = targetEffect.stacks || 1;
+    const burstMultiplier = value; // 技能配置里的 value，如 1.5 或 2.0
+    
+    let burstDmg = 0;
+    if (effectType === 'dot' && targetEffect.isPercentHp) {
+      // 中毒引爆：每层造成目标最大生命值 × 配置倍率 的伤害
+      burstDmg = Math.floor(target.maxHp * burstMultiplier * stacks / 100);
+    } else if (effectType === 'burn') {
+      // 灼烧引爆：每层造成施法者攻击力 × 灼烧倍率 × 引爆倍率 的伤害
+      const atk = targetEffect.casterAttack || source.getEffectiveAttack();
+      burstDmg = Math.floor(atk * (targetEffect.value || 0.2) * burstMultiplier * stacks);
+    } else {
+      // 旧版 Dot：基于攻击力的固定倍率
+      burstDmg = Math.floor(source.getEffectiveAttack() * burstMultiplier * stacks);
+    }
+    
     target.takeDamage(burstDmg, source);
-    messages.push(`${target.name} 的毒素被引爆，造成 ${burstDmg} 点伤害！`);
+    
+    // 引爆后清除层数
+    target.removeEffect(effectType === 'dot' ? EFFECT_TYPES.DOT : EFFECT_TYPES.BURN);
+    
+    messages.push(`引爆了目标身上的${effectType === 'dot' ? '中毒' : '灼烧'}，造成 ${burstDmg} 点伤害！`);
   }
   break;
+
 }
       case 'freeze':
         target.addEffect({ type: EFFECT_TYPES.FREEZE, duration: duration || 1, value: 0, stackable: false })
@@ -118,24 +154,83 @@ case 'trueDmg':
         source.addEffect({ type: EFFECT_TYPES.REGEN, value: value || 0.08, duration: duration || 3, stackable: false })
         messages.push(`${source.name} 获得再生效果`)
         break
+
+
+
+        // ===== 新增三脚架效果 =====
+
+// 斩杀：对低血量目标额外增伤（通过 attacker 字段传递到 damageCalculator）
+case 'executioner':
+  // 挂载到 source 的临时字段上，damageCalculator 会读取
+  if (!source._pendingExecutioner) source._pendingExecutioner = 0
+  source._pendingExecutioner = Math.max(source._pendingExecutioner, value || 1.0)
+  break
+
+
+
+// 碎冰：对冻结目标造成额外伤害（挂载到 source 上，damageCalculator 读取）
+case 'shatter':
+  if (!source._pendingShatter) source._pendingShatter = 0
+  source._pendingShatter = Math.max(source._pendingShatter, value || 1.0)
+  break
+
+// 冻结追击：对冻结目标必暴且增伤（挂载到 source 上，damageCalculator 读取）
+case 'freezeBonus':
+  if (!source._pendingFreezeBonus) source._pendingFreezeBonus = 0
+  source._pendingFreezeBonus = Math.max(source._pendingFreezeBonus, value || 0.5)
+  break
+
+// 眩晕追击：对眩晕目标增伤（挂载到 source 上，damageCalculator 读取）
+case 'stunBonus':
+  if (!source._pendingStunBonus) source._pendingStunBonus = 0
+  source._pendingStunBonus = Math.max(source._pendingStunBonus, value || 1.0)
+  break
+
+// 眩晕必暴：对眩晕目标必定暴击（挂载到 source 上，damageCalculator 读取）
+case 'stunCrit':
+  if (!source._pendingStunCrit) source._pendingStunCrit = false
+  source._pendingStunCrit = true
+  break
+
+// 牺牲生命换取 Buff（直接执行）
+case 'sacrifice':
+  const sacrificeHp = Math.floor(source.maxHp * (value || 0.2))
+  source.hp = Math.max(1, source.hp - sacrificeHp)
+  messages.push(`${source.name} 牺牲了 ${sacrificeHp} 点生命`)
+  break
+
+// 清除所有 DOT 和流血效果
+case 'cleanseDot':
+  source.removeEffect(EFFECT_TYPES.DOT)
+  source.removeEffect(EFFECT_TYPES.BLEED)
+  source.removeEffect(EFFECT_TYPES.BURN)
+  messages.push(`${source.name} 清除了所有持续伤害效果`)
+  break
+
+// 速度转攻击力（刻印已有此逻辑，这里补充技能版本）
+case 'speedToAtk':
+  const conversionRate = value || 10.0;  // 默认 1000% 转化率
+  const extraAtk = Math.floor(source.speed * conversionRate);
+  if (!source._speedToAtkBonus) source._speedToAtkBonus = 0;
+  source._speedToAtkBonus += extraAtk;
+  source.attack += extraAtk;
+  messages.push(`${source.name} 的速度转化为 +${extraAtk} 攻击力！`);
+  break;
       case 'lifestealBuff':
         source.addEffect({ type: EFFECT_TYPES.LIFESTEAL_BUFF, value: value || 0.15, duration: duration || 3, stackable: false })
         messages.push(`${source.name} 的吸血效果增强了`)
         break
 case 'dot':
   const isPercentHp = effDef.note && effDef.note.includes('最大生命值');
-  const dotEffect = {
+  target.addEffect({
     type: EFFECT_TYPES.DOT,
     value: effDef.value || 0.15,
     duration: effDef.duration || 3,
     stackable: effDef.stackable ?? true,
     maxStacks: effDef.maxStacks || 99,
-    isPercentHp: isPercentHp,
+    isPercentHp: isPercentHp,   // ← 只有毒系才会是 true，火焰斩的 note 不含"最大生命值"
     animClass: 'dot-damage'
-  };
-  // 如果是百分比生命 DOT，存储施法者攻击力用于软上限
-
-  target.addEffect(dotEffect);
+  });
   break;
 case 'heal':
   const healAmount = Math.floor(source.getEffectiveAttack() * value);
