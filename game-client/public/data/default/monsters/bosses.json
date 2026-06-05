@@ -32,46 +32,59 @@
     "minLevel": 10, "maxLevel": 25, "levelRange": [10, 25]
   },
   {
-    "_comment": "===== 15层 Boss =====",
-    "id": "boss_fire_dragon", "name": "焚狱炎龙", "tag": "boss", "isBoss": true,
-    "baseHp": 150000, "baseAtk": 280, "baseDef": 120, "exp": 2000,
-    "traits": ["revive"], "enrageTurn": 6,
-    "materials": [
-      { "id": "dragon_ore", "qty": 4, "dropRate": 100 },
-      { "id": "mithril_ore", "qty": 2, "dropRate": 100 },
-      { "id": "quality_stone", "qty": 3, "dropRate": 50 }
-    ],
-    "icon": "mdi:dragon", "element": "fire",
-    "critRate": 20, "critDmg": 150, "lifesteal": 10, "luck": 30,
-    "skillsText": "[{\"name\":\"龙息\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"fire\",\"baseMul\":3.0,\"effects\":[{\"type\":\"dot\",\"value\":0.25,\"duration\":3,\"chance\":100,\"target\":\"aoe\"}]},{\"name\":\"熔岩爆裂\",\"mpCost\":0,\"target\":\"single\",\"element\":\"fire\",\"baseMul\":6.0,\"effects\":[{\"type\":\"debuff\",\"stat\":\"def\",\"value\":-0.40,\"duration\":3,\"chance\":100}]},{\"name\":\"火焰护盾\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"shield\",\"value\":0.30,\"duration\":3,\"chance\":100},{\"type\":\"reflect\",\"value\":0.20,\"duration\":3,\"chance\":100}],\"cooldown\":5},{\"name\":\"陨石召唤\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"fire\",\"baseMul\":8.0,\"effects\":[{\"type\":\"dot\",\"value\":0.35,\"duration\":3,\"chance\":100,\"target\":\"aoe\"}],\"cooldown\":6}]",
-    "minLevel": 15, "maxLevel": 35, "levelRange": [15, 35]
-  },
-{
   "_comment": "===== 20层 Boss =====",
+  "id": "boss_fire_dragon",
+  "name": "焚狱炎龙",
+  "tag": "boss",
+  "isBoss": true,
+  "baseHp": 200000,
+  "baseAtk": 320,
+  "baseDef": 140,
+  "exp": 3000,
+  "traits": ["revive"],
+  "enrageTurn": 5,
+  "materials": [
+    { "id": "dragon_ore", "qty": 5, "dropRate": 100 },
+    { "id": "obsidian", "qty": 3, "dropRate": 60 },
+    { "id": "quality_stone", "qty": 4, "dropRate": 60 }
+  ],
+  "icon": "mdi:dragon",
+  "element": "fire",
+  "critRate": 25,
+  "critDmg": 180,
+  "lifesteal": 15,
+  "luck": 40,
+  "skillsText": "[{\"name\":\"龙息\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"fire\",\"baseMul\":3.5,\"effects\":[{\"type\":\"burn\",\"value\":0.30,\"duration\":3,\"chance\":100,\"target\":\"aoe\",\"stackable\":true,\"maxStacks\":5}]},{\"name\":\"熔岩爆裂\",\"mpCost\":0,\"target\":\"single\",\"element\":\"fire\",\"baseMul\":7.0,\"effects\":[{\"type\":\"debuff\",\"stat\":\"def\",\"value\":-0.50,\"duration\":3,\"chance\":100}]},{\"name\":\"火焰护盾\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"shield\",\"value\":0.35,\"duration\":3,\"chance\":100},{\"type\":\"reflect\",\"value\":0.25,\"duration\":3,\"chance\":100}],\"cooldown\":5},{\"name\":\"陨石天降\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"fire\",\"baseMul\":10.0,\"effects\":[{\"type\":\"burn\",\"value\":0.40,\"duration\":3,\"chance\":100,\"target\":\"aoe\",\"stackable\":true,\"maxStacks\":5}],\"cooldown\":6}]",
+  "minLevel": 20,
+  "maxLevel": 40,
+  "levelRange": [20, 40]
+},
+{
+  "_comment": "===== 15层 Boss =====",
   "id": "boss_shadow_lord",
   "name": "永夜领主",
   "tag": "boss",
   "isBoss": true,
-  "baseHp": 500000,
-  "baseAtk": 380,
-  "baseDef": 180,
-  "exp": 5000,
+  "baseHp": 350000,
+  "baseAtk": 300,
+  "baseDef": 150,
+  "exp": 2500,
   "traits": ["revive"],
-  "enrageTurn": 5,
+  "enrageTurn": 6,
   "materials": [
     { "id": "obsidian", "qty": 4, "dropRate": 100 },
     { "id": "mithril_ore", "qty": 2, "dropRate": 100 },
-    { "id": "quality_stone", "qty": 4, "dropRate": 100 }
+    { "id": "quality_stone", "qty": 3, "dropRate": 100 }
   ],
   "icon": "mdi:skull-crossbones",
   "element": "dark",
-  "critRate": 30,
-  "critDmg": 200,
-  "lifesteal": 20,
-  "luck": 50,
-  "skillsText": "[{\"name\":\"暗影弹幕\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":3.5,\"effects\":[{\"type\":\"bleed\",\"value\":0.10,\"duration\":3,\"chance\":100,\"target\":\"aoe\"}],\"ignoreDef\":50,\"unlockPhase\":1},{\"name\":\"暗影突刺\",\"mpCost\":0,\"target\":\"single\",\"element\":\"dark\",\"baseMul\":7.0,\"effects\":[{\"type\":\"bleed\",\"value\":0.15,\"duration\":3,\"chance\":100},{\"type\":\"debuff\",\"stat\":\"def\",\"value\":-0.50,\"duration\":3,\"chance\":100}],\"unlockPhase\":1},{\"name\":\"虚空诅咒\",\"mpCost\":0,\"target\":\"single\",\"element\":\"dark\",\"baseMul\":0,\"effects\":[{\"type\":\"void_curse\",\"duration\":10,\"mechanic\":\"void_curse\",\"extra\":{\"hpPercent\":0.50},\"chance\":100}],\"cooldown\":5,\"unlockPhase\":2,\"mechanic\":\"void_curse\"},{\"name\":\"召唤暗影分身\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[],\"cooldown\":8,\"unlockPhase\":3,\"mechanic\":\"summon_shadow_clones\",\"mechanicParams\":{\"count\":2,\"hpRatio\":0.3,\"atkRatio\":0.3,\"cloneName\":\"暗影分身\"}},{\"name\":\"生命虹吸\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":2.5,\"effects\":[{\"type\":\"lifestealBuff\",\"value\":40,\"duration\":1,\"chance\":100,\"target\":\"self\"}],\"cooldown\":4,\"unlockPhase\":3},{\"name\":\"湮灭\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":12.0,\"effects\":[{\"type\":\"dot\",\"value\":0.50,\"duration\":3,\"chance\":100,\"target\":\"aoe\"}],\"cooldown\":8,\"unlockPhase\":4}]",
-  "minLevel": 20,
-  "maxLevel": 40,
-  "levelRange": [20, 40]
+  "critRate": 25,
+  "critDmg": 180,
+  "lifesteal": 18,
+  "luck": 40,
+  "skillsText": "[{\"name\":\"暗影弹幕\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":3.5,\"effects\":[{\"type\":\"bleed\",\"value\":0.10,\"duration\":3,\"chance\":100,\"target\":\"aoe\"}],\"ignoreDef\":50,\"unlockPhase\":1},{\"name\":\"暗影突刺\",\"mpCost\":0,\"target\":\"single\",\"element\":\"dark\",\"baseMul\":7.0,\"effects\":[{\"type\":\"bleed\",\"value\":0.15,\"duration\":3,\"chance\":100},{\"type\":\"debuff\",\"stat\":\"def\",\"value\":-0.50,\"duration\":3,\"chance\":100}],\"unlockPhase\":1},{\"name\":\"虚空诅咒\",\"mpCost\":0,\"target\":\"single\",\"element\":\"dark\",\"baseMul\":0,\"effects\":[{\"type\":\"void_curse\",\"duration\":10,\"mechanic\":\"void_curse\",\"extra\":{\"hpPercent\":0.50},\"chance\":100}],\"cooldown\":5,\"unlockPhase\":2,\"mechanic\":\"void_curse\"},{\"name\":\"召唤暗影分身\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[],\"cooldown\":8,\"unlockPhase\":3,\"mechanic\":\"summon_shadow_clones\",\"mechanicParams\":{\"count\":2,\"hpRatio\":0.3,\"atkRatio\":0.3,\"cloneName\":\"暗影分身\"}},{\"name\":\"生命虹吸\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":2.5,\"effects\":[{\"type\":\"lifestealBuff\",\"value\":40,\"duration\":1,\"chance\":100,\"target\":\"self\"}],\"cooldown\":4,\"unlockPhase\":3},{\"name\":\"湮灭\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":10.0,\"effects\":[{\"type\":\"dot\",\"value\":0.40,\"duration\":3,\"chance\":100,\"target\":\"aoe\"}],\"cooldown\":8,\"unlockPhase\":4}]",
+  "minLevel": 15,
+  "maxLevel": 30,
+  "levelRange": [15, 30]
 }
 ]

@@ -7,28 +7,7 @@
       <p class="hint">挑战强大的Boss，获得稀有材料与荣誉</p>
 
       <div class="raid-list">
-        <!-- Boss 1：永夜领主 -->
-        <div class="raid-card" @click="enterRaid('boss_shadow_lord')">
-          <div class="raid-header">
-            <Icon icon="line-md:moon-twotone" class="raid-icon" />
-            <div class="raid-info">
-              <h3 class="raid-boss-name">永夜领主</h3>
-              <span class="raid-level">21层难度 | 推荐等级 20+</span>
-            </div>
-            <span v-if="raidClears['boss_shadow_lord']" class="clear-badge">已通关</span>
-          </div>
-          <div class="raid-desc">
-            暗影咒装材料的唯一来源。血量极高，暗影套的百分比真伤在此发挥最大价值。
-          </div>
-          <div class="raid-rewards">
-            <span class="reward-tag">黑曜石</span>
-            <span class="reward-tag">秘银矿石</span>
-            <span class="reward-tag">品质魔石 x4</span>
-          </div>
-          <div class="raid-enter">
-            <Icon icon="mdi:sword-cross" /> 进入战斗
-          </div>
-        </div>
+        
 
         <!-- Boss 2：焚狱炎龙 -->
         <div class="raid-card" @click="enterRaid('boss_fire_dragon')">
@@ -36,7 +15,7 @@
             <Icon icon="game-icons:sea-dragon" class="raid-icon" />
             <div class="raid-info">
               <h3 class="raid-boss-name">焚狱炎龙</h3>
-              <span class="raid-level">21层难度 | 推荐等级 15+</span>
+              <span class="raid-level">21层难度 | 推荐等级 20+</span>
             </div>
             <span v-if="raidClears['boss_fire_dragon']" class="clear-badge">已通关</span>
           </div>
@@ -53,6 +32,30 @@
           </div>
         </div>
 
+
+
+        <!-- Boss 1：永夜领主 -->
+        <div class="raid-card" @click="enterRaid('boss_shadow_lord')">
+          <div class="raid-header">
+            <Icon icon="line-md:moon-twotone" class="raid-icon" />
+            <div class="raid-info">
+              <h3 class="raid-boss-name">永夜领主</h3>
+              <span class="raid-level">21层难度 | 推荐等级 15+</span>
+            </div>
+            <span v-if="raidClears['boss_shadow_lord']" class="clear-badge">已通关</span>
+          </div>
+          <div class="raid-desc">
+            暗影咒装材料的唯一来源。血量极高，暗影套的百分比真伤在此发挥最大价值。
+          </div>
+          <div class="raid-rewards">
+            <span class="reward-tag">黑曜石</span>
+            <span class="reward-tag">秘银矿石</span>
+            <span class="reward-tag">品质魔石 x4</span>
+          </div>
+          <div class="raid-enter">
+            <Icon icon="mdi:sword-cross" /> 进入战斗
+          </div>
+        </div>
         <!-- Boss 3：猩红暴君 -->
         <div class="raid-card" @click="enterRaid('boss_goblin_king')">
           <div class="raid-header">
@@ -120,10 +123,10 @@ function enterRaid(bossId) {
   if (!template) return
 
 const raidMultiplier = {
-    'boss_shadow_lord': { hp: 3.0, atk: 2.0, def: 1.5 },
-    'boss_fire_dragon': { hp: 2.5, atk: 1.8, def: 1.3 },
-    'boss_goblin_king': { hp: 2.0, atk: 1.6, def: 1.2 },
-    'boss_goblin_chief': { hp: 1.5, atk: 1.4, def: 1.1 }
+    'boss_shadow_lord': { hp: 2.5, atk: 2.0, def: 1.6 },  // 现在它是15层Boss，保持高倍率
+    'boss_fire_dragon': { hp: 3.0, atk: 2.2, def: 1.8 },  // 20层炎龙，强度提到最高
+    'boss_goblin_king': { hp: 2.0, atk: 1.8, def: 1.4 },
+    'boss_goblin_chief': { hp: 1.5, atk: 1.4, def: 1.2 }
 }
   const mult = raidMultiplier[bossId] || { hp: 1.0, atk: 1.0, def: 1.0 }
 

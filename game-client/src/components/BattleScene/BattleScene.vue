@@ -2,14 +2,14 @@
   <div class="battle-container">
 
     <!-- Boss 独立血条（仅在 Boss 战时显示） -->
-    <BossHealthBar
-      v-if="isBossBattle && bossData"
-      :boss-data="bossData"
-      :phase-thresholds="bossPhaseThresholds"
-      :enemy-effects="currentEnemyEffects"
-      @phase-change="onBossPhaseChange"
-      @show-effect-bubble="(eff, maxHp, event) => showEffectBubble(eff, maxHp, event)"
-    />
+   <BossHealthBar
+  v-if="isBossBattle && bossData"
+  :boss-data="bossData"
+  :phase-thresholds="bossPhaseThresholds"
+  :enemy-effects="currentEnemyEffects"
+  @phase-change="onBossPhaseChange"
+  @show-effect-bubble="(eff, maxHp, event) => showEffectBubble(eff, maxHp, event)"
+/>
 
     <!-- 其余内容完全不变... -->
     <Transition name="fade">
@@ -113,7 +113,11 @@ import BattleResultPanel from './BattleResultPanel.vue'
 import BossHealthBar from './BossHealthBar.vue'
 import '@/assets/css/BattleScene.css'
 import { getSortedEffects } from '@/composables/useBattleHelpers'
-
+import { 
+  getEffectDisplayName, 
+  getEffectDisplayValue ,
+   getEffectTooltip 
+} from '@/composables/useBattleHelpers'
 const props = defineProps({
   enemies: Array,
   battleCoord: Object,
@@ -232,19 +236,8 @@ const showEdgeGlow = (color, duration = 0.5) => {
 // 通用的 showEffectBubble，会被 BossHealthBar 和其他组件调用
 const showEffectBubble = (effect, maxHp, event) => {
   uiShowEffectBubble(effect, maxHp, event, (eff, maxHp) => {
-    let desc = ''
-    switch (eff.type) {
-      case 'dot': desc = `每回合损失 ${Math.floor(eff.value * Math.pow(2, (eff.stacks || 1) - 1))} 点生命 (${eff.stacks || 1}层)`; break
-      case 'bleed': desc = `每回合损失 ${Math.floor(maxHp * eff.value)} 点生命`; break
-      case 'freeze': desc = '冻结中'; break
-      case 'stun': desc = '眩晕中'; break
-      case 'shield': desc = `护盾 ${eff.value}`; break
-      case 'regen': desc = `每回合恢复 ${Math.floor(maxHp * eff.value)} 点生命`; break
-      case 'atkUp': case 'defUp': case 'spdUp': case 'critUp': desc = `提升 ${Math.floor(eff.value * 100)}%`; break
-      case 'atkDown': case 'defDown': case 'spdDown': case 'critDown': desc = `降低 ${Math.floor(-eff.value * 100)}%`; break
-      default: desc = eff.type
-    }
-    return `${eff.type}：${desc}，剩余 ${eff.duration} 回合`
+    // 直接复用悬浮提示的完整文本
+    return getEffectTooltip(eff, maxHp)
   })
 }
 

@@ -45,11 +45,15 @@ export function getEffectIcon(type) {
     spdDown: 'mdi:walk',
     freeze: 'mdi:snowflake',
     taunt: 'mdi:account-voice',
+    critRateUp: 'fa:fire',
+critDmgUp: 'mdi:flash-circle',
     lifestealBuff: 'mdi:blood-saver',
     critUp: 'noto:heart-on-fire',
     dragonMark: 'simple-icons:redragon',
     shadowMark: 'line-md:moon',
-    holyMark: 'mdi:star-shooting'
+    holyMark: 'mdi:star-shooting',
+burn: 'cuida:fire-outline',
+reflect: 'mdi:shield-refresh',
   }
   return map[type] || 'mdi:circle-small'
 }
@@ -57,19 +61,70 @@ export function getEffectIcon(type) {
 export function getEffectTooltip(effect, maxHp) {
   let desc = ''
   switch (effect.type) {
-    case 'dot': desc = `每回合损失 ${Math.floor(effect.value * Math.pow(2, (effect.stacks || 1) - 1))} 点生命 (${effect.stacks || 1}层)`; break
-    case 'bleed': desc = `每回合损失 ${Math.floor(maxHp * effect.value)} 点生命`; break
-    case 'freeze': desc = '冻结中'; break
-    case 'stun': desc = '眩晕中'; break
-    case 'shield': desc = `护盾 ${effect.value}`; break
-    case 'regen': desc = `每回合恢复 ${Math.floor(maxHp * effect.value)} 点生命`; break
-    case 'atkUp': case 'defUp': case 'spdUp': case 'critUp': desc = `提升 ${Math.floor(effect.value * 100)}%`; break
-    case 'atkDown': case 'defDown': case 'spdDown': case 'critDown': desc = `降低 ${Math.floor(-effect.value * 100)}%`; break
-    default: desc = effect.type
+    case 'burn':
+  const atk = effect.casterAttack || 50;
+  const dmg = Math.floor(atk * (effect.value || 0.2) * (effect.stacks || 1));
+  desc = `灼烧 · ${effect.stacks || 1}层 · 每回合损失 ${dmg} 点生命`;
+  break;
+    case 'dot': 
+      desc = `中毒 · ${effect.stacks || 1}层 · 每回合损失 ${Math.floor((effect.value || 0) * 100)}% 最大生命`; 
+      break
+    case 'bleed': 
+      desc = `流血 · 每回合损失 ${Math.floor(maxHp * (effect.value || 0.05))} 点生命`; 
+      break
+    case 'freeze': 
+      desc = '冻结 · 无法行动'; 
+      break
+    case 'stun': 
+      desc = '眩晕 · 无法行动'; 
+      break
+    case 'shield': 
+      desc = `护盾 · ${Math.floor(effect.value)} 点`; 
+      break
+    case 'regen': 
+      desc = `再生 · 每回合恢复 ${Math.floor(maxHp * effect.value)} 点生命`; 
+      break
+    case 'atkUp': 
+      desc = `攻击力提升 ${Math.floor(effect.value * 100)}%`; 
+      break
+    case 'defUp': 
+      desc = `防御力提升 ${Math.floor(effect.value * 100)}%`; 
+      break
+    case 'spdUp': 
+      desc = `速度提升 ${Math.floor(effect.value * 100)}%`; 
+      break
+    case 'critUp': 
+      desc = `暴击率提升 ${Math.floor(effect.value * 100)}%`; 
+      break
+    case 'atkDown': 
+      desc = `攻击力降低 ${Math.floor(-effect.value * 100)}%`; 
+      break
+    case 'defDown': 
+      desc = `防御力降低 ${Math.floor(-effect.value * 100)}%`; 
+      break
+    case 'spdDown': 
+      desc = `速度降低 ${Math.floor(-effect.value * 100)}%`; 
+      break
+    case 'critDown': 
+      desc = `暴击率降低 ${Math.floor(-effect.value * 100)}%`; 
+      break
+    case 'holyMark': 
+      desc = `光之烙印 · 受到伤害增加 ${Math.floor(effect.value * 100)}%`; 
+      break
+    case 'dragonMark': 
+      desc = `龙焰印记 · 受到伤害增加 ${Math.floor(effect.value * 100)}% · ${effect.stacks || 1}层`; 
+      break
+    case 'shadowMark': 
+      desc = `暗蚀印记 · 百分比生命真伤 · ${effect.stacks || 1}层`; 
+      break
+    case 'element_mark': 
+      desc = getElementMarkTooltip(effect); 
+      break
+    default: 
+      desc = effect.type
   }
-  return `${effect.type}：${desc}，剩余 ${effect.duration} 回合`
+  return `${desc} · 剩余 ${effect.duration} 回合`
 }
-
 /**
  * 效果排序：套装印记 → 元素印记 → buff → debuff → dot
  */
@@ -143,4 +198,55 @@ export function getElementMarkTooltip(eff) {
   
   const label = labelMap[eff.element] || eff.element
   return `元素印记·${label}`
+}
+
+export function getEffectDisplayName(type) {
+  const map = {
+    atkUp: '攻击力', defUp: '防御力', spdUp: '速度',
+    atkDown: '攻击力', defDown: '防御力', spdDown: '速度',
+    critRateUp: '暴击率', critDmgUp: '暴击伤害',
+    maxHpUp: '最大生命', dodgeUp: '闪避率',
+    shield: '护盾', regen: '再生', dot: '中毒', bleed: '流血',
+    stun: '眩晕', freeze: '冻结', silence: '沉默',
+    reflect: '反伤', lifestealBuff: '吸血强化',
+    weak: '虚弱', taunt: '嘲讽',
+    holyMark: '光之烙印', dragonMark: '龙焰印记', shadowMark: '暗蚀印记',
+    element_mark: '元素印记'
+  }
+  return map[type] || type
+}
+
+export function getEffectDisplayValue(eff, maxHp) {
+
+if (eff.type === 'burn') {
+  const atk = eff.casterAttack || 50;
+  const dmg = Math.floor(atk * (eff.value || 0.2) * (eff.stacks || 1));
+  return dmg + ' 点/回合';
+}
+
+  if (eff.type === 'shield') {
+    return Math.floor(eff.value) + ' 点'
+  }
+  if (['stun','freeze','silence'].includes(eff.type)) {
+    return '控制'
+  }
+if (eff.type === 'dot') {
+    if (eff.isPercentHp) {
+        // 中毒：基于最大生命值百分比
+        const pct = (eff.value || 0.015) * (eff.stacks || 1)
+        const dmg = Math.floor((maxHp || 100) * pct)
+        return dmg + ' 点/回合'
+    } else {
+        // 灼烧：基于攻击力的固定伤害（显示百分比）
+        return Math.floor((eff.value || 0) * 100) + '% /回合'
+    }
+}
+  if (eff.type === 'bleed') {
+    const dmg = Math.floor((maxHp || 100) * (eff.value || 0.05))
+    return dmg + ' 点/回合'
+  }
+  const val = eff.value || 0
+  const percent = Math.abs(val * 100).toFixed(0)
+  const sign = val >= 0 ? '+' : ''
+  return sign + percent + '%'
 }

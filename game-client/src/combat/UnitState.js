@@ -115,40 +115,51 @@ export class UnitState {
     return shield
   }
 
-  addEffect(effectDef) {
+addEffect(effectDef) {
     const { type, duration, value, stackable, maxStacks, noRefresh } = effectDef
     const existing = this.effects.find(e => e.type === type)
 
     if (existing && noRefresh) return false
 
     if (existing) {
-      if (stackable) {
-        if (existing.stacks < (maxStacks || 99)) {
-          existing.stacks += 1
-        }
-        existing.duration = duration
-        existing.animClass = effectDef.animClass || existing.animClass
-        if (type === EFFECT_TYPES.SHIELD) {
-          existing.value += value
+        if (stackable) {
+            // 可叠加类型：增加层数，刷新持续时间
+            if (existing.stacks < (maxStacks || 99)) {
+                existing.stacks += 1
+            }
+            existing.duration = duration
+            existing.animClass = effectDef.animClass || existing.animClass
+            
+            // 护盾：累加数值
+            if (type === EFFECT_TYPES.SHIELD) {
+                existing.value += value
+            }
+            // 中毒、流血：保留原始 value，不覆盖
+            else if (type === EFFECT_TYPES.DOT || type === EFFECT_TYPES.BLEED) {
+                // 不做任何修改，保留第一次设置的值
+            }
+            // 其他类型：更新 value
+            else {
+                existing.value = value || existing.value
+            }
+            return true
         } else {
-          existing.value = value || existing.value
+            // 不可叠加类型：取最高值，刷新持续时间
+            existing.value = Math.max(existing.value || 0, value || 0)
+            existing.duration = Math.max(existing.duration, duration)
+            return true
         }
-        return true
-      } else {
-        this.removeEffect(type)
-      }
     }
 
     this.effects.push({
-      ...effectDef,
-      duration: duration || 0,
-      value: value || 0,
-      stacks: 1,
-      noRefresh: !!noRefresh,
+        ...effectDef,
+        duration: duration || 0,
+        value: value || 0,
+        stacks: 1,
+        noRefresh: !!noRefresh,
     })
     return true
-  }
-
+}
   removeEffect(type) {
     this.effects = this.effects.filter(e => e.type !== type)
   }
@@ -170,18 +181,21 @@ export class UnitState {
     this.effects.filter(e => e.type === EFFECT_TYPES.BLEED).forEach(e => {
         totalBleedDmg += Math.floor(this.maxHp * (e.value || 0.05));
     });
-    this.effects.filter(e => e.type === EFFECT_TYPES.DOT).forEach(e => {
-if (e.isPercentHp) {
-    const hpPercent = (e.value || 0.015) * (e.stacks || 1);
-    const rawDmg = Math.floor(this.maxHp * hpPercent);
-    // 硬上限：每层不超过目标最大生命值的 2%
-    const maxPerStack = Math.floor(this.maxHp * 0.02);
-    const maxTotal = maxPerStack * (e.stacks || 1);
-    totalDotDmg += Math.min(rawDmg, maxTotal);
-} else {
-    totalDotDmg += (e.value || 0.15) * (e.stacks || 1);
-}
-    });
+this.effects.filter(e => e.type === EFFECT_TYPES.DOT).forEach(e => {
+    if (e.isPercentHp) {
+        const hpPercent = (e.value || 0.015) * (e.stacks || 1)
+        const rawDmg = Math.floor(this.maxHp * hpPercent)
+        totalDotDmg += rawDmg
+    } else {
+        totalDotDmg += (e.value || 0.15) * (e.stacks || 1)
+    }
+})
+
+// 灼烧
+this.effects.filter(e => e.type === EFFECT_TYPES.BURN).forEach(e => {
+  const atk = e.casterAttack || this.attack || 10;
+  totalDotDmg += Math.floor(atk * (e.value || 0.2) * (e.stacks || 1));
+});
     const pendingDmg = totalBleedDmg + totalDotDmg;
 
     // 如果会致死，触发生存机制
@@ -193,7 +207,7 @@ if (e.isPercentHp) {
             const success = this.deathSave >= 100 || Math.random() * 100 < this.deathSave;
             if (success) {
                 this.hp = 1;
-                this._deathSaveCooldown = 1;   // 进入冷却
+                this._deathSaveCooldown = 3;   // 进入冷却
                 this.removeEffect(EFFECT_TYPES.BLEED);
                 this.removeEffect(EFFECT_TYPES.DOT);
                 if (this.deathShield > 0) {
@@ -265,6 +279,29 @@ if (e.isPercentHp) {
   }
 
   takeDamage(rawDamage, attacker) {
+      rawDamage = Math.floor(rawDamage);  // ← 加这一行，其他不变
+
+
+    // ===== 闪避判定 =====
+    if (!this.isBoss) {
+        // 基础闪避 = 速度 × 0.05%（每 20 速度 = 1% 闪避）+ 刻印闪避
+        const speedDodge = this.speed * 0.05;
+        const totalDodge = Math.min(35, speedDodge + (this.dodge || 0));
+        
+        if (Math.random() * 100 < totalDodge) {
+            // 闪避后触发刻印效果
+            if (this.dodgeCounter) {
+                this._nextAttackCrit = true;
+                if (this.dodgeCritDmg) {
+                    this._dodgeCritDmgBonus = this.dodgeCritDmg;
+                }
+            }
+            return { damage: 0, dodged: true };
+        }
+    }
+    
+    // 怨恨增伤
+
     if (this.dmgTaken && this.dmgTaken > 0) {
         rawDamage = Math.floor(rawDamage * (1 + this.dmgTaken / 100));
     }
@@ -305,7 +342,7 @@ if (e.isPercentHp) {
             const success = this.deathSave >= 100 || Math.random() * 100 < this.deathSave;
             if (success) {
                 this.hp = 1;
-                this._deathSaveCooldown = 1;   // 进入冷却
+                this._deathSaveCooldown = 3;   // 进入冷却
                 this.removeEffect(EFFECT_TYPES.BLEED);
                 this.removeEffect(EFFECT_TYPES.DOT);
                 if (this.deathShield > 0) {

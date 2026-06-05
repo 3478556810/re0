@@ -1,32 +1,31 @@
 [
   {
-    "_comment": "===== 圣系技能 =====",
     "id": "holy_light",
     "name": "圣光",
-    "desc": "圣属性单体攻击，附加光之烙印使目标受到伤害增加",
+    "desc": "圣属性单体攻击。附加光之烙印，使目标受到的所有伤害增加。",
     "icon": "mdi:white-balance-sunny",
     "type": "active",
     "target": "single",
     "element": "holy",
     "mpCost": 10,
-    "baseMul": 1.8,
+    "baseMul": 2.0,
     "maxLevel": 10,
     "upgradeCost": 3,
     "learnCost": 2,
-    "levelScaling": { "baseMul": 0.15 },
+    "levelScaling": { "baseMul": 0.18 },
     "effects": [
-      { "type": "debuff", "stat": "holyMark", "value": 0.5, "duration": 5, "chance": 100 }
+      { "type": "debuff", "stat": "holyMark", "value": 0.6, "duration": 5, "chance": 100 }
     ],
     "tripods": [
-      { "name": "神罚", "unlockLevel": 4, "effects": [{ "type": "debuff", "stat": "holyMark", "value": 0.75, "duration": 5, "chance": 100 }] },
+      { "name": "神罚", "unlockLevel": 4, "effects": [{ "type": "debuff", "stat": "holyMark", "value": 0.9, "duration": 5, "chance": 100 }] },
       { "name": "净化", "unlockLevel": 7, "effects": [{ "type": "cleanse", "chance": 100 }] },
-      { "name": "审判", "unlockLevel": 10, "effects": [{ "type": "debuff", "stat": "holyMark", "value": 1.0, "duration": 5, "chance": 100 }] }
+      { "name": "审判", "unlockLevel": 10, "effects": [{ "type": "debuff", "stat": "holyMark", "value": 1.2, "duration": 5, "chance": 100 }] }
     ]
   },
   {
     "id": "heal_light",
     "name": "治愈术",
-    "desc": "圣属性群体治疗，附带净化",
+    "desc": "圣属性群体治疗，附带净化所有减益效果。",
     "icon": "mdi:heart-pulse",
     "type": "active",
     "target": "all",
@@ -36,15 +35,15 @@
     "maxLevel": 10,
     "upgradeCost": 2,
     "learnCost": 1,
-    "levelScaling": { "healAmount": 20 },
+    "levelScaling": { "healAmount": 25 },
     "effects": [
-      { "type": "heal", "value": 1.5, "chance": 100, "target": "all" },
+      { "type": "heal", "value": 2.0, "chance": 100, "target": "all" },
       { "type": "cleanse", "chance": 100 }
     ],
     "tripods": [
-      { "name": "快速治愈", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.15, "stat": "def", "duration": 5, "chance": 100, "target": "self" }] },
-      { "name": "圣光护佑", "unlockLevel": 7, "effects": [{ "type": "shield", "value": 0.2, "duration": 5, "chance": 100, "target": "all" }] },
-      { "name": "神圣赞美诗", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.2, "stat": "atk", "duration": 5, "chance": 100, "target": "all" }] }
+      { "name": "快速治愈", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.2, "stat": "def", "duration": 3, "chance": 100, "target": "all" }] },
+      { "name": "圣光护佑", "unlockLevel": 7, "effects": [{ "type": "shield", "value": 0.3, "duration": 3, "chance": 100, "target": "all" }] },
+      { "name": "神圣赞美诗", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.25, "stat": "atk", "duration": 3, "chance": 100, "target": "all" }] }
     ]
   }
 ]

@@ -41,7 +41,16 @@ export const AFFIX_EFFECTS = {
   },
 
   // ========== T1 稳定输出/辅助 ==========
-
+swiftWind: {
+    name: '疾风', loreName: '疾风',
+    thresholds: [
+        { level: 1, desc: '速度+8，闪避率+3%', bonus: { speed: 8, dodge: 3 } },
+        { level: 3, desc: '速度+18，闪避率+6%', bonus: { speed: 18, dodge: 6 } },
+        { level: 5, desc: '速度+30，闪避率+10%', bonus: { speed: 30, dodge: 10 } },
+        { level: 7, desc: '速度+45，闪避率+15%，闪避后下次攻击必暴击', bonus: { speed: 45, dodge: 15, dodgeCounter: true } },
+        { level: 10, desc: '速度+65，闪避率+22%，闪避后下次攻击必暴击且伤害+50%', bonus: { speed: 65, dodge: 22, dodgeCounter: true, dodgeCritDmg: 50 } }
+    ]
+},
   // 4. 破甲：无视防御，对护盾特攻
   armorBreak: {
     name: '破甲', loreName: '破甲',

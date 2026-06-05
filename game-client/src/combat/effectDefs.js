@@ -28,9 +28,11 @@ export const EFFECT_TYPES = {
    HOLY_MARK: 'holyMark',
    DRAGON_MARK: 'dragonMark',
 SHADOW_MARK: 'shadowMark',
+BURN: 'burn',
 };
 
 export const effectDefaults = {
+  [EFFECT_TYPES.BURN]: { duration: 3, stackable: true, maxStacks: 5, value: 0.2 },
    [EFFECT_TYPES.DOT]: { duration: 3, stackable: true, maxStacks: 99, value: 0.15 },
   [EFFECT_TYPES.HOT]: { duration: 3, stackable: false, value: 0.1 },
   [EFFECT_TYPES.ATK_UP]: { duration: 3, stackable: false, value: 0.2 },

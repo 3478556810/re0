@@ -79,9 +79,56 @@ if (critDmgOnMark && defender.effects?.some(e => e.type === 'shadowMark')) {
   }
 
   // Boss增伤
-  if (bossDmg && defender.isBoss) {
-    damage = Math.floor(damage * (1 + bossDmg / 100));
+if (bossDmg && defender.isBoss) {
+  damage = Math.floor(damage * (1 + bossDmg / 100))
+}
+// 碎冰：对冻结目标额外增伤
+if (attacker._pendingShatter && defender.effects?.some(e => e.type === 'freeze')) {
+    damage = Math.floor(damage * (1 + attacker._pendingShatter))
+    delete attacker._pendingShatter
+}
+
+// 冻结追击：对冻结目标必暴 + 增伤
+if (attacker._pendingFreezeBonus && defender.effects?.some(e => e.type === 'freeze')) {
+    effectiveCritRate = 100
+    damage = Math.floor(damage * (1 + attacker._pendingFreezeBonus))
+    delete attacker._pendingFreezeBonus
+}
+
+// 眩晕追击：对眩晕目标增伤
+if (attacker._pendingStunBonus && defender.effects?.some(e => e.type === 'stun')) {
+    damage = Math.floor(damage * (1 + attacker._pendingStunBonus))
+    delete attacker._pendingStunBonus
+}
+
+// 眩晕必暴：对眩晕目标必定暴击
+if (attacker._pendingStunCrit && defender.effects?.some(e => e.type === 'stun')) {
+    effectiveCritRate = 100
+    delete attacker._pendingStunCrit
+}
+
+// 斩杀：对低血量目标增伤
+if (attacker._pendingExecutioner && defender.hpPercent < 0.3) {
+    damage = Math.floor(damage * (1 + attacker._pendingExecutioner))
+    delete attacker._pendingExecutioner
+}
+
+// 火焰斩层数增伤：目标身上每层灼烧使本次伤害+10%
+if (attacker.fireStackBonus && defender.effects) {
+  const burnEffect = defender.effects.find(e => e.type === 'burn');
+  if (burnEffect) {
+    const stacks = burnEffect.stacks || 1;
+    damage = Math.floor(damage * (1 + (stacks - 1) * attacker.fireStackBonus));
   }
+}
+
+// 暗系高血增伤（目标生命越高伤害越高）
+if (attacker.highHpBoost && defender.hpPercent !== undefined) {
+    const hpPercent = defender.hpPercent;
+    const aboveHalf = Math.max(0, hpPercent - 0.5);
+    const boost = 1 + aboveHalf * attacker.highHpBoost * 2;
+    damage = Math.floor(damage * boost);
+}
 
   // 低血量增伤（目标生命低于30%）
   if (lowHpDmg && defender.hpPercent < 0.3) {
@@ -135,5 +182,5 @@ const baseTrueDmg = attacker.trueDmg || 0
 damage += baseTrueDmg
 
 // 返回时带上 trueDmg
-return { damage: Math.max(0, damage), crit, multiplier: elemMult, shadowTrueDmg, trueDmg: baseTrueDmg }
+return { damage: Math.floor(Math.max(0, damage)), crit, multiplier: elemMult, shadowTrueDmg, trueDmg: baseTrueDmg }
 }
