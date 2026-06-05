@@ -177,24 +177,23 @@ function buildAttackResult(engine, enemy, target, skill) {
   )
   const deathResult = target.takeDamage(damage, enemy)
 
-
-// 闪避提示
+// 闪避提示：直接修改 msg 内容
 if (deathResult?.dodged) {
-    result.messages.push(`${target.name} 闪避了攻击！`);
+    const msg = `${enemy.name} 使用 ${skill.name}，但被 ${target.name} 闪避了！`
+    return { type: 'enemy_action', enemy: enemy.name, damage: 0, crit: false, multiplier: 1, messages: [msg] }
 }
 
-  applyEnemyLifesteal(enemy, target, damage)
+applyEnemyLifesteal(enemy, target, damage)
 
-  let msg = `${enemy.name} 使用 ${skill.name}，对 ${target.name} 造成 ${damage} 伤害`
-  if (crit) msg += ' (暴击)'
+let msg = `${enemy.name} 使用 ${skill.name}，对 ${target.name} 造成 ${damage} 伤害`
+if (crit) msg += ' (暴击)'
 
-  if (deathResult?.deathSaved) {
+if (deathResult?.deathSaved) {
     return { type: 'enemy_action', enemy: enemy.name, damage, crit, multiplier, messages: [`${msg}，但对方顽强存活！`] }
-  } else if (deathResult?.revived) {
+} else if (deathResult?.revived) {
     return { type: 'enemy_action', enemy: enemy.name, damage, crit, multiplier, messages: [`${msg}，但对方复活了！`] }
-  }
-  return { type: 'enemy_action', enemy: enemy.name, damage, crit, multiplier, messages: [msg] }
 }
+return { type: 'enemy_action', enemy: enemy.name, damage, crit, multiplier, messages: [msg] }}
 
 function executeSkill(engine, enemy, skill) {
   let target = null
@@ -227,9 +226,19 @@ function executeSkill(engine, enemy, skill) {
         }
         const calc = calculateDamage(a, defSnap, skill, { ignoreDef: skill.ignoreDef || 0 })
         const dResult = t.takeDamage(calc.damage, enemy)
-        applyEnemyLifesteal(enemy, t, calc.damage)
-        res.messages.push(`${skill.name} 对 ${t.name} 造成 ${calc.damage} 伤害`)
-        if (calc.crit) res.messages.push('(暴击)')
+
+
+// 闪避判断
+        if (dResult?.dodged) {
+            res.messages.push(`${skill.name} 被 ${t.name} 闪避了！`)
+        } else {
+            applyEnemyLifesteal(enemy, t, calc.damage)
+            res.messages.push(`${skill.name} 对 ${t.name} 造成 ${calc.damage} 伤害`)
+            if (calc.crit) res.messages.push('(暴击)')
+        }
+
+
+        
         if (t === engine.player) deathResult = dResult
       }
     } else if (target && target !== enemy) {
@@ -243,6 +252,11 @@ function executeSkill(engine, enemy, skill) {
       deathResult = target.takeDamage(damage, enemy)
 
 
+// 闪避提示
+if (deathResult?.dodged) {
+    res.messages.push(`${enemy.name} 使用 ${skill.name}，但被 ${target.name} 闪避了！`)
+    return res
+}
 
 
       applyEnemyLifesteal(enemy, target, damage)

@@ -78,7 +78,7 @@ export function useBattleState() {
   let questHintTimer = null
 
   // ---------- 引擎初始化 ----------
-  function initEngine(enemiesInput) {
+    function initEngine(enemiesInput) {
     if (!enemiesInput || !Array.isArray(enemiesInput) || enemiesInput.length === 0) {
       console.warn('initEngine: 没有敌人数据，无法初始化战斗引擎')
       return false
@@ -86,7 +86,6 @@ export function useBattleState() {
 
     const companionId = store.player.currentCompanion || 'freyja'
     const companionData = store.config.characters?.[companionId]
-    const baseAttack = companionData?.baseAttack || 40
     const playerLevel = store.player.level || 1
     let comp = null
     if (companionData) {
@@ -112,10 +111,24 @@ export function useBattleState() {
       if (aff.bonus?.stackingAtk) stackingAtk += aff.bonus.stackingAtk
     }
 
-    const fullPlayerStats = {
-      ...store.playerStats,
-      stackingAtk: stackingAtk,
-    }
+    // 1. 从全局状态浅拷贝一份数据
+    const rawStats = { ...store.playerStats };
+
+    // 2. 强制修正关键状态，确保不被任何旧数据污染
+    rawStats.isPlayer = true;
+    
+    // 3. 重新计算并强制写入正确的闪避值
+    const speedDodge = (rawStats.speed || 0) * 0.05;
+    rawStats.dodge = (rawStats.dodge || 0) + speedDodge;
+
+    // 4. 加入其他必要的动态属性
+    rawStats.stackingAtk = stackingAtk;
+
+   const fullPlayerStats = {
+  ...store.playerStats,
+  stackingAtk: stackingAtk,
+  isPlayer: true,
+}
 
     const enrichedEnemies = enemiesInput.map(e => {
       const isBoss = e.isBoss ?? (e.base?.isBoss) ?? false
@@ -148,7 +161,6 @@ export function useBattleState() {
     store.player.mp = engine.value.player.mp
     playerShield.value = engine.value.player.getShield()
 
-    // 从 store.battleEnemies 获取原始敌人数据（包含 isBoss）
     const originalEnemies = store.battleEnemies || []
 
     enemies.value = engine.value.enemies.map((enemy, idx) => {
@@ -171,7 +183,6 @@ export function useBattleState() {
       }
     })
 
-    // 同伴数据同步
     if (engine.value && engine.value.companion) {
       companion.value = {
         id: engine.value.companion.id,
@@ -184,30 +195,27 @@ export function useBattleState() {
       companion.value = null
     }
 
-    // ✅ 生成带中文名称和格式化数值的玩家效果列表
     playerEffectsDisplay.value = engine.value.player.effects
       .filter(e => e.duration > 0)
       .map(e => {
         const isDebuff = ['atkDown', 'defDown', 'spdDown', 'stun', 'freeze', 'silence', 'weak', 'dot', 'bleed'].includes(e.type)
         const isMark = ['holyMark', 'dragonMark', 'shadowMark', 'element_mark'].includes(e.type)
         const name = EFFECT_NAMES[e.type] || e.type
-// 在 syncStateFromEngine 中，playerEffectsDisplay 的 map 回调里：
-let displayValue = ''
-if (e.type === 'shield') {
-  displayValue = Math.floor(e.value) + ' 点'
-} else if (e.type === 'stun' || e.type === 'freeze' || e.type === 'silence') {
-  displayValue = '控制'
-} else if (e.type === 'dot' || e.type === 'bleed') {
-  // 中毒/流血：显示每回合损失的固定值
-  const totalDmg = Math.floor(e.value * Math.pow(2, (e.stacks || 1) - 1))
-  displayValue = totalDmg + ' 点/回合'
-} else {
-  const val = e.value || 0
-  const percent = Math.abs(val * 100).toFixed(0)
-  displayValue = (val >= 0 ? '+' : '-') + percent + '%'
-}
+        let displayValue = ''
+        if (e.type === 'shield') {
+          displayValue = Math.floor(e.value) + ' 点'
+        } else if (e.type === 'stun' || e.type === 'freeze' || e.type === 'silence') {
+          displayValue = '控制'
+        } else if (e.type === 'dot' || e.type === 'bleed') {
+          const totalDmg = Math.floor(e.value * Math.pow(2, (e.stacks || 1) - 1))
+          displayValue = totalDmg + ' 点/回合'
+        } else {
+          const val = e.value || 0
+          const percent = Math.abs(val * 100).toFixed(0)
+          displayValue = (val >= 0 ? '+' : '-') + percent + '%'
+        }
         return {
-          ...e,               // 保留引擎原有效果的所有字段
+          ...e,
           name,
           displayValue,
           isBuff: !isDebuff && !isMark,
@@ -218,7 +226,6 @@ if (e.type === 'shield') {
 
     store._refreshSetBonuses?.()
 
-    // 战斗结束检测
     if (!engine.value.battleOver && engine.value.getAliveEnemies().length === 0) {
       engine.value.battleOver = true
       engine.value.winner = 'player'
@@ -234,7 +241,6 @@ if (e.type === 'shield') {
       showSkillPanel.value = false
     }
 
-    // 目标选择修正
     if (enemies.value.length > 0) {
       const current = enemies.value[currentTargetIndex.value]
       if (!current || current.hp <= 0) {
@@ -287,7 +293,6 @@ if (e.type === 'shield') {
       })
     }
 
-    // 合并三脚架效果
     let mergedEffects = [...(skill.effects || [])];
     for (const extra of extraEffects) {
       if (extra.type === 'buff' && extra.stat) {
@@ -323,7 +328,6 @@ if (e.type === 'shield') {
     const result = engine.value.executePlayerAction(effectiveSkill, targetIdx, { noMpCost: isTrainingRoom.value })
     if (!result) return
 
-    // 浮动伤害数字
     if (result.hitDetails && result.hitDetails.length > 0) {
       result.hitDetails.forEach(hit => {
         if (hit.isShadowTrue) {
@@ -343,7 +347,6 @@ if (e.type === 'shield') {
       });
     }
 
-    // 敌人受击闪白
     if (result.damage > 0 && targetIdx >= 0) {
       hitEnemyIndex.value = targetIdx;
       setTimeout(() => {
