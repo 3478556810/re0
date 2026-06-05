@@ -22,7 +22,6 @@
       </div>
 
       <!-- 角色属性页 -->
-     <!-- 角色属性页 -->
 <div v-if="activeTab === 'stats'" class="tab-content">
   <div class="header">
     <div class="avatar-wrapper" @click="triggerUpload">
@@ -78,6 +77,14 @@
           <span v-if="speedBonus > 0" style="color: #4caf50;"> (+{{ speedBonus }})</span>
         </span>
       </div>
+      <!-- 新增闪避率 -->
+      <div class="stat-item">
+        <span class="stat-label"><Icon icon="mdi:shoe-print" /> 闪避率</span>
+        <span class="stat-value">
+          {{ store.playerStats.dodge || 0 }}%
+          <span v-if="dodgeBonus > 0" style="color: #4caf50;"> (+{{ dodgeBonus }}%)</span>
+        </span>
+      </div>
       <div class="stat-item">
         <span class="stat-label"><Icon icon="mdi:alert-circle" /> 暴击率</span>
         <span class="stat-value">
@@ -92,19 +99,11 @@
           <span v-if="critDmgBonus > 0" style="color: #4caf50;"> (+{{ critDmgBonus }}%)</span>
         </span>
       </div>
-      <!-- 新增 Boss 伤害 -->
       <div class="stat-item">
         <span class="stat-label"><Icon icon="mdi:target" /> Boss 伤害</span>
         <span class="stat-value">
            {{ store.playerStats.specialBossDmg || 0 }}%
           <span v-if="bossDmgBonus > 0" style="color: #4caf50;"> (+{{ bossDmgBonus }}%)</span>
-        </span>
-      </div>
-      <div class="stat-item">
-        <span class="stat-label"><Icon icon="mdi:sword" /> 真实伤害</span>
-        <span class="stat-value">
-          {{ store.playerStats.trueDmg }}
-          <span v-if="trueDmgBonus > 0" style="color: #4caf50;"> (+{{ trueDmgBonus }})</span>
         </span>
       </div>
       <div class="stat-item">
@@ -124,6 +123,14 @@
       <Icon :icon="showCombatDetail ? 'mdi:chevron-up' : 'mdi:chevron-down'" class="collapse-icon" />
     </h3>
     <div v-if="showCombatDetail" class="stat-list">
+      <!-- 真实伤害移到此处 -->
+      <div class="stat-item">
+        <span class="stat-label"><Icon icon="mdi:sword" /> 真实伤害</span>
+        <span class="stat-value">
+          {{ store.playerStats.trueDmg }}
+          <span v-if="trueDmgBonus > 0" style="color: #4caf50;"> (+{{ trueDmgBonus }})</span>
+        </span>
+      </div>
       <!-- 元素伤害 -->
       <div v-for="elem in elements" :key="elem.key" class="stat-item">
         <span class="stat-label"><Icon :icon="elem.icon" /> {{ elem.name }}</span>
@@ -132,13 +139,11 @@
           <span v-if="getElemBonus(elem.key) > 0" style="color: #4caf50;"> (+{{ getElemBonus(elem.key) }}%)</span>
         </span>
       </div>
-      <!-- 其他进阶属性可按需添加，如冷却缩减等 -->
     </div>
   </div>
 </div>
 
       <!-- 刻印效果页 -->
-    <!-- 刻印效果页 -->
 <div v-if="activeTab === 'engrave'" class="tab-content">
   <div class="section">
     <h3><Icon icon="mdi:gem" /> 激活的刻印</h3>
@@ -154,7 +159,6 @@
   <span class="engrave-level-text" :class="{ overflow: eff.level > 10 }">Lv.{{ eff.level }}</span>
  
 </div>
-<!-- 菱形点阵：前10级精确点亮，溢出部分用红色菱形标示 -->
 <div class="engrave-dots">
   <span
     v-for="i in Math.min(eff.level, 10)"
@@ -172,7 +176,6 @@
   </span>
 </div>
 
-  <!-- 效果描述 -->
   <div class="engrave-desc">{{ eff.desc }}</div>
         </div>
       </div>
@@ -182,12 +185,11 @@
     </div>
   </div>
 </template>
-
 <script setup>
 import { ref, computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
-
+const dodgeBonus = computed(() => (store.playerStats.dodge || 0) - (store.player.dodge || 0))
 const store = useGameStore()
 const activeTab = ref('stats')
 const fileInput = ref(null)
@@ -241,7 +243,7 @@ function getAffixIcon(affixId) {
     adrenaline: 'mdi:lightning-bolt',
     bossHunter: 'mdi:target',
     elementMaster: 'mdi:creation',
-    fortune: 'mdi:clover',
+    fortune: 'mdi:clover',swiftWind: 'mdi:weather-windy',
     ambushMaster: 'mdi:ninja',
     tenacity: 'mdi:shield-star',
     phoenix: 'file-icons:phoenix',

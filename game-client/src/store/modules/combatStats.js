@@ -200,7 +200,7 @@ let dodgeCritDmg = 0;
   for (const eff of affixEffects) {
     const b = eff.bonus || {}
 
-     if (b.speed) base.speed = (base.speed || 0) + b.speed;
+  
     if (b.dodge) dodge += b.dodge;
     if (b.dodgeCounter) dodgeCounter = true;
     if (b.dodgeCritDmg) dodgeCritDmg = Math.max(dodgeCritDmg, b.dodgeCritDmg);
@@ -238,9 +238,11 @@ let dodgeCritDmg = 0;
       if (typeof stats[key] === 'number') stats[key] += allElemDmg
     }
   }
-stats.dodge = dodge;
-stats.dodgeCounter = dodgeCounter;
-stats.dodgeCritDmg = dodgeCritDmg;
+  
+// 速度转闪避：每 20 速度 = 1% 闪避
+// 速度转闪避 + 刻印闪避
+const speedDodge = (stats.speed || 0) * 0.05;
+stats.dodge = dodge + speedDodge;
   stats.stackingAtk = stackingAtk
   stats.specialBossDmg = (stats.specialBossDmg || 0) + bossDmg
   stats.specialFullHpDmg = fullHpDmg

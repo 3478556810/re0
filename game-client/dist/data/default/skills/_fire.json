@@ -12,12 +12,13 @@
     "maxLevel": 10,
     "upgradeCost": 3,
     "learnCost": 2,
+    "fireStackBonus": 0.1,
     "levelScaling": { "baseMul": 0.13 },
     "effects": [
-      { "type": "dot", "value": 0.35, "duration": 3, "chance": 100, "stackable": true, "maxStacks": 5, "note": "每层灼烧使本次伤害+10%" }
+      { "type": "burn",  "value": 0.35, "duration": 3, "chance": 100, "stackable": true, "maxStacks": 5, "note": "每层灼烧使本次伤害+10%" }
     ],
     "tripods": [
-      { "name": "烈焰", "unlockLevel": 4, "effects": [{ "type": "dot", "value": 0.45, "duration": 3, "chance": 100, "stackable": true, "maxStacks": 5 }] },
+      { "name": "烈焰", "unlockLevel": 4, "effects": [{ "type": "burn",  "value": 0.45, "duration": 3, "chance": 100, "stackable": true, "maxStacks": 5 }] },
       { "name": "焦土", "unlockLevel": 7, "effects": [{ "type": "debuff", "value": -0.3, "stat": "def", "duration": 3, "chance": 100 }] },
       { "name": "燎原", "unlockLevel": 10, "effects": [{ "type": "dotBurst", "value": 1.5, "note": "引爆所有灼烧，每层造成额外伤害" }] }
     ]
@@ -40,7 +41,7 @@
       { "type": "dotBurst", "value": 1.0, "chance": 100, "note": "对已有灼烧目标伤害翻倍" }
     ],
     "tripods": [
-      { "name": "灼热", "unlockLevel": 4, "effects": [{ "type": "dot", "value": 0.3, "duration": 3, "chance": 100 }] },
+      { "name": "灼热", "unlockLevel": 4, "effects": [{ "type": "burn",  "value": 0.3, "duration": 3, "chance": 100 }] },
       { "name": "余烬", "unlockLevel": 7, "effects": [{ "type": "debuff", "value": -0.2, "stat": "atk", "duration": 3, "chance": 80 }] },
       { "name": "凤凰", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.25, "stat": "atk", "duration": 3, "chance": 100, "target": "self" }] }
     ]
