@@ -1,19 +1,35 @@
+// src/composables/useBattleState.js
+
 import { ref, reactive, computed, shallowRef } from 'vue'
 import { useGameStore } from '../store/gameStore'
 import { CombatEngine } from '../combat/CombatEngine'
 import { generateAccessoryLoot } from '../utils/lootGenerator'
 import { generateAccessoryName } from '../config/accessoryConfig'
 
+// 效果中文名称映射表
+const EFFECT_NAMES = {
+  atkUp: '攻击力', defUp: '防御力', spdUp: '速度',
+  atkDown: '攻击力', defDown: '防御力', spdDown: '速度',
+  critRateUp: '暴击率', critDmgUp: '暴击伤害',
+  maxHpUp: '最大生命', dodgeUp: '闪避率',
+  shield: '护盾', regen: '再生', dot: '中毒', bleed: '流血',
+  stun: '眩晕', freeze: '冻结', silence: '沉默',
+  reflect: '反伤', lifestealBuff: '吸血强化',
+  weak: '虚弱', taunt: '嘲讽',
+  holyMark: '光之烙印', dragonMark: '龙焰印记', shadowMark: '暗蚀印记',
+  element_mark: '元素印记'
+}
+
 export function useBattleState() {
   const store = useGameStore()
   const engine = shallowRef(null)
-const floatingNumbers = ref([]);
-let floatId = 0;
+  const floatingNumbers = ref([]);
+  let floatId = 0;
   const enemies = ref([])
   const currentTargetIndex = ref(0)
   const playerEffectsDisplay = ref([])
   const playerShield = ref(0)
-  const hitEnemyIndex = ref(-1)   // 敌人受击闪白
+  const hitEnemyIndex = ref(-1)
 
   const companion = ref(null)
   const companionHpPercent = computed(() => {
@@ -63,13 +79,10 @@ let floatId = 0;
 
   // ---------- 引擎初始化 ----------
   function initEngine(enemiesInput) {
-
-
     if (!enemiesInput || !Array.isArray(enemiesInput) || enemiesInput.length === 0) {
-    console.warn('initEngine: 没有敌人数据，无法初始化战斗引擎')
-    return false
-  }
-    
+      console.warn('initEngine: 没有敌人数据，无法初始化战斗引擎')
+      return false
+    }
 
     const companionId = store.player.currentCompanion || 'freyja'
     const companionData = store.config.characters?.[companionId]
@@ -80,7 +93,7 @@ let floatId = 0;
       comp = {
         id: companionData.id,
         name: companionData.name,
-       attack: Math.floor(store.playerStats.attack * 0.7 + store.getAffectionLevel(companionId) * 20),
+        attack: Math.floor(store.playerStats.attack * 0.7 + store.getAffectionLevel(companionId) * 20),
         defense: Math.floor(store.playerStats.defense * 0.8),
         hp: Math.floor(store.playerStats.maxHp * 0.8) + store.getAffectionLevel(companionId) * 50,
         maxHp: Math.floor(store.playerStats.maxHp * 0.8) + store.getAffectionLevel(companionId) * 50,
@@ -119,94 +132,128 @@ let floatId = 0;
     window.__engine = engine.value
     syncStateFromEngine()
   }
-function addFloatingNumber(targetIndex, amount, type = 'normal', offsetY = 0) {
-  const id = ++floatId;
-  floatingNumbers.value.push({ id, targetIndex, amount, type, offsetY });
-  setTimeout(() => {
-    const idx = floatingNumbers.value.findIndex(f => f.id === id);
-    if (idx !== -1) floatingNumbers.value.splice(idx, 1);
-  }, 3000); // 1.5秒后移除
+
+  function addFloatingNumber(targetIndex, amount, type = 'normal', offsetY = 0) {
+    const id = ++floatId;
+    floatingNumbers.value.push({ id, targetIndex, amount, type, offsetY });
+    setTimeout(() => {
+      const idx = floatingNumbers.value.findIndex(f => f.id === id);
+      if (idx !== -1) floatingNumbers.value.splice(idx, 1);
+    }, 3000);
+  }
+
+  function syncStateFromEngine() {
+    if (!engine.value) return
+    store.player.hp = engine.value.player.hp
+    store.player.mp = engine.value.player.mp
+    playerShield.value = engine.value.player.getShield()
+
+    // 从 store.battleEnemies 获取原始敌人数据（包含 isBoss）
+    const originalEnemies = store.battleEnemies || []
+
+    enemies.value = engine.value.enemies.map((enemy, idx) => {
+      const original = originalEnemies[idx] || {}
+      const shield = enemy.getShield ? enemy.getShield() : 0
+      return {
+        ...enemy,
+        id: enemy.id,
+        name: enemy.name || original.name || '未知敌人',
+        hp: Math.max(0, enemy.hp),
+        maxHp: enemy.maxHp,
+        shield,
+        element: enemy.element || original.element || '',
+        icon: enemy.icon || original.icon || 'mdi:help-circle',
+        level: enemy.level || original.level || 1,
+        atk: enemy.attack,
+        def: enemy.defense,
+        effects: enemy.effects || [],
+        isBoss: original.isBoss === true,
+      }
+    })
+
+    // 同伴数据同步
+    if (engine.value && engine.value.companion) {
+      companion.value = {
+        id: engine.value.companion.id,
+        name: engine.value.companion.name,
+        hp: Math.max(0, engine.value.companion.hp),
+        maxHp: engine.value.companion.maxHp,
+        icon: engine.value.companion.icon,
+      }
+    } else {
+      companion.value = null
+    }
+
+    // ✅ 生成带中文名称和格式化数值的玩家效果列表
+    playerEffectsDisplay.value = engine.value.player.effects
+      .filter(e => e.duration > 0)
+      .map(e => {
+        const isDebuff = ['atkDown', 'defDown', 'spdDown', 'stun', 'freeze', 'silence', 'weak', 'dot', 'bleed'].includes(e.type)
+        const isMark = ['holyMark', 'dragonMark', 'shadowMark', 'element_mark'].includes(e.type)
+        const name = EFFECT_NAMES[e.type] || e.type
+// 在 syncStateFromEngine 中，playerEffectsDisplay 的 map 回调里：
+let displayValue = ''
+if (e.type === 'shield') {
+  displayValue = Math.floor(e.value) + ' 点'
+} else if (e.type === 'stun' || e.type === 'freeze' || e.type === 'silence') {
+  displayValue = '控制'
+} else if (e.type === 'dot' || e.type === 'bleed') {
+  // 中毒/流血：显示每回合损失的固定值
+  const totalDmg = Math.floor(e.value * Math.pow(2, (e.stacks || 1) - 1))
+  displayValue = totalDmg + ' 点/回合'
+} else {
+  const val = e.value || 0
+  const percent = Math.abs(val * 100).toFixed(0)
+  displayValue = (val >= 0 ? '+' : '-') + percent + '%'
 }
- function syncStateFromEngine() {
-  if (!engine.value) return
-  store.player.hp = engine.value.player.hp
-  store.player.mp = engine.value.player.mp
-  playerShield.value = engine.value.player.getShield()
+        return {
+          ...e,               // 保留引擎原有效果的所有字段
+          name,
+          displayValue,
+          isBuff: !isDebuff && !isMark,
+          isDebuff,
+          isMark
+        }
+      })
 
-  // ✅ 重要：从 store.battleEnemies 获取原始敌人数据（包含 isBoss）
-  const originalEnemies = store.battleEnemies || []
+    store._refreshSetBonuses?.()
 
-  enemies.value = engine.value.enemies.map((enemy, idx) => {
-    const original = originalEnemies[idx] || {}
-    const shield = enemy.getShield ? enemy.getShield() : 0
-    return {
-      ...enemy,
-      id: enemy.id,
-      name: enemy.name || original.name || '未知敌人',
-      hp: Math.max(0, enemy.hp),
-      maxHp: enemy.maxHp,
-      shield,
-      element: enemy.element || original.element || '',
-      icon: enemy.icon || original.icon || 'mdi:help-circle',
-      level: enemy.level || original.level || 1,
-      atk: enemy.attack,
-      def: enemy.defense,
-      effects: enemy.effects || [],
-      isBoss: original.isBoss === true,   // 👈 关键：强制从原始数据复制
+    // 战斗结束检测
+    if (!engine.value.battleOver && engine.value.getAliveEnemies().length === 0) {
+      engine.value.battleOver = true
+      engine.value.winner = 'player'
     }
-  })
 
-  // 同伴数据同步
-  if (engine.value && engine.value.companion) {
-    companion.value = {
-      id: engine.value.companion.id,
-      name: engine.value.companion.name,
-      hp: Math.max(0, engine.value.companion.hp),
-      maxHp: engine.value.companion.maxHp,
-      icon: engine.value.companion.icon,
+    if (engine.value.battleOver && engine.value.winner === 'player' && !gameOver.value) {
+      victory()
+    } else if (engine.value.battleOver && engine.value.winner === 'enemy' && !gameOver.value) {
+      gameOver.value = true
+      gameOverMsg.value = '战斗失败'
+      waiting.value = false
+      playerTurn.value = false
+      showSkillPanel.value = false
     }
-  } else {
-    companion.value = null
-  }
 
-  playerEffectsDisplay.value = engine.value.player.effects.filter(e => e.duration > 0)
-  store._refreshSetBonuses?.()
-
-  // 战斗结束检测
-  if (!engine.value.battleOver && engine.value.getAliveEnemies().length === 0) {
-    engine.value.battleOver = true
-    engine.value.winner = 'player'
-  }
-
-  if (engine.value.battleOver && engine.value.winner === 'player' && !gameOver.value) {
-    victory()
-  } else if (engine.value.battleOver && engine.value.winner === 'enemy' && !gameOver.value) {
-    gameOver.value = true
-    gameOverMsg.value = '战斗失败'
-    waiting.value = false
-    playerTurn.value = false
-    showSkillPanel.value = false
-  }
-
-  // 目标选择修正
-  if (enemies.value.length > 0) {
-    const current = enemies.value[currentTargetIndex.value]
-    if (!current || current.hp <= 0) {
-      const nextAliveIdx = enemies.value.findIndex(e => e.hp > 0)
-      if (nextAliveIdx !== -1) {
-        currentTargetIndex.value = nextAliveIdx
+    // 目标选择修正
+    if (enemies.value.length > 0) {
+      const current = enemies.value[currentTargetIndex.value]
+      if (!current || current.hp <= 0) {
+        const nextAliveIdx = enemies.value.findIndex(e => e.hp > 0)
+        if (nextAliveIdx !== -1) {
+          currentTargetIndex.value = nextAliveIdx
+        }
       }
     }
   }
-}
-  // ---------- 玩家使用技能（不带玩家受击动画，稳定消息版） ----------
+
+  // ---------- 玩家使用技能 ----------
   async function useSkill(skill, showMessage) {
     if (!playerTurn.value || gameOver.value || waiting.value || !engine.value) return
 
     const mpCostReduction = store.playerStats.mpCostReduction || 0
-  const actualMpCost = skill.mpCost > 0 
-  ? Math.max(1, Math.floor(skill.mpCost * (1 - mpCostReduction / 100))) 
-  : 0
+    const actualMpCost = skill.mpCost > 0 
+      ? Math.max(1, Math.floor(skill.mpCost * (1 - mpCostReduction / 100))) 
+      : 0
     if (actualMpCost > store.player.mp) {
       await showMessage('MP 不足！')
       return
@@ -215,8 +262,13 @@ function addFloatingNumber(targetIndex, amount, type = 'normal', offsetY = 0) {
     const targetIdx = currentTargetIndex.value
 
     const skillLevel = store.player.skills[skill.id]?.level || 1
-    const scaling = skill.levelScaling || { baseMul: 0 }
-    const currentMul = (skill.baseMul || 0) + (skillLevel - 1) * (scaling.baseMul || 0)
+    const base = skill.baseMul || 0
+    const basePerLevel = skill.levelScaling?.baseMul || 0.1
+    let currentMul = base
+    for (let i = 2; i <= skillLevel; i++) {
+      const growthAtThisLevel = basePerLevel * (1 + (i - 1) * 0.08)
+      currentMul += growthAtThisLevel
+    }
 
     const tripodChoices = store.player.tripodChoices[skill.id] || {}
     const extraEffects = []
@@ -235,43 +287,49 @@ function addFloatingNumber(targetIndex, amount, type = 'normal', offsetY = 0) {
       })
     }
 
-// 合并效果：三脚架效果会覆盖同类型的基础效果（如 trueDmg、buff 等）
-let mergedEffects = [...(skill.effects || [])];
+    // 合并三脚架效果
+    let mergedEffects = [...(skill.effects || [])];
+    for (const extra of extraEffects) {
+      if (extra.type === 'buff' && extra.stat) {
+        const existing = mergedEffects.find(e => e.type === 'buff' && e.stat === extra.stat);
+        if (existing) {
+          existing.value = (existing.value || 0) + (extra.value || 0);
+        } else {
+          mergedEffects.push(extra);
+        }
+      } else if (extra.type === 'debuff' && extra.stat) {
+        const existing = mergedEffects.find(e => e.type === 'debuff' && e.stat === extra.stat);
+        if (existing) {
+          existing.value = Math.min(existing.value || 0, extra.value || 0);
+        } else {
+          mergedEffects.push(extra);
+        }
+      } else if (extra.type === 'dot' || extra.type === 'shield') {
+        mergedEffects.push(extra);
+      } else {
+        mergedEffects = mergedEffects.filter(e => e.type !== extra.type);
+        mergedEffects.push(extra);
+      }
+    }
 
-for (const extra of extraEffects) {
-  // 如果三脚架效果的类型是 trueDmg、buff、debuff 等需要覆盖的，则移除基础中同类型效果
-  if (extra.type === 'trueDmg' || extra.type === 'buff' || extra.type === 'debuff' || extra.type === 'dot' || extra.type === 'shield') {
-    mergedEffects = mergedEffects.filter(e => !(e.type === extra.type && e.stat === extra.stat));
-  }
-  mergedEffects.push(extra);
-}
-
-const effectiveSkill = {
-  ...skill,
-  baseMul: currentMul,
-  effects: mergedEffects,
-  extraActions,
-  mpCost: actualMpCost,
-};
+    const effectiveSkill = {
+      ...skill,
+      baseMul: currentMul,
+      effects: mergedEffects,
+      extraActions,
+      mpCost: actualMpCost,
+    };
 
     const result = engine.value.executePlayerAction(effectiveSkill, targetIdx, { noMpCost: isTrainingRoom.value })
     if (!result) return
-// 处理浮动伤害数字
-    // 处理浮动伤害数字
+
+    // 浮动伤害数字
     if (result.hitDetails && result.hitDetails.length > 0) {
       result.hitDetails.forEach(hit => {
-
-         // 暗影真伤：紫色数字
-    if (hit.isShadowTrue) {
-      addFloatingNumber(hit.targetIndex, hit.damage, 'shadowTrue')
-    
-    }
-
-
-        // 普通伤害（无暴击、无特殊倍率、无真伤、无暗影真伤）不显示
+        if (hit.isShadowTrue) {
+          addFloatingNumber(hit.targetIndex, hit.damage, 'shadowTrue')
+        }
         if (!hit.crit && hit.multiplier === 1 && !hit.trueDmg && !hit.isShadowTrue) return;
-
-        // 暴击/效果拔群等主伤害数字
         if (hit.crit || hit.multiplier !== 1) {
           let type = 'normal';
           if (hit.crit) type = 'crit';
@@ -279,13 +337,9 @@ const effectiveSkill = {
           else if (hit.multiplier < 1) type = 'resisted';
           addFloatingNumber(hit.targetIndex, hit.damage, type);
         }
-
-        // 真伤数字（独立显示，向上偏移20px避免重叠）
         if (hit.trueDmg && hit.trueDmg > 0) {
           addFloatingNumber(hit.targetIndex, hit.trueDmg, 'trueDmg', -20);
         }
-
- 
       });
     }
 
@@ -296,9 +350,6 @@ const effectiveSkill = {
         if (hitEnemyIndex.value === targetIdx) hitEnemyIndex.value = -1;
       }, 300);
     }
-
-
-
 
     waiting.value = true
     showSkillPanel.value = false
@@ -330,7 +381,7 @@ const effectiveSkill = {
     }
   }
 
-  // ---------- 敌人回合（无玩家动画回调，稳定版） ----------
+  // ---------- 敌人回合 ----------
   async function enemyTurn(showMessage) {
     if (gameOver.value || !engine.value) return
 
@@ -370,9 +421,6 @@ const effectiveSkill = {
       if (engine.value.battleOver || engine.value.getAliveEnemies().length === 0) break
       const res = engine.value.executeSingleEnemyAction(enemy)
       syncStateFromEngine()
-
-      // 敌人攻击后，玩家可以在此处增加动画，但现在先省略，确保消息正常
-      // 你可以在后续安全地加入，不会影响消息
 
       for (const msg of res.messages) {
         await showMessage(msg, 5000)
@@ -434,7 +482,7 @@ const effectiveSkill = {
     showSkillPanel.value = true
   }
 
-  // ---------- 胜利、奖励等函数（保持不变） ----------
+  // ---------- 胜利、奖励等 ----------
   function victory() {
     if (victory._called) return
     victory._called = true
@@ -513,7 +561,7 @@ const effectiveSkill = {
   function saveRewards() {
     if (totalReward.value.exp) store.addExperience(totalReward.value.exp)
     if (totalReward.value.materials?.length) {
-    totalReward.value.materials.forEach(m => store.addMaterial(m.id, m.name, m.qty || 1))
+      totalReward.value.materials.forEach(m => store.addMaterial(m.id, m.name, m.qty || 1))
     }
     if (totalReward.value.accessories?.length) {
       totalReward.value.accessories.forEach(acc => {
@@ -564,8 +612,8 @@ const effectiveSkill = {
     displayExp, nextLevelExp, displayExpPercent,
     playerTurn, gameOver, gameOverMsg, waiting, showSkillPanel, showResult, totalReward,
     questCompleteHint, questHintText, isTrainingRoom,
-    hitEnemyIndex,  floatingNumbers,
-  addFloatingNumber,  // 可选，便于外部使用
+    hitEnemyIndex, floatingNumbers,
+    addFloatingNumber,
     initEngine, syncStateFromEngine, useSkill, enemyTurn, victory,
     handleGameOver, saveRewards, onResultClose, onNextFloor, onRetreat,
     selectTarget, getCustomImage, getCompanionImage, destroy, resetVictoryFlag,

@@ -146,13 +146,16 @@
             {{ skillDetail.name }} (Lv.{{ getSkillLevel(skillDetail.id) }})
             <span v-if="getSkillLevel(skillDetail.id) >= 15" style="color: #ffd700; font-size: 10px;">· 觉醒</span>
           </h3>
-          <!-- 觉醒进度条（未满15级时显示） -->
-          <div v-if="getSkillLevel(skillDetail.id) < 15" class="awaken-progress">
-            <div class="awaken-label">觉醒进度：{{ getSkillLevel(skillDetail.id) }}/15</div>
-            <div class="awaken-bar">
-              <div class="awaken-fill" :style="{ width: (getSkillLevel(skillDetail.id) / 15 * 100) + '%' }"></div>
-            </div>
-          </div>
+         <!-- 觉醒进度条：15 → 10 -->
+<div v-if="getSkillLevel(skillDetail.id) < 10" class="awaken-progress">
+  <div class="awaken-label">觉醒进度：{{ getSkillLevel(skillDetail.id) }}/10</div>
+  <div class="awaken-bar">
+    <div class="awaken-fill" :style="{ width: (getSkillLevel(skillDetail.id) / 10 * 100) + '%' }"></div>
+  </div>
+</div>
+
+<!-- 觉醒标签：15 → 10 -->
+<span v-if="getSkillLevel(skillDetail.id) >= 10" style="color: #ffd700; font-size: 10px;">· 觉醒</span>
           <p class="detail-desc">{{ skillDetail.desc }}</p>
           <div class="detail-grid">
             <div class="detail-item"><span class="label">类型</span><span>{{ getTypeLabel(skillDetail.type) }}</span></div>
@@ -160,7 +163,10 @@
             <div class="detail-item" v-if="skillDetail.element"><span class="label">属性</span><span>{{ getElementLabel(skillDetail.element) }}</span></div>
             <div class="detail-item"><span class="label">MP消耗</span><span>{{ skillDetail.mpCost || 0 }}</span></div>
             <div class="detail-item"><span class="label">当前倍率</span><span>{{ getSkillCurrentMul(skillDetail) }}x</span></div>
-            <div class="detail-item" v-if="skillDetail.levelScaling?.baseMul"><span class="label">倍率成长</span><span>+{{ skillDetail.levelScaling.baseMul }}/级</span></div>
+<div class="detail-item" v-if="skillDetail.levelScaling?.baseMul">
+  <span class="label">倍率成长</span>
+  <span>{{ getGrowthDisplay(skillDetail) }}</span>
+</div>
             <div class="detail-item full-width" v-if="skillDetail.effects?.length"><span class="label">附加效果</span><span>{{ skillDetail.effects.map(e => getEffectFullDesc(e)).join('；') }}</span></div>
           </div>
           <div class="detail-actions">
@@ -224,11 +230,26 @@ function openSkillDetail(skill) {
   skillDetail.value = store.config.skillPool.find(s => s.id === skill.id) || skill
 }
 function getSkillCurrentMul(skill) {
-  const level = getSkillLevel(skill.id)
-  const scaling = skill.levelScaling || {}
-  return ((skill.baseMul || 0) + (level - 1) * (scaling.baseMul || 0)).toFixed(2)
+  const level = getSkillLevel(skill.id);         // SkillPanel 里用这个
+  // const level = skillLevel;                   // useBattleState 里用这个（从 store.player.skills 获取）
+  const base = skill.baseMul || 0;
+  const basePerLevel = skill.levelScaling?.baseMul || 0.1;
+  
+  let mul = base;
+  for (let i = 2; i <= level; i++) {
+    const growthAtThisLevel = basePerLevel * (1 + (i - 1) * 0.08);
+    mul += growthAtThisLevel;
+  }
+  
+  return mul.toFixed(2);
 }
-
+function getGrowthDisplay(skill) {
+  const level = getSkillLevel(skill.id);
+  const basePerLevel = skill.levelScaling?.baseMul || 0.1;
+  // 下一级的实际成长量
+  const nextGrowth = basePerLevel * (1 + level * 0.08);
+  return '+' + nextGrowth.toFixed(2) + '/级';
+}
 // ================= 升级费用阶梯（10级后递增） =================
 function getUpgradeCost(level) {
   if (level < 10) return 2         // 1-9级：2点
@@ -298,7 +319,7 @@ function upgradeSkill(skillId) {
   }
   
   const newLevel = getSkillLevel(skillId)
-  if (newLevel === 15) {
+  if (newLevel === 10) {
     showToast(`${skill.name} 觉醒！已解锁元素反应！`)
   } else {
     showToast(`${skill.name} 升级至 Lv.${newLevel}，消耗 ${cost} 技能点`)

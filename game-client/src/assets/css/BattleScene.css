@@ -513,3 +513,30 @@
 }
 
 
+/* 效果徽章保持原有背景/颜色，只增加右侧垂直文字 */
+.effect-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  /* 以下完全不改原有 background / color / border 等 */
+}
+
+/* 右侧数字列 */
+.eff-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.2;
+}
+
+.eff-dur {
+  font-size: 7px;
+  color: #fff;
+  text-shadow: 0 0 2px #000;
+}
+
+.eff-stacks {
+  font-size: 7px;
+  color: #ffd700;
+  text-shadow: 0 0 2px #000;
+}

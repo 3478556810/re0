@@ -22,29 +22,29 @@
       { "name": "顺风", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.25, "stat": "critRate", "duration": 3, "chance": 100, "target": "self" }] }
     ]
   },
-  {
-    "id": "swift_step",
-    "name": "疾风步",
-    "desc": "风属性辅助，提升攻击力与暴击率，并将速度的一定比例转化为攻击力。",
-    "icon": "mdi:run-fast",
-    "type": "active",
-    "target": "self",
-    "element": "wind",
-    "mpCost": 8,
-    "baseMul": 0,
-    "maxLevel": 10,
-    "upgradeCost": 2,
-    "learnCost": 2,
-    "levelScaling": { "buffValue": 5 },
-    "effects": [
-      { "type": "buff", "value": 0.3, "stat": "atk", "duration": 3, "chance": 100 },
-      { "type": "buff", "value": 0.25, "stat": "critRate", "duration": 3, "chance": 100 },
-      { "type": "speedToAtk", "value": 0.5, "note": "速度的50%转化为额外攻击力" }
-    ],
-    "tripods": [
-      { "name": "顺风", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.35, "stat": "critRate", "duration": 3, "chance": 100 }] },
-      { "name": "残影", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.3, "stat": "dodge", "duration": 3, "chance": 100 }] },
-      { "name": "暴风", "unlockLevel": 10, "effects": [{ "type": "extraAction", "value": 80, "chance": 100 }] }
-    ]
-  }
+ {
+  "id": "swift_step",
+  "name": "疾风步",
+  "desc": "风属性辅助，提升攻击与暴击率，并将速度的 1000% 转化为攻击力。",
+  "icon": "mdi:run-fast",
+  "type": "active",
+  "target": "self",
+  "element": "wind",
+  "mpCost": 8,
+  "baseMul": 0,
+  "maxLevel": 10,
+  "upgradeCost": 2,
+  "learnCost": 2,
+  "levelScaling": { "buffValue": 5 },
+  "effects": [
+    { "type": "buff", "value": 0.3, "stat": "atk", "duration": 3, "chance": 100 },
+    { "type": "buff", "value": 0.25, "stat": "critRate", "duration": 3, "chance": 100 },
+    { "type": "speedToAtk", "value": 10.0, "note": "速度的 1000% 转化为额外攻击力" }
+  ],
+  "tripods": [
+    { "name": "顺风", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.35, "stat": "critRate", "duration": 3, "chance": 100 }] },
+    { "name": "残影", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.3, "stat": "dodge", "duration": 3, "chance": 100 }] },
+    { "name": "暴风", "unlockLevel": 10, "effects": [{ "type": "extraAction", "value": 80, "chance": 100 }] }
+  ]
+}
 ]

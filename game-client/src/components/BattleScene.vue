@@ -23,6 +23,7 @@
                 <Icon :icon="getEffectIcon(eff.type)" />
                 <div class="effect-info">
                   <span class="effect-dur">{{ eff.duration }}</span>
+                  
                   <span class="effect-stacks" v-if="eff.stacks > 1">x{{ eff.stacks }}</span>
                 </div>
               </div>

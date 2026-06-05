@@ -4,21 +4,32 @@
       <div class="detail-tip">
         <div class="detail-tip-content">
           <!-- 当前装备对比 -->
-          <div v-if="compareItem" class="compare-card">
-            <div class="compare-title">当前装备</div>
-            <div class="compare-name" :style="{ color: qualityColor(compareItem.quality) }">
-              {{ compareItem.name }}<span class="acc-level">Lv.{{ compareItem.level || 1 }}</span>
-            </div>
-            <div class="tip-stats">
-              <span v-if="compareItem.atk > 0">攻+{{ compareItem.atk }}</span>
-              <span v-if="compareItem.def > 0">防+{{ compareItem.def }}</span>
-            </div>
-            <div v-if="compareItem.extraStats" class="tip-extra-stats">
-              <div v-for="(val, key) in compareItem.extraStats" :key="key" class="tip-stat-row">
-                {{ getExtraStatName(key) }} +{{ val }}
-              </div>
-            </div>
-          </div>
+          <!-- 当前装备对比 -->
+<div v-if="compareItem" class="compare-card">
+  <div class="compare-title">当前装备</div>
+  <div class="compare-name" :style="{ color: qualityColor(compareItem.quality) }">
+    {{ compareItem.name }}<span class="acc-level">Lv.{{ compareItem.level || 1 }}</span>
+  </div>
+  <div class="tip-stats">
+    <span v-if="compareItem.atk > 0">攻+{{ compareItem.atk }}</span>
+    <span v-if="compareItem.def > 0">防+{{ compareItem.def }}</span>
+  </div>
+  <div v-if="compareItem.extraStats" class="tip-extra-stats">
+    <div v-for="(val, key) in compareItem.extraStats" :key="key" class="tip-stat-row">
+      {{ getExtraStatName(key) }} +{{ val }}
+    </div>
+  </div>
+  <!-- 固定词条 + 随机词条 -->
+  <div v-if="compareItem.affixes?.length || compareItem.fixedAffix" class="tip-affixes">
+    <div v-if="compareItem.fixedAffix" class="affix-tag fixed">
+      <span class="fixed-circle"></span>
+      <span class="fixed-text">对Boss增伤 +{{ compareItem.bossDmgBonus || 18 }}%</span>
+    </div>
+    <div v-for="aff in compareItem.affixes" :key="aff.id" class="affix-tag">
+      <span>{{ getAffixName(aff.id) }} Lv.{{ aff.level }}</span>
+    </div>
+  </div>
+</div>
 
           <!-- 详情信息 -->
           <div class="detail-info">

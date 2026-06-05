@@ -6,25 +6,22 @@
         <div class="enemy-info">
           <div style="display: flex; align-items: center; gap: 6px;">
             <div class="name-box">{{ enemy.name }}</div>
-           <div class="effect-icons" v-if="enemy.effects && enemy.effects.length">
-  <div
-    v-for="eff in getSortedEffects(enemy)"
-    :key="eff.type + '_' + (eff.animKey || 0)"
-    class="effect-badge enemy-effect"
-    :class="[
-      eff.animClass || '',
-      eff.type === 'element_mark' ? getElementMarkClass(eff) : ''
-    ]"
-    :title="eff.type === 'element_mark' ? getElementMarkTooltip(eff) : getEffectTooltip(eff, enemy.maxHp)"
-    @touchstart.prevent="$emit('show-effect-bubble', eff, enemy.maxHp, $event)"
-  >
-    <Icon :icon="getEffectIcon(eff.type === 'element_mark' ? eff.element : eff.type)" />
-    <div class="effect-info">
-      <span class="effect-dur">{{ eff.duration }}</span>
-      <span class="effect-stacks" v-if="eff.stacks > 1">x{{ eff.stacks }}</span>
-    </div>
+         <div
+  v-for="eff in getSortedEffects(enemy)"
+  :key="eff.type + '_' + (eff.animKey || 0)"
+  class="effect-badge enemy-effect"
+  :class="[eff.animClass || '', eff.type === 'element_mark' ? getElementMarkClass(eff) : '']"
+  :title="eff.type === 'element_mark' ? getElementMarkTooltip(eff) : getEffectTooltip(eff, enemy.maxHp)"
+    @click.stop="$emit('show-effect-bubble', eff, enemy.maxHp, $event)"
+  @touchstart.prevent="$emit('show-effect-bubble', eff, enemy.maxHp, $event)"
+>
+  <Icon :icon="getEffectIcon(eff.type === 'element_mark' ? eff.element : eff.type)" />
+  <div class="eff-meta">
+    <span class="eff-dur" v-if="eff.duration > 0">T{{ eff.duration }}</span>
+    <span class="eff-stacks" v-if="eff.stacks > 1">×{{ eff.stacks }}</span>
   </div>
 </div>
+
           </div>
           <div class="level-tag">Lv.{{ enemy.level }}</div>
           <div class="bar-row">

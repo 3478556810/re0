@@ -1,30 +1,32 @@
 [
   {
-    "_comment": "===== 水系技能 =====",
     "id": "water_jet",
     "name": "水枪术",
-    "desc": "水属性单体攻击，概率降低防御",
+    "desc": "水属性单体攻击，削弱目标防御，为自己回复法力。",
     "icon": "mdi:water",
     "type": "active",
     "target": "single",
     "element": "water",
     "mpCost": 6,
-    "baseMul": 1.5,
+    "baseMul": 1.6,
     "maxLevel": 10,
     "upgradeCost": 3,
     "learnCost": 2,
-    "levelScaling": { "baseMul": 0.12 },
-    "effects": [{ "type": "debuff", "value": -0.15, "stat": "def", "duration": 5, "chance": 60 }],
+    "levelScaling": { "baseMul": 0.13 },
+    "effects": [
+      { "type": "debuff", "value": -0.25, "stat": "def", "duration": 3, "chance": 80 },
+      { "type": "mpDrain", "value": 5, "chance": 100, "target": "self" }
+    ],
     "tripods": [
-      { "name": "高压水刃", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": -0.25, "stat": "def", "duration": 5, "chance": 80 }] },
-      { "name": "水流环绕", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.15, "stat": "def", "duration": 5, "chance": 100, "target": "self" }] },
-      { "name": "洪水", "unlockLevel": 10, "effects": [{ "type": "extraAction", "value": 25, "note": "追加全体伤害", "chance": 100, "target": "aoe" }] }
+      { "name": "高压水刃", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": -0.35, "stat": "def", "duration": 3, "chance": 100 }] },
+      { "name": "水流环绕", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.2, "stat": "def", "duration": 3, "chance": 100, "target": "self" }] },
+      { "name": "洪水", "unlockLevel": 10, "effects": [{ "type": "extraAction", "value": 35, "chance": 100, "target": "aoe" }] }
     ]
   },
   {
     "id": "healing_rain",
     "name": "治愈之雨",
-    "desc": "水属性辅助，为全队施加再生与防御Buff",
+    "desc": "水属性辅助。全队获得强力再生，并清除所有中毒和流血效果。",
     "icon": "mdi:weather-rainy",
     "type": "active",
     "target": "all",
@@ -34,15 +36,15 @@
     "maxLevel": 10,
     "upgradeCost": 2,
     "learnCost": 2,
-    "levelScaling": { "shieldValue": 8 },
+    "levelScaling": { "healAmount": 10 },
     "effects": [
-      { "type": "regen", "value": 0.06, "duration": 5, "chance": 100, "target": "all" },
-      { "type": "buff", "value": 0.15, "stat": "def", "duration": 5, "chance": 100, "target": "all" }
+      { "type": "regen", "value": 0.1, "duration": 5, "chance": 100, "target": "all" },
+      { "type": "cleanseDot", "chance": 100, "note": "清除所有DOT和流血效果" }
     ],
     "tripods": [
-      { "name": "甘霖", "unlockLevel": 4, "effects": [{ "type": "regen", "value": 0.1, "duration": 5, "chance": 100, "target": "all" }] },
+      { "name": "甘霖", "unlockLevel": 4, "effects": [{ "type": "regen", "value": 0.15, "duration": 5, "chance": 100, "target": "all" }] },
       { "name": "净化之雨", "unlockLevel": 7, "effects": [{ "type": "cleanse", "chance": 100 }] },
-      { "name": "潮汐之力", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.2, "stat": "atk", "duration": 5, "chance": 100, "target": "all" }] }
+      { "name": "潮汐之力", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.25, "stat": "atk", "duration": 3, "chance": 100, "target": "all" }] }
     ]
   }
 ]

@@ -1,33 +1,32 @@
 [
   {
-    "_comment": "===== 草系技能 =====",
     "id": "grass_whip",
     "name": "草藤",
-    "desc": "草属性单体攻击，附加生命汲取",
+    "desc": "草属性单体攻击，附带吸血和荆棘反伤。",
     "icon": "mdi:leaf",
     "type": "active",
     "target": "single",
     "element": "grass",
     "mpCost": 6,
-    "baseMul": 1.4,
+    "baseMul": 1.5,
     "maxLevel": 10,
     "upgradeCost": 3,
     "learnCost": 2,
-    "levelScaling": { "baseMul": 0.11 },
+    "levelScaling": { "baseMul": 0.12 },
     "effects": [
-      { "type": "debuff", "value": -0.20, "stat": "atk", "duration": 5, "chance": 100 },
-      { "type": "lifestealBuff", "value": 10, "duration": 5, "chance": 100, "target": "self" }
+      { "type": "lifestealBuff", "value": 18, "duration": 3, "chance": 100, "target": "self" },
+      { "type": "reflect", "value": 0.15, "duration": 3, "chance": 100, "target": "self" }
     ],
     "tripods": [
-      { "name": "缠绕", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": -0.30, "stat": "atk", "duration": 5, "chance": 100 }] },
-      { "name": "生命汲取", "unlockLevel": 7, "effects": [{ "type": "lifestealBuff", "value": 20, "duration": 5, "chance": 100, "target": "self" }] },
-      { "name": "荆棘", "unlockLevel": 10, "effects": [{ "type": "reflect", "value": 0.2, "duration": 5, "chance": 100, "target": "self" }] }
+      { "name": "缠绕", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": -0.25, "stat": "speed", "duration": 3, "chance": 100 }] },
+      { "name": "生命汲取", "unlockLevel": 7, "effects": [{ "type": "lifestealBuff", "value": 28, "duration": 3, "chance": 100, "target": "self" }] },
+      { "name": "荆棘", "unlockLevel": 10, "effects": [{ "type": "reflect", "value": 0.3, "duration": 3, "chance": 100, "target": "self" }] }
     ]
   },
   {
     "id": "forest_heal",
     "name": "森林祝福",
-    "desc": "草属性辅助，大幅提升攻击并附加吸血",
+    "desc": "草属性辅助，大幅提升最大生命和攻击，并附加荆棘光环。",
     "icon": "mdi:flower",
     "type": "active",
     "target": "self",
@@ -39,11 +38,12 @@
     "learnCost": 2,
     "levelScaling": { "buffValue": 5 },
     "effects": [
-      { "type": "buff", "value": 0.3, "stat": "atk", "duration": 5, "chance": 100 },
-      { "type": "lifestealBuff", "value": 20, "duration": 5, "chance": 100 }
+      { "type": "buff", "value": 0.3, "stat": "maxHp", "duration": 5, "chance": 100 },
+      { "type": "buff", "value": 0.25, "stat": "atk", "duration": 5, "chance": 100 },
+      { "type": "reflect", "value": 0.2, "duration": 5, "chance": 100, "target": "self" }
     ],
     "tripods": [
-      { "name": "自然之力", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.45, "stat": "atk", "duration": 5, "chance": 100 }] },
+      { "name": "自然之力", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.4, "stat": "maxHp", "duration": 5, "chance": 100 }] },
       { "name": "自然庇佑", "unlockLevel": 7, "effects": [{ "type": "shield", "value": 0.25, "duration": 5, "chance": 100 }] },
       { "name": "生命之种", "unlockLevel": 10, "effects": [{ "type": "regen", "value": 0.12, "duration": 5, "chance": 100 }] }
     ]

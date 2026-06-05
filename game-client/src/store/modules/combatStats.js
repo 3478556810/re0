@@ -56,11 +56,16 @@ export function useCombatStats(equipment, config, player) {
     const base = { ...player }
 
     // ========== 1. 装备基础攻防 ==========
-    for (const slot of Object.values(equipment)) {
-      if (!slot) continue
-      base.attack += slot.atk || 0
-      base.defense += slot.def || 0
-    }
+// ========== 1. 装备基础攻防 ==========
+for (const slot of Object.values(equipment)) {
+  if (!slot) continue
+  base.attack += slot.atk || 0
+  base.defense += slot.def || 0
+  // 累加装备上的 Boss 增伤词条
+  if (slot.bossDmgBonus) {
+    base.specialBossDmg = (base.specialBossDmg || 0) + slot.bossDmgBonus
+  }
+}
 
     // ========== 2. 装备副词条 (extraStats) + 鞋子速度 ==========
     const pctBonuses = {} // 存储所有百分比加成
@@ -148,6 +153,11 @@ export function useCombatStats(equipment, config, player) {
     // ========== 8. 特殊刻印加成（肾上腺素、巫毒娃娃等） ==========
     applySpecialAffixBonuses(base, activeAffixEffects.value)
 
+
+
+    // ========== 强制累加所有装备的 Boss 增伤 ==========
+
+
     return base
   })
 
@@ -155,6 +165,7 @@ export function useCombatStats(equipment, config, player) {
 }
 
 function applySpecialAffixBonuses(stats, affixEffects) {
+
   let speedToAtk = 0
   let trueDmgPercent = 0
   let bossDmg = 0
@@ -177,9 +188,22 @@ function applySpecialAffixBonuses(stats, affixEffects) {
   let reviveChance = 0
   let reviveCD = 0
   let reviveDmg = 0
+let bossDmgBonus = 0  // 新增：来自装备的Boss增伤
+
+let dodge = 0;
+let dodgeCounter = false;
+let dodgeCritDmg = 0;
+
+
+
 
   for (const eff of affixEffects) {
     const b = eff.bonus || {}
+
+     if (b.speed) base.speed = (base.speed || 0) + b.speed;
+    if (b.dodge) dodge += b.dodge;
+    if (b.dodgeCounter) dodgeCounter = true;
+    if (b.dodgeCritDmg) dodgeCritDmg = Math.max(dodgeCritDmg, b.dodgeCritDmg);
     if (b.speedToAtk) speedToAtk += b.speedToAtk
     if (b.trueDmgPercent) trueDmgPercent += b.trueDmgPercent
     if (b.bossDmg) bossDmg += b.bossDmg
@@ -202,6 +226,7 @@ function applySpecialAffixBonuses(stats, affixEffects) {
     if (b.reviveChance) reviveChance += b.reviveChance
     if (b.reviveCD) reviveCD += b.reviveCD
     if (b.reviveDmg) reviveDmg += b.reviveDmg
+    if (b.bossDmgBonus) bossDmgBonus += b.bossDmgBonus  // 新增：累加来自刻印的Boss增伤
   }
 
   if (speedToAtk > 0) stats.attack += Math.floor(stats.speed * speedToAtk / 100)
@@ -213,9 +238,11 @@ function applySpecialAffixBonuses(stats, affixEffects) {
       if (typeof stats[key] === 'number') stats[key] += allElemDmg
     }
   }
-
+stats.dodge = dodge;
+stats.dodgeCounter = dodgeCounter;
+stats.dodgeCritDmg = dodgeCritDmg;
   stats.stackingAtk = stackingAtk
-  stats.specialBossDmg = bossDmg
+  stats.specialBossDmg = (stats.specialBossDmg || 0) + bossDmg
   stats.specialFullHpDmg = fullHpDmg
   stats.specialIgnoreDef = ignoreDef
   stats.specialLifestealPercent = lifestealPercent
@@ -234,4 +261,5 @@ function applySpecialAffixBonuses(stats, affixEffects) {
   stats.reviveChance = Math.min(reviveChance, 100)
   stats.reviveCD = reviveCD
   stats.reviveDmg = reviveDmg
+  stats.bossDmgBonus = (stats.bossDmgBonus || 0) + bossDmgBonus
 }
