@@ -65,7 +65,7 @@ export class UnitState {
       'specialLifestealPercent', 'specialMpLifestealPercent',
       'mpOnHit', 'mpOnKill', 'specialLowHpDmg',
       'holyMarkOnHit', 'lowHpLifestealOnMark', 'critDmgOnMark',
-      'trueDmgPercent', 'dragonMarkOnHit', 'shadowMarkOnHit',
+      'trueDmgPercent', 'dragonMarkOnHit', 'shadowMarkOnHit',  'dodge',   // ← 必须有
     ]
     specialFields.forEach(field => {
       this[field] = baseStats[field] || 0
@@ -283,22 +283,16 @@ this.effects.filter(e => e.type === EFFECT_TYPES.BURN).forEach(e => {
 
 
     // ===== 闪避判定 =====
-    if (!this.isBoss) {
-        // 基础闪避 = 速度 × 0.05%（每 20 速度 = 1% 闪避）+ 刻印闪避
-        const speedDodge = this.speed * 0.05;
-        const totalDodge = Math.min(35, speedDodge + (this.dodge || 0));
-        
-        if (Math.random() * 100 < totalDodge) {
-            // 闪避后触发刻印效果
-            if (this.dodgeCounter) {
-                this._nextAttackCrit = true;
-                if (this.dodgeCritDmg) {
-                    this._dodgeCritDmgBonus = this.dodgeCritDmg;
-                }
-            }
-            return { damage: 0, dodged: true };
-        }
+    // ===== 闪避判定 =====
+// ===== 闪避判定 =====
+if (window.__engine && this === window.__engine.player) {
+    const speedDodge = this.speed * 0.05;
+    const totalDodge = speedDodge + (this.dodge || 0);
+    
+    if (Math.random() * 100 < totalDodge) {
+        return { damage: 0, dodged: true };
     }
+}
     
     // 怨恨增伤
 

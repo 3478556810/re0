@@ -254,7 +254,7 @@ const effectiveSkill = { ...skill, baseMul: effectiveMul }
 
 // 闪避提示
 if (deathResult?.dodged) {
-    result.messages.push(`${target.name} 闪避了攻击！`);
+ result.messages.push(`${target.name} 闪避了攻击！`)
 }
 
     player._lastDamageDealt = damage

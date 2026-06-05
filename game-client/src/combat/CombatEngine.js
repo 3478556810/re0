@@ -8,10 +8,11 @@ import { executePlayerDotTick } from './dotTick'
 export class CombatEngine {
   constructor(playerStats, enemies, companion = null, playerSkills = {}) {
   // ✅ 直接展开 playerStats，让 UnitState 接收所有已计算好的属性
-  this.player = new UnitState({
-    ...playerStats,    // ← 包含 attack、defense、critRate、trueDmg、speed、fireDmg 等所有字段
-    isPlayer: true,
-  });
+this.player = new UnitState({
+  ...playerStats,
+  isPlayer: true,
+
+});
 
   this.companion = companion
     ? new UnitState({ ...companion, isCompanion: true })
