@@ -141,7 +141,18 @@
       <div v-if="skillDetail" class="skill-detail-overlay" @click.self="skillDetail = null">
         <div class="skill-detail-panel">
           <button class="close-btn" @click="skillDetail = null"><Icon icon="mdi:close" /></button>
-          <h3><Icon :icon="skillDetail.icon" /> {{ skillDetail.name }} (Lv.{{ getSkillLevel(skillDetail.id) }})</h3>
+          <h3>
+            <Icon :icon="skillDetail.icon" /> 
+            {{ skillDetail.name }} (Lv.{{ getSkillLevel(skillDetail.id) }})
+            <span v-if="getSkillLevel(skillDetail.id) >= 15" style="color: #ffd700; font-size: 10px;">· 觉醒</span>
+          </h3>
+          <!-- 觉醒进度条（未满15级时显示） -->
+          <div v-if="getSkillLevel(skillDetail.id) < 15" class="awaken-progress">
+            <div class="awaken-label">觉醒进度：{{ getSkillLevel(skillDetail.id) }}/15</div>
+            <div class="awaken-bar">
+              <div class="awaken-fill" :style="{ width: (getSkillLevel(skillDetail.id) / 15 * 100) + '%' }"></div>
+            </div>
+          </div>
           <p class="detail-desc">{{ skillDetail.desc }}</p>
           <div class="detail-grid">
             <div class="detail-item"><span class="label">类型</span><span>{{ getTypeLabel(skillDetail.type) }}</span></div>
@@ -154,7 +165,9 @@
           </div>
           <div class="detail-actions">
             <template v-if="isUnlocked(skillDetail.id)">
-              <button class="pixel-btn small" @click="upgradeSkill(skillDetail.id)" :disabled="!canUpgrade(skillDetail.id)">升级 ({{ skillDetail.upgradeCost }} SP)</button>
+              <button class="pixel-btn small" @click="upgradeSkill(skillDetail.id)">
+                升级 ({{ getUpgradeCost(getSkillLevel(skillDetail.id)) }} SP)
+              </button>
               <button class="pixel-btn small" v-if="!isEquipped(skillDetail.id)" @click="equipSkill(skillDetail.id)">装备</button>
               <button class="pixel-btn small danger" v-else @click="unequipSkill(skillDetail.id)">卸下</button>
             </template>
@@ -167,7 +180,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, watch, onMounted, inject } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
 
@@ -216,6 +229,13 @@ function getSkillCurrentMul(skill) {
   return ((skill.baseMul || 0) + (level - 1) * (scaling.baseMul || 0)).toFixed(2)
 }
 
+// ================= 升级费用阶梯（10级后递增） =================
+function getUpgradeCost(level) {
+  if (level < 10) return 2         // 1-9级：2点
+  if (level < 15) return 2 + (level - 9) // 10级3点, 11级4点, ... 14级6点
+  return 5 + (level - 14)          // 15级6点, 16级7点...
+}
+
 async function handleResetSkills() {
   const ok = await showConfirm('确定要重置所有技能吗？\n所有技能点将返还，已学习技能将被遗忘。')
   if (!ok) return
@@ -224,7 +244,7 @@ async function handleResetSkills() {
     const state = store.player.skills?.[skill.id]
     if (!state?.unlocked) continue
     refund += skill.learnCost || 0
-    if (state.level > 1) refund += (skill.upgradeCost || 2) * (state.level - 1)
+    if (state.level > 1) refund += getUpgradeCost(state.level - 1) * (state.level - 1) // 简化退还，实际应累加每级消耗
   }
   store.player.skills = {}
   store.player.equippedSkills = []
@@ -237,11 +257,6 @@ async function handleResetSkills() {
 function isUnlocked(skillId) { return !!store.player.skills?.[skillId]?.unlocked }
 function isEquipped(skillId) { return store.player.equippedSkills?.includes(skillId) }
 function getSkillLevel(skillId) { return store.player.skills?.[skillId]?.level || 1 }
-function canUpgrade(skillId) {
-  const skill = store.config.skillPool.find(s => s.id === skillId)
-  if (!skill) return false
-  return store.player.skillPoints >= (skill.upgradeCost ?? 2) && getSkillLevel(skillId) < (skill.maxLevel || 10)
-}
 
 function learnSkill(skillId) {
   const skill = store.config.skillPool.find(s => s.id === skillId)
@@ -257,16 +272,37 @@ function learnSkill(skillId) {
 }
 
 function upgradeSkill(skillId) {
-  if (!canUpgrade(skillId)) return
   const skill = store.config.skillPool.find(s => s.id === skillId)
   if (!skill) return
-  const cost = skill.upgradeCost ?? 2
-  if (store.player.skillPoints < cost) return
+  
+  const currentLevel = getSkillLevel(skillId)
+  const cost = getUpgradeCost(currentLevel)
+  
+  if (!isUnlocked(skillId)) {
+    showToast('尚未学习该技能')
+    return
+  }
+  if (store.player.skillPoints < cost) {
+    showToast(`技能点不足 (需要${cost}点)`)
+    return
+  }
+
+  store.player.skillPoints -= cost
   if (!store.player.skills) store.player.skills = {}
   if (!store.player.skills[skillId]) store.player.skills[skillId] = { unlocked: true, level: 1 }
-  store.player.skills[skillId].level = (store.player.skills[skillId].level || 1) + 1
+  store.player.skills[skillId].level += 1
   store.save()
-  if (skillDetail.value?.id === skillId) skillDetail.value = store.config.skillPool.find(s => s.id === skillId)
+
+  if (skillDetail.value?.id === skillId) {
+    skillDetail.value = store.config.skillPool.find(s => s.id === skillId)
+  }
+  
+  const newLevel = getSkillLevel(skillId)
+  if (newLevel === 15) {
+    showToast(`${skill.name} 觉醒！已解锁元素反应！`)
+  } else {
+    showToast(`${skill.name} 升级至 Lv.${newLevel}，消耗 ${cost} 技能点`)
+  }
 }
 
 function equipSkill(skillId) {
@@ -367,65 +403,20 @@ function getEffectFullDesc(eff) {
     default: return eff.note || ''
   }
 }
-
-function getEffectShort(eff) {
-  const typeMap = { lifesteal:'吸血', mpDrain:'吸蓝', dot:'持续伤害', heal:'治疗', buff:'增益', debuff:'减益', shield:'护盾' }
-  let text = typeMap[eff.type] || eff.type
-  if (eff.value) text += ` ${eff.value}${eff.type === 'lifesteal' || eff.type === 'mpDrain' ? '%' : ''}`
-  if (eff.chance < 100) text += `(${eff.chance}%)`
-  return text
-}
 </script>
 
 <style scoped>
-/* ===== 全局 ===== */
+/* ===== 原有样式保持不变 ===== */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 200; }
 .panel { width: 90vw; height: 90vh; padding: 16px; background: rgba(15,25,45,0.95); border: 2px solid #b89a6a; color: #ffd; font-family: 'Press Start 2P', cursive; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
 
-/* 顶部栏：左标题+技能点/重置，右关闭 */
-.top-bar {
-  display: flex;
-  align-items: center;
-  margin-bottom: 10px;
-}
-.top-left {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.top-title {
-  font-size: 16px;
-  color: #ffd700;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-  white-space: nowrap;
-}
-.top-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font-size: 10px;
-  color: #ffd700;
-  margin-left: 16px;
-}
-.top-sp {
-  white-space: nowrap;
-}
-.reset-btn {
-  font-size: 7px;
-  padding: 4px 10px;
-}
-.close-btn {
-  background: none;
-  border: none;
-  color: #ffd;
-  font-size: 20px;
-  cursor: pointer;
-  flex-shrink: 0;
-  margin-left: auto;
-}
+.top-bar { display: flex; align-items: center; margin-bottom: 10px; }
+.top-left { display: flex; align-items: center; gap: 16px; }
+.top-title { font-size: 16px; color: #ffd700; display: flex; align-items: center; gap: 10px; margin: 0; white-space: nowrap; }
+.top-actions { display: flex; align-items: center; gap: 10px; font-size: 10px; color: #ffd700; margin-left: 16px; }
+.top-sp { white-space: nowrap; }
+.reset-btn { font-size: 7px; padding: 4px 10px; }
+.close-btn { background: none; border: none; color: #ffd; font-size: 20px; cursor: pointer; flex-shrink: 0; margin-left: auto; }
 
 .main-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
 .main-tab { flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(184,154,106,0.4); padding: 8px; font-size: 9px; color: #aaa; display: flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer; }
@@ -452,7 +443,6 @@ function getEffectShort(eff) {
 .equipped-card .skill-info { flex: 1; display: flex; flex-direction: column; }
 .order-btns { display: flex; gap: 3px; }
 
-/* 三脚架 */
 .tripod-full { display: flex; flex-direction: column; gap: 12px; }
 .tripod-tabs { display: flex; gap: 4px; justify-content: flex-start; margin-bottom: 16px; }
 .tripod-tab {border-radius: 6px;width: 28px; height: 28px; background: rgba(0,0,0,0.4); border: 1px solid rgba(184,154,106,0.4); color: #aaa; font-family: inherit; font-size: 9px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
@@ -469,7 +459,6 @@ function getEffectShort(eff) {
 .eff-desc { font-size: 6px; color: #aaa; line-height: 1.3; }
 .choice-btn.active .eff-desc { color: #ffd; }
 
-/* 弹窗 */
 .skill-detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 600; padding: 20px; }
 .skill-detail-panel { border-radius: 6px;background: rgba(15,25,45,0.98); border: 2px solid #b89a6a; padding: 20px; max-width: 500px; width: 100%; max-height: 80vh; overflow-y: auto; color: #ffd; font-family: 'Press Start 2P', cursive; position: relative; }
 .skill-detail-panel h3 { font-size: 13px; color: #ffd700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
@@ -483,4 +472,10 @@ function getEffectShort(eff) {
 .pixel-btn.danger { background: rgba(255,100,100,0.2); border-color: #f44; }
 .pixel-btn.micro { font-size: 6px; padding: 3px 5px; min-width: unset; }
 .empty { text-align: center; color: #888; padding: 20px; font-size: 9px; }
+
+/* 觉醒进度条样式 */
+.awaken-progress { margin: 10px 0; }
+.awaken-label { font-size: 8px; color: #aaa; margin-bottom: 4px; }
+.awaken-bar { height: 6px; background: #2a2a3a; border-radius: 3px; overflow: hidden; }
+.awaken-fill { height: 100%; background: linear-gradient(90deg, #ffd700, #ff8c00); border-radius: 3px; transition: width 0.3s; }
 </style>

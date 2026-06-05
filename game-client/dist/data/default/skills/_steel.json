@@ -1,0 +1,51 @@
+[
+  {
+    "_comment": "===== 钢系技能 =====",
+    "id": "steel_armor",
+    "name": "钢甲",
+    "desc": "钢属性辅助，提升全队防御与护盾",
+    "icon": "mdi:cube-outline",
+    "type": "active",
+    "target": "all",
+    "element": "steel",
+    "mpCost": 12,
+    "baseMul": 0,
+    "maxLevel": 10,
+    "upgradeCost": 2,
+    "learnCost": 2,
+    "levelScaling": { "shieldValue": 10 },
+    "effects": [
+      { "type": "buff", "value": 0.25, "stat": "def", "duration": 5, "chance": 100 },
+      { "type": "shield", "value": 0.2, "duration": 5, "chance": 100 }
+    ],
+    "tripods": [
+      { "name": "坚韧", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.15, "stat": "maxHp", "duration": 5, "chance": 100, "target": "all" }] },
+      { "name": "反伤光环", "unlockLevel": 7, "effects": [{ "type": "reflect", "value": 0.2, "duration": 5, "chance": 100, "target": "all" }] },
+      { "name": "钢之意志", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.2, "stat": "atk", "duration": 5, "chance": 100, "target": "all" }] }
+    ]
+  },
+  {
+    "id": "steel_blade",
+    "name": "钢刃",
+    "desc": "钢属性单体攻击，无视部分防御并附加真实伤害",
+    "icon": "mdi:sword-cross",
+    "type": "active",
+    "target": "single",
+    "element": "steel",
+    "mpCost": 7,
+    "baseMul": 1.5,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.12 },
+    "effects": [
+      { "type": "buff", "value": 0.2, "stat": "ignoreDef", "duration": 1, "chance": 100, "target": "self", "note": "本次攻击无视20%防御" },
+      { "type": "trueDmg", "value": 0.1, "chance": 100, "note": "附加攻击力10%的真伤" }
+    ],
+    "tripods": [
+      { "name": "锋利", "unlockLevel": 4, "effects": [{ "type": "trueDmg", "value": 0.2, "chance": 100, "note": "真伤比例提升至20%" }] },
+      { "name": "破甲", "unlockLevel": 7, "effects": [{ "type": "debuff", "value": -0.2, "stat": "def", "duration": 5, "chance": 100 }] },
+      { "name": "钢躯", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.15, "stat": "def", "duration": 5, "chance": 100, "target": "self" }] }
+    ]
+  }
+]

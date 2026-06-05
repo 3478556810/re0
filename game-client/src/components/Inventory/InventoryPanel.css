@@ -1,0 +1,116 @@
+/* ===== 背包主面板 ===== */
+.overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); backdrop-filter: blur(10px); display: flex; justify-content: center; align-items: center; z-index: 200; }
+.panel { width: 100vw; height: 100vh; background: rgba(15,25,45,0.92); border: 2px solid #b89a6a; border-radius: 0; color: #ffd; font-family: 'Press Start 2P', cursive; padding: 24px; position: relative; overflow-y: auto; }
+.close-btn { position: absolute; top: 16px; right: 16px; background: none; border: none; color: #ffd; font-size: 20px; cursor: pointer; z-index: 10; }
+.layout { display: flex; gap: 24px; height: 100%; }
+
+/* 左右弹性平分 */
+.equip-section { flex: 1; display: flex; flex-direction: column; }
+.mats-section { flex: 1; display: flex; flex-direction: column; }
+
+/* 以下完全保留你原有所有样式，只动上面几个 */
+.section-title { font-size: 14px; margin-bottom: 15px; color: #ffd700; display: flex; align-items: center; gap: 10px; }
+.equip-columns { display: flex; gap: 15px; flex: 1; overflow-y: auto; }
+.equip-col { flex: 1; background: rgba(255,255,255,0.03); border-radius: 16px; padding: 12px; }
+.equip-col h3 { font-size: 10px; margin-bottom: 12px; color: #ccc; display: flex; align-items: center; gap: 6px; }
+.equip-slot { margin-bottom: 10px; }
+.slot-label { font-size: 7px; color: #aaa; margin-bottom: 4px; }
+.slot-item { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,215,0,0.25); border-radius: 10px; padding: 8px; min-height: 36px; display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.2s; position: relative; }
+.slot-item:hover { background: rgba(255,215,0,0.15); }
+.slot-item.empty { justify-content: center; }
+.empty-icon { font-size: 20px; opacity: 0.3; }
+.item-icon { font-size: 18px; color: #ffd700; flex-shrink: 0; }
+.item-name { font-size: 8px; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* 品质边框 */
+.slot-item.quality-green { border-color: #4caf50; }
+.slot-item.quality-blue { border-color: #2196f3; }
+.slot-item.quality-purple { border-color: #9c27b0; }
+.slot-item.quality-red { border-color: #f44336; }
+
+/* 标签栏 */
+.tab-bar { display: flex; gap: 4px; margin-bottom: 14px; }
+.tab-btn {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(184,154,106,0.5);
+ border-radius: 8px;              /* ← 改为四角统一圆角 */
+  padding: 6px 12px;              /* 稍减内边距，让按钮更接近正方形 */
+  font-size: 9px;
+  color: #ccc;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tab-btn.active { background: rgba(255,215,0,0.2); border-color: #ffd700; color: #ffd700; font-weight: bold; }
+
+/* 装备/饰品网格 */
+.acc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.acc-card { background: rgba(0,0,0,0.5); border: 1px solid rgba(184,154,106,0.3); border-radius: 12px; padding: 10px 10px 8px; display: flex; flex-direction: column; gap: 6px; }
+.acc-body { cursor: pointer; display: flex; flex-direction: column; gap: 8px; }
+.acc-name { font-size: 10px; font-weight: bold; color: #ffe4b5; word-break: break-word; }
+.acc-level { font-size: 7px; color: #aaa; margin-left: 4px; }
+.acc-stats { font-size: 8px; color: #ccc; display: flex; gap: 12px; }
+.acc-actions { display: flex; gap: 5px; margin-top: 6px; }
+.acc-extra-stat { color: #aaa; font-size: 7px; }
+
+/* 按钮 */
+.pixel-btn { background: #2a2a3a; border: 2px solid #b89a6a; color: #ffd; font-family: inherit; padding: 6px 14px; font-size: 9px; cursor: pointer; border-radius: 8px; }
+.pixel-btn.small { padding: 3px 8px; font-size: 7px; border-radius: 6px; }
+.pixel-btn.primary { background: rgba(255,215,0,0.2); border-color: #ffd700; }
+.pixel-btn.danger { background: rgba(180,0,0,0.3); border-color: #ff5555; color: #ffaaaa; }
+.pixel-input { background: #1a1a2e; border: 2px solid #b89a6a; color: #ffd; padding: 4px 8px; border-radius: 6px; font-family: inherit; }
+
+/* 材料网格 */
+.materials-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr)); gap: 10px; flex: 1; overflow-y: auto; align-content: start; padding-right: 5px; }
+.material-cell { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,215,0,0.2); border-radius: 12px; padding: 10px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 5px; transition: transform 0.2s; }
+.material-cell.clickable:hover { background: rgba(255,215,0,0.1); border-color: #ffd700; cursor: pointer; }
+.mat-icon { font-size: 28px; color: #ffd700; }
+.mat-name { font-size: 7px; color: #ccc; word-break: break-all; }
+.mat-qty { font-size: 8px; font-weight: bold; color: #ffd; background: rgba(0,0,0,0.5); padding: 2px 8px; border-radius: 10px; }
+.empty-mats { grid-column: 1 / -1; text-align: center; font-size: 10px; color: #888; padding: 30px; }
+
+/* 贩卖弹窗 */
+.dialog-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 300; }
+.sell-dialog { background: rgba(15,25,45,0.95); border: 2px solid #ffd700; border-radius: 16px; padding: 20px; color: #ffd; font-family: inherit; text-align: center; }
+.dialog-price { font-size: 9px; color: #ffd700; }
+.dialog-controls { display: flex; gap: 8px; align-items: center; margin: 12px 0; }
+.qty-input { width: 60px; text-align: center; }
+.dialog-total { font-size: 10px; color: #4caf50; margin: 10px 0; }
+.dialog-actions { display: flex; gap: 10px; justify-content: center; }
+
+/* 详情浮层 */
+.detail-tip-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.3); display: flex; justify-content: center; align-items: center; z-index: 500; }
+.detail-tip { background: rgba(0,0,0,0.95); border: 2px solid #ffd700; border-radius: 16px; padding: 16px; box-shadow: 0 0 30px rgba(0,0,0,0.9); max-width: 400px; font-size: 10px; color: #ffd; }
+.detail-tip-content { display: flex; gap: 12px; }
+.compare-card { width: 130px; flex-shrink: 0; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,215,0,0.3); border-radius: 8px; padding: 8px; font-size: 8px; color: #ccc; }
+.compare-title { font-size: 9px; color: #ffd700; margin-bottom: 6px; border-bottom: 1px solid rgba(255,215,0,0.3); padding-bottom: 4px; }
+.compare-name { font-size: 10px; font-weight: bold; margin-bottom: 4px; }
+.detail-info { flex: 1; min-width: 0; }
+.tip-name { font-size: 12px; font-weight: bold; margin-bottom: 4px; }
+.tip-quality { font-size: 9px; margin-bottom: 8px; }
+.tip-stats { display: flex; gap: 16px; margin: 6px 0; font-size: 9px; }
+.tip-stat-row { display: flex; align-items: center; gap: 4px; }
+.tip-extra-stats { margin-top: 8px; border-top: 1px solid rgba(255,215,0,0.3); padding-top: 6px; }
+.tip-extra-stats .tip-stat-row { justify-content: space-between; }
+.tip-affixes { margin-top: 8px; border-top: 1px solid rgba(255,215,0,0.3); padding-top: 6px; }
+.tip-set { margin-top: 8px; border-top: 1px solid rgba(255,215,0,0.3); padding-top: 6px; }
+.tip-set-header { font-size: 9px; color: #ffd700; font-weight: bold; }
+.tip-set-desc { font-size: 8px; color: #aaa; margin: 4px 0; }
+.tip-actions { margin-top: 10px; display: flex; gap: 8px; }
+.affix-tag { background: rgba(0,0,0,0.5); border: 1px solid rgba(184,154,106,0.3); border-radius: 6px; padding: 2px 8px; font-size: 8px; color: #ccc; display: inline-flex; align-items: center; gap: 4px; margin-right: 4px; }
+.affix-tag.fixed { border-color: #f0c060; background: rgba(240,192,96,0.12); box-shadow: 0 0 6px rgba(240,192,96,0.3); }
+.fixed-circle { width: 8px; height: 8px; border-radius: 50%; border: 2px solid #f0c060; background: transparent; flex-shrink: 0; }
+.fixed-text { color: #f0c060; font-weight: bold; }
+
+/* 品质筛选按钮 */
+.quality-spacer { width: 8px; flex-shrink: 0; }
+.quality-chip { background: rgba(0,0,0,0.4); border: 1px solid #3a3a5a; border-radius: 6px; padding: 2px 6px; font-size: 7px; color: #888; cursor: pointer; white-space: nowrap; }
+.quality-chip.active { background: rgba(255,215,0,0.2); border-color: #ffd700; color: #ffd700; }
+.quality-chip.danger { color: #ffaaaa; border-color: #8b0000; }
+.quality-chip.danger:disabled { opacity: 0.3; cursor: not-allowed; }
+
+@media (max-width: 700px) {
+  .layout { flex-direction: column; }
+  .detail-tip { max-width: 90vw; }
+}

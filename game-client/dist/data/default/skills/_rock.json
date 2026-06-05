@@ -1,0 +1,45 @@
+[
+  {
+    "_comment": "===== 岩系技能 =====",
+    "id": "rock_fall",
+    "name": "岩崩",
+    "desc": "岩属性单体攻击，概率眩晕",
+    "icon": "mdi:terrain",
+    "type": "active",
+    "target": "single",
+    "element": "rock",
+    "mpCost": 7,
+    "baseMul": 1.6,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 2,
+    "levelScaling": { "baseMul": 0.13 },
+    "effects": [{ "type": "stun", "duration": 1, "chance": 40 }],
+    "tripods": [
+      { "name": "重击", "unlockLevel": 4, "effects": [{ "type": "stun", "duration": 1, "chance": 55 }] },
+      { "name": "碎石", "unlockLevel": 7, "effects": [{ "type": "debuff", "value": -0.25, "stat": "def", "duration": 5, "chance": 100 }] },
+      { "name": "岩盾", "unlockLevel": 10, "effects": [{ "type": "shield", "value": 0.25, "duration": 5, "chance": 100, "target": "self" }] }
+    ]
+  },
+  {
+    "id": "earthquake",
+    "name": "地震",
+    "desc": "岩属性全体攻击，概率降低敌人攻击力",
+    "icon": "mdi:waves",
+    "type": "active",
+    "target": "aoe",
+    "element": "rock",
+    "mpCost": 15,
+    "baseMul": 0.95,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 3,
+    "levelScaling": { "baseMul": 0.08 },
+    "effects": [{ "type": "debuff", "value": -0.20, "stat": "atk", "duration": 5, "chance": 60 }],
+    "tripods": [
+      { "name": "地裂", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": -0.15, "stat": "def", "duration": 5, "chance": 80 }] },
+      { "name": "岩铠", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.2, "stat": "def", "duration": 5, "chance": 100, "target": "self" }] },
+      { "name": "地动", "unlockLevel": 10, "effects": [{ "type": "stun", "duration": 1, "chance": 30 }] }
+    ]
+  }
+]

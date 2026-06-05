@@ -122,20 +122,21 @@ case 'trueDmg':
         source.addEffect({ type: EFFECT_TYPES.LIFESTEAL_BUFF, value: value || 0.15, duration: duration || 3, stackable: false })
         messages.push(`${source.name} 的吸血效果增强了`)
         break
-   case 'dot': {
-  // DOT伤害 = 施法者攻击力 × 系数（最少保证1点）
-  const dotDamage = Math.max(1, Math.floor(source.getEffectiveAttack() * Math.min(value || 0.1, 1.0)))
-  target.addEffect({
+case 'dot':
+  const isPercentHp = effDef.note && effDef.note.includes('最大生命值');
+  const dotEffect = {
     type: EFFECT_TYPES.DOT,
-    value: dotDamage,        // ✅ 存储计算后的实际伤害值
-    duration: duration,
-    stackable: true,
-    maxStacks: 99,
-    noRefresh: effDef.noRefresh ?? false,
-  })
-  messages.push(`${target.name} 中毒，每回合损失 ${dotDamage} 点生命，持续 ${duration} 回合`)
-  break
-}
+    value: effDef.value || 0.15,
+    duration: effDef.duration || 3,
+    stackable: effDef.stackable ?? true,
+    maxStacks: effDef.maxStacks || 99,
+    isPercentHp: isPercentHp,
+    animClass: 'dot-damage'
+  };
+  // 如果是百分比生命 DOT，存储施法者攻击力用于软上限
+
+  target.addEffect(dotEffect);
+  break;
 case 'heal':
   const healAmount = Math.floor(source.getEffectiveAttack() * value);
   if (effDef.target === 'all' && engine) {

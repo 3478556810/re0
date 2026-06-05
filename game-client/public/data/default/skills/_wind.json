@@ -1,48 +1,50 @@
 [
   {
-    "_comment": "===== 风系技能 =====",
     "id": "wind_blade",
     "name": "风刃",
-    "desc": "风属性单体攻击，高几率追加攻击",
+    "desc": "风属性单体攻击，高概率追加攻击。每次追加提升下一次追加概率。",
     "icon": "mdi:weather-windy",
     "type": "active",
     "target": "single",
     "element": "wind",
     "mpCost": 6,
-    "baseMul": 1.4,
+    "baseMul": 1.5,
     "maxLevel": 10,
     "upgradeCost": 3,
     "learnCost": 2,
-    "levelScaling": { "baseMul": 0.11 },
-    "effects": [],
+    "levelScaling": { "baseMul": 0.12 },
+    "effects": [
+      { "type": "extraAction", "value": 60, "chance": 60, "note": "追加一次攻击；若触发，下次追加概率+10%（可叠加）" }
+    ],
     "tripods": [
-      { "name": "连风", "unlockLevel": 4, "effects": [{ "type": "extraAction", "value": 50, "note": "追加攻击", "chance": 60 }] },
-      { "name": "风暴", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 30, "note": "追加全体伤害", "chance": 100, "target": "aoe" }] },
-      { "name": "顺风", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.20, "stat": "critRate", "duration": 5, "chance": 100, "target": "self" }] }
+      { "name": "连风", "unlockLevel": 4, "effects": [{ "type": "extraAction", "value": 70, "chance": 75 }] },
+      { "name": "风暴", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 40, "chance": 100, "target": "aoe" }] },
+      { "name": "顺风", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.25, "stat": "critRate", "duration": 3, "chance": 100, "target": "self" }] }
     ]
   },
   {
     "id": "swift_step",
     "name": "疾风步",
-    "desc": "风属性辅助，提升攻击与暴击率",
+    "desc": "风属性辅助，提升攻击力与暴击率，并将速度的一定比例转化为攻击力。",
     "icon": "mdi:run-fast",
     "type": "active",
     "target": "self",
     "element": "wind",
-    "mpCost": 6,
+    "mpCost": 8,
     "baseMul": 0,
     "maxLevel": 10,
     "upgradeCost": 2,
     "learnCost": 2,
-    "levelScaling": { "buffValue": 4 },
+    "levelScaling": { "buffValue": 5 },
     "effects": [
-      { "type": "buff", "value": 0.25, "stat": "atk", "duration": 5, "chance": 100 },
-      { "type": "buff", "value": 0.20, "stat": "critRate", "duration": 5, "chance": 100 }
+      { "type": "buff", "value": 0.3, "stat": "atk", "duration": 3, "chance": 100 },
+      { "type": "buff", "value": 0.25, "stat": "critRate", "duration": 3, "chance": 100 },
+      { "type": "speedToAtk", "value": 0.5, "note": "速度的50%转化为额外攻击力" }
     ],
     "tripods": [
-      { "name": "顺风", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.30, "stat": "critRate", "duration": 5, "chance": 100 }] },
-      { "name": "残影", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.25, "stat": "dodge", "duration": 5, "chance": 100 }] },
-      { "name": "暴风", "unlockLevel": 10, "effects": [{ "type": "extraAction", "value": 60, "note": "追加风属性伤害", "chance": 100 }] }
+      { "name": "顺风", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.35, "stat": "critRate", "duration": 3, "chance": 100 }] },
+      { "name": "残影", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.3, "stat": "dodge", "duration": 3, "chance": 100 }] },
+      { "name": "暴风", "unlockLevel": 10, "effects": [{ "type": "extraAction", "value": 80, "chance": 100 }] }
     ]
   }
 ]
