@@ -14,13 +14,42 @@ export function getElementColor(element) {
 }
 
 export function getEffectIcon(type) {
+  // ✅ 优先匹配元素图标（火、水、雷、风、草、冰、圣、暗、岩、钢、毒）
+  const elementIcons = {
+    fire: 'mdi:fire',
+    water: 'mdi:water',
+    thunder: 'mdi:lightning-bolt',
+    wind: 'mdi:weather-windy',
+    grass: 'mdi:leaf',
+    ice: 'mdi:snowflake',
+    holy: 'mdi:brightness-7',
+    dark: 'mdi:moon-waning-crescent',
+    rock: 'mdi:terrain',
+    steel: 'mdi:cube-outline',
+    poison: 'mdi:skull-crossbones'
+  }
+  if (elementIcons[type]) return elementIcons[type]
+
+  // 原有其他效果图标映射
   const map = {
-    dot: 'mdi:skull-crossbones', hot: 'mdi:heart-plus', atkUp: 'mdi:sword-cross', defUp: 'mdi:shield-star',
-    spdUp: 'mdi:run-fast', atkDown: 'pepicons-print:sword-off', defDown: 'mdi:shield-off', spdDown: 'mdi:walk',
-    shield: 'mdi:shield', stun: 'mdi:lightning-bolt', silence: 'mdi:microphone-off', reflect: 'mdi:mirror',
-    freeze: 'mdi:snowflake', bleed: 'mdi:blood-bag', weak: 'mdi:emoticon-cry', regen: 'mdi:heart-circle',
-    taunt: 'mdi:account-voice', lifestealBuff: 'mdi:blood-saver', critRateUp: 'noto:heart-on-fire',
-    dragonMark: 'simple-icons:redragon', shadowMark: 'line-md:moon', holyMark: 'mdi:star-shooting'
+    dot: 'mdi:skull-crossbones',
+    bleed: 'mdi:blood-bag',
+    stun: 'mdi:lightning-bolt',
+    shield: 'mdi:shield',
+    regen: 'mdi:heart-circle',
+    atkUp: 'mdi:sword-cross',
+    defUp: 'mdi:shield-star',
+    spdUp: 'mdi:run-fast',
+    atkDown: 'pepicons-print:sword-off',
+    defDown: 'mdi:shield-off',
+    spdDown: 'mdi:walk',
+    freeze: 'mdi:snowflake',
+    taunt: 'mdi:account-voice',
+    lifestealBuff: 'mdi:blood-saver',
+    critUp: 'noto:heart-on-fire',
+    dragonMark: 'simple-icons:redragon',
+    shadowMark: 'line-md:moon',
+    holyMark: 'mdi:star-shooting'
   }
   return map[type] || 'mdi:circle-small'
 }
@@ -41,15 +70,28 @@ export function getEffectTooltip(effect, maxHp) {
   return `${effect.type}：${desc}，剩余 ${effect.duration} 回合`
 }
 
-// 印记置顶排序（确保 dragonMark, shadowMark, holyMark 在最前）
-export function getSortedEffects(enemy) {
-  if (!enemy?.effects) return []
-  const marks = ['dragonMark', 'shadowMark', 'holyMark']
-  return [...enemy.effects].sort((a, b) => {
-    const aIs = marks.includes(a.type)
-    const bIs = marks.includes(b.type)
-    if (aIs && !bIs) return -1
-    if (!aIs && bIs) return 1
+/**
+ * 效果排序：套装印记 → 元素印记 → buff → debuff → dot
+ */
+export function getSortedEffects(target) {
+  if (!target?.effects) return []
+  
+  const marks = ['dragonMark', 'shadowMark', 'holyMark']  // 套装印记
+  const elementMarks = ['element_mark']                     // 元素印记
+  
+  return [...target.effects].sort((a, b) => {
+    // 套装印记优先
+    const aIsSet = marks.includes(a.type)
+    const bIsSet = marks.includes(b.type)
+    if (aIsSet && !bIsSet) return -1
+    if (!aIsSet && bIsSet) return 1
+    
+    // 元素印记次之
+    const aIsEle = elementMarks.includes(a.type)
+    const bIsEle = elementMarks.includes(b.type)
+    if (aIsEle && !bIsEle) return -1
+    if (!aIsEle && bIsEle) return 1
+    
     return 0
   })
 }
@@ -61,4 +103,44 @@ export function getDamageClass(damage, isCrit, isTrue, isShadowTrue) {
   if (isShadowTrue) return 'dmg-type-shadowTrue'
   if (isTrue) return 'dmg-type-trueDmg'
   return 'dmg-type-normal'
+}
+
+
+/**
+ * 获取元素印记对应的动画类名（基于元素颜色）
+ */
+export function getElementMarkClass(eff) {
+  if (eff.type !== 'element_mark') return ''
+  
+  const colorMap = {
+    fire: 'element-mark-fire',
+    water: 'element-mark-water',
+    thunder: 'element-mark-thunder',
+    wind: 'element-mark-wind',
+    grass: 'element-mark-grass',
+    ice: 'element-mark-ice',
+    holy: 'element-mark-holy',
+    dark: 'element-mark-dark',
+    rock: 'element-mark-rock',
+    steel: 'element-mark-steel',
+    poison: 'element-mark-poison'
+  }
+  
+  return colorMap[eff.element] || 'element-mark-default'
+}
+
+/**
+ * 获取元素印记的提示文字
+ */
+export function getElementMarkTooltip(eff) {
+  if (eff.type !== 'element_mark') return ''
+  
+  const labelMap = {
+    fire: '火', water: '水', thunder: '雷', wind: '风',
+    grass: '草', ice: '冰', holy: '圣', dark: '暗',
+    rock: '岩', steel: '钢', poison: '毒'
+  }
+  
+  const label = labelMap[eff.element] || eff.element
+  return `元素印记·${label}`
 }

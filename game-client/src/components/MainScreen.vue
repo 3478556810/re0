@@ -91,9 +91,9 @@ import { ref, computed, watch, onMounted, inject, nextTick,reactive } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
 import CharacterPanel from './CharacterPanel.vue'
-import InventoryPanel from './InventoryPanel.vue'
+import InventoryPanel from './Inventory/InventoryPanel.vue'
 import StockPanel from './StockPanel.vue'
-import ForgePanel from './ForgePanel.vue'
+import ForgePanel from './ForgePanel//ForgePanel.vue'
 import AdventurerGuild from './AdventurerGuild.vue'
 import DevPanel from './DevPanel/DevPanel.vue'
 import DungeonPanel from './DungeonPanel.vue'
@@ -425,8 +425,8 @@ const summary = [
 }
 
 .main-btn {
-  width: 160px;
-  height: 160px;
+  width: 120px;
+  height: 120px;
   border-radius: 24px;
   border: 2px solid rgba(0,0,0,0.08);
   background: rgba(255,255,255,0.9);

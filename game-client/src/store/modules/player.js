@@ -5,10 +5,10 @@ export function usePlayer() {
     name: '冒险者', emoji: '',
     level: 1, exp: 0, gold: 500,
     class: '流浪者',
-    hp: 80, maxHp: 80,
-    mp: 50, maxMp: 50,
-    attack: 28, defense: 15,
-    speed: 10, luck: 5,
+ hp: 500, maxHp: 500,      // 从80提高到500
+mp: 80, maxMp: 80,         // 从50提高到80
+attack: 30, defense: 18,   // 攻击力微调，防御力上调到18（配合防御系数1.0会有明显减伤）
+speed: 12, luck: 5,
     critRate: 5, critDmg: 150,
     trueDmg: 0, lifesteal: 0,
     rank: '黑铁', rankExp: 0,
@@ -43,12 +43,12 @@ export function usePlayer() {
     while (player.level > 0 && player.exp >= needExp) {
       player.exp -= needExp
       player.level++
-      player.maxHp += 15
-      player.maxMp += 8
-      player.hp = player.maxHp
-      player.mp = player.maxMp
-      player.attack += 5
-      player.defense += 4
+  player.maxHp += 80            // 每级+80，配合500基础，20级≈2100 HP
+player.maxMp += 15            // 每级+15
+player.hp = player.maxHp
+player.mp = player.maxMp
+player.attack += 6            // 攻击成长稍高，弥补装备差距
+player.defense += 6           // 防御成长也提上来，让裸装也有坦度
       player.skillPoints = (player.skillPoints || 0) + 3
       needExp = player.level * 100
       if (player.exp < 0) player.exp = 0

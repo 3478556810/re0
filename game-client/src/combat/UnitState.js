@@ -37,6 +37,7 @@ export class UnitState {
     this.reviveDmg = baseStats.reviveDmg || 0
     this._reviveCooldown = 0
     this._reviveUsedThisBattle = false
+    this._deathSaveCooldown = 0            // 顽强冷却回合数
     this.lifesteal = baseStats.lifesteal || 0
     this.mpLifesteal = baseStats.mpLifesteal || 0
     this.elemDmg = {}
@@ -152,148 +153,224 @@ export class UnitState {
     this.effects = this.effects.filter(e => e.type !== type)
   }
 
-  // 修改：接受 engine 参数
   onTurnEnd(engine) {
-    if (this._reviveCooldown > 0) this._reviveCooldown--
+    // 减少冷却
+    if (this._reviveCooldown > 0) this._reviveCooldown--;
+    if (this._deathSaveCooldown > 0) this._deathSaveCooldown--;
 
     // 再生
     this.effects.filter(e => e.type === EFFECT_TYPES.REGEN).forEach(e => {
-      const heal = Math.floor(this.maxHp * (e.value || 0.08))
-      this.hp = Math.min(this.maxHp, this.hp + heal)
-    })
+        const heal = Math.floor(this.maxHp * (e.value || 0.08));
+        this.hp = Math.min(this.maxHp, this.hp + heal);
+    });
 
-    // 流血
+    // 收集所有持续伤害
+    let totalBleedDmg = 0;
+    let totalDotDmg = 0;
     this.effects.filter(e => e.type === EFFECT_TYPES.BLEED).forEach(e => {
-      const dmg = Math.floor(this.maxHp * (e.value || 0.05))
-      this.hp -= dmg
-      if (this.hp < 0) this.hp = 0
-    })
-
-    // DOT 结算
+        totalBleedDmg += Math.floor(this.maxHp * (e.value || 0.05));
+    });
     this.effects.filter(e => e.type === EFFECT_TYPES.DOT).forEach(e => {
-      const totalDmg = (e.value || 0) * (e.stacks || 1)
-      this.hp -= totalDmg
-      if (this.hp < 0) this.hp = 0
-    })
+if (e.isPercentHp) {
+    const hpPercent = (e.value || 0.015) * (e.stacks || 1);
+    const rawDmg = Math.floor(this.maxHp * hpPercent);
+    // 硬上限：每层不超过目标最大生命值的 2%
+    const maxPerStack = Math.floor(this.maxHp * 0.02);
+    const maxTotal = maxPerStack * (e.stacks || 1);
+    totalDotDmg += Math.min(rawDmg, maxTotal);
+} else {
+    totalDotDmg += (e.value || 0.15) * (e.stacks || 1);
+}
+    });
+    const pendingDmg = totalBleedDmg + totalDotDmg;
 
-    // 执行所有效果上的 onTick 机制（包括虚空诅咒）
+    // 如果会致死，触发生存机制
+    if (pendingDmg > 0 && this.hp - pendingDmg <= 0) {
+        let survived = false;
+
+        // 1. 顽强锁血（带冷却）
+        if (this.deathSave > 0 && this._deathSaveCooldown <= 0) {
+            const success = this.deathSave >= 100 || Math.random() * 100 < this.deathSave;
+            if (success) {
+                this.hp = 1;
+                this._deathSaveCooldown = 1;   // 进入冷却
+                this.removeEffect(EFFECT_TYPES.BLEED);
+                this.removeEffect(EFFECT_TYPES.DOT);
+                if (this.deathShield > 0) {
+                    this.addEffect({
+                        type: EFFECT_TYPES.SHIELD,
+                        value: Math.floor(this.maxHp * this.deathShield / 100),
+                        duration: 3,
+                        stackable: true,
+                        maxStacks: 99
+                    });
+                }
+                engine._pendingMessages = engine._pendingMessages || [];
+                engine._pendingMessages.push('玩家顽强地存活下来！');
+                survived = true;
+            }
+        }
+
+        // 2. 不死鸟复活
+        if (!survived && this.reviveChance > 0 && !this._reviveUsedThisBattle && this._reviveCooldown <= 0) {
+            const success = this.reviveChance >= 100 || Math.random() * 100 < this.reviveChance;
+            if (success) {
+                this.hp = Math.floor(this.maxHp * 0.5);
+                this._reviveUsedThisBattle = true;
+                this._reviveCooldown = this.reviveCD || 10;
+                this.removeEffect(EFFECT_TYPES.BLEED);
+                this.removeEffect(EFFECT_TYPES.DOT);
+                if (this.reviveDmg > 0) {
+                    this.addEffect({
+                        type: EFFECT_TYPES.ATK_UP,
+                        value: this.reviveDmg / 100,
+                        duration: 3,
+                        stackable: false
+                    });
+                }
+                engine._pendingMessages = engine._pendingMessages || [];
+                engine._pendingMessages.push('玩家从死亡中复活！');
+                survived = true;
+            }
+        }
+
+        // 如果存活，跳过扣血
+        if (survived) {
+            this.effects.forEach(e => e.duration--);
+            this.effects = this.effects.filter(e => e.duration > 0);
+            return;
+        }
+    }
+
+    // 正常结算持续伤害
+    if (totalBleedDmg > 0) {
+        this.hp -= totalBleedDmg;
+        if (this.hp < 0) this.hp = 0;
+    }
+    if (totalDotDmg > 0) {
+        this.hp -= totalDotDmg;
+        if (this.hp < 0) this.hp = 0;
+    }
+
+    // 机制钩子
     this.effects.forEach(eff => {
-      if (eff.mechanic && bossMechanics[eff.mechanic]?.onTick) {
-        bossMechanics[eff.mechanic].onTick(eff, this, engine)
-      }
-    })
+        if (eff.mechanic && bossMechanics[eff.mechanic]?.onTick) {
+            bossMechanics[eff.mechanic].onTick(eff, this, engine)
+        }
+    });
 
-    // 减少持续时间
-    this.effects.forEach(e => e.duration--)
-    this.effects = this.effects.filter(e => e.duration > 0)
+    // 持续时间衰减
+    this.effects.forEach(e => e.duration--);
+    this.effects = this.effects.filter(e => e.duration > 0);
   }
 
   takeDamage(rawDamage, attacker) {
-    // 怨恨增伤
     if (this.dmgTaken && this.dmgTaken > 0) {
-      rawDamage = Math.floor(rawDamage * (1 + this.dmgTaken / 100))
+        rawDamage = Math.floor(rawDamage * (1 + this.dmgTaken / 100));
     }
 
     // 冻结额外伤害
-    if (this.effects.some(e => e.type === EFFECT_TYPES.FREEZE) && attacker) {
-      rawDamage = Math.floor(rawDamage * 1.3)
-      this.removeEffect(EFFECT_TYPES.FREEZE)
+    const frozen = this.effects.find(e => e.type === EFFECT_TYPES.FREEZE);
+    if (frozen && attacker) {
+        rawDamage = Math.floor(rawDamage * 1.3);
+        this.removeEffect(EFFECT_TYPES.FREEZE);
     }
 
-    // 顽强锁血（可保留，暂不拆）
-    if (this.specialLowHpShield && !this._tenacityTriggered && this.hp / this.maxHp <= 0.5) {
-      this._tenacityTriggered = true
-      const shieldValue = Math.floor(this.maxHp * this.specialLowHpShield / 100)
-      this.addEffect({ type: EFFECT_TYPES.SHIELD, value: shieldValue, duration: 99, stackable: true, maxStacks: 99 })
-    }
+    let shield = this.getShield();
+    let damage = rawDamage;
 
-    let shield = this.getShield()
-    let damage = rawDamage
-
-    // 破甲对护盾额外伤害
+    // 破甲额外盾伤
     if (shield > 0 && attacker && attacker.shieldDmg) {
-      const extraShieldDmg = Math.floor(damage * (attacker.shieldDmg || 0) / 100)
-      this.reduceShield(extraShieldDmg)
-      shield = this.getShield()
+        const extra = Math.floor(damage * (attacker.shieldDmg || 0) / 100);
+        this.reduceShield(extra);
+        shield = this.getShield();
     }
 
+    // 护盾吸收
     if (shield > 0) {
-      if (shield >= damage) {
-        this.reduceShield(damage)
-        damage = 0
-      } else {
-        damage -= shield
-        this.removeEffect(EFFECT_TYPES.SHIELD)
-      }
-    }
-
-    this.hp -= damage
-
-    // 顽强免死
-    if (this.deathSave && this.hp <= 0) {
-      if (this.deathSave >= 100 || Math.random() * 100 < this.deathSave) {
-        this.hp = 1
-        if (this.deathShield) {
-          this.addEffect({
-            type: EFFECT_TYPES.SHIELD,
-            value: Math.floor(this.maxHp * this.deathShield / 100),
-            duration: 3,
-            stackable: true,
-            maxStacks: 99
-          })
+        if (shield >= damage) {
+            this.reduceShield(damage);
+            damage = 0;
+        } else {
+            damage -= shield;
+            this.removeEffect(EFFECT_TYPES.SHIELD);
         }
-        return { damage, deathSaved: true }
-      }
     }
 
-    if (this.hp < 0) this.hp = 0
+    const wouldDie = (this.hp - damage) <= 0;
 
-    if (this.hp <= 0) {
-      // 不死鸟
-      if (this.reviveChance && !this._reviveUsedThisBattle && this._reviveCooldown <= 0) {
-        if (Math.random() * 100 < this.reviveChance) {
-          this.hp = Math.floor(this.maxHp * 0.5)
-          this._reviveUsedThisBattle = true
-          this._reviveCooldown = this.reviveCD || 10
-          if (this.reviveDmg) {
-            this.addEffect({
-              type: EFFECT_TYPES.ATK_UP,
-              value: this.reviveDmg / 100,
-              duration: 3,
-              stackable: false
-            })
-          }
-          return { damage, revived: true }
+    if (wouldDie) {
+        // 1. 顽强锁血（带冷却）
+        if (this.deathSave > 0 && this._deathSaveCooldown <= 0) {
+            const success = this.deathSave >= 100 || Math.random() * 100 < this.deathSave;
+            if (success) {
+                this.hp = 1;
+                this._deathSaveCooldown = 1;   // 进入冷却
+                this.removeEffect(EFFECT_TYPES.BLEED);
+                this.removeEffect(EFFECT_TYPES.DOT);
+                if (this.deathShield > 0) {
+                    this.addEffect({
+                        type: EFFECT_TYPES.SHIELD,
+                        value: Math.floor(this.maxHp * this.deathShield / 100),
+                        duration: 3,
+                        stackable: true,
+                        maxStacks: 99
+                    });
+                }
+                return { damage, deathSaved: true };
+            }
         }
-      }
-      // 普通复活
-      if (this.traits.includes('revive') && !this.hasRevived) {
-        this.hasRevived = true
-        this.hp = Math.floor(this.maxHp * 0.3)
-        return { damage, revived: true }
-      }
+
+        // 2. 不死鸟复活
+        if (this.reviveChance > 0 && !this._reviveUsedThisBattle && this._reviveCooldown <= 0) {
+            const success = this.reviveChance >= 100 || Math.random() * 100 < this.reviveChance;
+            if (success) {
+                this.hp = Math.floor(this.maxHp * 0.5);
+                this._reviveUsedThisBattle = true;
+                this._reviveCooldown = this.reviveCD || 10;
+                this.removeEffect(EFFECT_TYPES.BLEED);
+                this.removeEffect(EFFECT_TYPES.DOT);
+                if (this.reviveDmg > 0) {
+                    this.addEffect({
+                        type: EFFECT_TYPES.ATK_UP,
+                        value: this.reviveDmg / 100,
+                        duration: 3,
+                        stackable: false
+                    });
+                }
+                return { damage, revived: true };
+            }
+        }
+
+        // 3. 怪物通用复活
+        if (this.traits?.includes('revive') && !this.hasRevived) {
+            this.hasRevived = true;
+            this.hp = Math.floor(this.maxHp * 0.3);
+            return { damage, revived: true };
+        }
     }
+
+    // 真正扣血
+    this.hp -= damage;
+    if (this.hp < 0) this.hp = 0;
 
     // 反伤
-    let reflectDmg = 0
+    let reflectDmg = 0;
     this.effects.forEach(e => {
-      if (e.type === EFFECT_TYPES.REFLECT) {
-        reflectDmg += this.getEffectiveAttack() * e.value
-      }
-    })
+        if (e.type === EFFECT_TYPES.REFLECT) {
+            reflectDmg += this.getEffectiveAttack() * e.value;
+        }
+    });
     if (reflectDmg > 0 && attacker) {
-      attacker.takeDamage(Math.floor(reflectDmg))
+        attacker.takeDamage(Math.floor(reflectDmg));
     }
 
-    // 分身死亡处理：移交给机制
+    // 分身死亡标记
     if (this.hp <= 0 && this.isClone && this.masterId) {
-      // 注意：这里不直接操作 engine，但需要传入 engine 引用；可通过全局或向上传递
-      // 由于 takeDamage 未接收 engine，这里采用事件通知模式，让调用者处理。
-      // 暂时保留返回值，由调用处（playerAction/enemyActions）检测并调用机制。
-      return { damage, cloneDeath: true, masterId: this.masterId }
+        return { damage, cloneDeath: true, masterId: this.masterId };
     }
 
-    return damage
+    return damage;
   }
 
   reduceShield(amount) {

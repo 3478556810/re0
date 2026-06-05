@@ -25,7 +25,7 @@
 
 <script setup>
 import { Icon } from '@iconify/vue'
-import { getElementColor, getElementLabel } from '@/composables/useBattleHelpers'
+import { getElementIcon, getElementLabel, getElementColor } from '@/utils/elementUtils.js'
 
 defineProps({
   skills: Array,

@@ -13,7 +13,7 @@
   },
   {
     "id": "green_slime", "name": "翠绿史莱姆", "tag": "weak", "isBoss": false,
-    "baseHp": 140, "baseAtk": 7, "baseDef": 8, "exp": 25,
+    "baseHp": 160, "baseAtk": 8, "baseDef": 8, "exp": 25,
     "materials": [
       { "id": "slime_gel", "name": "粘稠凝胶", "dropRate": 90 },
       { "id": "iron_ore", "name": "铁矿石", "dropRate": 15 }
@@ -25,7 +25,7 @@
   },
   {
     "id": "goblin", "name": "暗牙劫掠者", "tag": "weak", "isBoss": false,
-    "baseHp": 200, "baseAtk": 10, "baseDef": 12, "exp": 35,
+    "baseHp": 240, "baseAtk": 12, "baseDef": 12, "exp": 35,
     "materials": [
       { "id": "goblin_fang", "name": "暗牙碎片", "dropRate": 85 },
       { "id": "iron_ore", "name": "铁矿石", "dropRate": 25 }
@@ -37,7 +37,7 @@
   },
   {
     "id": "goblin_scout", "name": "暗牙斥候", "tag": "weak", "isBoss": false,
-    "baseHp": 180, "baseAtk": 12, "baseDef": 8, "exp": 40,
+    "baseHp": 220, "baseAtk": 14, "baseDef": 10, "exp": 40,
     "materials": [
       { "id": "goblin_fang", "name": "暗牙碎片", "dropRate": 75 },
       { "id": "iron_ore", "name": "铁矿石", "dropRate": 30 }
@@ -49,10 +49,10 @@
   },
   {
     "id": "giant_bat", "name": "幽暗蝠", "tag": "normal", "isBoss": false,
-    "baseHp": 280, "baseAtk": 14, "baseDef": 12, "exp": 45,
+    "baseHp": 400, "baseAtk": 18, "baseDef": 14, "exp": 45,
     "materials": [
       { "id": "bat_wing", "name": "幽蝠翼膜", "dropRate": 70 },
-      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 15 }
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 20 }
     ],
     "icon": "mdi:bat", "element": "dark",
     "critRate": 15, "critDmg": 20, "lifesteal": 5, "luck": 0,
@@ -61,10 +61,10 @@
   },
   {
     "id": "cave_spider", "name": "冰窟蛛魔", "tag": "normal", "isBoss": false,
-    "baseHp": 260, "baseAtk": 16, "baseDef": 10, "exp": 50,
+    "baseHp": 380, "baseAtk": 20, "baseDef": 12, "exp": 50,
     "materials": [
       { "id": "spider_silk", "name": "蛛魔丝", "dropRate": 70 },
-      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 15 }
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 20 }
     ],
     "icon": "mdi:spider", "element": "ice",
     "critRate": 10, "critDmg": 30, "lifesteal": 0, "luck": 0,
@@ -73,10 +73,10 @@
   },
   {
     "id": "rock_golem", "name": "岩石魔像", "tag": "strong", "isBoss": false,
-    "baseHp": 400, "baseAtk": 18, "baseDef": 40, "exp": 80,
+    "baseHp": 800, "baseAtk": 24, "baseDef": 50, "exp": 100,
     "materials": [
-      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 60 },
-      { "id": "iron_ore", "name": "铁矿石", "dropRate": 40 }
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 65 },
+      { "id": "iron_ore", "name": "铁矿石", "dropRate": 45 }
     ],
     "icon": "mdi:stone", "element": "rock",
     "trait": "坚硬",
@@ -86,24 +86,25 @@
   },
   {
     "id": "boss_goblin_chief", "name": "血斧督军", "tag": "boss", "isBoss": true,
-    "baseHp": 800, "baseAtk": 18, "baseDef": 30, "exp": 250,
+    "baseHp": 3000, "baseAtk": 28, "baseDef": 35, "exp": 350,
     "traits": ["revive"], "enrageTurn": 8,
     "materials": [
       { "id": "dungeon_token", "dropRate": 100 },
       { "id": "copper_ore", "qty": 3, "dropRate": 100 },
-      { "id": "silver_ore", "qty": 2, "dropRate": 100 }
+      { "id": "silver_ore", "qty": 2, "dropRate": 100 },
+      { "id": "quality_stone", "qty": 1, "dropRate": 15 }
     ],
     "icon": "mdi:skull", "element": "fire",
     "critRate": 10, "critDmg": 40, "lifesteal": 0, "luck": 10,
-    "skillsText": "[{\"name\":\"重击\",\"mpCost\":0,\"baseMul\":1.2,\"effects\":[]},{\"name\":\"吼叫\",\"mpCost\":0,\"target\":\"aoe\",\"baseMul\":0,\"effects\":[{\"type\":\"debuff\",\"value\":-0.15,\"stat\":\"def\",\"duration\":3,\"chance\":100}]}]",
+  "skillsText": "[{\"name\":\"重击\",\"mpCost\":0,\"baseMul\":1.2,\"effects\":[]},{\"name\":\"吼叫\",\"mpCost\":0,\"target\":\"aoe\",\"baseMul\":0,\"effects\":[{\"type\":\"debuff\",\"value\":-0.15,\"stat\":\"def\",\"duration\":3,\"chance\":100}],\"cooldown\":3}]",
     "minLevel": 5, "maxLevel": 20, "levelRange": [5, 20]
   },
   {
     "id": "fire_elemental", "name": "灼炎之灵", "tag": "strong", "isBoss": false,
-    "baseHp": 350, "baseAtk": 20, "baseDef": 18, "exp": 75,
+    "baseHp": 700, "baseAtk": 28, "baseDef": 22, "exp": 100,
     "materials": [
       { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 70 },
-      { "id": "gold_ore", "name": "金矿石", "dropRate": 15 }
+      { "id": "gold_ore", "name": "金矿石", "dropRate": 20 }
     ],
     "icon": "mdi:fire-circle", "element": "fire",
     "critRate": 0, "critDmg": 0, "lifesteal": 0, "luck": 0,
@@ -112,10 +113,10 @@
   },
   {
     "id": "shadow_wraith", "name": "暗影幽魂", "tag": "strong", "isBoss": false,
-    "baseHp": 320, "baseAtk": 18, "baseDef": 14, "exp": 75,
+    "baseHp": 650, "baseAtk": 26, "baseDef": 18, "exp": 100,
     "materials": [
-      { "id": "spider_silk", "name": "蛛魔丝", "dropRate": 50 },
-      { "id": "crystal_shard", "name": "晶簇碎片", "dropRate": 10 }
+      { "id": "spider_silk", "name": "蛛魔丝", "dropRate": 55 },
+      { "id": "crystal_shard", "name": "晶簇碎片", "dropRate": 15 }
     ],
     "icon": "mdi:ghost", "element": "dark",
     "critRate": 25, "critDmg": 60, "lifesteal": 10, "luck": 0,
@@ -124,51 +125,54 @@
   },
   {
     "id": "boss_fire_dragon", "name": "焚狱炎龙", "tag": "boss", "isBoss": true,
-    "baseHp": 2500, "baseAtk": 24, "baseDef": 45, "exp": 500,
-    "traits": ["revive"], "enrageTurn": 8,
+    "baseHp": 50000, "baseAtk": 40, "baseDef": 60, "exp": 800,
+    "traits": ["revive"], "enrageTurn": 6,
     "materials": [
       { "id": "dragon_ore", "qty": 4, "dropRate": 100 },
-      { "id": "mithril_ore", "qty": 2, "dropRate": 100 }
+      { "id": "mithril_ore", "qty": 2, "dropRate": 100 },
+      { "id": "quality_stone", "qty": 2, "dropRate": 25 }
     ],
     "icon": "mdi:dragon", "element": "fire",
     "critRate": 15, "critDmg": 80, "lifesteal": 5, "luck": 30,
-    "skillsText": "[{\"name\":\"龙息\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"fire\",\"baseMul\":0.7,\"effects\":[{\"type\":\"dot\",\"value\":0.15,\"duration\":3,\"chance\":100,\"target\":\"aoe\"}]},{\"name\":\"烈焰护盾\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"shield\",\"value\":0.15,\"duration\":3,\"chance\":100}]}]",
+    "skillsText": "[{\"name\":\"龙息\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"fire\",\"baseMul\":0.7,\"effects\":[{\"type\":\"dot\",\"value\":0.15,\"duration\":3,\"chance\":100,\"target\":\"aoe\"}]},{\"name\":\"烈焰护盾\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"shield\",\"value\":0.15,\"duration\":3,\"chance\":100}],\"cooldown\":4}]",
     "minLevel": 15, "maxLevel": 35, "levelRange": [15, 35]
   },
   {
     "id": "boss_shadow_lord", "name": "永夜领主", "tag": "boss", "isBoss": true,
-    "baseHp": 3200, "baseAtk": 28, "baseDef": 40, "exp": 600,
-    "traits": ["revive"], "enrageTurn": 8,
+    "baseHp": 200000, "baseAtk": 55, "baseDef": 55, "exp": 1200,
+    "traits": ["revive"], "enrageTurn": 5,
     "materials": [
       { "id": "obsidian", "qty": 4, "dropRate": 100 },
-      { "id": "mithril_ore", "qty": 2, "dropRate": 100 }
+      { "id": "mithril_ore", "qty": 2, "dropRate": 100 },
+      { "id": "quality_stone", "qty": 3, "dropRate": 30 }
     ],
     "icon": "mdi:skull-crossbones", "element": "dark",
     "critRate": 20, "critDmg": 100, "lifesteal": 10, "luck": 40,
-    "skillsText": "[{\"name\":\"暗影风暴\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":0.6,\"effects\":[{\"type\":\"bleed\",\"value\":0.05,\"duration\":3,\"chance\":100,\"target\":\"aoe\"}]},{\"name\":\"诅咒\",\"mpCost\":0,\"target\":\"single\",\"baseMul\":0,\"effects\":[{\"type\":\"debuff\",\"value\":-0.15,\"stat\":\"def\",\"duration\":3,\"chance\":100}]}]",
-    "minLevel": 18, "maxLevel": 40, "levelRange": [18, 40]
+   "skillsText": "[{\"name\":\"暗影弹幕\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":0.8,\"effects\":[],\"note\":\"扇形AOE，地面预警\",\"unlockPhase\":1},{\"name\":\"暗影突刺\",\"mpCost\":0,\"target\":\"single\",\"element\":\"dark\",\"baseMul\":1.8,\"effects\":[{\"type\":\"bleed\",\"value\":0.03,\"duration\":3,\"chance\":100}],\"unlockPhase\":1},{\"name\":\"虚空诅咒\",\"mpCost\":0,\"target\":\"single\",\"element\":\"dark\",\"baseMul\":0,\"effects\":[{\"type\":\"debuff\",\"stat\":\"def\",\"value\":-0.3,\"duration\":10,\"chance\":100,\"note\":\"10回合内未解除则受到最大生命30%真伤\"}],\"cooldown\":5,\"unlockPhase\":2},{\"name\":\"召唤暗影分身\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[],\"cooldown\":8,\"unlockPhase\":3},{\"name\":\"生命虹吸\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":1.2,\"effects\":[{\"type\":\"lifestealBuff\",\"value\":30,\"duration\":1,\"chance\":100,\"target\":\"self\"}],\"cooldown\":4,\"unlockPhase\":3}]",
+    "minLevel": 20, "maxLevel": 40, "levelRange": [20, 40]
   },
   {
     "id": "boss_goblin_king", "name": "猩红暴君", "tag": "boss", "isBoss": true,
-    "baseHp": 1500, "baseAtk": 20, "baseDef": 40, "exp": 400,
-    "traits": ["revive"], "enrageTurn": 8,
+    "baseHp": 12000, "baseAtk": 32, "baseDef": 50, "exp": 600,
+    "traits": ["revive"], "enrageTurn": 7,
     "materials": [
       { "id": "dungeon_token", "dropRate": 100 },
       { "id": "gold_ore", "qty": 3, "dropRate": 100 },
-      { "id": "crystal_shard", "qty": 2, "dropRate": 100 }
+      { "id": "crystal_shard", "qty": 2, "dropRate": 100 },
+      { "id": "quality_stone", "qty": 1, "dropRate": 20 }
     ],
     "icon": "mdi:crown", "element": "dark",
     "critRate": 15, "critDmg": 60, "lifesteal": 10, "luck": 20,
-    "skillsText": "[{\"name\":\"王者斩击\",\"mpCost\":0,\"target\":\"aoe\",\"baseMul\":0.9,\"effects\":[{\"type\":\"bleed\",\"value\":0.03,\"duration\":3,\"chance\":100,\"target\":\"aoe\"}]},{\"name\":\"号令\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"buff\",\"stat\":\"atk\",\"value\":0.2,\"duration\":3,\"chance\":100}]}]",
+    "skillsText": "[{\"name\":\"王者斩击\",\"mpCost\":0,\"target\":\"aoe\",\"baseMul\":0.9,\"effects\":[{\"type\":\"bleed\",\"value\":0.03,\"duration\":3,\"chance\":100,\"target\":\"aoe\"}]},{\"name\":\"号令\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"buff\",\"stat\":\"atk\",\"value\":0.2,\"duration\":3,\"chance\":100}],\"cooldown\":3}]",
     "minLevel": 10, "maxLevel": 25, "levelRange": [10, 25]
   },
   {
     "id": "rock_golem_elite", "name": "磐石巨像", "tag": "strong", "isBoss": false,
-    "baseHp": 550, "baseAtk": 20, "baseDef": 55, "exp": 120,
+    "baseHp": 1500, "baseAtk": 28, "baseDef": 65, "exp": 180,
     "materials": [
       { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 80 },
-      { "id": "gold_ore", "name": "金矿石", "dropRate": 25 },
-      { "id": "silver_ore", "name": "银矿石", "dropRate": 25 }
+      { "id": "gold_ore", "name": "金矿石", "dropRate": 30 },
+      { "id": "silver_ore", "name": "银矿石", "dropRate": 30 }
     ],
     "icon": "mdi:stone", "element": "rock",
     "trait": "坚壁",
@@ -181,7 +185,7 @@
     "name": "训练木桩",
     "tag": "boss",
     "isBoss": true,
-    "baseHp": 99999,
+    "baseHp": 999999,
     "baseAtk": 1,
     "baseDef": 20,
     "exp": 0,

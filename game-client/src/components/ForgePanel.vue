@@ -468,74 +468,74 @@ function canUpgradeLevel(item) {
 }
 
 function upgradeLevel(item) {
-  if (!canUpgradeLevel(item)) return window.showToast('材料或金币不足！')
+  if (!canUpgradeLevel(item)) return window.showToast('材料或金币不足！');
+  const cost = levelUpgradeCost(item);
+  store.addGold(-cost.gold);
+  for (const mat of cost.materials) store.addMaterial(mat.id, '', -mat.qty);
 
-  const cost = levelUpgradeCost(item)
-  store.addGold(-cost.gold)
-  for (const [id, qty] of Object.entries(cost.materials)) store.addMaterial(id, '', -qty)
-
-  const successRate = getLevelSuccessRate(item)
+  const successRate = getLevelSuccessRate(item);
   if (Math.random() < successRate) {
-    item.level += 1
-    const mult = QUALITY_STATS_MULTIPLIER[item.quality] || 1
-    const craftedMult = 1.8
-  // 更线性的成长，避免后期指数爆炸
-// 调整为：前期系数更高，后期平滑
-const progress = Math.min(item.level, 20)  // 20级前快速成长
-const levelBonus = 1 + (progress - 1) * 0.18  // 改为0.18
-const flatAtk = (item.level - 1) * 3  // 固定值也稍加
-    const flatDef = (item.level - 1) * 1
+    item.level += 1;
 
-    const part = item.part || item.type || 'armor'
-    const isOffensive = ['weapon', 'gauntlet'].includes(part)
-    const isDefensive = ['armor', 'helmet', 'pants', 'shoes'].includes(part)
+    // ===== 使用与制作完全相同的计算公式 =====
+    const mult = QUALITY_STATS_MULTIPLIER[item.quality] || 1;
+    const craftedMultiplier = 1.3;                    // 和 craft 一样
+    const progressLevel = Math.min(item.level, 20);    // 封顶20级
+    const levelBonus = 1 + (progressLevel - 1) * 0.12; // 和 craft 一样
+
+    // 使用物品自带的 baseAtk/baseDef（制作时已固化）
+    const baseAtk = item.baseAtk || 10;
+    const baseDef = item.baseDef || 5;
+
+    const part = item.part || item.type || 'armor';
+    const isOffensive = ['weapon', 'gauntlet'].includes(part);
+    const isDefensive = ['armor', 'helmet', 'pants', 'shoes'].includes(part);
 
     if (isOffensive) {
-      item.atk = Math.floor((item.baseAtk || 10) * mult * levelBonus * craftedMult) + flatAtk
-      item.def = 0
+      item.atk = Math.floor(baseAtk * mult * levelBonus * craftedMultiplier);
+      item.def = 0;
     } else if (isDefensive) {
-      item.atk = 0
-      item.def = Math.floor((item.baseDef || 5) * mult * levelBonus * craftedMult) + flatDef
+      item.atk = 0;
+      item.def = Math.floor(baseDef * mult * levelBonus * craftedMultiplier);
     } else {
-      item.atk = Math.floor((item.baseAtk || 10) * mult * levelBonus * craftedMult) + flatAtk
-      item.def = Math.floor((item.baseDef || 5) * mult * levelBonus * craftedMult) + flatDef
+      // 饰品（双属性）
+      item.atk = Math.floor(baseAtk * mult * levelBonus * craftedMultiplier);
+      item.def = Math.floor(baseDef * mult * levelBonus * craftedMultiplier);
+    }
+    // ==========================================
+
+    // 副词条成长（保持不变）
+    if (item.extraStats) {
+      const limitedKeys = ['critRate', 'critDmg', 'dodge', 'lifesteal', 'speed'];
+      const limitedPercentKeys = ['critRatePercent', 'dodgePercent'];
+      if (!item._initialExtraStats) item._initialExtraStats = {};
+      for (const key of Object.keys(item.extraStats)) {
+        const val = item.extraStats[key];
+        if (!item._initialExtraStats[key]) item._initialExtraStats[key] = val;
+        const initial = item._initialExtraStats[key];
+        const maxVal = initial * 3;
+        if (limitedPercentKeys.includes(key)) {
+          item.extraStats[key] = Math.min(15, val + 0.8);
+        } else if (limitedKeys.includes(key)) {
+          const hardMax = key === 'critRate' ? 30 : key === 'critDmg' ? 200 : 40;
+          item.extraStats[key] = Math.min(hardMax, Math.floor(val * 1.02));
+        } else if (key.endsWith('Percent')) {
+          item.extraStats[key] = Math.min(50, val + 1.5);
+        } else {
+          item.extraStats[key] = Math.min(maxVal, Math.floor(val * 1.06));
+        }
+      }
     }
 
-// ✅ 副词条随等级成长（修正版）
-// ✅ 副词条随等级成长（稳中求进版）
-if (item.extraStats) {
-  const limitedKeys = ['critRate', 'critDmg', 'dodge', 'lifesteal', 'speed']
-  const limitedPercentKeys = ['critRatePercent', 'dodgePercent']
-
-  for (const key of Object.keys(item.extraStats)) {
-    const val = item.extraStats[key]
-    // 获取生成时的初始值（如果没有保存过，就用当前值）
-    if (!item._initialExtraStats) item._initialExtraStats = {}
-    if (!item._initialExtraStats[key]) item._initialExtraStats[key] = val
-
-    const initial = item._initialExtraStats[key]
-    const maxVal = initial * 3  // 硬上限为基础值的3倍
-
-    if (limitedPercentKeys.includes(key)) {
-      item.extraStats[key] = Math.min(15, val + 0.8)
-    } else if (limitedKeys.includes(key)) {
-      const hardMax = key === 'critRate' ? 30 : key === 'critDmg' ? 200 : 40
-      item.extraStats[key] = Math.min(hardMax, Math.floor(val * 1.02))
-    } else if (key.endsWith('Percent')) {
-      item.extraStats[key] = Math.min(50, val + 1.5)
-    } else {
-      // 普通数值：每级+6%，但不超过初始值的3倍
-      item.extraStats[key] = Math.min(maxVal, Math.floor(val * 1.06))
-    }
-  }
-}
-    item.levelFailCount = 0
-    store.save()
-    window.showToast(`${item.name} 升级为 Lv.${item.level}！`)
+    item.levelFailCount = 0;
+    syncEquippedItem(item);
+    store.save();
+    window.showToast(`${item.name} 升级为 Lv.${item.level}！`);
   } else {
-    item.levelFailCount = (item.levelFailCount || 0) + 1
-    store.save()
-    window.showToast(`升级失败！下次成功率 ${Math.floor(getLevelSuccessRate(item) * 100)}%`)
+    item.levelFailCount = (item.levelFailCount || 0) + 1;
+    syncEquippedItem(item);
+    store.save();
+    window.showToast(`升级失败！下次成功率 ${Math.floor(getLevelSuccessRate(item) * 100)}%`);
   }
 }
 

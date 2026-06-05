@@ -1,16 +1,16 @@
 import { ref, watch } from 'vue'
 
 export function useRank(player, pendingRankUp, pendingTargetRank, configRef) {
-  const rankConfig = [
-    { name: '黑铁', requiredExp: 300, discount: 0, rewardMult: 1.0, icon: 'mdi:circle-small' },
-    { name: '青铜', requiredExp: 600, discount: 5, rewardMult: 1.2, icon: 'mdi:circle-double' },
-    { name: '白银', requiredExp: 1000, discount: 10, rewardMult: 1.5, icon: 'mdi:brightness-5' },
-    { name: '黄金', requiredExp: 1500, discount: 15, rewardMult: 2.0, icon: 'mdi:star-four-points' },
-    { name: '白金', requiredExp: 2200, discount: 20, rewardMult: 2.5, icon: 'mdi:diamond' },
-    { name: '钻石', requiredExp: 3200, discount: 25, rewardMult: 3.0, icon: 'mdi:rhombus-split' },
-    { name: '大师', requiredExp: 4500, discount: 30, rewardMult: 3.8, icon: 'mdi:shield-crown' },
-    { name: '王者', requiredExp: 6000, discount: 35, rewardMult: 4.5, icon: 'mdi:crown' }
-  ]
+const rankConfig = [
+  { name: '黑铁', requiredExp: 1500, discount: 0, rewardMult: 1.2, icon: 'mdi:circle-small' },
+  { name: '青铜', requiredExp: 3000, discount: 5, rewardMult: 1.8, icon: 'mdi:circle-double' },
+  { name: '白银', requiredExp: 5000, discount: 10, rewardMult: 2.5, icon: 'mdi:brightness-5' },
+  { name: '黄金', requiredExp: 8000, discount: 15, rewardMult: 4.0, icon: 'mdi:star-four-points' },
+  { name: '白金', requiredExp: 12000, discount: 20, rewardMult: 5.5, icon: 'mdi:diamond' },
+  { name: '钻石', requiredExp: 18000, discount: 25, rewardMult: 7.5, icon: 'mdi:rhombus-split' },
+  { name: '大师', requiredExp: 26000, discount: 30, rewardMult: 10.0, icon: 'mdi:shield-crown' },
+  { name: '王者', requiredExp: 36000, discount: 35, rewardMult: 13.0, icon: 'mdi:crown' }
+]
 
   function checkRankUp(saveFn) {
     if (pendingRankUp.value) return

@@ -115,7 +115,7 @@ let floatId = 0;
       }
     })
 
-    engine.value = new CombatEngine(fullPlayerStats, enrichedEnemies, comp)
+    engine.value = new CombatEngine(fullPlayerStats, enrichedEnemies, comp, store.player.skills || {})
     window.__engine = engine.value
     syncStateFromEngine()
   }
