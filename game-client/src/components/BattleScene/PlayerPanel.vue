@@ -6,7 +6,7 @@
       <Icon v-else icon="mdi:account" class="big-sprite" />
     </div>
 
-    <!-- 底部横向区域（状态卡 + 伙伴卡 + 逃跑按钮） -->
+    <!-- 底部横向区域（状态卡 + 逃跑按钮） -->
     <div class="player-bottom-area">
       <!-- 玩家状态卡片 -->
       <div class="player-status-card">
@@ -56,27 +56,22 @@
         </div>
       </div>
 
-      <!-- 伙伴卡片 -->
-      <div v-if="companion" class="companion-card">
-        <img v-if="getCompanionImage && getCompanionImage()" :src="getCompanionImage()" class="companion-portrait" />
-        <Icon v-else :icon="companion.icon || 'mdi:account-heart'" class="companion-icon" />
-        <div class="companion-info">
-          <div class="companion-name">{{ companion.name }}</div>
-          <div class="bar-row">
-            <span class="bar-text">HP</span>
-            <div class="hp-bar small-bar">
-              <div class="hp-fill" :style="{ width: companionHpPercent + '%' }"></div>
-              <span>{{ companion.hp }} / {{ companion.maxHp }}</span>
-            </div>
+ 
+    </div>
+
+    <!-- 伙伴卡片（固定在右下角） -->
+    <div v-if="companion" class="companion-card">
+      <img v-if="getCompanionImage && getCompanionImage()" :src="getCompanionImage()" class="companion-portrait" />
+      <Icon v-else :icon="companion.icon || 'mdi:account-heart'" class="companion-icon" />
+      <div class="companion-info">
+        <div class="companion-name">{{ companion.name }}</div>
+        <div class="bar-row">
+          <span class="bar-text">HP</span>
+          <div class="hp-bar small-bar">
+            <div class="hp-fill" :style="{ width: companionHpPercent + '%' }"></div>
+            <span>{{ companion.hp }} / {{ companion.maxHp }}</span>
           </div>
         </div>
-      </div>
-
-      <!-- 逃跑按钮 -->
-      <div class="flee-btn-area" v-if="!gameOver && playerTurn && !waiting && !showResult">
-        <button class="pixel-btn warning" @click="$emit('flee')">
-          <Icon icon="streamline-freehand:safety-fire-exit" /> 逃跑
-        </button>
       </div>
     </div>
   </div>
@@ -108,8 +103,56 @@ defineProps({
 
 defineEmits(['flee', 'show-effect-bubble'])
 
-// 受击动画内部状态（可选，实际可由父组件通过 props 控制，这里简化）
+// 受击动画内部状态（保留，未来可扩展）
 const playerHit = ref(false)
 const playerFlash = ref(false)
 const playerShakeX = ref(0)
 </script>
+
+<style scoped>
+/* 将伙伴卡片固定在右下角，不再跟随玩家面板布局 */
+.companion-card {
+  position: fixed;
+  bottom: 18%;
+  right: 20px;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  border: 2px solid #b89a6a;
+  border-radius: 12px;
+  padding: 8px 14px;
+  color: #ffd;
+  font-family: 'Press Start 2P', cursive;
+  min-width: 160px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+/* 原跟随流式布局的样式已被覆盖，其余保持不变 */
+.companion-portrait {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #ffd700;
+}
+.companion-icon {
+  font-size: 32px;
+  color: #ffd700;
+}
+.companion-info {
+  flex: 1;
+}
+.companion-name {
+  font-size: 9px;
+  color: #ffd966;
+  margin-bottom: 4px;
+  text-shadow: 1px 1px 0 #000;
+}
+.small-bar {
+  height: 10px;
+  width: 100px;
+}
+</style>

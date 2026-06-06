@@ -1,4 +1,5 @@
 import { computed } from 'vue'
+import { TALENT_TREES, CLASS_DEFS } from '@/components/class/classData'
 
 export function useCombatStats(equipment, config, player) {
   const totalAffixLevels = computed(() => {
@@ -56,36 +57,27 @@ export function useCombatStats(equipment, config, player) {
     const base = { ...player }
 
     // ========== 1. 装备基础攻防 ==========
-// ========== 1. 装备基础攻防 ==========
-for (const slot of Object.values(equipment)) {
-  if (!slot) continue
-  base.attack += slot.atk || 0
-  base.defense += slot.def || 0
-  // 累加装备上的 Boss 增伤词条
-  if (slot.bossDmgBonus) {
-    base.specialBossDmg = (base.specialBossDmg || 0) + slot.bossDmgBonus
-  }
-}
-
-    // ========== 2. 装备副词条 (extraStats) + 鞋子速度 ==========
-    const pctBonuses = {} // 存储所有百分比加成
-
     for (const slot of Object.values(equipment)) {
       if (!slot) continue
+      base.attack += slot.atk || 0
+      base.defense += slot.def || 0
+      if (slot.bossDmgBonus) {
+        base.specialBossDmg = (base.specialBossDmg || 0) + slot.bossDmgBonus
+      }
+    }
 
-      // 鞋子基础速度
+    // ========== 2. 装备副词条 + 鞋子速度 ==========
+    const pctBonuses = {}
+    for (const slot of Object.values(equipment)) {
+      if (!slot) continue
       if (slot.speed && slot.speed > 0) {
         base.speed = (base.speed || 0) + slot.speed
       }
-
-      // 副词条
       if (!slot.extraStats) continue
       for (const [key, val] of Object.entries(slot.extraStats)) {
         if (key.endsWith('Percent')) {
-          // 百分比词条，先累加起来
           pctBonuses[key] = (pctBonuses[key] || 0) + val
         } else {
-          // 固定数值直接加到基础属性上
           if (typeof base[key] === 'number') {
             base[key] += val
           } else {
@@ -95,12 +87,7 @@ for (const slot of Object.values(equipment)) {
       }
     }
 
-
-
-
-
-
-    // ========== 3. 应用普通百分比加成（攻击%、防御%、生命%） ==========
+    // ========== 3. 普通百分比加成 ==========
     if (pctBonuses.atkPercent) {
       base.attack += Math.floor(base.attack * pctBonuses.atkPercent / 100)
     }
@@ -111,7 +98,7 @@ for (const slot of Object.values(equipment)) {
       base.maxHp += Math.floor((base.maxHp || 100) * pctBonuses.hpPercent / 100)
     }
 
-    // ========== 4. 应用百分比元素伤害（火%、冰%、雷%...） ==========
+    // ========== 4. 百分比元素伤害 ==========
     const elemPercentKeys = [
       'fireDmgPercent', 'iceDmgPercent', 'thunderDmgPercent',
       'windDmgPercent', 'grassDmgPercent', 'holyDmgPercent',
@@ -119,7 +106,7 @@ for (const slot of Object.values(equipment)) {
     ]
     for (const key of elemPercentKeys) {
       if (pctBonuses[key]) {
-        const elem = key.replace('DmgPercent', '') // 提取元素名，如 fire
+        const elem = key.replace('DmgPercent', '')
         const elemKey = elem + 'Dmg'
         if (!base.elemDmg) base.elemDmg = {}
         base.elemDmg[elemKey] = (base.elemDmg[elemKey] || 0) + Math.floor(base.attack * pctBonuses[key] / 100)
@@ -130,7 +117,7 @@ for (const slot of Object.values(equipment)) {
     activeAffixEffects.value.forEach(effect => {
       const bonus = effect.bonus || {}
       for (const [key, value] of Object.entries(bonus)) {
-         base[key] = (base[key] || 0) + value 
+        base[key] = (base[key] || 0) + value
       }
     })
 
@@ -155,23 +142,27 @@ for (const slot of Object.values(equipment)) {
       if (bonus.shadowMarkOnHit) base.shadowMarkOnHit = Math.max(base.shadowMarkOnHit || 0, bonus.shadowMarkOnHit)
     }
 
-    // ========== 8. 特殊刻印加成（肾上腺素、巫毒娃娃等） ==========
+    // ========== 8. 特殊刻印加成 ==========
     applySpecialAffixBonuses(base, activeAffixEffects.value)
 
+    // ========== 9. 宝石属性 ==========
+    const gems = player.gems || {}
+    const gemDefs = config.gemDefinitions || []
+    for (const [slot, gemId] of Object.entries(gems)) {
+      const gem = gemDefs.find(g => g.id === gemId)
+      if (!gem) continue
+      if (gem.type === 'atk') base.attack += gem.value
+      else if (gem.type === 'def') base.defense += gem.value
+      else if (gem.type === 'hp') base.maxHp += gem.value
+      else if (gem.type === 'critDmg') base.critDmg += gem.value
+      else if (gem.type === 'speed') base.speed += gem.value
+    }
 
-// ========== 宝石属性 ==========
-const gems = player.gems || {}
-const gemDefs = config.gemDefinitions || []
-for (const [slot, gemId] of Object.entries(gems)) {
-    const gem = gemDefs.find(g => g.id === gemId)
-    if (!gem) continue
-    if (gem.type === 'atk') base.attack += gem.value
-    else if (gem.type === 'def') base.defense += gem.value
-    else if (gem.type === 'hp') base.maxHp += gem.value
-    else if (gem.type === 'critDmg') base.critDmg += gem.value
-    else if (gem.type === 'speed') base.speed += gem.value
-}
+    // ========== 10. 天赋盘百分比加成 ==========
+    applyTalentBonuses(base, player.talents || {}, player.class)
 
+    // ========== 11. 职业机制 ==========
+    applyClassMechanism(base, player.class)
 
     return base
   })
@@ -179,46 +170,78 @@ for (const [slot, gemId] of Object.entries(gems)) {
   return { totalAffixLevels, activeAffixEffects, activeSetBonuses, playerStats }
 }
 
+// ==================== 天赋盘百分比加成 ====================
+function applyTalentBonuses(stats, allocatedTalents, classId) {
+  const def = CLASS_DEFS[classId]
+  let series = 'warrior'
+  if (def) {
+    if (def.tier === 2) series = def.parent
+    else if (def.tier === 1) series = classId
+  }
+  const tree = TALENT_TREES[series]
+  if (!tree || !tree.nodes) return
+
+  let atkPct = 0, defPct = 0, hpPct = 0, spdPct = 0
+  let critRate = 0, critDmg = 0, dodge = 0
+  let allElemDmgPct = 0
+
+  for (const node of tree.nodes) {
+    if (!allocatedTalents[node.id]) continue
+    const effect = node.effect
+    const match = (regex) => {
+      const m = effect.match(regex)
+      return m ? parseFloat(m[1]) : 0
+    }
+    atkPct += match(/攻击\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+    defPct += match(/防御\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+    hpPct += match(/生命\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+    spdPct += match(/速度\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+    critRate += match(/暴击率\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+    critDmg += match(/暴击伤害\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+    dodge += match(/闪避\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+    allElemDmgPct += match(/全元素伤害\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+  }
+
+  // 攻击/防御/生命等：基于当前数值的百分比加成（这是对的，保留不动）
+  if (atkPct > 0) stats.attack += Math.floor(stats.attack * atkPct / 100)
+  if (defPct > 0) stats.defense += Math.floor(stats.defense * defPct / 100)
+  if (hpPct > 0) stats.maxHp += Math.floor(stats.maxHp * hpPct / 100)
+  if (spdPct > 0) stats.speed += Math.floor(stats.speed * spdPct / 100)
+  if (critRate > 0) stats.critRate = (stats.critRate || 0) + critRate
+  if (critDmg > 0) stats.critDmg = (stats.critDmg || 0) + critDmg
+  if (dodge > 0) stats.dodge = (stats.dodge || 0) + dodge
+
+  // 全元素伤害：直接加到各元素伤害的百分比值上（不再乘攻击力）
+  if (allElemDmgPct > 0) {
+    const elems = ['fire','water','thunder','wind','grass','ice','holy','dark','rock','steel']
+    for (const elem of elems) {
+      const key = elem + 'Dmg'
+      if (typeof stats[key] === 'number') {
+        stats[key] += allElemDmgPct
+      }
+    }
+  }
+}
+// ==================== 职业机制 ====================
+function applyClassMechanism(stats, classId) {
+  stats.classMechanism = CLASS_DEFS[classId]?.mechanism || null
+  // 具体机制效果在战斗引擎中实时处理，这里仅标记
+}
+
 function applySpecialAffixBonuses(stats, affixEffects) {
-
-  let speedToAtk = 0
-  let trueDmgPercent = 0
-  let bossDmg = 0
-  let fullHpDmg = 0
-  let ignoreDef = 0
-  let allElemDmg = 0
-  let lifestealPercent = 0
-  let mpLifestealPercent = 0
-  let stackingAtk = 0
-  let mpOnHit = 0
-  let mpOnKill = 0
-  let mpCostReduction = 0
-  let dmgTaken = 0
-  let doubleDrop = 0
-  let shieldDmg = 0
-  let halfHpCrit = 0
-  let halfHpCritDmg = 0
-  let deathSave = 0
-  let deathShield = 0
-  let reviveChance = 0
-  let reviveCD = 0
-  let reviveDmg = 0
-let bossDmgBonus = 0  // 新增：来自装备的Boss增伤
-
-let dodge = 0;
-let dodgeCounter = false;
-let dodgeCritDmg = 0;
-
-
-
+  let speedToAtk = 0, trueDmgPercent = 0, bossDmg = 0, fullHpDmg = 0
+  let ignoreDef = 0, allElemDmg = 0, lifestealPercent = 0, mpLifestealPercent = 0
+  let stackingAtk = 0, mpOnHit = 0, mpOnKill = 0, mpCostReduction = 0
+  let dmgTaken = 0, doubleDrop = 0, shieldDmg = 0, halfHpCrit = 0
+  let halfHpCritDmg = 0, deathSave = 0, deathShield = 0, reviveChance = 0
+  let reviveCD = 0, reviveDmg = 0, bossDmgBonus = 0
+  let dodge = 0, dodgeCounter = false, dodgeCritDmg = 0
 
   for (const eff of affixEffects) {
     const b = eff.bonus || {}
-
-  
-    if (b.dodge) dodge += b.dodge;
-    if (b.dodgeCounter) dodgeCounter = true;
-    if (b.dodgeCritDmg) dodgeCritDmg = Math.max(dodgeCritDmg, b.dodgeCritDmg);
+    if (b.dodge) dodge += b.dodge
+    if (b.dodgeCounter) dodgeCounter = true
+    if (b.dodgeCritDmg) dodgeCritDmg = Math.max(dodgeCritDmg, b.dodgeCritDmg)
     if (b.speedToAtk) speedToAtk += b.speedToAtk
     if (b.trueDmgPercent) trueDmgPercent += b.trueDmgPercent
     if (b.bossDmg) bossDmg += b.bossDmg
@@ -241,7 +264,7 @@ let dodgeCritDmg = 0;
     if (b.reviveChance) reviveChance += b.reviveChance
     if (b.reviveCD) reviveCD += b.reviveCD
     if (b.reviveDmg) reviveDmg += b.reviveDmg
-    if (b.bossDmgBonus) bossDmgBonus += b.bossDmgBonus  // 新增：累加来自刻印的Boss增伤
+    if (b.bossDmgBonus) bossDmgBonus += b.bossDmgBonus
   }
 
   if (speedToAtk > 0) stats.attack += Math.floor(stats.speed * speedToAtk / 100)
@@ -253,11 +276,9 @@ let dodgeCritDmg = 0;
       if (typeof stats[key] === 'number') stats[key] += allElemDmg
     }
   }
-  
-// 速度转闪避：每 20 速度 = 1% 闪避
-// 速度转闪避 + 刻印闪避
-const speedDodge = (stats.speed || 0) * 0.05;
-stats.dodge = dodge + speedDodge;
+
+  const speedDodge = (stats.speed || 0) * 0.05
+  stats.dodge = dodge + speedDodge
   stats.stackingAtk = stackingAtk
   stats.specialBossDmg = (stats.specialBossDmg || 0) + bossDmg
   stats.specialFullHpDmg = fullHpDmg

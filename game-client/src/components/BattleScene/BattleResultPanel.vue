@@ -43,6 +43,21 @@
             </div>
           </div>
         </div>
+<!-- 宝石 -->
+<div class="reward-row" v-if="reward.gems && reward.gems.length">
+  <div class="section-label"><Icon icon="mdi:rhombus-split" /> 宝石</div>
+  <div class="grid-area">
+    <div v-for="(g, idx) in reward.gems" :key="g.id + idx" class="material-card">
+      <div
+        class="gem-core"
+        :class="'gem-tier-' + getGemTier(g.id)"
+        :style="{ '--gem-color': gemColor(g.id), width: '28px', height: '28px' }"
+      ></div>
+      <span class="mat-name">{{ g.name }}</span>
+      <span class="mat-qty" v-if="g.qty > 1">x{{ g.qty }}</span>
+    </div>
+  </div>
+</div>
 
         <!-- 完全无掉落时显示 -->
         <div v-if="!hasAnyReward" class="empty-row">无战利品</div>
@@ -76,7 +91,25 @@ const store = useGameStore()
 
 const displayedExp = ref(0)
 let animFrame = null
+const gemColors = {
+  atk: '#e74c3c',
+  def: '#3498db',
+  hp: '#2ecc71',
+  critDmg: '#9b59b6',
+  speed: '#f1c40f'
+}
 
+function gemColor(gemId) {
+  const parts = gemId?.split('_')
+  const type = parts?.[1]
+  return gemColors[type] || '#888'
+}
+
+function getGemTier(gemId) {
+  const parts = gemId?.split('_')
+  const level = parseInt(parts?.[2]) || 1
+  return level
+}
 watch(() => props.reward?.exp, (newExp) => {
   if (!newExp || newExp <= 0) return
   const target = newExp
@@ -140,6 +173,8 @@ function equipmentIcon(part) {
 </script>
 
 <style scoped>
+/* 宝石卡片 */
+
 /* ========== 遮罩 ========== */
 .overlay {
   position: fixed;

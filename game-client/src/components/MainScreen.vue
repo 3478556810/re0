@@ -22,6 +22,9 @@
     <button class="corner-btn" @click="openPanel('character')">
       <Icon icon="mdi:account" /><span>角色</span>
     </button>
+    <button class="corner-btn" @click="openPanel('profession')">
+  <Icon icon="mdi:shield-account" /><span>职业</span>
+</button>
     <button class="corner-btn" @click="openPanel('skills')">
       <Icon icon="mdi:star-four-points" /><span>技能</span>
     </button>
@@ -38,7 +41,10 @@
 
   <!-- 竖列：4个独立按钮 -->
   <div class="corner-vert-col">
- 
+ <button class="corner-btn" @click="openPanel('companion')">
+  <Icon icon="mdi:account-group" /><span>伙伴</span>
+</button>
+
        <button class="corner-btn" @click="triggerDialog">
       <Icon icon="mdi:chat" /><span>剧情</span>
     </button>
@@ -69,7 +75,8 @@
 
 
     </div>
-
+<CompanionPanel v-if="currentPanel === 'companion'" @close="popPanel" />
+<ProfessionPanel v-if="currentPanel === 'profession'" @close="popPanel" />
     <!-- 面板组件（保持不变） -->
     <!-- 面板组件 -->
 <RaidPanel v-if="currentPanel === 'raid'" @close="popPanel" @startBattle="emit('startBattle', $event)" />
@@ -102,7 +109,8 @@ import SkillPanel from './SkillPanel.vue'
 import DungeonSelectPanel from './DungeonSelectPanel.vue'
 import AffectionPanel from './AffectionPanel.vue'
 import RaidPanel from './RaidPanel.vue'
-
+import CompanionPanel from './CompanionPanel.vue'
+import ProfessionPanel from './class/ClassPanel.vue'
 
 // 速通战斗记录
 const speedrunStats = reactive({
@@ -611,8 +619,8 @@ const summary = [
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  width: 64px;
-  height: 64px;
+  width: 45px;
+  height: 45px;
   padding: 8px 4px;
   border-radius: 12px;
   border: 2px solid rgba(0,0,0,0.1);

@@ -178,55 +178,79 @@ export function getRewards(engine) {
       exp += Math.floor(monsterLevel * 15 * expMultiplier)
 
       // 材料掉落
-      const mats = e.base?.materials || (e.base?.material ? [e.base.material] : [])
-      for (const matDef of mats) {
-        const dropRate = matDef.dropRate ?? 100
-        if (Math.random() * 100 < dropRate) {
-          let qty = matDef.qty || 1
-          if (doubleDrop > 0 && Math.random() * 100 < doubleDrop) qty *= 2
+     // 材料掉落
+const mats = e.base?.materials || (e.base?.material ? [e.base.material] : [])
+for (const matDef of mats) {
+    const dropRate = matDef.dropRate ?? 100
+    if (Math.random() * 100 < dropRate) {
+        let qty = matDef.qty || 1
+        if (doubleDrop > 0 && Math.random() * 100 < doubleDrop) qty *= 2
 
-          if (matDef.id?.startsWith('gem_')) {
-            gems.push({ id: matDef.id, name: matDef.name || matDef.id, qty })
-          } else {
-            materials.push({ id: matDef.id, name: matDef.name || matDef.id, qty })
-          }
+        // ✅ 关键：如果是 gem_random，跳过并触发随机宝石逻辑
+        if (matDef.id === 'gem_random') {
+            const gemDefs = engine.config?.gemDefinitions || []
+            if (gemDefs.length > 0) {
+                const eligible = gemDefs.filter(g => g.level === 7)
+                if (eligible.length > 0) {
+                    const gem = eligible[Math.floor(Math.random() * eligible.length)]
+                    gems.push({ id: gem.id, name: gem.name, qty: 1 })
+                }
+            }
+            continue; // 跳过普通材料处理
         }
-      }
+
+        // 其他宝石类掉落
+        if (matDef.id?.startsWith('gem_')) {
+            gems.push({ id: matDef.id, name: matDef.name || matDef.id, qty })
+        } else {
+            materials.push({ id: matDef.id, name: matDef.name || matDef.id, qty })
+        }
+    }
+}
 
       // 副本Boss特殊掉落（品质魔石 + 专属材料 + 7级宝石）
-      if (e.isRaidBoss || e.base?.isRaidBoss) {
-        const bossId = e.id || e.base?.id
+// 副本Boss特殊掉落（品质魔石 + 专属材料 + 7级宝石）
+if (e.isRaidBoss || e.base?.isRaidBoss) {
+    const bossId = e.id || e.base?.id
 
-        let qualityStoneQty = 2
-        if (bossId === 'raid_bishop') qualityStoneQty = 5
-        else if (bossId === 'raid_lava_core') qualityStoneQty = 4
-        else if (bossId === 'raid_gladiator') qualityStoneQty = 3
-        materials.push({ id: 'quality_stone', name: '品质魔石', qty: qualityStoneQty })
+    // 品质魔石
+    let qualityStoneQty = 2
+    if (bossId === 'raid_bishop') qualityStoneQty = 5
+    else if (bossId === 'raid_lava_core') qualityStoneQty = 4
+    else if (bossId === 'raid_gladiator') qualityStoneQty = 3
+    materials.push({ id: 'quality_stone', name: '品质魔石', qty: qualityStoneQty })
 
-        const gemDefs = engine.config?.gemDefinitions || []
+    // ✅ 核心：在这里硬编码 7 级宝石掉落
+    const gemDefs = engine.config?.gemDefinitions || []
+    if (gemDefs.length > 0) {
         const eligible = gemDefs.filter(g => g.level === 7)
         if (eligible.length > 0) {
-          const gem = eligible[Math.floor(Math.random() * eligible.length)]
-          gems.push({ id: gem.id, name: gem.name, qty: 1 })
+            const gem = eligible[Math.floor(Math.random() * eligible.length)]
+            gems.push({ id: gem.id, name: gem.name, qty: 1 })
+          
         }
+    } 
 
-        if (Math.random() < 0.4) {
-          const eq = generateRandomEquipment('boss', 21, playerLevel)
-          if (eq) equipments.push(eq)
-        }
-      }
+    // 概率掉落装备
+    if (Math.random() < 0.4) {
+        const eq = generateRandomEquipment('boss', 21, playerLevel)
+        if (eq) equipments.push(eq)
+    }
+}
 
       // 塔Boss掉落套装材料 + 宝石
       if (e.isBoss && !e.isRaidBoss && !(e.base?.isRaidBoss)) {
         const bossId = e.id || e.base?.id
 
         if (bossId === 'boss_shadow_lord') {
+          materials.push({ id: 'dungeon_token', name: '地下城徽记', qty: 3, dropRate: 100 })
           materials.push(
             { id: 'obsidian', name: '黑曜石', qty: 8, dropRate: 100 },
             { id: 'crystal_shard', name: '晶簇碎片', qty: 5, dropRate: 100 }
           )
         }
         if (bossId === 'boss_fire_dragon') {
+          materials.push({ id: 'dungeon_token', name: '地下城徽记', qty: 3, dropRate: 100 })
           materials.push({ id: 'dragon_ore', name: '龙鳞矿', qty: 8, dropRate: 100 })
         }
 
