@@ -83,6 +83,10 @@
 
     <!-- 材料 -->
     <MaterialGrid v-if="activeTab === 'material'" :sell-mode="sellMode" />
+
+
+<!-- 宝石（解耦为独立组件） -->
+<GemBagPanel v-if="activeTab === 'gem'" @refresh="emit('refresh')" />
   </div>
 </template>
 
@@ -92,6 +96,9 @@ import { Icon } from '@iconify/vue'
 import { useGameStore } from '@/store/gameStore'
 import { qualityColor, getExtraStatName } from '@/composables/useEquipment'
 import MaterialGrid from './MaterialGrid.vue'
+import GemBagPanel from './GemBagPanel.vue'
+
+const showToast = inject('showToast', (msg) => alert(msg))
 
 const store = useGameStore()
 const emit = defineEmits(['open-detail', 'refresh'])
@@ -102,7 +109,8 @@ const activeTab = ref(props.sellMode ? 'material' : 'equip')
 const tabs = [
   { key: 'equip', label: '装备', icon: 'mdi:sword-cross' },
   { key: 'accessory', label: '饰品', icon: 'mdi:gem' },
-  { key: 'material', label: '材料', icon: 'mdi:cube-outline' }
+  { key: 'material', label: '材料', icon: 'mdi:cube-outline' },
+  { key: 'gem', label: '宝石', icon: 'mdi:rhombus-split' }
 ]
 
 const qualityFilter = ref('all')
@@ -117,6 +125,10 @@ const qualityOptions = [
 
 const multiSelectMode = ref(false)
 const selectedItems = reactive(new Set())
+
+
+
+
 
 function toggleMultiSelect() {
   multiSelectMode.value = !multiSelectMode.value
@@ -142,6 +154,9 @@ const filteredItems = computed(() => {
   return list.filter(item => item.quality === qualityFilter.value)
 })
 const currentFilteredItems = computed(() => filteredItems.value)
+
+
+
 
 function onItemClick(item) {
   if (multiSelectMode.value) {
@@ -197,4 +212,8 @@ async function deleteSelected() {
   multiSelectMode.value = false
   emit('refresh')
 }
+
+
+
+
 </script>

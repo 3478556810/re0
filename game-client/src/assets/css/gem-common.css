@@ -1,0 +1,149 @@
+/* ========== 宝石核心样式（全局） ========== */
+
+/* 所有宝石统一尺寸，不加任何边框，保持内部区域干净 */
+.gem-core,
+.gem-bag-icon-inner,
+.slot-gem-img,
+.gem-select-img,
+.detail-gem-preview {
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    rgba(255,255,255,0.4) 0%,
+    var(--gem-color) 30%,
+    rgba(255,255,255,0.6) 50%,
+    var(--gem-color) 70%,
+    rgba(255,255,255,0.4) 100%
+  );
+  background-size: 300% 300%;
+  animation: surfaceFlow 3s ease-in-out infinite;
+  box-shadow: 0 0 10px var(--gem-color), inset 0 0 8px rgba(255,255,255,0.5);
+  position: relative;
+  overflow: visible;            /* 允许外部光晕显示 */
+  border: none;                 /* 彻底移除边框，用伪元素实现圆环 */
+  box-sizing: border-box;
+}
+
+/* 高光扫光（内部） */
+.gem-core::after,
+.gem-bag-icon-inner::after,
+.slot-gem-img::after,
+.gem-select-img::after,
+.detail-gem-preview::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: linear-gradient(
+    135deg,
+    transparent 40%,
+    rgba(255, 255, 255, 0.7) 50%,
+    transparent 60%
+  );
+  background-size: 200% 200%;
+  animation: shineSweep 2s linear infinite;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* ========== 外围装饰统一用 ::before 伪元素实现 ========== */
+.gem-core::before,
+.gem-bag-icon-inner::before,
+.slot-gem-img::before,
+.gem-select-img::before,
+.detail-gem-preview::before {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 1;
+  /* 默认无内容，各等级单独设置 */
+}
+
+/* 1-2级：无任何外围装饰，只有基础光晕 */
+.gem-tier-1::before,
+.gem-tier-2::before {
+  display: none;
+}
+.gem-tier-1,
+.gem-tier-2 {
+  box-shadow: 0 0 6px var(--gem-color), inset 0 0 4px rgba(255,255,255,0.3);
+}
+
+/* 3-4级：静态金色细圆环 + 柔和呼吸 */
+.gem-tier-3::before,
+.gem-tier-4::before {
+  inset: -3px;
+  border: 2px solid #ffd700;
+  box-shadow: 0 0 8px #ffd700;
+  animation: gentleGlow 3s ease-in-out infinite;
+}
+.gem-tier-3,
+.gem-tier-4 {
+  box-shadow: 0 0 12px var(--gem-color), inset 0 0 8px rgba(255,255,255,0.5);
+}
+
+/* 5-6级：较粗金环 + 旋转光点 */
+.gem-tier-5::before,
+.gem-tier-6::before {
+  inset: -5px;
+  border: 3px solid #ffd700;
+  box-shadow: 0 0 12px #ffd700, 0 0 20px rgba(255,215,0,0.6);
+  animation: rotateFeather 4s linear infinite, gentleGlow 3s ease-in-out infinite;
+}
+.gem-tier-5,
+.gem-tier-6 {
+  box-shadow: 0 0 18px var(--gem-color), inset 0 0 10px rgba(255,255,255,0.5);
+}
+
+/* 7-8级：橙色粗环 + 强烈呼吸 + 旋转光带 */
+.gem-tier-7::before,
+.gem-tier-8::before {
+  inset: -6px;
+  background: conic-gradient(from 0deg, transparent 0%, rgba(255,170,0,0.4) 25%, transparent 50%, rgba(255,170,0,0.4) 75%);
+  animation: rotateFeather 3s linear infinite, ultraGlow 2s ease-in-out infinite;
+}
+.gem-tier-7,
+.gem-tier-8 {
+  box-shadow: 0 0 25px var(--gem-color), inset 0 0 15px rgba(255,255,255,0.4);
+}
+
+/* 9-10级：彩虹旋转环 + 极亮光晕 */
+.gem-tier-9::before,
+.gem-tier-10::before {
+  inset: -7px;
+  background: conic-gradient(from 0deg, red, orange, yellow, green, blue, indigo, violet, red);
+  -webkit-mask: radial-gradient(circle, transparent 65%, black 66%);
+  mask: radial-gradient(circle, transparent 65%, black 66%);
+  animation: rotateFeather 2s linear infinite, rainbowGlow 2s ease-in-out infinite;
+}
+.gem-tier-9,
+.gem-tier-10 {
+  box-shadow: 0 0 35px var(--gem-color), inset 0 0 20px rgba(255,255,255,0.5);
+}
+
+/* ========== 动画定义 ========== */
+@keyframes surfaceFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+@keyframes shineSweep {
+  0% { background-position: 100% 100%; }
+  100% { background-position: -100% -100%; }
+}
+@keyframes gentleGlow {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+@keyframes ultraGlow {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+@keyframes rainbowGlow {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 1; }
+}
+@keyframes rotateFeather {
+  100% { transform: rotate(360deg); }
+}

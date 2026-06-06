@@ -67,8 +67,13 @@ if (critDmgOnMark && defender.effects?.some(e => e.type === 'shadowMark')) {
   let damage = baseDamage * (1 + elemBonus / 100) * elemMult * critMult;
 
   // 无视防御
-  const effectiveDef = defender.defense * (1 - ignoreDef / 100);
-  damage = Math.max(1, Math.floor(damage - effectiveDef * 1));
+// 无视防御
+const effectiveDef = defender.defense * (1 - ignoreDef / 100);
+// 百分比减免：每 100 防减免 3%，无上限
+const defRatio = effectiveDef / 3300;
+damage = Math.floor(damage * (1 - defRatio));
+// 固定减伤
+damage = Math.max(1, Math.floor(damage - effectiveDef * 0.5));
 
   // 真伤
   damage += (attacker.trueDmg || 0);

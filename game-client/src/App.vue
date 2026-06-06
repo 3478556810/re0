@@ -37,6 +37,7 @@
 
 
 <script setup>
+import '@/assets/css/gem-common.css'
 import { watch,ref, reactive, provide, onMounted, onUnmounted } from 'vue'
 import MainScreen from './components/MainScreen.vue'
 import BattleScene from './components/BattleScene/BattleScene.vue'

@@ -35,7 +35,6 @@ const DEFENSE_AFFIX_POOL = [
 /* ==================== 生成随机装备 ==================== */
 function generateRandomEquipment(tag, monsterLevel, playerLevel) {
   try {
-    // 1. 品质权重（根据玩家等级与怪物标签动态调整）
     let baseWeights = QUALITY_WEIGHTS[tag] || QUALITY_WEIGHTS.normal
     let qualityWeights = { ...baseWeights }
 
@@ -64,18 +63,15 @@ function generateRandomEquipment(tag, monsterLevel, playerLevel) {
       if (roll <= 0) { quality = q; break }
     }
 
-    // 2. 装备等级（受玩家等级与品质影响）
     let equipLevel = Math.min(monsterLevel, playerLevel + 2)
     equipLevel = Math.max(monsterLevel - 5, equipLevel)
     if (quality === 'purple') equipLevel = Math.min(monsterLevel + 1, playerLevel + 3)
     if (quality === 'red') equipLevel = Math.min(monsterLevel + 2, playerLevel + 4)
     equipLevel = Math.max(1, equipLevel + Math.floor(Math.random() * 3) - 1)
 
-    // 3. 随机部位
     const part = ['weapon', 'armor', 'helmet', 'pants', 'shoes', 'gauntlet'][Math.floor(Math.random() * 6)]
     const isOffensive = OFFENSIVE_PARTS.includes(part)
 
-    // 4. 基础攻防数值
     let baseAtk = 0, baseDef = 0
     if (part === 'weapon')      baseAtk = 6 + Math.floor(equipLevel * 1.4)
     else if (part === 'gauntlet') baseAtk = 4 + Math.floor(equipLevel * 1.0)
@@ -91,7 +87,6 @@ function generateRandomEquipment(tag, monsterLevel, playerLevel) {
     const atk = Math.floor(baseAtk * qualityMult)
     const def = Math.floor(baseDef * qualityMult)
 
-    // 5. 副词条（固定1个，白装无）
     const extraStats = {}
     if (quality !== 'white') {
       const pool = isOffensive ? ATTACK_AFFIX_POOL : DEFENSE_AFFIX_POOL
@@ -107,13 +102,11 @@ function generateRandomEquipment(tag, monsterLevel, playerLevel) {
       }
     }
 
-    // 鞋子额外速度（作为装备固有属性，不占用副词条位）
     let shoeSpeed = 0
     if (part === 'shoes') {
       shoeSpeed = 2 + Math.floor(Math.random() * 5)
     }
 
-    // 6. 刻印词条（传统词条，等级体系）
     const affixKeys = isOffensive ? OFFENSIVE_AFFIX_KEYS : DEFENSIVE_AFFIX_KEYS
     const affixCount = quality === 'white' ? 0 : quality === 'green' ? 1 : quality === 'blue' ? 1 : quality === 'purple' ? 2 : 2
     const affixes = []
@@ -130,7 +123,6 @@ function generateRandomEquipment(tag, monsterLevel, playerLevel) {
       affixes.push({ id: key, level: affixLevel })
     }
 
-    // 7. 命名
     const nameMap = { weapon: '剑', armor: '铠', helmet: '盔', pants: '护腿', shoes: '靴', gauntlet: '臂甲' }
     const qualityName = { white: '破旧的', green: '普通的', blue: '精良的', purple: '史诗的', red: '传说的' }[quality]
 
@@ -141,12 +133,12 @@ function generateRandomEquipment(tag, monsterLevel, playerLevel) {
       level: equipLevel,
       quality,
       atk, def,
-        baseAtk: baseAtk,   // ← 新增：保存基础攻击力基准值
-  baseDef: baseDef,   // ← 新增：保存基础防御力基准值
-   qualityMult: qualityMult,  // ← 必须存在
-      speed: shoeSpeed,          // 鞋子基础速度
-      extraStats,                // 副词条（最多1个）
-      affixes,                   // 刻印词条
+      baseAtk: baseAtk,
+      baseDef: baseDef,
+      qualityMult: qualityMult,
+      speed: shoeSpeed,
+      extraStats,
+      affixes,
       levelRequired: equipLevel,
       gemSlots: quality === 'red' ? 1 : 0
     }
@@ -159,12 +151,13 @@ function generateRandomEquipment(tag, monsterLevel, playerLevel) {
 /* ==================== 战斗奖励 ==================== */
 export function getRewards(engine) {
   if (engine.winner !== 'player') {
-    return { exp: 0, materials: [], accessories: [], equipments: [] }
+    return { exp: 0, materials: [], accessories: [], equipments: [], gems: [] }
   }
 
   let exp = 0
   const materials = []
   const equipments = []
+  const gems = []
 
   const doubleDrop = engine.player?.doubleDrop || 0
   const playerLevel = engine.player?.level || 1
@@ -191,36 +184,87 @@ export function getRewards(engine) {
         if (Math.random() * 100 < dropRate) {
           let qty = matDef.qty || 1
           if (doubleDrop > 0 && Math.random() * 100 < doubleDrop) qty *= 2
-          materials.push({ id: matDef.id, name: matDef.name || matDef.id, qty })
+
+          if (matDef.id?.startsWith('gem_')) {
+            gems.push({ id: matDef.id, name: matDef.name || matDef.id, qty })
+          } else {
+            materials.push({ id: matDef.id, name: matDef.name || matDef.id, qty })
+          }
         }
       }
 
-      // 副本Boss特殊掉落（品质魔石 + 概率装备）
- if (e.isRaidBoss || e.base?.isRaidBoss) {
-    const bossId = e.id || e.base?.id;
-    let qualityStoneQty = 2;
-    if (bossId === 'boss_fire_dragon') qualityStoneQty = 5;      // 20层炎龙奖励最多
-    else if (bossId === 'boss_shadow_lord') qualityStoneQty = 3; // 15层永夜领主
-    else if (bossId === 'boss_goblin_king') qualityStoneQty = 2; // 10层猩红暴君
-    
-    materials.push({ id: 'quality_stone', name: '品质魔石', qty: qualityStoneQty });
+      // 副本Boss特殊掉落（品质魔石 + 专属材料 + 7级宝石）
+      if (e.isRaidBoss || e.base?.isRaidBoss) {
+        const bossId = e.id || e.base?.id
 
-    // 永夜领主额外掉落暗影套材料
-    if (bossId === 'boss_shadow_lord') {
-        materials.push(
-            { id: 'obsidian', name: '黑曜石', qty: 3, dropRate: 100 },
-            { id: 'crystal_shard', name: '晶簇碎片', qty: 3, dropRate: 100 }
-        );
-    }
+        let qualityStoneQty = 2
+        if (bossId === 'raid_bishop') qualityStoneQty = 5
+        else if (bossId === 'raid_lava_core') qualityStoneQty = 4
+        else if (bossId === 'raid_gladiator') qualityStoneQty = 3
+        materials.push({ id: 'quality_stone', name: '品质魔石', qty: qualityStoneQty })
 
-    if (Math.random() < 0.4) {
-        const eq = generateRandomEquipment('boss', 21, playerLevel);
-        if (eq) equipments.push(eq);
-    }
-}
+        const gemDefs = engine.config?.gemDefinitions || []
+        const eligible = gemDefs.filter(g => g.level === 7)
+        if (eligible.length > 0) {
+          const gem = eligible[Math.floor(Math.random() * eligible.length)]
+          gems.push({ id: gem.id, name: gem.name, qty: 1 })
+        }
 
-      // 普通小怪装备掉落
+        if (Math.random() < 0.4) {
+          const eq = generateRandomEquipment('boss', 21, playerLevel)
+          if (eq) equipments.push(eq)
+        }
+      }
+
+      // 塔Boss掉落套装材料 + 宝石
+      if (e.isBoss && !e.isRaidBoss && !(e.base?.isRaidBoss)) {
+        const bossId = e.id || e.base?.id
+
+        if (bossId === 'boss_shadow_lord') {
+          materials.push(
+            { id: 'obsidian', name: '黑曜石', qty: 8, dropRate: 100 },
+            { id: 'crystal_shard', name: '晶簇碎片', qty: 5, dropRate: 100 }
+          )
+        }
+        if (bossId === 'boss_fire_dragon') {
+          materials.push({ id: 'dragon_ore', name: '龙鳞矿', qty: 8, dropRate: 100 })
+        }
+
+        const gemDefs = engine.config?.gemDefinitions || []
+        if (gemDefs.length > 0) {
+          let minLevel = 1, maxLevel = 1, gemQty = 0
+
+          if (bossId === 'boss_goblin_king') {
+            minLevel = 3; maxLevel = 5; gemQty = 2
+          } else if (bossId === 'boss_shadow_lord') {
+            minLevel = 4; maxLevel = 6; gemQty = 3
+          } else if (bossId === 'boss_fire_dragon') {
+            minLevel = 5; maxLevel = 7; gemQty = 4
+          }
+
+          for (let i = 0; i < gemQty; i++) {
+            const eligible = gemDefs.filter(g => g.level >= minLevel && g.level <= maxLevel)
+            if (eligible.length > 0) {
+              const gem = eligible[Math.floor(Math.random() * eligible.length)]
+              gems.push({ id: gem.id, name: gem.name, qty: 1 })
+            }
+          }
+        }
+      }
+
+      // 普通小怪装备掉落 + 宝石掉落
       if (!e.isBoss && !(e.base && e.base.isBoss)) {
+        // 宝石掉落（6%概率掉落1~2级）
+        const gemDefs = engine.config?.gemDefinitions || []
+        if (Math.random() < 0.06) {
+          const eligible = gemDefs.filter(g => g.level >= 1 && g.level <= 2)
+          if (eligible.length > 0) {
+            const gem = eligible[Math.floor(Math.random() * eligible.length)]
+            gems.push({ id: gem.id, name: gem.name, qty: 1 })
+          }
+        }
+
+        // 装备掉落
         let dropRate = 0.12
         if (playerLevel <= 5) dropRate = 0.30
         else if (playerLevel <= 10) dropRate = 0.22
@@ -240,5 +284,5 @@ export function getRewards(engine) {
     }
   }
 
-  return { exp, materials, accessories: [], equipments }
+  return { exp, materials, accessories: [], equipments, gems }
 }
