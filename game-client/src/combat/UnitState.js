@@ -8,6 +8,7 @@ export class UnitState {
     this.name = baseStats.name || ''
     this.isPlayer = isPlayer
     this.isBoss = baseStats.isBoss || false
+    this.isRaidBoss = baseStats.isRaidBoss || false
     this.traits = baseStats.traits || []
     if (typeof baseStats.trait === 'string' && baseStats.trait) {
       this.traits.push(baseStats.trait)
@@ -278,24 +279,41 @@ this.effects.filter(e => e.type === EFFECT_TYPES.BURN).forEach(e => {
     this.effects = this.effects.filter(e => e.duration > 0);
   }
 
-  takeDamage(rawDamage, attacker) {
-      rawDamage = Math.floor(rawDamage);  // ← 加这一行，其他不变
+   takeDamage(rawDamage, attacker) {
+      rawDamage = Math.floor(rawDamage);
 
+    // ===== 副本Boss无敌（硬编码，用名字和场上敌人判定）=====
+    if (this.isRaidBoss) {
+        const engine = window.__engine
+        if (engine) {
+            const hasTotem = engine.enemies.some(e => e.name === '鲜血图腾' && e.hp > 0)
+            const hasClones = engine.enemies.some(e => e.name === '暗影分身' && e.hp > 0)
+            const hasLavaShield = this._lavaShieldActive
 
-    // ===== 闪避判定 =====
-    // ===== 闪避判定 =====
-// ===== 闪避判定 =====
-if (window.__engine && this === window.__engine.player) {
-    const speedDodge = this.speed * 0.05;
-    const totalDodge = speedDodge + (this.dodge || 0);
-    
-    if (Math.random() * 100 < totalDodge) {
-        return { damage: 0, dodged: true };
+            if (hasTotem || hasClones || hasLavaShield) {
+                if (hasLavaShield && attacker?._lastSkillElement === 'water') {
+                    this._lavaShieldActive = false
+                    this.removeEffect(EFFECT_TYPES.SHIELD)
+                    if (engine._pendingMessages) {
+                        engine._pendingMessages.push('熔岩护盾被水属性技能击破！')
+                    }
+                    // 继续正常结算
+                } else {
+                    return { damage: 0, invulnerable: true }
+                }
+            }
+        }
     }
-}
+    // ===== 闪避判定 =====
+    if (window.__engine && this === window.__engine.player) {
+        const speedDodge = this.speed * 0.05;
+        const totalDodge = speedDodge + (this.dodge || 0);
+        if (Math.random() * 100 < totalDodge) {
+            return { damage: 0, dodged: true };
+        }
+    }
     
     // 怨恨增伤
-
     if (this.dmgTaken && this.dmgTaken > 0) {
         rawDamage = Math.floor(rawDamage * (1 + this.dmgTaken / 100));
     }
@@ -403,7 +421,6 @@ if (window.__engine && this === window.__engine.player) {
 
     return damage;
   }
-
   reduceShield(amount) {
     let remaining = amount
     this.effects.forEach(e => {

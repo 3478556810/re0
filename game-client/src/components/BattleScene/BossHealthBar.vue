@@ -3,31 +3,54 @@
     <div class="boss-info">
       <div class="boss-name">{{ bossData.name }}</div>
       <div class="boss-phase" :style="{ color: phaseColor }">{{ phaseText }}</div>
-    <div class="boss-hp-numbers">{{ Math.floor(bossData.currentHp) }} / {{ bossData.maxHp }}</div>
+      <div class="boss-hp-numbers">{{ Math.floor(bossData.currentHp) }} / {{ bossData.maxHp }}</div>
     </div>
     <div class="boss-hp-bg">
       <div class="boss-hp-fill" :style="{ width: hpPercent + '%', background: phaseBarGradient }"></div>
     </div>
     <div class="phase-tip" v-if="phaseTip"><Icon :icon="phaseIcon" /> {{ phaseTip }}</div>
 
-    <!-- 效果图标区域 -->
+    <!-- 效果图标区域（保持不动） -->
     <div class="boss-effect-icons" v-if="enemyEffects && enemyEffects.length">
-  <div
-  v-for="eff in sortedEffects"
-  :key="eff.type"
-  class="effect-badge"
-:class="[getEffectClass(eff), eff.animClass || '', eff.type === 'element_mark' ? getElementMarkClass(eff) : '']"
-  @click.stop="$emit('showEffectBubble', eff, bossData.maxHp, $event)"
->
-  <Icon :icon="getEffectIcon(eff.type === 'element_mark' ? eff.element : eff.type)" />
-  <div class="eff-meta">
-    <span class="eff-dur" v-if="eff.duration > 0">T{{ eff.duration }}</span>
-    <span class="eff-stacks" v-if="eff.stacks > 1">×{{ eff.stacks }}</span>
-  </div>
-</div></div>
+      <div
+        v-for="eff in sortedEffects"
+        :key="eff.type"
+        class="effect-badge"
+        :class="[getEffectClass(eff), eff.animClass || '', eff.type === 'element_mark' ? getElementMarkClass(eff) : '']"
+        @click.stop="$emit('showEffectBubble', eff, bossData.maxHp, $event)"
+      >
+        <Icon :icon="getEffectIcon(eff.type === 'element_mark' ? eff.element : eff.type)" />
+        <div class="eff-meta">
+          <span class="eff-dur" v-if="eff.duration > 0">T{{ eff.duration }}</span>
+          <span class="eff-stacks" v-if="eff.stacks > 1">×{{ eff.stacks }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 小怪血条列表（移到外面，独立渲染） ===== -->
+    <div class="minion-list" v-if="minionList.length">
+      <div
+        v-for="minion in minionList"
+        :key="minion.id"
+        class="minion-bar"
+        :class="{ 'minion-totem': minion.isTotem, 'minion-clone': minion.isClone }"
+      >
+        <div class="minion-header">
+          <span class="minion-name">{{ minion.name }}</span>
+          <span class="minion-hp-text">
+            {{ Math.floor(minion.currentHp) }} / {{ minion.maxHp }}
+          </span>
+        </div>
+        <div class="minion-hp-bg">
+          <div
+            class="minion-hp-fill"
+            :style="{ width: (minion.currentHp / minion.maxHp) * 100 + '%' }"
+          ></div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
-
 <script setup>
 import { computed, ref, watch } from 'vue'
 import { Icon } from '@iconify/vue'
@@ -43,12 +66,16 @@ const props = defineProps({
   phaseThresholds: {
     type: Array,
     default: () => [
-      { threshold: 0.7, name: 'P1', tip: '暗影形态', color: '#f59e0b', icon: 'mdi:shield-moon' },
-      { threshold: 0.4, name: 'P2', tip: '狂怒爆发', color: '#ef4444', icon: 'mdi:fire' },
-      { threshold: 0.1, name: 'P3', tip: '终焉降临', color: '#8b5cf6', icon: 'mdi:skull' }
+      { threshold: 0.75, name: 'P1', tip: '暗影形态', color: '#f59e0b', icon: 'mdi:shield-moon' },
+      { threshold: 0.5, name: 'P2', tip: '狂怒爆发', color: '#ef4444', icon: 'mdi:fire' },
+      { threshold: 0.25, name: 'P3', tip: '终焉降临', color: '#8b5cf6', icon: 'mdi:skull' }
     ]
   },
-  enemyEffects: Array
+  enemyEffects: Array,
+   minionList: {          // ← 新增
+    type: Array,
+    default: () => []
+  }
 })
 
 const emit = defineEmits(['phaseChange', 'showEffectBubble'])  // ✅ 添加了 showEffectBubble
@@ -258,5 +285,63 @@ const getEffectClass = (eff) => {
 :deep(.element-mark-steel),
 :deep(.element-mark-poison) {
   /* 从全局样式复制对应的属性，或者直接留空，因为全局已经定义了 */
+}
+
+
+/* 小怪血条列表 */
+.minion-list {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.minion-bar {
+  background: rgba(20, 20, 35, 0.8);
+  border: 1px solid rgba(255, 215, 0, 0.25);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+
+.minion-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 9px;
+  color: #ccc;
+  margin-bottom: 2px;
+}
+
+.minion-name {
+  color: #f0c674;
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.minion-hp-text {
+  color: #ffaa66;
+  font-family: 'Press Start 2P', monospace;
+}
+
+.minion-hp-bg {
+  height: 10px;
+  background: #2a1f1f;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.minion-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #d97706, #fbbf24);
+  transition: width 0.2s ease;
+}
+
+/* 可选：区分图腾和分身颜色 */
+.minion-totem .minion-hp-fill {
+  background: linear-gradient(90deg, #7c3aed, #a78bfa);
+}
+.minion-clone .minion-hp-fill {
+  background: linear-gradient(90deg, #dc2626, #f87171);
 }
 </style>

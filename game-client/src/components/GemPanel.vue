@@ -1,29 +1,48 @@
 <template>
-  <div class="tab-content">
-    <div class="section">
-      <h3><Icon icon="mdi:rhombus-split" /> 宝石插槽</h3>
-      <div class="gem-slots-circle">
-        <div class="gem-circle-center">
-          <Icon icon="mdi:rhombus-split" />
+  <div class="tab-content gem-tab-layout">
+    <!-- 左侧：宝石插槽圆形布局 -->
+    <div class="gem-left">
+      <div class="section">
+        <h3><Icon icon="mdi:rhombus-split" /> 宝石插槽</h3>
+        <div class="gem-slots-circle">
+          <div class="gem-circle-center">
+            <Icon icon="mdi:rhombus-split" />
+          </div>
+          <div
+            v-for="(slot, index) in gemSlots"
+            :key="slot.key"
+            class="gem-slot-circle"
+            :class="{ filled: slot.gem, empty: !slot.gem }"
+            :style="getSlotStyle(index)"
+            @click="handleSlotClick(slot)"
+          >
+            <template v-if="slot.gem">
+              <div
+                class="slot-gem-img"
+                :class="'gem-tier-' + slot.gem.level"
+                :style="{ '--gem-color': slot.gem.color }"
+              ></div>
+            </template>
+            <template v-else>
+              <Icon icon="mdi:plus-circle-outline" class="slot-empty-icon" />
+            </template>
+          </div>
         </div>
-        <div
-          v-for="(slot, index) in gemSlots"
-          :key="slot.key"
-          class="gem-slot-circle"
-          :class="{ filled: slot.gem, empty: !slot.gem }"
-          :style="getSlotStyle(index)"
-          @click="handleSlotClick(slot)"
-        >
-          <template v-if="slot.gem">
-            <div
-              class="slot-gem-img"
-              :class="'gem-tier-' + slot.gem.level"
-              :style="{ '--gem-color': slot.gem.color }"
-            ></div>
-          </template>
-          <template v-else>
-            <Icon icon="mdi:plus-circle-outline" class="slot-empty-icon" />
-          </template>
+      </div>
+    </div>
+
+    <!-- 右侧：宝石类型总效果 -->
+    <div class="gem-right">
+      <div class="section">
+        <h3><Icon icon="mdi:chart-pie" /> 宝石总加成</h3>
+        <div class="total-effects">
+          <div class="total-row" v-for="(val, type) in totalGemEffects" :key="type">
+            <span class="type-label">{{ getTypeLabel(type) }}</span>
+            <span class="type-value">+{{ val }}</span>
+          </div>
+          <div v-if="Object.keys(totalGemEffects).length === 0" class="empty-total">
+            尚未镶嵌宝石
+          </div>
         </div>
       </div>
     </div>
@@ -43,9 +62,11 @@
               :style="{ '--gem-color': detailGem.color }"
             ></div>
             <div class="detail-info">
-              <div class="info-row"><span>等级</span><span>{{ detailGem.level }}</span></div>
+              <!-- 移除顶部冗余等级，直接展示类型和效果 -->
+                            <div class="info-row"><span>等级</span><span>{{ detailGem.level }}</span></div>
               <div class="info-row"><span>类型</span><span>{{ detailGem.typeText }}</span></div>
               <div class="info-row"><span>效果</span><span class="effect-value">{{ detailGem.effectDesc }}</span></div>
+
             </div>
           </div>
           <div class="detail-actions">
@@ -56,7 +77,7 @@
       </div>
     </Teleport>
 
-    <!-- 宝石选择弹窗 -->
+    <!-- 宝石选择弹窗（不变） -->
     <Teleport to="body">
       <div v-if="gemSelectVisible" class="gem-select-fullscreen" @click.self="gemSelectVisible = false">
         <div class="gem-select-container">
@@ -87,7 +108,6 @@
   </div>
 </template>
 
-
 <script setup>
 import { ref, computed, inject } from 'vue'
 import { Icon } from '@iconify/vue'
@@ -108,6 +128,30 @@ function findGem(gemId) {
   return gemDefs.value.find(g => g.id === gemId)
 }
 
+// 类型中文映射
+function getTypeLabel(type) {
+  const map = {
+    atk: '攻击力',
+    def: '防御力',
+    hp: '生命值',
+    critDmg: '暴击伤害',
+    speed: '速度'
+  }
+  return map[type] || type
+}
+
+// 宝石效果描述
+function getEffectDesc(def) {
+  if (!def) return '未知'
+  if (def.type === 'atk') return `攻击力 +${def.value}`
+  if (def.type === 'def') return `防御力 +${def.value}`
+  if (def.type === 'hp') return `生命值 +${def.value}`
+  if (def.type === 'critDmg') return `暴击伤害 +${def.value}%`
+  if (def.type === 'speed') return `速度 +${def.value}`
+  return `${def.type} +${def.value}`
+}
+
+// 宝石插槽数据
 const gemSlots = computed(() => {
   const slots = []
   for (let i = 1; i <= 7; i++) {
@@ -117,10 +161,32 @@ const gemSlots = computed(() => {
     slots.push({
       key,
       label: ['壹','贰','叁','肆','伍','陆','柒'][i - 1],
-      gem: def ? { id: gemId, name: def.name, color: def.color, value: def.value, type: def.type, level: def.level } : null
+      gem: def ? {
+        id: gemId,
+        name: def.name,
+        color: def.color,
+        value: def.value,
+        type: def.type,
+        level: def.level,
+        typeText: getTypeLabel(def.type),      // 预计算类型文本
+        effectDesc: getEffectDesc(def)         // 预计算效果描述
+      } : null
     })
   }
   return slots
+})
+
+// 右侧总效果计算
+const totalGemEffects = computed(() => {
+  const totals = {}
+  for (const slot of gemSlots.value) {
+    if (slot.gem) {
+      const { type, value } = slot.gem
+      if (!totals[type]) totals[type] = 0
+      totals[type] += value
+    }
+  }
+  return totals
 })
 
 function getSlotStyle(index) {
@@ -130,15 +196,6 @@ function getSlotStyle(index) {
   const x = Math.cos(angle) * radius
   const y = Math.sin(angle) * radius
   return { transform: `translate(${x}px, ${y}px)` }
-}
-
-function getEffectDesc(def) {
-  if (def.type === 'atk') return `攻击力 +${def.value}`
-  if (def.type === 'def') return `防御力 +${def.value}`
-  if (def.type === 'hp') return `生命值 +${def.value}`
-  if (def.type === 'critDmg') return `暴击伤害 +${def.value}%`
-  if (def.type === 'speed') return `速度 +${def.value}`
-  return `${def.type} +${def.value}`
 }
 
 const availableGems = computed(() => {
@@ -151,8 +208,13 @@ const availableGems = computed(() => {
   return Object.entries(counts).map(([gemId, qty]) => {
     const def = findGem(gemId)
     return {
-      id: gemId, name: def?.name || gemId, color: def?.color || '#888',
-      type: def?.type || '?', value: def?.value || 0, level: def?.level || 1, qty
+      id: gemId,
+      name: def?.name || gemId,
+      color: def?.color || '#888',
+      type: def?.type || '?',
+      value: def?.value || 0,
+      level: def?.level || 1,
+      qty
     }
   })
 })
@@ -194,6 +256,8 @@ function unequipGem(slotKey) {
   detailVisible.value = false
 }
 </script>
+
+
 
 <style scoped>
 /* 宝石插槽圆形布局 */
@@ -300,4 +364,59 @@ function unequipGem(slotKey) {
   border-radius: 6px; display: inline-flex; align-items: center; gap: 4px;
 }
 .pixel-btn.danger { background: rgba(180,0,0,0.3); border-color: #ff5555; color: #ffaaaa; }
+/* 原有样式保留，增加布局和右侧样式 */
+.gem-tab-layout {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.gem-left {
+  flex: 0 0 300px;
+}
+
+.gem-right {
+  flex: 0 0 200px;
+}
+
+.total-effects {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-radius: 12px;
+  padding: 12px;
+  font-family: 'Press Start 2P', cursive;
+  color: #ffd;
+}
+
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 9px;
+}
+
+.type-label {
+  color: #ccc;
+}
+
+.type-value {
+  color: #ffd700;
+}
+
+.empty-total {
+  text-align: center;
+  color: #888;
+  font-size: 9px;
+  padding: 10px 0;
+}
+
+/* 原样式微调 */
+.gem-slots-circle {
+  position: relative;
+  width: 260px; height: 260px;
+  margin: 20px auto;
+}
+/* …… 其他样式保持不变 …… */
+
 </style>

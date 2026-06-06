@@ -1,29 +1,48 @@
 <template>
   <div class="battle-container">
-
     <!-- Boss 独立血条（仅在 Boss 战时显示） -->
-   <BossHealthBar
-  v-if="isBossBattle && bossData"
-  :boss-data="bossData"
-  :phase-thresholds="bossPhaseThresholds"
-  :enemy-effects="currentEnemyEffects"
-  @phase-change="onBossPhaseChange"
-  @show-effect-bubble="(eff, maxHp, event) => showEffectBubble(eff, maxHp, event)"
-/>
+    <BossHealthBar
+      v-if="isBossBattle && bossData"
+      :boss-data="bossData"
+      :minion-list="minionList"
+      :phase-thresholds="bossPhaseThresholds"
+      :enemy-effects="currentEnemyEffects"
+      @phase-change="onBossPhaseChange"
+      @show-effect-bubble="(eff, maxHp, event) => showEffectBubble(eff, maxHp, event)"
+    />
 
-    <!-- 其余内容完全不变... -->
+    <!-- Boss 立绘（左上角，可点击选中） -->
+    <div
+      v-if="isBossBattle && bossEnemy"
+      class="boss-sprite-container"
+      :class="{ 'target-boss': bossEnemyIndex === currentTargetIndex }"
+      @click="selectTarget(bossEnemyIndex)"
+    >
+      <div class="boss-sprite">
+        <img
+          v-if="getCustomImage && getCustomImage(bossEnemy.id)"
+          :src="getCustomImage(bossEnemy.id)"
+          class="big-sprite-img"
+        />
+        <Icon v-else :icon="bossEnemy.icon || 'mdi:help-circle'" class="big-sprite-icon" />
+      </div>
+    </div>
+
+    <!-- 任务完成提示 -->
     <Transition name="fade">
       <div v-if="questCompleteHint" class="quest-hint-fixed">
         <Icon icon="mdi:check-circle" /> {{ questHintText }}
       </div>
     </Transition>
 
+    <!-- 背景装饰 -->
     <div class="sky"></div>
     <div class="ground"></div>
     <div class="decoration tree1"></div>
     <div class="decoration tree2"></div>
     <div class="decoration rock"></div>
 
+    <!-- 敌人面板（只显示小怪立绘和卡片） -->
     <EnemyPanel
       :hide-hp-bar="isBossBattle"
       :boss-phase-anim-trigger="bossPhaseAnimTrigger"
@@ -35,6 +54,7 @@
       @show-effect-bubble="showEffectBubble"
     />
 
+    <!-- 玩家面板 -->
     <PlayerPanel
       :player-stats="playerStats"
       :player-shield="playerShield"
@@ -55,40 +75,63 @@
       @show-effect-bubble="showEffectBubble"
     />
 
+    <!-- 浮动消息 -->
     <Transition name="fade">
-      <div v-if="floatingMessage.visible" class="floating-message" :class="'msg-' + floatingMessage.type">
+      <div
+        v-if="floatingMessage.visible"
+        class="floating-message"
+        :class="'msg-' + floatingMessage.type"
+      >
         {{ floatingMessage.text }}
       </div>
     </Transition>
     <div v-if="floatingMessage.visible" class="message-overlay" @click="skipMessage"></div>
 
+    <!-- 效果悬浮气泡 -->
     <Transition name="fade">
-      <div v-if="effectBubble.visible" class="effect-bubble" :style="{ left: effectBubble.x + 'px', top: effectBubble.y + 'px' }">
+      <div
+        v-if="effectBubble.visible"
+        class="effect-bubble"
+        :style="{ left: effectBubble.x + 'px', top: effectBubble.y + 'px' }"
+      >
         {{ effectBubble.text }}
       </div>
     </Transition>
 
-    <SkillBar
-      v-if="!gameOver && playerTurn && !waiting && !showResult"
-      :skills="battleSkills"
-      :player-mp="store.player.mp"
-      @use-skill="useSkill"
-      @show-preview="showSkillPreview"
-      @hide-preview="hideSkillPreview"
-    />
+    <!-- 技能栏（阶段无敌动画期间隐藏） -->
+<!-- 技能栏和逃跑按钮容器 -->
+<div v-if="!gameOver && playerTurn && !waiting && !showResult" class="skill-flee-row">
+  <SkillBar
+    :skills="battleSkills"
+    :player-mp="store.player.mp"
+    @use-skill="useSkill"
+    @show-preview="showSkillPreview"
+    @hide-preview="hideSkillPreview"
+  />
+  <button class="pixel-btn warning" @click="fleeBattle">
+    <Icon icon="streamline-freehand:safety-fire-exit" /> 逃跑
+  </button>
+</div>
 
-    <div v-if="skillPreview.visible" class="skill-preview" :style="{ left: skillPreview.x + 'px', top: skillPreview.y + 'px' }">
+    <!-- 技能预览浮层 -->
+    <div
+      v-if="skillPreview.visible"
+      class="skill-preview"
+      :style="{ left: skillPreview.x + 'px', top: skillPreview.y + 'px' }"
+    >
       <div class="preview-name">{{ skillPreview.name }}</div>
       <div class="preview-desc">{{ skillPreview.desc }}</div>
       <div class="preview-dmg">预期伤害：{{ skillPreview.dmg }}</div>
       <div v-if="skillPreview.mul > 1" class="preview-mul">克制倍率：{{ skillPreview.mul }}x</div>
     </div>
 
+    <!-- 战斗失败面板 -->
     <div v-if="gameOver && gameOverMsg === '战斗失败'" class="game-over-panel">
       {{ gameOverMsg }}
       <button class="pixel-btn" @click="gameOverHandler">确定</button>
     </div>
 
+    <!-- 战斗结果面板 -->
     <BattleResultPanel
       v-if="showResult"
       :reward="totalReward"
@@ -113,11 +156,12 @@ import BattleResultPanel from './BattleResultPanel.vue'
 import BossHealthBar from './BossHealthBar.vue'
 import '@/assets/css/BattleScene.css'
 import { getSortedEffects } from '@/composables/useBattleHelpers'
-import { 
-  getEffectDisplayName, 
-  getEffectDisplayValue ,
-   getEffectTooltip 
+import {
+  getEffectDisplayName,
+  getEffectDisplayValue,
+  getEffectTooltip
 } from '@/composables/useBattleHelpers'
+
 const props = defineProps({
   enemies: Array,
   battleCoord: Object,
@@ -131,6 +175,7 @@ const emit = defineEmits(['victory', 'exit', 'nextFloor', 'retreatToDungeon'])
 const store = useGameStore()
 
 const {
+  engine,   
   enemies,
   currentTargetIndex,
   playerEffectsDisplay,
@@ -159,7 +204,7 @@ const {
   getCompanionImage,
   floatingNumbers,
   destroy: destroyState,
-  hitEnemyIndex,
+  hitEnemyIndex
 } = useBattleState()
 
 const {
@@ -175,18 +220,45 @@ const {
   destroyUI
 } = useBattleUI()
 
-const playerHpPercent = computed(() => (store.player.hp / store.player.maxHp) * 100)
+// ---------------------- 小怪数据（给 BossHealthBar 显示血条） ----------------------
+const minionList = computed(() => {
+  if (!enemies.value) return []
+  return enemies.value
+    .filter(e => {
+      // 临时：只要不是 boss 且存活，就当作小怪显示
+      if (e.hp <= 0) return false
+      // 假设索引0是boss，后面可以根据 isBoss 标记完善
+      return e !== enemies.value[0]
+    })
+    .map(e => ({
+      id: e.id || e.name,
+      name: e.name,
+      currentHp: e.hp,
+      maxHp: e.maxHp,
+      isTotem: e.isTotem || false,
+      isClone: e.isClone || false
+    }))
+})
 
-const bossPhaseAnimTrigger = ref(0)
-
+// ---------------------- Boss 相关 ----------------------
 const isBossBattle = computed(() => {
   if (!enemies.value.length) return false
   return enemies.value.some(enemy => enemy.isBoss === true)
 })
 
+const bossEnemy = computed(() => {
+  if (!isBossBattle.value || !enemies.value.length) return null
+  return enemies.value.find(e => e.isBoss) || enemies.value[0]
+})
+
+const bossEnemyIndex = computed(() => {
+  if (!bossEnemy.value) return -1
+  return enemies.value.indexOf(bossEnemy.value)
+})
+
 const bossData = computed(() => {
   if (!isBossBattle.value || !enemies.value.length) return null
-  const boss = enemies.value[0]
+  const boss = bossEnemy.value
   return {
     name: boss.name,
     maxHp: boss.maxHp,
@@ -207,6 +279,14 @@ const bossPhaseThresholds = [
   { threshold: 0.25, name: '阶段三', tip: '终焉降临', color: '#8b5cf6', icon: 'mdi:skull' }
 ]
 
+const playerHpPercent = computed(() => (store.player.hp / store.player.maxHp) * 100)
+
+const bossPhaseAnimTrigger = ref(0)
+
+// ---------------------- 阶段无敌动画控制 ----------------------
+
+
+// ---------------------- 事件处理 ----------------------
 const onBossPhaseChange = (phaseIndex, phaseConfig) => {
   triggerScreenShake(0.5)
   bossPhaseAnimTrigger.value++
@@ -233,10 +313,8 @@ const showEdgeGlow = (color, duration = 0.5) => {
   }, duration * 1000)
 }
 
-// 通用的 showEffectBubble，会被 BossHealthBar 和其他组件调用
 const showEffectBubble = (effect, maxHp, event) => {
   uiShowEffectBubble(effect, maxHp, event, (eff, maxHp) => {
-    // 直接复用悬浮提示的完整文本
     return getEffectTooltip(eff, maxHp)
   })
 }
@@ -244,7 +322,6 @@ const showEffectBubble = (effect, maxHp, event) => {
 const fleeBattle = () => emit('exit')
 
 const useSkill = async (skill) => {
-  
   await battleUseSkill(skill, showMessage)
 }
 
@@ -277,10 +354,19 @@ const onRetreat = () => {
   emit('retreatToDungeon')
 }
 
+// ---------------------- 生命周期 ----------------------
 onMounted(() => {
-  console.log('onMounted, store.battleEnemies 已设置:', props.enemies);
+  console.log('onMounted, store.battleEnemies 已设置:', props.enemies)
   store.battleEnemies = props.enemies
   initEngine(props.enemies)
+
+  // 设置 engine 的阶段变化回调（给 UI 播特效）
+  if (engine.value && engine.value.onPhaseChange !== undefined) {
+    engine.value.onPhaseChange = onBossPhaseChange
+  }
+
+
+
   showMessage('敌人出现了！')
   document.addEventListener('click', hideEffectBubbleOnOutsideClick)
 })
