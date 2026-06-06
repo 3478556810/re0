@@ -172,10 +172,10 @@
 
 /* ========== 技能栏 ========== */
 .skill-bar {
-  position: absolute; top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
-  z-index: 30;
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 .skill-card {
   background: rgba(0,0,0,0.7); border: 2px solid #b89a6a;
@@ -269,20 +269,7 @@
 }
 
 /* ========== 逃跑按钮 ========== */
-.flee-btn {
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  gap: 4px; background: rgba(0,0,0,0.7); border: 2px solid rgba(255,165,0,0.6);
-  border-radius: 12px; padding: 10px 14px; color: #ffd;
-  font-family: 'Press Start 2P', cursive; font-size: 8px;
-  cursor: pointer; transition: all 0.2s; white-space: nowrap;
-  min-width: 70px; min-height: 70px;
-}
-.flee-btn:hover {
-  background: rgba(255,165,0,0.2); border-color: #ffa500; transform: scale(1.05);
-}
-.flee-btn:active { transform: scale(0.95); }
-.flee-icon { font-size: 28px; color: #ffa500; }
-.flee-text { font-size: 7px; color: #ffd; }
+
 
 /* ========== 浮动伤害数字（分级） ========== */
 .floating-damage-container {
@@ -539,4 +526,72 @@
   font-size: 7px;
   color: #ffd700;
   text-shadow: 0 0 2px #000;
+}
+
+
+
+/* Boss 立绘独立容器 */
+.boss-sprite-container {
+  position: absolute;
+  top: 30px;               /* 给顶部血条留空 */
+  left: 120px;
+  z-index: 25;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+/* Boss 立绘选中状态 - 高亮边框 + 光晕 + 轻微放大 */
+.boss-sprite-container.target-boss .boss-sprite {
+  border-color: #ff6600;
+  transform: scale(1.12);
+  filter: drop-shadow(0 0 16px orange);
+  box-shadow: 0 0 20px rgba(255, 100, 0, 0.7);
+}
+
+.boss-sprite {
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid #ffd700;
+
+  background: rgba(0, 0, 0, 0.5);
+  transition: all 0.2s ease;
+}
+
+
+/* 技能栏与逃跑按钮容器 */
+.skill-flee-row {
+  position: absolute;
+  bottom: 8%;                    /* 技能栏底部位置，你可按需调整 */
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: flex-end;         /* 底端对齐 */
+  gap: -2px;                      /* 按钮与最后一个技能卡片的水平间距 */
+  z-index: 30;
+}
+
+/* 逃跑按钮 - 缩小并紧贴技能栏 */
+.skill-flee-row .pixel-btn.warning {
+  font-size: 7px;
+  padding: 4px 8px;
+  height: auto;
+  min-width: unset;
+  min-height: unset;
+  line-height: 1.3;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin: 0;                     /* 清除所有额外外边距 */
+  align-self: flex-end;          /* 强制底端对齐 */
+}
+
+/* 按钮内图标大小 */
+.skill-flee-row .pixel-btn.warning .iconify {
+  font-size: 14px;
+  vertical-align: middle;
 }

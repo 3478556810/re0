@@ -1,9 +1,10 @@
 [
   {
-    "id": "dark_ball",
-    "name": "暗影球",
-    "desc": "暗属性单体攻击。目标生命越高伤害越高（最多翻倍）。",
-    "icon": "mdi:circle-opacity",
+    "_comment": "===== 暗属性技能 =====",
+    "id": "dark_bolt",
+    "name": "暗影弹",
+    "desc": "暗属性单体攻击，附加暗蚀印记造成基于最大生命的真实伤害。",
+    "icon": "mdi:moon-waning-crescent",
     "type": "active",
     "target": "single",
     "element": "dark",
@@ -12,40 +13,56 @@
     "maxLevel": 10,
     "upgradeCost": 3,
     "learnCost": 2,
-    "highHpBoost": 1.0,
     "levelScaling": { "baseMul": 0.15 },
-    "effects": [
-      { "type": "debuff", "value": -0.25, "stat": "def", "duration": 3, "chance": 100 }
-    ],
+    "effects": [],
     "tripods": [
-      { "name": "黑暗", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": -0.35, "stat": "def", "duration": 3, "chance": 100 }] },
-      { "name": "吞噬", "unlockLevel": 7, "effects": [{ "type": "lifestealBuff", "value": 20, "duration": 3, "chance": 100, "target": "self" }] },
-      { "name": "湮灭", "unlockLevel": 10, "effects": [{ "type": "death", "chance": 20, "note": "对生命低于20%的非Boss敌人即死；对Boss造成5%最大生命真伤" }] }
+      { "name": "蚀骨", "unlockLevel": 4, "effects": [{ "type": "trueDmg", "value": 0.15, "chance": 100 }] },
+      { "name": "暗影波", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 30, "target": "aoe", "chance": 100 }] },
+      { "name": "深渊", "unlockLevel": 10, "effects": [{ "type": "debuff", "value": -0.3, "stat": "def", "duration": 3, "chance": 100 }] }
     ]
   },
   {
-    "id": "shadow_step",
-    "name": "暗影步",
-    "desc": "牺牲15%最大生命，进入暗影状态：3回合内攻击必暴击且暴伤+100%。",
-    "icon": "mdi:moon-waning-crescent",
+    "id": "void_curse",
+    "name": "虚空诅咒",
+    "desc": "暗属性技能，施加暗蚀印记，每层造成基于最大生命值的真实伤害。",
+    "icon": "mdi:ghost",
     "type": "active",
-    "target": "self",
+    "target": "single",
     "element": "dark",
-    "mpCost": 0,
+    "mpCost": 10,
     "baseMul": 0,
     "maxLevel": 10,
     "upgradeCost": 3,
     "learnCost": 3,
-    "levelScaling": { "critDmgBuff": 10 },
+    "levelScaling": { "markValue": 0.01 },
     "effects": [
-      { "type": "sacrifice", "value": 0.15, "note": "消耗15%最大生命" },
-      { "type": "buff", "value": 100, "stat": "critRate", "duration": 3, "chance": 100 },
-      { "type": "buff", "value": 1.0, "stat": "critDmg", "duration": 3, "chance": 100 }
+      { "type": "debuff", "stat": "shadowMark", "value": 0.02, "duration": 5, "chance": 100 }
     ],
     "tripods": [
-      { "name": "暗杀", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.3, "stat": "atk", "duration": 3, "chance": 100 }] },
-      { "name": "潜行", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.3, "stat": "dodge", "duration": 3, "chance": 100 }] },
-      { "name": "影杀", "unlockLevel": 10, "effects": [{ "type": "trueDmg", "value": 0.1, "chance": 100, "note": "本次必暴攻击附带目标10%最大生命的毁灭伤害" }] }
+      { "name": "强化诅咒", "unlockLevel": 4, "effects": [{ "type": "debuff", "stat": "shadowMark", "value": 0.03, "duration": 5 }] },
+      { "name": "蔓延", "unlockLevel": 7, "effects": [{ "type": "debuff", "stat": "shadowMark", "value": 0.02, "duration": 5, "target": "aoe" }] },
+      { "name": "凋零", "unlockLevel": 10, "effects": [{ "type": "debuff", "value": -0.3, "stat": "def", "duration": 5, "chance": 100 }] }
+    ]
+  },
+  {
+    "id": "dark_explosion",
+    "name": "暗影爆发",
+    "desc": "暗属性全体攻击，引爆暗蚀印记造成额外伤害。",
+    "icon": "mdi:explosion",
+    "type": "active",
+    "target": "aoe",
+    "element": "dark",
+    "mpCost": 16,
+    "baseMul": 1.5,
+    "maxLevel": 10,
+    "upgradeCost": 4,
+    "learnCost": 4,
+    "levelScaling": { "baseMul": 0.14 },
+    "effects": [],
+    "tripods": [
+      { "name": "爆印", "unlockLevel": 4, "effects": [{ "type": "dotBurst", "value": 0.06, "note": "引爆暗蚀印记，每层额外伤害" }] },
+      { "name": "暗影风暴", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 30, "target": "aoe", "chance": 100 }] },
+      { "name": "虚空", "unlockLevel": 10, "effects": [{ "type": "trueDmg", "value": 0.25, "chance": 100 }] }
     ]
   }
 ]

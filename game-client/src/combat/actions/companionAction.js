@@ -38,7 +38,8 @@ const attackerSnap = {
   critRate: companion.critRate || 5,
   critDmg: companion.critDmg || 150,
   trueDmg: companion.trueDmg || 0,
-  element: companion.element || ''         // ✅ 同伴的元素
+  element: companion.element || ''  ,
+         // ✅ 同伴的元素
 };
 
 // 复制同伴的元素伤害加成

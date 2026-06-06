@@ -34,7 +34,6 @@ export function executeEnemyTurn(engine) {
       { ignoreDef: skill.ignoreDef || 0 }
     )
 
-    // ★ 获取免死/复活标记
     const deathResult = engine.player.takeDamage(damage, enemy)
     applyEnemyLifesteal(enemy, engine.player, damage)
 
@@ -57,7 +56,6 @@ export function executeEnemyTurn(engine) {
       }
     }
 
-    // ★ 只有真正死亡才判定战斗结束
     if (deathResult?.deathSaved) {
       res.messages.push('玩家顽强地存活下来！')
     } else if (deathResult?.revived) {
@@ -91,10 +89,36 @@ export function executeSingleEnemyAction(engine, enemy) {
   }
 
   if (!enemy._skillCooldowns) enemy._skillCooldowns = {}
-  if (!enemy._lastPhase) enemy._lastPhase = 0
 
   for (const key of Object.keys(enemy._skillCooldowns)) {
     if (enemy._skillCooldowns[key] > 0) enemy._skillCooldowns[key]--
+  }
+
+  // ★ 强制释放阶段机制技能
+  if (enemy._pendingMechanicSkill) {
+    const skillName = enemy._pendingMechanicSkill
+    delete enemy._pendingMechanicSkill
+    const forcedSkill = enemy.skills?.find(s => s.name === skillName)
+    if (forcedSkill) {
+      return executeSkill(engine, enemy, forcedSkill)
+    }
+  }
+
+  // ★ 没有匹配技能时，直接触发机制
+  if (enemy._pendingMechanicDirect) {
+    const mechName = enemy._pendingMechanicDirect
+    delete enemy._pendingMechanicDirect
+    if (bossMechanics[mechName]?.onCast) {
+      bossMechanics[mechName].onCast({}, enemy, engine)
+      return {
+        type: 'enemy_action',
+        enemy: enemy.name,
+        messages: [`${enemy.name} 释放了 ${mechName}`],
+        damage: 0,
+        crit: false,
+        multiplier: 1
+      }
+    }
   }
 
   if (!enemy.skills?.length) {
@@ -103,15 +127,12 @@ export function executeSingleEnemyAction(engine, enemy) {
     })
   }
 
-  const hpPercent = enemy.hp / enemy.maxHp
-  let currentPhase = 1
-  if (hpPercent <= 0.75) currentPhase = 2
-  if (hpPercent <= 0.50) currentPhase = 3
-  if (hpPercent <= 0.25) currentPhase = 4
-
-  if (currentPhase !== enemy._lastPhase) {
-    enemy._skillCooldowns = {}
-    enemy._lastPhase = currentPhase
+  let currentPhase = enemy.currentPhase || 1
+  if (!enemy.currentPhase) {
+    const hpPercent = enemy.hp / enemy.maxHp
+    if (hpPercent <= 0.75) currentPhase = 2
+    if (hpPercent <= 0.50) currentPhase = 3
+    if (hpPercent <= 0.25) currentPhase = 4
   }
 
   const phaseSkills = enemy.skills.filter(skill => {
@@ -177,23 +198,23 @@ function buildAttackResult(engine, enemy, target, skill) {
   )
   const deathResult = target.takeDamage(damage, enemy)
 
-// 闪避提示：直接修改 msg 内容
-if (deathResult?.dodged) {
+  if (deathResult?.dodged) {
     const msg = `${enemy.name} 使用 ${skill.name}，但被 ${target.name} 闪避了！`
     return { type: 'enemy_action', enemy: enemy.name, damage: 0, crit: false, multiplier: 1, messages: [msg] }
-}
+  }
 
-applyEnemyLifesteal(enemy, target, damage)
+  applyEnemyLifesteal(enemy, target, damage)
 
-let msg = `${enemy.name} 使用 ${skill.name}，对 ${target.name} 造成 ${damage} 伤害`
-if (crit) msg += ' (暴击)'
+  let msg = `${enemy.name} 使用 ${skill.name}，对 ${target.name} 造成 ${damage} 伤害`
+  if (crit) msg += ' (暴击)'
 
-if (deathResult?.deathSaved) {
+  if (deathResult?.deathSaved) {
     return { type: 'enemy_action', enemy: enemy.name, damage, crit, multiplier, messages: [`${msg}，但对方顽强存活！`] }
-} else if (deathResult?.revived) {
+  } else if (deathResult?.revived) {
     return { type: 'enemy_action', enemy: enemy.name, damage, crit, multiplier, messages: [`${msg}，但对方复活了！`] }
+  }
+  return { type: 'enemy_action', enemy: enemy.name, damage, crit, multiplier, messages: [msg] }
 }
-return { type: 'enemy_action', enemy: enemy.name, damage, crit, multiplier, messages: [msg] }}
 
 function executeSkill(engine, enemy, skill) {
   let target = null
@@ -227,18 +248,14 @@ function executeSkill(engine, enemy, skill) {
         const calc = calculateDamage(a, defSnap, skill, { ignoreDef: skill.ignoreDef || 0 })
         const dResult = t.takeDamage(calc.damage, enemy)
 
-
-// 闪避判断
         if (dResult?.dodged) {
-            res.messages.push(`${skill.name} 被 ${t.name} 闪避了！`)
+          res.messages.push(`${skill.name} 被 ${t.name} 闪避了！`)
         } else {
-            applyEnemyLifesteal(enemy, t, calc.damage)
-            res.messages.push(`${skill.name} 对 ${t.name} 造成 ${calc.damage} 伤害`)
-            if (calc.crit) res.messages.push('(暴击)')
+          applyEnemyLifesteal(enemy, t, calc.damage)
+          res.messages.push(`${skill.name} 对 ${t.name} 造成 ${calc.damage} 伤害`)
+          if (calc.crit) res.messages.push('(暴击)')
         }
 
-
-        
         if (t === engine.player) deathResult = dResult
       }
     } else if (target && target !== enemy) {
@@ -251,13 +268,10 @@ function executeSkill(engine, enemy, skill) {
       damage = calc.damage; crit = calc.crit; multiplier = calc.multiplier
       deathResult = target.takeDamage(damage, enemy)
 
-
-// 闪避提示
-if (deathResult?.dodged) {
-    res.messages.push(`${enemy.name} 使用 ${skill.name}，但被 ${target.name} 闪避了！`)
-    return res
-}
-
+      if (deathResult?.dodged) {
+        res.messages.push(`${enemy.name} 使用 ${skill.name}，但被 ${target.name} 闪避了！`)
+        return res
+      }
 
       applyEnemyLifesteal(enemy, target, damage)
       let msg = `${enemy.name} 使用 ${skill.name}，对 ${target.name} 造成 ${damage} 伤害`
@@ -288,7 +302,6 @@ if (deathResult?.dodged) {
     bossMechanics[skill.mechanic].onCast(skill, enemy, engine)
   }
 
-  // ★ 最后统一的死亡判定
   if (deathResult?.deathSaved) {
     res.messages.push('玩家顽强地存活下来！')
   } else if (deathResult?.revived) {
@@ -315,7 +328,7 @@ function applyEnemyLifesteal(enemy, target, damage) {
     }
   })
   if (totalLifesteal > 0) {
-    const drain = Math.floor(damage * totalLifesteal / 100)
+    const drain = Math.floor(enemy.maxHp * totalLifesteal / 100)
     enemy.hp = Math.min(enemy.maxHp, enemy.hp + drain)
   }
 }

@@ -110,14 +110,14 @@ function enterRaid(bossId) {
   const template = store.config.monsterTemplates.find(m => m.id === bossId)
   if (!template) return
 
-  const raidMultiplier = {
-    'raid_gladiator': { hp: 1.5, atk: 1.3, def: 1.2 },
-    'raid_lava_core': { hp: 1.8, atk: 1.5, def: 1.4 },
-    'raid_bishop': { hp: 2.5, atk: 2.0, def: 1.6 },
-  }
+const raidMultiplier = {
+    'raid_gladiator': { hp: 2.0, atk: 1.3, def: 1.3 },
+    'raid_lava_core': { hp: 2.0, atk: 1.5, def: 1.5 },
+    'raid_bishop': { hp: 2.4, atk: 2.0, def: 1.8 },
+}
   const mult = raidMultiplier[bossId] || { hp: 1.0, atk: 1.0, def: 1.0 }
 
-  const monster = {
+ const monster = {
     ...template,
     level: 21,
     hp: Math.floor(template.baseHp * mult.hp),
@@ -127,9 +127,9 @@ function enterRaid(bossId) {
     icon: template.icon,
     element: template.element,
     isBoss: true,
-    isRaidBoss: true,
+    isRaidBoss: true,          // ← 确保这行存在
     skills: JSON.parse(template.skillsText || '[]'),
-  }
+}
 
   store.dungeon.isRaidBattle = true
   store.dungeon.currentRaidBoss = bossId

@@ -78,17 +78,18 @@ export function useBattleState() {
   let questHintTimer = null
 
   // ---------- 引擎初始化 ----------
-    function initEngine(enemiesInput) {
+function initEngine(enemiesInput) {
     if (!enemiesInput || !Array.isArray(enemiesInput) || enemiesInput.length === 0) {
       console.warn('initEngine: 没有敌人数据，无法初始化战斗引擎')
       return false
     }
 
+    // 检查伙伴出战状态
+    const companionActive = store.player.companionActive !== false
     const companionId = store.player.currentCompanion || 'freyja'
     const companionData = store.config.characters?.[companionId]
-    const playerLevel = store.player.level || 1
     let comp = null
-    if (companionData) {
+    if (companionActive && companionData) {
       comp = {
         id: companionData.id,
         name: companionData.name,
@@ -111,41 +112,24 @@ export function useBattleState() {
       if (aff.bonus?.stackingAtk) stackingAtk += aff.bonus.stackingAtk
     }
 
-    // 1. 从全局状态浅拷贝一份数据
-    const rawStats = { ...store.playerStats };
+    const fullPlayerStats = {
+      ...store.playerStats,
+      stackingAtk: stackingAtk,
+      isPlayer: true,
+    }
 
-    // 2. 强制修正关键状态，确保不被任何旧数据污染
-    rawStats.isPlayer = true;
-    
-    // 3. 重新计算并强制写入正确的闪避值
-    const speedDodge = (rawStats.speed || 0) * 0.05;
-    rawStats.dodge = (rawStats.dodge || 0) + speedDodge;
+    const enrichedEnemies = enemiesInput.map(e => ({
+      ...e,
+      isBoss: e.isBoss ?? (e.base?.isBoss) ?? false,
+      isRaidBoss: e.isRaidBoss ?? (e.base?.isRaidBoss) ?? false,
+      level: e.level ?? (e.base?.level) ?? 1,
+      exp: e.exp ?? ((e.level ?? (e.base?.level) ?? 1) * 10 + 5),
+    }))
 
-    // 4. 加入其他必要的动态属性
-    rawStats.stackingAtk = stackingAtk;
-
-   const fullPlayerStats = {
-  ...store.playerStats,
-  stackingAtk: stackingAtk,
-  isPlayer: true,
-}
-
-    const enrichedEnemies = enemiesInput.map(e => {
-      const isBoss = e.isBoss ?? (e.base?.isBoss) ?? false
-      const level = e.level ?? (e.base?.level) ?? 1
-      return {
-        ...e,
-        isBoss,
-        level,
-        exp: e.exp ?? (level * 10 + 5),
-      }
-    })
-
-    engine.value = new CombatEngine(fullPlayerStats, enrichedEnemies, comp, store.player.skills || {})
+    engine.value = new CombatEngine(fullPlayerStats, enrichedEnemies, comp, store.player.skills || {}, store.config)
     window.__engine = engine.value
     syncStateFromEngine()
-  }
-
+}
   function addFloatingNumber(targetIndex, amount, type = 'normal', offsetY = 0) {
     const id = ++floatId;
     floatingNumbers.value.push({ id, targetIndex, amount, type, offsetY });
@@ -180,6 +164,7 @@ export function useBattleState() {
         def: enemy.defense,
         effects: enemy.effects || [],
         isBoss: original.isBoss === true,
+        isRaidBoss: original.isRaidBoss === true,
       }
     })
 
@@ -535,6 +520,7 @@ export function useBattleState() {
       exp: engineRewards.exp || 0,
       materials: totalMats,
       accessories: totalAccs,
+        gems: engineRewards.gems || [],        // ← 必须有这一行
       equipments: engineRewards.equipments || []
     }
 
@@ -575,8 +561,21 @@ export function useBattleState() {
     if (totalReward.value.equipments?.length) {
       totalReward.value.equipments.forEach(eq => store.inventory.push(eq))
     }
-    const tokenQty = Math.random() < 0.2 ? 2 : 1
-    store.addMaterial('dungeon_token', '地下城徽记', tokenQty)
+    // 宝石存储
+// 宝石存储
+if (totalReward.value.gems?.length) {
+    for (const gem of totalReward.value.gems) {
+        const existing = store.inventory.find(i => i.id === gem.id)
+        if (existing) {
+            existing.qty = (existing.qty || 1) + gem.qty
+        } else {
+            store.inventory.push({ id: gem.id, name: gem.name, qty: gem.qty })
+        }
+    }
+}
+   // 徽记掉落增加
+const tokenQty = Math.random() < 0.3 ? 3 : 2  // 原 0.2 ? 2 : 1
+store.addMaterial('dungeon_token', '地下城徽记', tokenQty)
     store.save()
   }
 

@@ -302,7 +302,7 @@ updateHuntProgress: (enemyIds) => huntQuestModule.updateHuntProgress(
 
   // 升段奖励
   const rankIndex = rankModule.rankConfig.findIndex(r => r.name === playerModule.player.rank)
-  const bonusGold = 1000 + rankIndex * 600
+ 
   playerModule.addGold(bonusGold, save)
 
   // 奖励紫色饰品一件（等级根据段位）
@@ -311,6 +311,23 @@ updateHuntProgress: (enemyIds) => huntQuestModule.updateHuntProgress(
   if (accessory) {
     inventoryModule.inventory.push(accessory)
   }
+
+  // 技能点奖励
+const skillPoints = 3 + rankIndex * 2  // 黑铁→青铜3点，青铜→白银5点...
+store.player.skillPoints += skillPoints
+
+// 金币奖励
+const bonusGold = 2000 + rankIndex * 1000
+playerModule.addGold(bonusGold, save)
+
+// 宝石奖励
+const gemDefs = config.gemDefinitions || []
+const gemLevel = 3 + rankIndex
+const eligible = gemDefs.filter(g => g.level === gemLevel)
+if (eligible.length > 0) {
+    const gem = eligible[Math.floor(Math.random() * eligible.length)]
+    store.inventory.push({ id: gem.id, name: gem.name, qty: 1 })
+}
 
   save()
   window.showToast?.(`晋升为 ${playerModule.player.rank}！获得 ${bonusGold}G 和稀有饰品！`)

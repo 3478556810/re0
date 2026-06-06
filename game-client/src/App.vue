@@ -51,7 +51,7 @@ onMounted(() => {
     if (!store.isStoryMode || store.storyEndTime) return
     const key = 'story_raid_clears'
     const clears = JSON.parse(sessionStorage.getItem(key) || '{}')
-    const allBosses = ['boss_goblin_king', 'boss_fire_dragon', 'boss_shadow_lord']
+   const allBosses = ['raid_gladiator', 'raid_lava_core', 'raid_bishop']
     if (allBosses.every(id => clears[id])) {
       store.storyEndTime = Date.now()
     }

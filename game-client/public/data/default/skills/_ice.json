@@ -1,50 +1,72 @@
 [
   {
-    "id": "ice_bolt",
-    "name": "冰冻术",
-    "desc": "冰属性单体攻击。冻结目标；对已冻结目标必定暴击且伤害+50%。",
+    "_comment": "===== 冰属性技能 =====",
+    "id": "ice_shard",
+    "name": "冰锥术",
+    "desc": "冰属性单体攻击，高概率冻结目标。",
     "icon": "mdi:snowflake",
     "type": "active",
     "target": "single",
     "element": "ice",
     "mpCost": 8,
-    "baseMul": 1.7,
+    "baseMul": 1.6,
     "maxLevel": 10,
     "upgradeCost": 3,
     "learnCost": 2,
-    "levelScaling": { "baseMul": 0.14 },
+    "levelScaling": { "baseMul": 0.13 },
     "effects": [
-      { "type": "freeze", "duration": 1, "chance": 50 },
-      { "type": "freezeBonus", "value": 0.5, "note": "对已冻结目标必暴击且伤害+50%" }
+      { "type": "freeze", "duration": 1, "chance": 60 }
     ],
     "tripods": [
-      { "name": "深寒", "unlockLevel": 4, "effects": [{ "type": "freeze", "duration": 2, "chance": 60 }] },
-      { "name": "冰刺", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 0.4, "duration": 3, "chance": 100 }] },
-      { "name": "冰甲", "unlockLevel": 10, "effects": [{ "type": "shield", "value": 0.3, "duration": 3, "chance": 100, "target": "self" }] }
+      { "name": "极寒", "unlockLevel": 4, "effects": [{ "type": "freeze", "duration": 1, "chance": 80 }] },
+      { "name": "冰刺", "unlockLevel": 7, "effects": [{ "type": "trueDmg", "value": 0.15, "chance": 100 }] },
+      { "name": "零度", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.3, "stat": "critDmg", "duration": 3, "chance": 100, "target": "self" }] }
     ]
   },
   {
     "id": "blizzard",
     "name": "暴风雪",
-    "desc": "冰属性全体攻击。对已冻结目标造成双倍伤害并解冻。",
-    "icon": "mdi:weather-snowy-heavy",
+    "desc": "冰属性全体攻击，附加冻伤debuff降低目标速度。",
+    "icon": "mdi:weather-snowy",
+    "type": "active",
+    "target": "aoe",
+    "element": "ice",
+    "mpCost": 14,
+    "baseMul": 1.3,
+    "maxLevel": 10,
+    "upgradeCost": 3,
+    "learnCost": 3,
+    "levelScaling": { "baseMul": 0.11 },
+    "effects": [
+      { "type": "freeze", "duration": 1, "chance": 30 }
+    ],
+    "tripods": [
+      { "name": "凛冬", "unlockLevel": 4, "effects": [{ "type": "freeze", "duration": 1, "chance": 45 }] },
+      { "name": "碎冰", "unlockLevel": 7, "effects": [{ "type": "shatter", "value": 2.0, "note": "对冻结目标伤害翻倍" }] },
+      { "name": "冰甲", "unlockLevel": 10, "effects": [{ "type": "shield", "value": 0.3, "duration": 3, "chance": 100, "target": "self" }] }
+    ]
+  },
+  {
+    "id": "frost_nova",
+    "name": "冰霜新星",
+    "desc": "冰属性全体爆发，对冻结目标必定暴击且伤害提升。",
+    "icon": "mdi:snowflake-melt",
     "type": "active",
     "target": "aoe",
     "element": "ice",
     "mpCost": 16,
-    "baseMul": 0.9,
+    "baseMul": 1.8,
     "maxLevel": 10,
-    "upgradeCost": 3,
-    "learnCost": 3,
-    "levelScaling": { "baseMul": 0.08 },
+    "upgradeCost": 4,
+    "learnCost": 4,
+    "levelScaling": { "baseMul": 0.16 },
     "effects": [
-      { "type": "freeze", "duration": 1, "chance": 25 },
-      { "type": "shatter", "value": 1.0, "note": "对已冻结目标伤害翻倍并解冻" }
+      { "type": "freezeBonus", "value": 1.5, "note": "对冻结目标伤害+50%且必暴" }
     ],
     "tripods": [
-      { "name": "极寒", "unlockLevel": 4, "effects": [{ "type": "freeze", "duration": 1, "chance": 35 }] },
-      { "name": "冰霜护体", "unlockLevel": 7, "effects": [{ "type": "shield", "value": 0.2, "duration": 3, "chance": 100, "target": "self" }] },
-      { "name": "永冻", "unlockLevel": 10, "effects": [{ "type": "debuff", "value": -0.3, "stat": "speed", "duration": 3, "chance": 100 }] }
+      { "name": "深寒", "unlockLevel": 4, "effects": [{ "type": "freezeBonus", "value": 2.0 }] },
+      { "name": "冰爆", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 50, "target": "aoe", "chance": 100 }] },
+      { "name": "永冻", "unlockLevel": 10, "effects": [{ "type": "freeze", "duration": 1, "chance": 50 }] }
     ]
   }
 ]

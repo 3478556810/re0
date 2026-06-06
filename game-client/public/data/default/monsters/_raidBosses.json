@@ -6,17 +6,16 @@
     "tag": "raid_boss",
     "isBoss": true,
     "isRaidBoss": true,
-    "baseHp": 120000,
-    "baseAtk": 180,
-    "baseDef": 100,
+    "baseHp": 480000,
+    "baseAtk": 200,
+    "baseDef": 120,
     "exp": 2000,
     "traits": ["revive"],
-    "enrageTurn": 6,
+    "enrageTurn": 8,
     "raidId": "arena",
     "materials": [
       { "id": "quality_stone", "qty": 3, "dropRate": 100 },
-      { "id": "gladiator_medal", "qty": 2, "dropRate": 100, "note": "角斗士勋章，可交易" },
-      { "id": "gem_random", "qty": 1, "dropRate": 100, "note": "随机1~3级宝石" }
+      { "id": "gladiator_medal", "qty": 2, "dropRate": 100, "note": "角斗士勋章，可交易" }
     ],
     "icon": "mdi:axe-battle",
     "element": "fire",
@@ -25,7 +24,28 @@
     "lifesteal": 10,
     "luck": 30,
     "mechanics": ["blood_ritual"],
-    "skillsText": "[{\"name\":\"裂地斩\",\"mpCost\":0,\"target\":\"single\",\"baseMul\":3.0,\"effects\":[{\"type\":\"bleed\",\"value\":0.10,\"duration\":3,\"chance\":100}]},{\"name\":\"血之盛宴\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"buff\",\"stat\":\"atk\",\"value\":0.30,\"duration\":5,\"chance\":100}],\"cooldown\":4},{\"name\":\"鲜血仪式\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[],\"cooldown\":6,\"mechanic\":\"blood_ritual\",\"mechanicParams\":{\"totemHp\":5000,\"duration\":3}}]",
+    "phaseTransitions": [
+      {
+        "atHpPercent": 0.75,
+        "mechanic": "blood_ritual",
+        "buffSelf": { "stat": "atk", "value": 0.15 },
+        "message": "角斗士·血斧开始鲜血仪式，召唤图腾！"
+      },
+      {
+        "atHpPercent": 0.50,
+        "mechanic": "blood_ritual",
+        "buffSelf": { "stat": "atk", "value": 0.15 },
+        "message": "鲜血仪式再次触发，图腾更加强韧！"
+      },
+      {
+        "atHpPercent": 0.25,
+        "mechanic": "blood_ritual",
+        "buffSelf": { "stat": "atk", "value": 0.30 },
+        "enrageNow": true,
+        "message": "角斗士·血斧陷入狂怒，攻击力大幅提升！"
+      }
+    ],
+    "skillsText": "[{\"name\":\"裂地斩\",\"mpCost\":0,\"target\":\"single\",\"baseMul\":3.0,\"effects\":[{\"type\":\"bleed\",\"value\":0.10,\"duration\":3,\"chance\":100}]},{\"name\":\"血之盛宴\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"buff\",\"stat\":\"atk\",\"value\":0.30,\"duration\":5,\"chance\":100}],\"cooldown\":4},{\"name\":\"鲜血仪式\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[],\"cooldown\":6,\"mechanic\":\"blood_ritual\",\"mechanicParams\":{\"totemHp\":8000,\"duration\":3}}]",
     "minLevel": 10,
     "maxLevel": 30,
     "levelRange": [10, 30]
@@ -37,17 +57,16 @@
     "tag": "raid_boss",
     "isBoss": true,
     "isRaidBoss": true,
-    "baseHp": 250000,
-    "baseAtk": 220,
-    "baseDef": 140,
+    "baseHp": 1000000,
+    "baseAtk": 240,
+    "baseDef": 160,
     "exp": 3500,
     "traits": ["revive"],
-    "enrageTurn": 5,
+    "enrageTurn": 7,
     "raidId": "volcano",
     "materials": [
       { "id": "quality_stone", "qty": 4, "dropRate": 100 },
-      { "id": "cooling_crystal", "qty": 2, "dropRate": 100, "note": "冷却水晶，可交易" },
-      { "id": "gem_random", "qty": 1, "dropRate": 100, "note": "随机1~3级宝石" }
+      { "id": "cooling_crystal", "qty": 2, "dropRate": 100, "note": "冷却水晶，可交易" }
     ],
     "icon": "mdi:lava-lamp",
     "element": "fire",
@@ -56,6 +75,27 @@
     "lifesteal": 12,
     "luck": 35,
     "mechanics": ["lava_shield"],
+    "phaseTransitions": [
+      {
+        "atHpPercent": 0.75,
+        "mechanic": "lava_shield",
+        "buffSelf": { "stat": "def", "value": 0.20 },
+        "message": "炎核·熔岩巨像激活熔岩护盾！"
+      },
+      {
+        "atHpPercent": 0.50,
+        "mechanic": "lava_shield",
+        "buffSelf": { "stat": "def", "value": 0.20 },
+        "message": "熔岩护盾再次激活，反伤效果增强！"
+      },
+      {
+        "atHpPercent": 0.25,
+        "mechanic": "lava_shield",
+        "buffSelf": { "stat": "atk", "value": 0.30 },
+        "enrageNow": true,
+        "message": "熔岩巨像核心过热，攻击力暴涨！"
+      }
+    ],
     "skillsText": "[{\"name\":\"熔岩爆裂\",\"mpCost\":0,\"target\":\"single\",\"element\":\"fire\",\"baseMul\":4.0,\"effects\":[{\"type\":\"debuff\",\"stat\":\"def\",\"value\":-0.50,\"duration\":3,\"chance\":100}]},{\"name\":\"熔岩护盾\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"shield\",\"value\":0.40,\"duration\":3,\"chance\":100},{\"type\":\"reflect\",\"value\":0.30,\"duration\":3,\"chance\":100}],\"cooldown\":5,\"mechanic\":\"lava_shield\"},{\"name\":\"陨石天降\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"fire\",\"baseMul\":5.0,\"effects\":[{\"type\":\"burn\",\"value\":0.40,\"duration\":3,\"chance\":100,\"target\":\"aoe\",\"stackable\":true,\"maxStacks\":5}],\"cooldown\":6}]",
     "minLevel": 15,
     "maxLevel": 35,
@@ -68,17 +108,15 @@
     "tag": "raid_boss",
     "isBoss": true,
     "isRaidBoss": true,
-    "baseHp": 500000,
-    "baseAtk": 280,
-    "baseDef": 180,
+    "baseHp": 2880000,
+    "baseAtk": 300,
+    "baseDef": 200,
     "exp": 5000,
     "traits": ["revive"],
-    "enrageTurn": 4,
+    "enrageTurn": 6,
     "raidId": "sanctuary",
     "materials": [
-      { "id": "quality_stone", "qty": 5, "dropRate": 100 },
-      { "id": "shadow_crystal", "qty": 2, "dropRate": 100, "note": "圣光碎片，可交易" },
-      { "id": "gem_random", "qty": 1, "dropRate": 100, "note": "随机1~3级宝石" }
+      { "id": "quality_stone", "qty": 5, "dropRate": 100 }
     ],
     "icon": "mdi:ghost",
     "element": "dark",
@@ -87,7 +125,28 @@
     "lifesteal": 18,
     "luck": 50,
     "mechanics": ["shadow_clone", "void_curse"],
-    "skillsText": "[{\"name\":\"暗影突刺\",\"mpCost\":0,\"target\":\"single\",\"element\":\"dark\",\"baseMul\":5.0,\"effects\":[{\"type\":\"bleed\",\"value\":0.15,\"duration\":3,\"chance\":100},{\"type\":\"debuff\",\"stat\":\"def\",\"value\":-0.50,\"duration\":3,\"chance\":100}]},{\"name\":\"暗影弹幕\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":2.5,\"effects\":[{\"type\":\"bleed\",\"value\":0.10,\"duration\":3,\"chance\":100,\"target\":\"aoe\"}],\"ignoreDef\":50},{\"name\":\"召唤暗影分身\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[],\"cooldown\":6,\"mechanic\":\"shadow_clone\",\"mechanicParams\":{\"count\":3,\"hpRatio\":0.4,\"atkRatio\":0.4,\"cloneName\":\"暗影分身\"}},{\"name\":\"永夜降临\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":6.0,\"effects\":[],\"cooldown\":10,\"note\":\"第10回合释放全场秒杀技\"}]",
+    "phaseTransitions": [
+      {
+        "atHpPercent": 0.75,
+        "mechanic": "shadow_clone",
+        "buffSelf": { "stat": "atk", "value": 0.15 },
+        "message": "永夜主教召唤暗影分身，隐匿于黑暗之中！"
+      },
+      {
+        "atHpPercent": 0.50,
+        "mechanic": "void_curse",
+        "buffSelf": { "stat": "def", "value": 0.20 },
+        "message": "永夜主教释放虚空诅咒，侵蚀你的生命！"
+      },
+      {
+        "atHpPercent": 0.25,
+        "mechanic": "shadow_clone",
+        "buffSelf": { "stat": "atk", "value": 0.30 },
+        "enrageNow": true,
+        "message": "永夜主教召唤更多分身，进入狂暴状态！"
+      }
+    ],
+    "skillsText": "[{\"name\":\"暗影突刺\",\"mpCost\":0,\"target\":\"single\",\"element\":\"dark\",\"baseMul\":5.0,\"effects\":[{\"type\":\"bleed\",\"value\":0.15,\"duration\":3,\"chance\":100},{\"type\":\"debuff\",\"stat\":\"def\",\"value\":-0.50,\"duration\":3,\"chance\":100}]},{\"name\":\"暗影弹幕\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":2.5,\"effects\":[{\"type\":\"bleed\",\"value\":0.10,\"duration\":3,\"chance\":100,\"target\":\"aoe\"}],\"ignoreDef\":50},{\"name\":\"召唤暗影分身\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[],\"cooldown\":5,\"mechanic\":\"shadow_clone\",\"mechanicParams\":{\"count\":3,\"hpRatio\":0.4,\"atkRatio\":0.4,\"cloneName\":\"暗影分身\"}},{\"name\":\"永夜降临\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":6.0,\"effects\":[],\"cooldown\":10,\"note\":\"第10回合释放全场秒杀技\"}]",
     "minLevel": 20,
     "maxLevel": 40,
     "levelRange": [20, 40]

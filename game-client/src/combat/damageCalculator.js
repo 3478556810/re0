@@ -17,6 +17,11 @@ export function getElementMultiplier(atkElem, defElem) {
 }
 
 export function calculateDamage(attacker, defender, skill, options = {}) {
+
+    if (defender.isRaidBoss || defender.isRaidBoss === true) {
+      console.log('🚫 暴力拦截：伤害归零！', defender.name)
+      return { damage: 0, crit: false, multiplier: 1, shadowTrueDmg: 0, trueDmg: 0 }
+  }
   const {
     ignoreDef = 0,
     fullHpDmg = 0,
