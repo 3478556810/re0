@@ -143,3 +143,67 @@
   0%, 100% { box-shadow: 0 0 0 0 rgba(240, 192, 96, 0.4); }
   50% { box-shadow: 0 0 0 4px rgba(240, 192, 96, 0); }
 }
+
+.material-grid-wrapper {
+  overflow-y: auto;
+  max-height: 60vh;  /* 手机端可滚动 */
+  -webkit-overflow-scrolling: touch;
+}
+
+.gem-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+  overflow-y: auto;
+  max-height: 60vh;
+  padding-right: 4px;
+}
+
+.gem-card {
+  background: rgba(0,0,0,0.4);
+  border: 2px solid #888;
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.gem-icon {
+  font-size: 28px;
+  flex-shrink: 0;
+}
+
+.gem-info {
+  flex: 1;
+}
+
+.gem-name {
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.gem-effect {
+  font-size: 8px;
+  color: #ccc;
+}
+
+.gem-level {
+  font-size: 7px;
+  color: #888;
+}
+
+.gem-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.merge-preview {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(255,215,0,0.1);
+  border: 1px solid #ffd700;
+  border-radius: 10px;
+  font-size: 9px;
+}

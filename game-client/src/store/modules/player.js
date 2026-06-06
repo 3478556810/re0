@@ -5,7 +5,8 @@ export function usePlayer() {
     name: '冒险者', emoji: '',
     level: 1, exp: 0, gold: 500,
     class: '流浪者',
- hp: 500, maxHp: 500,      // 从80提高到500
+ hp: Math.floor(800),
+maxHp: Math.floor(800),     // 从80提高到500
 mp: 80, maxMp: 80,         // 从50提高到80
 attack: 30, defense: 18,   // 攻击力微调，防御力上调到18（配合防御系数1.0会有明显减伤）
 speed: 12, luck: 5,
@@ -22,7 +23,11 @@ speed: 12, luck: 5,
       normal_attack: { unlocked: true, level: 1 },
       fire_slash: { unlocked: true, level: 1 }
     },
-    tripodChoices: {}
+    tripodChoices: {},
+    gems: {}
+
+
+
   })
 
   const worldLevel = computed(() => {
@@ -43,9 +48,10 @@ speed: 12, luck: 5,
     while (player.level > 0 && player.exp >= needExp) {
       player.exp -= needExp
       player.level++
-  player.maxHp += 80            // 每级+80，配合500基础，20级≈2100 HP
+ player.maxHp += 150;  // 原 80
+player.hp = player.maxHp        // 每级+80，配合500基础，20级≈2100 HP
 player.maxMp += 15            // 每级+15
-player.hp = player.maxHp
+
 player.mp = player.maxMp
 player.attack += 6            // 攻击成长稍高，弥补装备差距
 player.defense += 6           // 防御成长也提上来，让裸装也有坦度

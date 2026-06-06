@@ -95,6 +95,11 @@ for (const slot of Object.values(equipment)) {
       }
     }
 
+
+
+
+
+
     // ========== 3. 应用普通百分比加成（攻击%、防御%、生命%） ==========
     if (pctBonuses.atkPercent) {
       base.attack += Math.floor(base.attack * pctBonuses.atkPercent / 100)
@@ -154,8 +159,18 @@ for (const slot of Object.values(equipment)) {
     applySpecialAffixBonuses(base, activeAffixEffects.value)
 
 
-
-    // ========== 强制累加所有装备的 Boss 增伤 ==========
+// ========== 宝石属性 ==========
+const gems = player.gems || {}
+const gemDefs = config.gemDefinitions || []
+for (const [slot, gemId] of Object.entries(gems)) {
+    const gem = gemDefs.find(g => g.id === gemId)
+    if (!gem) continue
+    if (gem.type === 'atk') base.attack += gem.value
+    else if (gem.type === 'def') base.defense += gem.value
+    else if (gem.type === 'hp') base.maxHp += gem.value
+    else if (gem.type === 'critDmg') base.critDmg += gem.value
+    else if (gem.type === 'speed') base.speed += gem.value
+}
 
 
     return base

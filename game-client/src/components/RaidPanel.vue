@@ -7,24 +7,22 @@
       <p class="hint">挑战强大的Boss，获得稀有材料与荣誉</p>
 
       <div class="raid-list">
-        
-
-        <!-- Boss 2：焚狱炎龙 -->
-        <div class="raid-card" @click="enterRaid('boss_fire_dragon')">
+        <!-- Boss 1：角斗士·血斧 (10层) -->
+        <div class="raid-card" @click="enterRaid('raid_gladiator')">
           <div class="raid-header">
-            <Icon icon="game-icons:sea-dragon" class="raid-icon" />
+            <Icon icon="mdi:axe-battle" class="raid-icon" />
             <div class="raid-info">
-              <h3 class="raid-boss-name">焚狱炎龙</h3>
-              <span class="raid-level">21层难度 | 推荐等级 20+</span>
+              <h3 class="raid-boss-name">角斗士·血斧</h3>
+              <span class="raid-level">10层难度 | 推荐等级 10+</span>
             </div>
-            <span v-if="raidClears['boss_fire_dragon']" class="clear-badge">已通关</span>
+            <span v-if="raidClears['raid_gladiator']" class="clear-badge">已通关</span>
           </div>
           <div class="raid-desc">
-            龙骸套装材料的唯一来源。火属性攻击，建议携带水属性技能。
+            竞技场的霸主，击败可获得角斗士勋章和随机宝石。
           </div>
           <div class="raid-rewards">
-            <span class="reward-tag">龙鳞矿</span>
-            <span class="reward-tag">秘银矿石</span>
+            <span class="reward-tag">角斗士勋章</span>
+            <span class="reward-tag">随机宝石</span>
             <span class="reward-tag">品质魔石 x3</span>
           </div>
           <div class="raid-enter">
@@ -32,47 +30,46 @@
           </div>
         </div>
 
-
-
-        <!-- Boss 1：永夜领主 -->
-        <div class="raid-card" @click="enterRaid('boss_shadow_lord')">
+        <!-- Boss 2：炎核·熔岩巨像 (15层) -->
+        <div class="raid-card" @click="enterRaid('raid_lava_core')">
           <div class="raid-header">
-            <Icon icon="line-md:moon-twotone" class="raid-icon" />
+            <Icon icon="mdi:lava-lamp" class="raid-icon" />
             <div class="raid-info">
-              <h3 class="raid-boss-name">永夜领主</h3>
-              <span class="raid-level">21层难度 | 推荐等级 15+</span>
+              <h3 class="raid-boss-name">炎核·熔岩巨像</h3>
+              <span class="raid-level">15层难度 | 推荐等级 15+</span>
             </div>
-            <span v-if="raidClears['boss_shadow_lord']" class="clear-badge">已通关</span>
+            <span v-if="raidClears['raid_lava_core']" class="clear-badge">已通关</span>
           </div>
           <div class="raid-desc">
-            暗影咒装材料的唯一来源。血量极高，暗影套的百分比真伤在此发挥最大价值。
+            熔岩之心的守护者，击败可获得冷却水晶和随机宝石。
           </div>
           <div class="raid-rewards">
-            <span class="reward-tag">黑曜石</span>
-            <span class="reward-tag">秘银矿石</span>
+            <span class="reward-tag">冷却水晶</span>
+            <span class="reward-tag">随机宝石</span>
             <span class="reward-tag">品质魔石 x4</span>
           </div>
           <div class="raid-enter">
             <Icon icon="mdi:sword-cross" /> 进入战斗
           </div>
         </div>
-        <!-- Boss 3：猩红暴君 -->
-        <div class="raid-card" @click="enterRaid('boss_goblin_king')">
+
+        <!-- Boss 3：永夜主教 (20层) -->
+        <div class="raid-card" @click="enterRaid('raid_bishop')">
           <div class="raid-header">
-            <Icon icon="mdi:blood" class="raid-icon" />
+            <Icon icon="mdi:ghost" class="raid-icon" />
             <div class="raid-info">
-              <h3 class="raid-boss-name">猩红暴君</h3>
-              <span class="raid-level">21层难度 | 推荐等级 10+</span>
+              <h3 class="raid-boss-name">永夜主教</h3>
+              <span class="raid-level">20层难度 | 推荐等级 20+</span>
             </div>
-            <span v-if="raidClears['boss_goblin_king']" class="clear-badge">已通关</span>
+            <span v-if="raidClears['raid_bishop']" class="clear-badge">已通关</span>
           </div>
           <div class="raid-desc">
-            血怒套装材料的唯一来源。中期强力Boss，适合测试Build强度。
+            暗影圣殿的主宰，击败可获得圣光碎片和随机宝石。
           </div>
           <div class="raid-rewards">
-            <span class="reward-tag">金矿石</span>
-            <span class="reward-tag">晶簇碎片</span>
-            <span class="reward-tag">品质魔石 x2</span>
+            <span class="reward-tag">圣光碎片</span>
+            <span class="reward-tag">随机宝石</span>
+            <span class="reward-tag">品质魔石 x5</span>
           </div>
           <div class="raid-enter">
             <Icon icon="mdi:sword-cross" /> 进入战斗
@@ -91,43 +88,33 @@ import { useGameStore } from '../store/gameStore'
 const store = useGameStore()
 const emit = defineEmits(['close', 'startBattle'])
 
-// ✅ 改为计算属性，实时读取 sessionStorage
 const raidClears = computed(() => {
   if (!store.isStoryMode) {
-    return {
-      boss_goblin_king: false,
-      boss_fire_dragon: false,
-      boss_shadow_lord: false
-    }
+    return { raid_gladiator: false, raid_lava_core: false, raid_bishop: false }
   }
   const saved = sessionStorage.getItem('story_raid_clears')
   if (saved) {
     try {
       const data = JSON.parse(saved)
       return {
-        boss_goblin_king: !!data.boss_goblin_king,
-        boss_fire_dragon: !!data.boss_fire_dragon,
-        boss_shadow_lord: !!data.boss_shadow_lord
+        raid_gladiator: !!data.raid_gladiator,
+        raid_lava_core: !!data.raid_lava_core,
+        raid_bishop: !!data.raid_bishop
       }
     } catch (e) {}
   }
-  return {
-    boss_goblin_king: false,
-    boss_fire_dragon: false,
-    boss_shadow_lord: false
-  }
+  return { raid_gladiator: false, raid_lava_core: false, raid_bishop: false }
 })
 
 function enterRaid(bossId) {
   const template = store.config.monsterTemplates.find(m => m.id === bossId)
   if (!template) return
 
-const raidMultiplier = {
-    'boss_shadow_lord': { hp: 2.5, atk: 2.0, def: 1.6 },  // 现在它是15层Boss，保持高倍率
-    'boss_fire_dragon': { hp: 3.0, atk: 2.2, def: 1.8 },  // 20层炎龙，强度提到最高
-    'boss_goblin_king': { hp: 2.0, atk: 1.8, def: 1.4 },
-    'boss_goblin_chief': { hp: 1.5, atk: 1.4, def: 1.2 }
-}
+  const raidMultiplier = {
+    'raid_gladiator': { hp: 1.5, atk: 1.3, def: 1.2 },
+    'raid_lava_core': { hp: 1.8, atk: 1.5, def: 1.4 },
+    'raid_bishop': { hp: 2.5, atk: 2.0, def: 1.6 },
+  }
   const mult = raidMultiplier[bossId] || { hp: 1.0, atk: 1.0, def: 1.0 }
 
   const monster = {
@@ -153,7 +140,6 @@ const raidMultiplier = {
 </script>
 
 <style scoped>
-/* 样式保持不变 */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 200; }
 .panel {
   width: 90vw; height: 85vh; max-width: 600px;
@@ -164,7 +150,6 @@ const raidMultiplier = {
 .close-btn { position: absolute; top: 16px; right: 16px; background: none; border: none; color: #ffd; font-size: 20px; cursor: pointer; }
 h2 { font-size: 18px; color: #ffd700; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
 .hint { font-size: 10px; color: #aaa; margin-bottom: 20px; }
-
 .raid-list { display: flex; flex-direction: column; gap: 12px; }
 .raid-card {
   background: rgba(0,0,0,0.4); border: 1px solid rgba(184,154,106,0.3);
@@ -178,13 +163,8 @@ h2 { font-size: 18px; color: #ffd700; margin-bottom: 8px; display: flex; align-i
 .raid-boss-name { font-size: 14px; color: #ff4444; margin: 0 0 4px 0; }
 .raid-level { font-size: 9px; color: #ff9800; }
 .clear-badge {
-  background: rgba(76, 175, 80, 0.2);
-  border: 1px solid #4caf50;
-  border-radius: 6px;
-  padding: 3px 8px;
-  font-size: 8px;
-  color: #4caf50;
-  white-space: nowrap;
+  background: rgba(76, 175, 80, 0.2); border: 1px solid #4caf50;
+  border-radius: 6px; padding: 3px 8px; font-size: 8px; color: #4caf50; white-space: nowrap;
 }
 .raid-desc { font-size: 9px; color: #ccc; margin-bottom: 10px; line-height: 1.5; }
 .raid-rewards { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
