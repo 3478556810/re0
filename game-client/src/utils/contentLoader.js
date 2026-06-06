@@ -3,8 +3,14 @@ export async function loadContentPacks() {
   const manifest = {
     packs: ['default', 'dlc'],
     files: [
+      'gems/_ruby.json',
+'gems/_sapphire.json',
+'gems/_emerald.json',
+'gems/_amethyst.json',
+'gems/_topaz.json',
        // 怪物分片
       'monsters/bosses.json',
+      'monsters/_raidBosses.json',
       'monsters/_weak.json',
       'monsters/_normal.json',
       'monsters/_strong.json',
@@ -50,7 +56,12 @@ export async function loadContentPacks() {
         const res = await fetch(url)
         if (!res.ok) continue
         const data = await res.json()
-
+// 统一处理所有 gems/ 开头的文件
+if (file.startsWith('gems/')) {
+    if (!config.gemDefinitions) config.gemDefinitions = []
+    config.gemDefinitions.push(...data)
+    continue
+}
         // 统一处理所有 skills/ 开头的文件
         if (file.startsWith('skills/')) {
           if (!config.skillPool) config.skillPool = []
@@ -61,7 +72,6 @@ export async function loadContentPacks() {
         // 统一处理所有 monsters/ 开头的文件
         if (file.startsWith('monsters/')) {
           if (!config.monsterTemplates) config.monsterTemplates = []
-          // 对于每个怪物，若已存在同 id 则覆盖（方便 dlc 更新），否则追加
           for (const mob of data) {
             const idx = config.monsterTemplates.findIndex(m => m.id === mob.id)
             if (idx !== -1) {

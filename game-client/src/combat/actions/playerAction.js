@@ -1,3 +1,6 @@
+
+
+// ======================= 元素反应表 =======================
 // src/combat/actions/playerAction.js
 import { calculateDamage } from '../damageCalculator'
 import { EFFECT_TYPES } from '../effectDefs'
@@ -6,16 +9,15 @@ import { applySkillEffects } from '../effects/skillEffects'
 // ======================= 元素反应表 =======================
 const ELEMENT_REACTIONS = {
   'fire_water': { name: '蒸发', dmgMul: 1.5 },
-  'fire_thunder': { name: '超载', aoeDmgMul: 1.2 },
-  'fire_grass': { name: '燃烧', dotValue: 0.6, dotDuration: 3 },
-  'thunder_water': { name: '感电', chainDmgMul: 1.0, chainCount: 3 },
-  'ice_water': { name: '冻结', dmgMul: 1.3, freeze: true },
-  'ice_thunder': { name: '超导', dmgMul: 1.0, defReduce: 0.6, defDuration: 3 },
+  'fire_thunder': { name: '超载', aoeDmgMul: 0.6 },        // 对全体敌人造成本次伤害60%的AOE
+  'fire_grass': { name: '燃烧', dotValue: 0.5, dotDuration: 3 },
+  'thunder_water': { name: '感电', chainDmgMul: 0.4, chainCount: 3 },
+  'ice_water': { name: '冻结', dmgMul: 1.3, freezeDuration: 1 },
+  'ice_thunder': { name: '超导', dmgMul: 0.8, defReduce: 0.6, defDuration: 3 },
   'grass_water': { name: '生长', healPercent: 0.25 },
-  'dark_holy': { name: '湮灭', maxHpPercent: 0.12 },
-  'fire_rock': { name: '熔岩', dotValue: 0.6, dotDuration: 3 },
-  'fire_poison': { name: '毒爆', burstPerStack: 0.05 },
-  // 扩散系列
+  'dark_holy': { name: '湮灭', dmgMul: 1.5 },
+  'fire_rock': { name: '熔岩', dotValue: 0.5, dotDuration: 3 },
+  'fire_poison': { name: '毒爆', burstPerStack: 0.06 },
   'fire_wind': { name: '扩散', spread: true },
   'grass_wind': { name: '扩散', spread: true },
   'ice_wind': { name: '扩散', spread: true },
@@ -26,6 +28,7 @@ const ELEMENT_REACTIONS = {
   'thunder_wind': { name: '扩散', spread: true },
   'water_wind': { name: '扩散', spread: true }
 };
+
 function getElementLabel(element) {
   const map = {
     fire: '火', water: '水', thunder: '雷', wind: '风',
@@ -34,6 +37,7 @@ function getElementLabel(element) {
   };
   return map[element] || element;
 }
+
 function checkElementReaction(engine, attacker, target, skill, result, damage) {
   const skills = engine.playerSkills || {};
   const skillState = skills[skill.id];
@@ -50,11 +54,12 @@ function checkElementReaction(engine, attacker, target, skill, result, damage) {
     const reaction = ELEMENT_REACTIONS[key];
     if (!reaction) return;
 
-    // 扩散
+    const scale = 1 + Math.max(0, skillLevel - 10) * 0.1;
+
+    // ========== 扩散 ==========
     if (reaction.spread) {
       const allEnemies = engine.getAliveEnemies();
       const spreadElement = existingMark.element === 'wind' ? skill.element : existingMark.element;
-      const scale = 1 + Math.max(0, skillLevel - 10) * 0.1;
       const spreadDmg = Math.floor(attacker.getEffectiveAttack() * 0.8 * scale);
       for (const enemy of allEnemies) {
         enemy.takeDamage(spreadDmg, attacker);
@@ -78,40 +83,128 @@ function checkElementReaction(engine, attacker, target, skill, result, damage) {
       return;
     }
 
-    // 伤害反应
-    const scale = 1 + Math.max(0, skillLevel - 10) * 0.1;
-    let reactionDamage = 0;
-
+    // ========== 伤害乘算反应（蒸发、湮灭、冻结、超导） ==========
     if (reaction.dmgMul) {
-      reactionDamage = Math.floor(damage * reaction.dmgMul * scale);
-      target.takeDamage(reactionDamage, attacker);
-    } else if (reaction.maxHpPercent) {
-      reactionDamage = Math.floor(target.maxHp * reaction.maxHpPercent * scale);
-      target.takeDamage(reactionDamage, attacker);
-    } else if (reaction.aoeDmgMul) {
-      reactionDamage = Math.floor(damage * reaction.aoeDmgMul * scale);
-      target.takeDamage(reactionDamage, attacker);
+   // 印记来源技能造成的最终伤害
+    const markDamage = existingMark.markDamage || damage;
+    
+    // 反应总伤害 = (触发技能伤害 + 印记技能伤害) × 反应倍率
+    const totalBaseDamage = damage + markDamage;
+    const reactionDamage = Math.floor(totalBaseDamage * reaction.dmgMul * scale);
+    
+    target.takeDamage(reactionDamage, attacker);
+      if (reaction.freezeDuration) {
+        target.addEffect({ type: EFFECT_TYPES.FREEZE, duration: reaction.freezeDuration, stackable: false });
+        result.messages.push(`触发元素反应：${reaction.name}！造成 ${reactionDamage} 伤害并冻结目标`);
+      } else if (reaction.defReduce) {
+        target.addEffect({ type: EFFECT_TYPES.DEF_DOWN, value: -reaction.defReduce, duration: reaction.defDuration, stackable: false });
+        result.messages.push(`触发元素反应：${reaction.name}！造成 ${reactionDamage} 伤害并降低防御`);
+      } else {
+        result.messages.push(`触发元素反应：${reaction.name}！造成 ${reactionDamage} 点额外伤害`);
+      }
+      target.removeEffect('element_mark');
+      return;
     }
 
-    if (reactionDamage > 0) {
-      result.messages.push(`触发元素反应：${reaction.name}！造成 ${reactionDamage} 点额外伤害`);
-    } else {
-      result.messages.push(`触发元素反应：${reaction.name}！`);
+    // ========== AOE 反应（超载） ==========
+    if (reaction.aoeDmgMul) {
+      const aoeDmg = Math.floor(damage * reaction.aoeDmgMul * scale);
+      const aliveEnemies = engine.getAliveEnemies();
+      for (const enemy of aliveEnemies) {
+        enemy.takeDamage(aoeDmg, attacker);
+      }
+      result.messages.push(`触发元素反应：${reaction.name}！对所有敌人造成 ${aoeDmg} 伤害`);
+      target.removeEffect('element_mark');
+      return;
     }
+
+    // ========== 感电（连锁伤害） ==========
+    if (reaction.chainDmgMul) {
+      let chainDmg = Math.floor(damage * reaction.chainDmgMul * scale);
+      target.takeDamage(chainDmg, attacker);
+      result.messages.push(`触发元素反应：${reaction.name}！额外造成 ${chainDmg} 伤害`);
+
+      // 弹射
+      const otherEnemies = engine.getAliveEnemies().filter(e => e !== target && e.hp > 0);
+      let currentDmg = chainDmg;
+      for (let i = 0; i < Math.min(reaction.chainCount, otherEnemies.length); i++) {
+        const nextTarget = otherEnemies[i % otherEnemies.length];
+        currentDmg = Math.floor(currentDmg * 0.7); // 每次弹射衰减30%
+        if (currentDmg <= 0) break;
+        nextTarget.takeDamage(currentDmg, attacker);
+        result.messages.push(`感电弹射到 ${nextTarget.name}，造成 ${currentDmg} 伤害`);
+      }
+      target.removeEffect('element_mark');
+      return;
+    }
+
+    // ========== DOT 附加（燃烧、熔岩） ==========
+    if (reaction.dotValue) {
+      const dotDmg = Math.floor(attacker.getEffectiveAttack() * reaction.dotValue);
+      target.addEffect({
+        type: EFFECT_TYPES.BURN,
+        value: reaction.dotValue,
+        duration: reaction.dotDuration || 3,
+        stackable: true,
+        maxStacks: 5,
+        casterAttack: attacker.getEffectiveAttack()
+      });
+      result.messages.push(`触发元素反应：${reaction.name}！目标被灼烧，每回合损失 ${dotDmg} 点生命`);
+      target.removeEffect('element_mark');
+      return;
+    }
+
+    // ========== 毒爆（引爆中毒层数） ==========
+    if (reaction.burstPerStack) {
+      const poison = target.effects.find(e => e.type === EFFECT_TYPES.DOT && e.isPercentHp);
+      if (poison) {
+        const stacks = poison.stacks || 1;
+        const burstDmg = Math.floor(target.maxHp * reaction.burstPerStack * stacks);
+        target.takeDamage(burstDmg, attacker);
+        target.removeEffect(EFFECT_TYPES.DOT); // 清除中毒
+        result.messages.push(`触发元素反应：${reaction.name}！引爆 ${stacks} 层中毒，造成 ${burstDmg} 伤害`);
+      } else {
+        result.messages.push(`触发元素反应：${reaction.name}，但目标没有中毒效果`);
+      }
+      target.removeEffect('element_mark');
+      return;
+    }
+
+    // ========== 生长（全队治疗） ==========
+    if (reaction.healPercent) {
+      const healPlayer = Math.floor(attacker.maxHp * reaction.healPercent);
+      attacker.hp = Math.min(attacker.maxHp, attacker.hp + healPlayer);
+      result.messages.push(`触发元素反应：${reaction.name}！恢复 ${healPlayer} 生命`);
+      if (engine.companion && engine.companion.hp > 0) {
+        const healComp = Math.floor(engine.companion.maxHp * reaction.healPercent);
+        engine.companion.hp = Math.min(engine.companion.maxHp, engine.companion.hp + healComp);
+        result.messages.push(`同伴恢复 ${healComp} 生命`);
+      }
+      target.removeEffect('element_mark');
+      return;
+    }
+
+    // 默认移除印记
     target.removeEffect('element_mark');
 
   } else {
-    // 只有单体技能可挂印记
+    // 挂元素印记（只有单体技能可挂）
     if (skill.target !== 'aoe') {
       target.addEffect({
         type: 'element_mark',
+       markDamage: damage,     // ← 存本次造成的最终伤害（含暴击、增伤）
         element: skill.element,
+    
         duration: 5,
         stackable: false
       });
     }
   }
 }
+
+// ======================= 原函数结束（executePlayerAction 保持不变） =======================
+// 以下为原有的 executePlayerAction 函数，无需修改
+// ...（由于篇幅，此处省略，实际文件中保留原有完整函数）
 // ======================= 原函数结束 =======================
 
 export function executePlayerAction(engine, skill, targetIndex, options = {}) {
