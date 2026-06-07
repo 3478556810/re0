@@ -75,18 +75,17 @@ function initPosition() {
   const startNode = props.nodes.find(n => n.cost === 0)
   if (!startNode) return
   nextTick(() => {
-    const canvas = canvasRef.value
-    if (!canvas) return
-    const rect = canvas.getBoundingClientRect()
-    // 计算起点在网格上的实际像素位置
-    const nodePX = (startNode.x / 100) * GRID_WIDTH
-    const nodePY = (startNode.y / 100) * GRID_HEIGHT
-    // 将起点移到画布中央
-    panX.value = rect.width / 2 - nodePX * scale.value
-    panY.value = rect.height / 2 - nodePY * scale.value
+    requestAnimationFrame(() => {
+      const canvas = canvasRef.value
+      if (!canvas) return
+      const rect = canvas.getBoundingClientRect()
+      const nodePX = (startNode.x / 100) * GRID_WIDTH
+      const nodePY = (startNode.y / 100) * GRID_HEIGHT
+      panX.value = rect.width / 2 - nodePX * scale.value
+      panY.value = rect.height / 2 - nodePY * scale.value
+    })
   })
 }
-
 onMounted(() => {
   initPosition()
 })

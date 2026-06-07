@@ -1,9 +1,8 @@
 [
   {
-    "_comment": "===== 岩属性技能 =====",
     "id": "rock_fall",
     "name": "岩崩",
-    "desc": "岩属性单体攻击，高概率眩晕。对眩晕目标伤害翻倍。",
+    "desc": "岩属性单体攻击，高概率眩晕，对眩晕目标伤害翻倍",
     "icon": "mdi:terrain",
     "type": "active",
     "target": "single",
@@ -27,7 +26,7 @@
   {
     "id": "earthquake",
     "name": "地震",
-    "desc": "岩属性全体攻击，附加防御降低。对眩晕目标必定暴击。",
+    "desc": "岩属性全体攻击，附加防御降低，对眩晕目标必定暴击",
     "icon": "mdi:waves",
     "type": "active",
     "target": "aoe",
@@ -39,36 +38,13 @@
     "learnCost": 3,
     "levelScaling": { "baseMul": 0.12 },
     "effects": [
-      { "type": "stun", "duration": 1, "chance": 20 },
+      { "type": "debuff", "value": -0.2, "stat": "def", "duration": 3, "chance": 80 },
       { "type": "stunCrit", "note": "对眩晕目标必定暴击" }
     ],
     "tripods": [
-      { "name": "地裂", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": -0.3, "stat": "def", "duration": 3, "chance": 80 }] },
-      { "name": "岩铠", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.3, "stat": "def", "duration": 3, "chance": 100, "target": "self" }] },
+      { "name": "地裂", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": -0.3, "stat": "def", "duration": 3, "chance": 100 }] },
+      { "name": "岩铠", "unlockLevel": 7, "effects": [{ "type": "shield", "value": 0.25, "duration": 3, "chance": 100, "target": "self" }] },
       { "name": "地动", "unlockLevel": 10, "effects": [{ "type": "stun", "duration": 1, "chance": 35 }] }
-    ]
-  },
-  {
-    "id": "meteor_impact",
-    "name": "陨石冲击",
-    "desc": "岩属性单体高爆发，对生命低于50%的敌人额外造成大量伤害。",
-    "icon": "mdi:meteor",
-    "type": "active",
-    "target": "single",
-    "element": "rock",
-    "mpCost": 16,
-    "baseMul": 2.5,
-    "maxLevel": 10,
-    "upgradeCost": 4,
-    "learnCost": 4,
-    "levelScaling": { "baseMul": 0.22 },
-    "effects": [
-      { "type": "executioner", "value": 2.5, "note": "对生命低于30%目标伤害+150%" }
-    ],
-    "tripods": [
-      { "name": "毁灭", "unlockLevel": 4, "effects": [{ "type": "executioner", "value": 3.0 }] },
-      { "name": "震地", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 40, "target": "aoe", "chance": 100 }] },
-      { "name": "余烬", "unlockLevel": 10, "effects": [{ "type": "burn", "value": 0.5, "duration": 3, "chance": 100 }] }
     ]
   }
 ]

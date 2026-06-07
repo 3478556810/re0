@@ -3,6 +3,11 @@ import { bossMechanics } from './engine/mechanics/bossMechanics'
 
 export class UnitState {
   constructor(baseStats, isPlayer = false) {
+    // 在 UnitState 构造函数中，添加以下属性
+this.talents = baseStats.talents || {}
+this.mpCostReduction = baseStats.mpCostReduction || 0
+this.mpOnHit = baseStats.mpOnHit || 0
+this.mpOnKill = baseStats.mpOnKill || 0
     this.isCompanion = baseStats.isCompanion || false
     this.id = baseStats.id || 'unit'
     this.name = baseStats.name || ''
@@ -57,6 +62,13 @@ export class UnitState {
         this.skills = []
       }
     }
+
+
+// 伙伴技能保留（新增）
+if (baseStats.isCompanion && Array.isArray(baseStats.skills)) {
+    this.skills = baseStats.skills
+}
+
     this.base = { ...baseStats }
     this.isCompanion = baseStats.isCompanion || false
 

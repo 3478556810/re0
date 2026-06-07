@@ -2,159 +2,134 @@ import { Icon } from '@iconify/vue'
 
 // ========== 全新词条效果表（机制化设计）==========
 export const AFFIX_EFFECTS = {
-  // 怨恨：7级质变，10级毕业
   grudge: {
     name: '怨恨', loreName: '怨恨',
     thresholds: [
-      { level: 1, desc: '攻+20%，受伤+15%', bonus: { attack: 20, dmgTaken: 15 } },
-      { level: 3, desc: '攻+40%，受伤+25%', bonus: { attack: 40, dmgTaken: 25 } },
-      { level: 5, desc: '攻+70%，受伤+35%', bonus: { attack: 70, dmgTaken: 35 } },
-      { level: 7, desc: '攻+120%，受伤+45%', bonus: { attack: 120, dmgTaken: 45 } },
-      { level: 10, desc: '攻+250%，受伤+60%', bonus: { attack: 250, dmgTaken: 60 } }
+      { level: 1, bonus: { attack: 15, dmgTaken: 12 } },
+      { level: 3, bonus: { attack: 25, dmgTaken: 18 } },
+      { level: 5, bonus: { attack: 40, dmgTaken: 25 } },
+      { level: 7, bonus: { attack: 60, dmgTaken: 30 } },
+      { level: 10, bonus: { attack: 90, dmgTaken: 40 } }
     ]
   },
-
-  // 巫毒娃娃：7级质变，10级毕业
   voodooDoll: {
     name: '巫毒娃娃', loreName: '巫毒',
     thresholds: [
-      { level: 1, desc: '伤害的 15% 转为真伤', bonus: { trueDmgPercent: 15 } },
-      { level: 3, desc: '伤害的 30% 转为真伤', bonus: { trueDmgPercent: 30 } },
-      { level: 5, desc: '伤害的 50% 转为真伤', bonus: { trueDmgPercent: 50 } },
-      { level: 7, desc: '伤害的 70% 转为真伤', bonus: { trueDmgPercent: 70 } },
-      { level: 10, desc: '伤害的 120% 转为真伤', bonus: { trueDmgPercent: 120 } }
+      { level: 1, bonus: { trueDmgPercent: 10 } },
+      { level: 3, bonus: { trueDmgPercent: 20 } },
+      { level: 5, bonus: { trueDmgPercent: 35 } },
+      { level: 7, bonus: { trueDmgPercent: 50 } },
+      { level: 10, bonus: { trueDmgPercent: 80 } }
     ]
   },
-
-  // 钝器：7级质变，10级毕业
   bluntWeapon: {
     name: '钝器', loreName: '钝器',
     thresholds: [
-      { level: 1, desc: '暴伤+50%, 暴率-2%', bonus: { critDmg: 50, critRate: -2 } },
-      { level: 3, desc: '暴伤+120%, 暴率-4%', bonus: { critDmg: 120, critRate: -4 } },
-      { level: 5, desc: '暴伤+240%, 暴率-6%', bonus: { critDmg: 240, critRate: -6 } },
-      { level: 7, desc: '暴伤+440%, 暴率-8%', bonus: { critDmg: 440, critRate: -8 } },
-      { level: 10, desc: '暴伤+700%, 暴率-10%', bonus: { critDmg: 700, critRate: -10 } }
+      { level: 1, bonus: { critDmg: 30, critRate: -2 } },
+      { level: 3, bonus: { critDmg: 60, critRate: -4 } },
+      { level: 5, bonus: { critDmg: 100, critRate: -5 } },
+      { level: 7, bonus: { critDmg: 150, critRate: -6 } },
+      { level: 10, bonus: { critDmg: 220, critRate: -8 } }
     ]
   },
-
-  // 破甲：7级质变，10级毕业
   armorBreak: {
     name: '破甲', loreName: '破甲',
     thresholds: [
-      { level: 1, desc: '无视防御 24%，对护盾伤害+40%', bonus: { ignoreDef: 24, shieldDmg: 40 } },
-      { level: 3, desc: '无视防御 44%，对护盾伤害+60%', bonus: { ignoreDef: 44, shieldDmg: 60 } },
-      { level: 5, desc: '无视防御 70%，对护盾伤害+90%', bonus: { ignoreDef: 70, shieldDmg: 90 } },
-      { level: 7, desc: '无视防御 100%，对护盾伤害+130%', bonus: { ignoreDef: 100, shieldDmg: 130 } },
-      { level: 10, desc: '无视防御 140%，对护盾伤害+180%', bonus: { ignoreDef: 140, shieldDmg: 180 } }
+      { level: 1, bonus: { ignoreDef: 20, shieldDmg: 30 } },
+      { level: 3, bonus: { ignoreDef: 35, shieldDmg: 50 } },
+      { level: 5, bonus: { ignoreDef: 55, shieldDmg: 75 } },
+      { level: 7, bonus: { ignoreDef: 80, shieldDmg: 110 } },
+      { level: 10, bonus: { ignoreDef: 120, shieldDmg: 150 } }
     ]
   },
-
-  // 法力共鸣：7级质变，10级毕业
   manaResonance: {
     name: '法力共鸣', loreName: '法力',
     thresholds: [
-      { level: 1, desc: 'MP消耗-10%，伤害回蓝6', bonus: { mpCostReduction: 10, mpOnHit: 6 } },
-      { level: 3, desc: 'MP消耗-20%，伤害回蓝10', bonus: { mpCostReduction: 20, mpOnHit: 10 } },
-      { level: 5, desc: 'MP消耗-30%，伤害回蓝16，击杀回蓝20', bonus: { mpCostReduction: 30, mpOnHit: 16, mpOnKill: 20 } },
-      { level: 7, desc: 'MP消耗-40%，伤害回蓝24，击杀回蓝30', bonus: { mpCostReduction: 40, mpOnHit: 24, mpOnKill: 30 } },
-      { level: 10, desc: 'MP消耗-50%，伤害回蓝40，击杀回蓝50', bonus: { mpCostReduction: 50, mpOnHit: 40, mpOnKill: 50 } }
+      { level: 1, bonus: { mpCostReduction: 10, mpOnHit: 5 } },
+      { level: 3, bonus: { mpCostReduction: 20, mpOnHit: 8 } },
+      { level: 5, bonus: { mpCostReduction: 30, mpOnHit: 12, mpOnKill: 15 } },
+      { level: 7, bonus: { mpCostReduction: 40, mpOnHit: 30, mpOnKill: 35 } },
+      { level: 10, bonus: { mpCostReduction: 50, mpOnHit: 50, mpOnKill: 60 } }
     ]
   },
-
-  // 肾上腺素：7级质变，10级毕业
   adrenaline: {
     name: '肾上腺素', loreName: '肾上腺素',
     thresholds: [
-      { level: 1, desc: '每回合攻+6%（基于最终攻击），最多4层', bonus: { stackingAtk: 6, maxStacks: 4 } },
-      { level: 3, desc: '每回合攻+8%，最多5层', bonus: { stackingAtk: 8, maxStacks: 5 } },
-      { level: 5, desc: '每回合攻+12%，最多6层', bonus: { stackingAtk: 12, maxStacks: 6 } },
-      { level: 7, desc: '每回合攻+16%，最多7层', bonus: { stackingAtk: 16, maxStacks: 7 } },
-      { level: 10, desc: '每回合攻+24%，最多8层', bonus: { stackingAtk: 24, maxStacks: 8 } }
+      { level: 1, bonus: { stackingAtk: 5, maxStacks: 3 } },
+      { level: 3, bonus: { stackingAtk: 7, maxStacks: 4 } },
+      { level: 5, bonus: { stackingAtk: 10, maxStacks: 5 } },
+      { level: 7, bonus: { stackingAtk: 14, maxStacks: 6 } },
+      { level: 10, bonus: { stackingAtk: 20, maxStacks: 7 } }
     ]
   },
-
-  // Boss猎人：7级质变，10级毕业
   bossHunter: {
     name: 'Boss猎人', loreName: '猎王',
     thresholds: [
-      { level: 1, desc: '对Boss增伤 20%', bonus: { bossDmg: 20 } },
-      { level: 3, desc: '对Boss增伤 40%', bonus: { bossDmg: 40 } },
-      { level: 5, desc: '对Boss增伤 70%', bonus: { bossDmg: 70 } },
-      { level: 7, desc: '对Boss增伤 110%', bonus: { bossDmg: 110 } },
-      { level: 10, desc: '对Boss增伤 160%', bonus: { bossDmg: 160 } }
+      { level: 1, bonus: { bossDmg: 15 } },
+      { level: 3, bonus: { bossDmg: 30 } },
+      { level: 5, bonus: { bossDmg: 50 } },
+      { level: 7, bonus: { bossDmg: 80 } },
+      { level: 10, bonus: { bossDmg: 120 } }
     ]
   },
-
-  // 属性大师：7级质变，10级毕业
   elementMaster: {
     name: '属性大师', loreName: '元素',
     thresholds: [
-      { level: 1, desc: '全元素+16%', bonus: { allElemDmg: 16 } },
-      { level: 3, desc: '全元素+36%', bonus: { allElemDmg: 36 } },
-      { level: 5, desc: '全元素+64%', bonus: { allElemDmg: 64 } },
-      { level: 7, desc: '全元素+100%', bonus: { allElemDmg: 100 } },
-      { level: 10, desc: '全元素+150%', bonus: { allElemDmg: 150 } }
+      { level: 1, bonus: { allElemDmg: 12 } },
+      { level: 3, bonus: { allElemDmg: 28 } },
+      { level: 5, bonus: { allElemDmg: 50 } },
+      { level: 7, bonus: { allElemDmg: 80 } },
+      { level: 10, bonus: { allElemDmg: 120 } }
     ]
   },
-
-  // 天运：7级质变，10级毕业
   fortune: {
     name: '天运', loreName: '天运',
     thresholds: [
-      { level: 1, desc: '暴率+12%，掉落双倍概率+6%', bonus: { critRate: 12, doubleDrop: 6 } },
-      { level: 3, desc: '暴率+24%，掉落双倍概率+12%', bonus: { critRate: 24, doubleDrop: 12 } },
-      { level: 5, desc: '暴率+40%，掉落双倍概率+20%', bonus: { critRate: 40, doubleDrop: 20 } },
-      { level: 7, desc: '暴率+60%，掉落双倍概率+30%', bonus: { critRate: 60, doubleDrop: 30 } },
-      { level: 10, desc: '暴率+90%，掉落双倍概率+50%', bonus: { critRate: 90, doubleDrop: 50 } }
+      { level: 1, bonus: { critRate: 8, doubleDrop: 5 } },
+      { level: 3, bonus: { critRate: 18, doubleDrop: 10 } },
+      { level: 5, bonus: { critRate: 30, doubleDrop: 15 } },
+      { level: 7, bonus: { critRate: 45, doubleDrop: 25 } },
+      { level: 10, bonus: { critRate: 65, doubleDrop: 40 } }
     ]
   },
-
-  // 奇袭大师：7级质变，10级毕业
   ambushMaster: {
     name: '奇袭大师', loreName: '奇袭',
     thresholds: [
-      { level: 1, desc: '对半血以上敌人暴率+24%', bonus: { halfHpCrit: 24 } },
-      { level: 3, desc: '对半血以上敌人暴率+44%', bonus: { halfHpCrit: 44 } },
-      { level: 5, desc: '对半血以上敌人暴率+70%，暴伤+30%', bonus: { halfHpCrit: 70, halfHpCritDmg: 30 } },
-      { level: 7, desc: '对半血以上敌人暴率+100%，暴伤+50%', bonus: { halfHpCrit: 100, halfHpCritDmg: 50 } },
-      { level: 10, desc: '对半血以上敌人暴率+140%，暴伤+80%', bonus: { halfHpCrit: 140, halfHpCritDmg: 80 } }
+      { level: 1, bonus: { halfHpCrit: 18 } },
+      { level: 3, bonus: { halfHpCrit: 35 } },
+      { level: 5, bonus: { halfHpCrit: 55, halfHpCritDmg: 25 } },
+      { level: 7, bonus: { halfHpCrit: 80, halfHpCritDmg: 40 } },
+      { level: 10, bonus: { halfHpCrit: 110, halfHpCritDmg: 65 } }
     ]
   },
-
-  // 顽强：7级质变，10级毕业
   tenacity: {
     name: '顽强', loreName: '顽强',
     thresholds: [
-      { level: 1, desc: '受致命伤害时，15%概率锁血，获得10%HP护盾', bonus: { deathSave: 15, deathShield: 10 } },
-      { level: 3, desc: '受致命伤害时，30%概率锁血，获得20%HP护盾', bonus: { deathSave: 30, deathShield: 20 } },
-      { level: 5, desc: '受致命伤害时，50%概率锁血，获得30%HP护盾', bonus: { deathSave: 50, deathShield: 30 } },
-      { level: 7, desc: '受致命伤害时，100%锁血，获得80%HP护盾（触发后3回合冷却）', bonus: { deathSave: 100, deathShield: 80 } },
-      { level: 10, desc: '锁血时护盾提升至150%HP（触发后2回合冷却）', bonus: { deathSave: 100, deathShield: 150 } }
+      { level: 1, bonus: { deathSave: 20, deathShield: 15 } },
+      { level: 3, bonus: { deathSave: 35, deathShield: 25 } },
+      { level: 5, bonus: { deathSave: 50, deathShield: 35 } },
+      { level: 7, bonus: { deathSave: 100, deathShield: 60 } },
+      { level: 10, bonus: { deathSave: 100, deathShield: 120 } }
     ]
   },
-
-  // 不死鸟：7级质变，10级毕业
-  phoenix: {
+phoenix: {
     name: '不死鸟', loreName: '不死鸟',
     thresholds: [
-      { level: 1, desc: '死亡时30%概率复活(35%HP)；火焰伤害+16%，吸血+10%', bonus: { reviveChance: 30, reviveDmg: 15, fireDmg: 16, lifestealPercent: 10 } },
-      { level: 3, desc: '死亡时50%概率复活(50%HP)；火焰伤害+36%，吸血+20%', bonus: { reviveChance: 50, reviveDmg: 25, fireDmg: 36, lifestealPercent: 20 } },
-      { level: 5, desc: '死亡时75%概率复活(65%HP)；火焰伤害+60%，吸血+36%', bonus: { reviveChance: 75, reviveDmg: 35, fireDmg: 60, lifestealPercent: 36 } },
-      { level: 7, desc: '死亡时100%复活(80%HP)，冷却10回合；火焰伤害+90%，吸血+50%', bonus: { reviveChance: 100, reviveCD: 10, reviveDmg: 45, fireDmg: 90, lifestealPercent: 50 } },
-      { level: 10, desc: '复活冷却减至5回合；火焰伤害+110%，吸血+64%', bonus: { reviveChance: 100, reviveCD: 5, reviveDmg: 50, fireDmg: 110, lifestealPercent: 64 } }
+      { level: 1, bonus: { reviveChance: 25, reviveDmg: 10, fireDmg: 12, lifestealPercent: 5 } },
+      { level: 3, bonus: { reviveChance: 45, reviveDmg: 20, fireDmg: 28, lifestealPercent: 10 } },
+      { level: 5, bonus: { reviveChance: 70, reviveDmg: 30, fireDmg: 50, lifestealPercent: 15 } },
+      { level: 7, bonus: { reviveChance: 100, reviveCD: 8, reviveDmg: 40, fireDmg: 80, lifestealPercent: 20 } },
+      { level: 10, bonus: { reviveChance: 100, reviveCD: 4, reviveDmg: 60, fireDmg: 120, lifestealPercent: 25 } }
     ]
   },
-
-  // 疾风：7级质变，10级毕业
   swiftWind: {
     name: '疾风', loreName: '疾风',
     thresholds: [
-      { level: 1, desc: '速度+16，闪避率+6%', bonus: { speed: 16, dodge: 6 } },
-      { level: 3, desc: '速度+36，闪避率+12%', bonus: { speed: 36, dodge: 12 } },
-      { level: 5, desc: '速度+60，闪避率+20%', bonus: { speed: 60, dodge: 20 } },
-      { level: 7, desc: '速度+100，闪避率+30%，闪避后下次攻击必暴击', bonus: { speed: 100, dodge: 30, dodgeCounter: true } },
-      { level: 10, desc: '速度+200，闪避率+50%，闪避后下次攻击必暴击且伤害+100%', bonus: { speed: 200, dodge: 50, dodgeCounter: true, dodgeCritDmg: 100 } }
+      { level: 1, bonus: { speed: 12, dodge: 5 } },
+      { level: 3, bonus: { speed: 28, dodge: 10 } },
+      { level: 5, bonus: { speed: 50, dodge: 15 } },
+      { level: 7, bonus: { speed: 80, dodge: 25 } },
+      { level: 10, bonus: { speed: 160, dodge: 40 } }
     ]
   }
 }

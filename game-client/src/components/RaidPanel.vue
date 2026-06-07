@@ -111,9 +111,9 @@ function enterRaid(bossId) {
   if (!template) return
 
 const raidMultiplier = {
-    'raid_gladiator': { hp: 2.0, atk: 1.3, def: 1.3 },
-    'raid_lava_core': { hp: 2.0, atk: 1.5, def: 1.5 },
-    'raid_bishop': { hp: 2.4, atk: 2.0, def: 1.8 },
+    'raid_gladiator': { hp: 2.0, atk: 2.0, def: 1.3 },
+    'raid_lava_core': { hp: 2.0, atk: 2.2, def: 1.5 },
+    'raid_bishop': { hp: 2.4, atk: 2.8, def: 1.8 },
 }
   const mult = raidMultiplier[bossId] || { hp: 1.0, atk: 1.0, def: 1.0 }
 

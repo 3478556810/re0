@@ -8,5 +8,5 @@
   { "id": "gem_sapphire_7", "name": "极寒冰渊·7级", "type": "def", "value": 135, "level": 7, "color": "#3498db", "icon": "mdi:rhombus" },
   { "id": "gem_sapphire_8", "name": "极寒冰渊·8级", "type": "def", "value": 190, "level": 8, "color": "#3498db", "icon": "mdi:rhombus" },
   { "id": "gem_sapphire_9", "name": "极寒冰渊·9级", "type": "def", "value": 255, "level": 9, "color": "#3498db", "icon": "mdi:rhombus" },
-  { "id": "gem_sapphire_10", "name": "极寒冰渊·10级", "type": "def", "value": 500, "level": 10, "color": "#3498db", "icon": "mdi:rhombus" }
+  { "id": "gem_sapphire_10", "name": "极寒冰渊·10级", "type": "def", "value": 350, "level": 10, "color": "#3498db", "icon": "mdi:rhombus" }
 ]

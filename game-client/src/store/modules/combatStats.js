@@ -164,6 +164,41 @@ export function useCombatStats(equipment, config, player) {
     // ========== 11. 职业机制 ==========
     applyClassMechanism(base, player.class)
 
+
+
+
+// 在 playerStats computed 中，return base 之前
+const talents = player.talents || {}
+const isOracle = ['oracle', 'seer'].includes(player.class)
+
+if (isOracle && talents['o_keystone_link']) {
+  const selfRate = talents['s_keystone_link'] ? 0.7 : 0.6  // 神谕者30%，织光者40%
+  base.attack = Math.floor(base.attack * selfRate)
+  base.defense = Math.floor(base.defense * selfRate)
+  base.maxHp = Math.floor(base.maxHp * selfRate)
+}
+  // ========== 最终取整，消灭所有浮点数 ==========
+    base.attack = Math.floor(base.attack || 0)
+    base.defense = Math.floor(base.defense || 0)
+    base.maxHp = Math.floor(base.maxHp || 0)
+    base.hp = Math.min(Math.floor(base.hp || 0), base.maxHp)
+    base.maxMp = Math.floor(base.maxMp || 0)
+    base.mp = Math.min(Math.floor(base.mp || 0), base.maxMp)
+    base.speed = Math.floor(base.speed || 0)
+    base.critRate = Math.floor(base.critRate || 0)
+    base.critDmg = Math.floor(base.critDmg || 0)
+    base.dodge = Math.floor(base.dodge || 0)
+    base.trueDmg = Math.floor(base.trueDmg || 0)
+    base.lifesteal = Math.floor(base.lifesteal || 0)
+
+    const elems = ['fire','water','thunder','wind','grass','ice','holy','dark','rock','steel']
+    for (const e of elems) {
+      const key = e + 'Dmg'
+      if (typeof base[key] === 'number') base[key] = Math.floor(base[key])
+    }
+
+
+
     return base
   })
 

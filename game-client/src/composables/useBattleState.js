@@ -84,26 +84,156 @@ function initEngine(enemiesInput) {
       return false
     }
 
-    // 检查伙伴出战状态
+    if (!store.activeCompanionId && store.companions && store.companions.length > 0) {
+      store.activeCompanionId = store.companions[0].id
+    }
+
     const companionActive = store.player.companionActive !== false
-    const companionId = store.player.currentCompanion || 'freyja'
-    const companionData = store.config.characters?.[companionId]
-    let comp = null
-    if (companionActive && companionData) {
-      comp = {
-        id: companionData.id,
-        name: companionData.name,
-        attack: Math.floor(store.playerStats.attack * 0.7 + store.getAffectionLevel(companionId) * 20),
-        defense: Math.floor(store.playerStats.defense * 0.8),
-        hp: Math.floor(store.playerStats.maxHp * 0.8) + store.getAffectionLevel(companionId) * 50,
-        maxHp: Math.floor(store.playerStats.maxHp * 0.8) + store.getAffectionLevel(companionId) * 50,
-        mp: Math.floor(store.playerStats.maxMp * 0.6),
-        maxMp: Math.floor(store.playerStats.maxMp * 0.6),
-        speed: store.playerStats.speed + 5,
-        critRate: store.playerStats.critRate * 0.8,
-        critDmg: store.playerStats.critDmg * 0.8,
-        icon: companionData.icon || 'mdi:account-heart',
-        isCompanion: true,
+    const companionId = store.activeCompanionId || store.player.currentCompanion
+    let companionUnit = null
+
+    // ========== 保存原始玩家属性（灵魂链接削减前） ==========
+    const originalAttack = store.playerStats.attack || 10
+    const originalDefense = store.playerStats.defense || 5
+    const originalMaxHp = store.playerStats.maxHp || 100
+    const originalMaxMp = store.playerStats.maxMp || 30
+    const originalSpeed = store.playerStats.speed || 10
+    const originalCritRate = store.playerStats.critRate || 5
+    const originalCritDmg = store.playerStats.critDmg || 150
+
+    if (companionActive && companionId) {
+      const companions = store.companions || []
+      if (Array.isArray(companions) && companions.length > 0) {
+        const companionSave = companions.find(c => c.id === companionId)
+
+        if (companionSave) {
+          const affectionLevel = store.getAffectionLevel?.(companionId) || 1
+          const lv = Math.floor(affectionLevel / 200)
+
+          const isHealer = ['archmage', 'elemental', 'paladin', 'oracle', 'seer'].includes(store.player.class)
+          const isOracle = ['oracle', 'seer'].includes(store.player.class)
+          
+          const talents = store.player.talents || {}
+          const hasSoulLink = isOracle && talents['o_keystone_link']
+          const hasSoulResonance = isOracle && talents['s_keystone_link']
+          const hasLifeConvert = isOracle && talents['o_life_convert']
+          const hasDefConvert = isOracle && talents['o_def_convert']
+          const hasLifePraise = isOracle && talents['s_notable_life']
+          const hasSteelSong = isOracle && talents['s_notable_steel']
+
+          let atkRate = isHealer ? 0.9 : 0.6
+          let defRate = isHealer ? 0.7 : 0.4
+          let hpRate  = isHealer ? 0.9 : 0.6
+
+          if (hasSoulLink) {
+            atkRate += 0.10
+            defRate += 0.10
+            hpRate  += 0.10
+          }
+
+          if (hasSoulResonance) {
+            atkRate += 0.20
+            defRate += 0.20
+            hpRate  += 0.20
+          }
+
+          // ========== 关键修复：伙伴自身基础 + 继承玩家 + 好感度固定值 ==========
+          // 伙伴自身基础属性（已包含等级成长）
+          const selfBaseAtk = companionSave.baseAtk || 25
+          const selfBaseDef = companionSave.baseDef || 12
+          const selfBaseHp = companionSave.baseHp || 200
+
+          // 继承玩家的部分
+          const inheritedAtk = Math.floor(originalAttack * atkRate)
+          const inheritedDef = Math.floor(originalDefense * defRate)
+          const inheritedHp = Math.floor(originalMaxHp * hpRate)
+
+          // 累加：自身基础 + 继承玩家 + 好感度等级固定值
+          let attack = selfBaseAtk + inheritedAtk + lv * 20
+          let defense = selfBaseDef + inheritedDef
+          let hp = selfBaseHp + inheritedHp + lv * 50
+          const speed = originalSpeed + 5 + lv * 2
+          const critRate = Math.floor(originalCritRate * 0.8)
+          let critDmg = Math.floor(originalCritDmg * 0.8)
+
+          // 生命转化（基于玩家原始生命计算额外加成）
+          if (hasLifeConvert) {
+            const bonusAtkPct = Math.floor(originalMaxHp / 100) * 3
+            attack += Math.floor(attack * bonusAtkPct / 100)
+          }
+
+          // 生命礼赞
+          if (hasLifePraise) {
+            const bonusAtkPct = Math.floor(originalMaxHp / 100) * 4
+            attack += Math.floor(attack * bonusAtkPct / 100)
+          }
+
+          // 钢铁意志
+          if (hasDefConvert) {
+            const bonusCritDmg = Math.floor(originalDefense / 50) * 5
+            critDmg += bonusCritDmg
+          }
+
+          // 钢铁圣歌
+          if (hasSteelSong) {
+            const bonusCritDmg = Math.floor(originalDefense / 50) * 6
+            critDmg += bonusCritDmg
+          }
+
+          const skillSlots = companionSave.skillSlots || {}
+          const companionSkillsData = companionSave.skills || {}
+          const companionSkillDefs = []
+
+          for (const slotKey of Object.keys(skillSlots)) {
+            const skillId = skillSlots[slotKey]
+            if (!skillId) continue
+            const skillDef = store.config?.skillPool?.find(s => s.id === skillId)
+            if (!skillDef) continue
+            
+            const skillLevel = companionSkillsData[skillId]?.level || 1
+            const levelScaling = skillDef.levelScaling?.baseMul || 0.1
+            let currentMul = skillDef.baseMul || 0
+            for (let i = 2; i <= skillLevel; i++) {
+              const growth = levelScaling * (1 + (i - 1) * 0.08)
+              currentMul += growth
+            }
+
+            companionSkillDefs.push({
+              ...skillDef,
+              currentLevel: skillLevel,
+              baseMul: currentMul,
+              element: skillDef.element || '',
+              mpCost: skillDef.mpCost || 0,
+              effects: skillDef.effects || [],
+            })
+          }
+
+          companionUnit = {
+            id: companionId,
+            level: companionSave.level || 1,
+            name: companionSave.name || '伙伴',
+            icon: companionSave.icon || 'mdi:account-heart',
+            isCompanion: true,
+            attack, defense, hp, maxHp: hp,
+            mp: Math.max(Math.floor(originalMaxMp * 0.6), 50),
+            maxMp: Math.max(Math.floor(originalMaxMp * 0.6), 50),
+            speed, critRate, critDmg,
+            skills: companionSkillDefs,
+            // 新增：继承玩家的特殊属性
+    specialBossDmg: store.playerStats.specialBossDmg || 0,
+    specialFullHpDmg: store.playerStats.specialFullHpDmg || 0,
+    specialIgnoreDef: store.playerStats.specialIgnoreDef || 0,
+    
+    // 继承玩家的元素伤害
+    fireDmg: store.playerStats.fireDmg || 0,
+    waterDmg: store.playerStats.waterDmg || 0,
+    thunderDmg: store.playerStats.thunderDmg || 0,
+    // ... 其他元素同理
+    
+    // 继承吸血
+    lifesteal: store.playerStats.lifesteal || 0,
+          }
+        }
       }
     }
 
@@ -116,6 +246,10 @@ function initEngine(enemiesInput) {
       ...store.playerStats,
       stackingAtk: stackingAtk,
       isPlayer: true,
+      talents: store.player.talents || {},
+      mpCostReduction: store.playerStats.mpCostReduction || 0,
+      mpOnHit: store.playerStats.mpOnHit || 0,
+      mpOnKill: store.playerStats.mpOnKill || 0,
     }
 
     const enrichedEnemies = enemiesInput.map(e => ({
@@ -126,7 +260,13 @@ function initEngine(enemiesInput) {
       exp: e.exp ?? ((e.level ?? (e.base?.level) ?? 1) * 10 + 5),
     }))
 
-    engine.value = new CombatEngine(fullPlayerStats, enrichedEnemies, comp, store.player.skills || {}, store.config)
+    engine.value = new CombatEngine(
+      fullPlayerStats,
+      enrichedEnemies,
+      companionUnit,
+      store.player.skills || {},
+      store.config
+    )
     window.__engine = engine.value
     syncStateFromEngine()
 }
@@ -168,17 +308,33 @@ function initEngine(enemiesInput) {
       }
     })
 
-    if (engine.value && engine.value.companion) {
-      companion.value = {
-        id: engine.value.companion.id,
-        name: engine.value.companion.name,
-        hp: Math.max(0, engine.value.companion.hp),
-        maxHp: engine.value.companion.maxHp,
-        icon: engine.value.companion.icon,
-      }
-    } else {
-      companion.value = null
+   // 同步伙伴状态
+if (engine.value && engine.value.companion) {
+    const comp = engine.value.companion
+    // 从 store 中获取当前伙伴的等级和经验值
+    const companionSave = store.companions?.find(c => c.id === store.activeCompanionId)
+     const companionExp = companionSave?.exp || 0
+ const companionLevel = companionSave?.level || 1
+const companionNextExp = Math.floor(100 * Math.pow(1.1, companionLevel - 1))
+const companionExpPercent = companionNextExp > 0 ? (companionExp / companionNextExp) * 100 : 0
+    companion.value = {
+        id: comp.id,
+        name: comp.name,
+        level: companionLevel,          // 同步等级
+        hp: Math.max(0, comp.hp),
+        maxHp: comp.maxHp,
+        mp: comp.mp || 0,
+        maxMp: comp.maxMp || 0,
+        exp: companionExp,              // 同步经验
+        nextExp: companionNextExp,
+        expPercent: companionExpPercent,
+        icon: comp.icon,
+        effects: comp.effects || []
     }
+} else {
+  companion.value = null
+}
+   
 
     playerEffectsDisplay.value = engine.value.player.effects
       .filter(e => e.duration > 0)
@@ -471,7 +627,8 @@ function initEngine(enemiesInput) {
   }
 
   // ---------- 胜利、奖励等 ----------
-  function victory() {
+// ---------- 胜利、奖励等 ----------
+function victory() {
     if (victory._called) return
     victory._called = true
 
@@ -495,7 +652,7 @@ function initEngine(enemiesInput) {
       }
     } catch (e) { console.error('更新讨伐任务失败:', e) }
 
-    let engineRewards = { exp: 0, materials: [], accessories: [], equipments: [] }
+    let engineRewards = { exp: 0, materials: [], accessories: [], equipments: [], gems: [], companionExp: 0 }
     if (engine.value) {
       try { engineRewards = engine.value.getRewards() } catch (e) { console.error('获取战斗奖励失败:', e) }
     }
@@ -520,8 +677,9 @@ function initEngine(enemiesInput) {
       exp: engineRewards.exp || 0,
       materials: totalMats,
       accessories: totalAccs,
-        gems: engineRewards.gems || [],        // ← 必须有这一行
-      equipments: engineRewards.equipments || []
+      gems: engineRewards.gems || [],
+      equipments: engineRewards.equipments || [],
+      companionExp: engineRewards.companionExp || 0
     }
 
     const mpOnKill = store.playerStats.mpOnKill || 0
@@ -535,7 +693,7 @@ function initEngine(enemiesInput) {
     setTimeout(() => {
       showResult.value = true
     }, 100)
-  }
+}
 
   function resetVictoryFlag() { victory._called = false }
 
@@ -548,36 +706,52 @@ function initEngine(enemiesInput) {
   }
 
   function saveRewards() {
-    if (totalReward.value.exp) store.addExperience(totalReward.value.exp)
-    if (totalReward.value.materials?.length) {
-      totalReward.value.materials.forEach(m => store.addMaterial(m.id, m.name, m.qty || 1))
+  // 玩家经验
+  if (totalReward.value.exp) store.addExperience(totalReward.value.exp)
+  
+  // 新增：伙伴经验
+  if (totalReward.value.companionExp && store.activeCompanionId) {
+    if (store.addCompanionExp) {
+      store.addCompanionExp(store.activeCompanionId, totalReward.value.companionExp)
     }
-    if (totalReward.value.accessories?.length) {
-      totalReward.value.accessories.forEach(acc => {
-        acc.name = generateAccessoryName(acc.part, acc.affixes)
-        store.inventory.push(acc)
-      })
-    }
-    if (totalReward.value.equipments?.length) {
-      totalReward.value.equipments.forEach(eq => store.inventory.push(eq))
-    }
-    // 宝石存储
-// 宝石存储
-if (totalReward.value.gems?.length) {
-    for (const gem of totalReward.value.gems) {
-        const existing = store.inventory.find(i => i.id === gem.id)
-        if (existing) {
-            existing.qty = (existing.qty || 1) + gem.qty
-        } else {
-            store.inventory.push({ id: gem.id, name: gem.name, qty: gem.qty })
-        }
-    }
-}
-   // 徽记掉落增加
-const tokenQty = Math.random() < 0.3 ? 3 : 2  // 原 0.2 ? 2 : 1
-store.addMaterial('dungeon_token', '地下城徽记', tokenQty)
-    store.save()
   }
+
+  // 材料
+  if (totalReward.value.materials?.length) {
+    totalReward.value.materials.forEach(m => store.addMaterial(m.id, m.name, m.qty || 1))
+  }
+  
+  // 饰品
+  if (totalReward.value.accessories?.length) {
+    totalReward.value.accessories.forEach(acc => {
+      acc.name = generateAccessoryName(acc.part, acc.affixes)
+      store.inventory.push(acc)
+    })
+  }
+  
+  // 装备
+  if (totalReward.value.equipments?.length) {
+    totalReward.value.equipments.forEach(eq => store.inventory.push(eq))
+  }
+  
+  // 宝石
+  if (totalReward.value.gems?.length) {
+    for (const gem of totalReward.value.gems) {
+      const existing = store.inventory.find(i => i.id === gem.id)
+      if (existing) {
+        existing.qty = (existing.qty || 1) + gem.qty
+      } else {
+        store.inventory.push({ id: gem.id, name: gem.name, qty: gem.qty })
+      }
+    }
+  }
+  
+  // 徽记掉落
+  const tokenQty = Math.random() < 0.3 ? 3 : 2
+  store.addMaterial('dungeon_token', '地下城徽记', tokenQty)
+  
+  store.save()
+}
 
   function onResultClose() { saveRewards(); showResult.value = false }
   function onNextFloor() { saveRewards(); showResult.value = false; store.clearFloor() }

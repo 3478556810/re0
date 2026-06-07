@@ -2,15 +2,15 @@
   <div class="overlay" @click.self="$emit('close')">
     <div class="panel pixel-panel">
       
-   <!-- 顶部栏：左上技能标题，中间技能点+重置，右上关闭 -->
-<div class="top-bar">
-  <h2 class="top-title"><Icon icon="mdi:star-four-points" /> 技能</h2>
-  <div class="top-actions">
-    <span class="top-sp">技能点：<strong>{{ store.player.skillPoints }}</strong></span>
-    <button class="pixel-btn danger reset-btn" @click="handleResetSkills">重置</button>
-  </div>
-  <button class="close-btn" @click="$emit('close')"><Icon icon="mdi:close" /></button>
-</div>
+      <!-- 顶部栏 -->
+      <div class="top-bar">
+        <h2 class="top-title"><Icon icon="mdi:star-four-points" /> 技能</h2>
+        <div class="top-actions">
+          <span class="top-sp">技能点：<strong>{{ skillPoints }}</strong></span>
+          <button class="pixel-btn danger reset-btn" @click="handleResetSkills">重置</button>
+        </div>
+        <button v-if="mode !== 'companion'" class="close-btn" @click="$emit('close')"><Icon icon="mdi:close" /></button>
+      </div>
 
       <!-- 主标签栏 -->
       <div class="main-tabs">
@@ -25,46 +25,70 @@
         </button>
       </div>
 
-      <!-- ================= 技能学习页 ================= -->
-      <div v-if="activeTab === 'learn'" class="tab-content">
-        <div class="element-filter">
-          <button
-            v-for="tag in elementTags"
-            :key="tag.value"
-            :class="['filter-btn', { active: selectedElement === tag.value }]"
-            @click="selectedElement = tag.value"
-          >
-            <Icon v-if="tag.icon" :icon="tag.icon" />
-            <span class="filter-label">{{ tag.label }}</span>
-          </button>
-        </div>
+    
 
-        <div class="skill-list">
-          <div
-            v-for="skill in filteredSkillPool"
-            :key="skill.id"
-            class="skill-card"
-            :class="{ locked: !isUnlocked(skill.id) }"
-            @click="openSkillDetail(skill)"
-          >
-            <div class="skill-top">
-              <Icon :icon="skill.icon" class="skill-icon" />
-              <div class="skill-name-level">
-                <span class="skill-name">{{ skill.name }}</span>
-                <span class="skill-cost" v-if="isUnlocked(skill.id)">Lv.{{ getSkillLevel(skill.id) }}</span>
-                <span v-if="skill.element" class="skill-element" :style="{ color: getElementColor(skill.element) }">
-                  {{ getElementLabel(skill.element) }}
-                </span>
-              </div>
-              <div class="skill-mp">MP {{ skill.mpCost }}</div>
-            </div>
-            <div class="skill-desc">{{ skill.desc }}</div>
+<!-- ================= 技能学习页（分页版） ================= -->
+<div v-if="activeTab === 'learn'" class="tab-content">
+  <div class="element-filter">
+    <!-- 原有的元素过滤栏不变 -->
+    <button
+      v-for="tag in elementTags"
+      :key="tag.value"
+      :class="['filter-btn', { active: selectedElement === tag.value }]"
+      @click="selectedElement = tag.value"
+    >
+      <Icon v-if="tag.icon" :icon="tag.icon" />
+      <span class="filter-label">{{ tag.label }}</span>
+    </button>
+  </div>
+
+  <!-- 分页区域 -->
+  <div class="pagination-area">
+    <button
+      class="page-btn prev"
+      :disabled="currentPage <= 1"
+      @click="currentPage--"
+    >
+      <Icon icon="mdi:chevron-left" />
+    </button>
+
+    <div class="skill-list-pages">
+      <div
+        v-for="skill in paginatedSkills"
+        :key="skill.id"
+        class="skill-card"
+        :class="{ locked: !isUnlocked(skill.id) }"
+        @click="openSkillDetail(skill)"
+      >
+        <div class="skill-top">
+          <Icon :icon="skill.icon" class="skill-icon" />
+          <div class="skill-name-level">
+            <span class="skill-name">{{ skill.name }}</span>
+            <span class="skill-cost" v-if="isUnlocked(skill.id)">Lv.{{ getSkillLevel(skill.id) }}</span>
+            <span v-if="skill.element" class="skill-element" :style="{ color: getElementColor(skill.element) }">
+              {{ getElementLabel(skill.element) }}
+            </span>
           </div>
-          <div v-if="filteredSkillPool.length === 0" class="empty">暂无技能</div>
+          <div class="skill-mp">MP {{ skill.mpCost }}</div>
         </div>
+        <div class="skill-desc">{{ skill.desc }}</div>
       </div>
+      <div v-if="paginatedSkills.length === 0" class="empty">暂无技能</div>
+    </div>
 
-      <!-- ================= 已装备页 ================= -->
+    <button
+      class="page-btn next"
+      :disabled="currentPage >= totalPages"
+      @click="currentPage++"
+    >
+      <Icon icon="mdi:chevron-right" />
+    </button>
+  </div>
+</div>
+
+
+
+      <!-- 已装备页 -->
       <div v-if="activeTab === 'equipped'" class="tab-content">
         <div v-if="equippedSkills.length === 0" class="empty">尚未装备任何技能</div>
         <div class="equipped-list-vertical">
@@ -83,7 +107,7 @@
         </div>
       </div>
 
-      <!-- ================= 三脚架配置页 ================= -->
+      <!-- 三脚架配置页 -->
       <div v-if="activeTab === 'tripod'" class="tripod-full">
         <div v-if="equippedSkills.length === 0" class="empty">请先装备技能</div>
         <template v-else>
@@ -124,7 +148,7 @@
                   </button>
                   <button
                     class="choice-btn none"
-                    :class="{ active: !tripodChoices[equippedSkills[currentTripodSkillIndex].id]?.[tIdx] }"
+                    :class="{ active: !currentTripodChoices[equippedSkills[currentTripodSkillIndex].id]?.[tIdx] }"
                     @click="selectTripod(equippedSkills[currentTripodSkillIndex].id, tIdx, '')"
                   >
                     不选择
@@ -137,25 +161,22 @@
         </template>
       </div>
 
-      <!-- ================= 技能详情弹窗 ================= -->
+      <!-- 技能详情弹窗 -->
       <div v-if="skillDetail" class="skill-detail-overlay" @click.self="skillDetail = null">
         <div class="skill-detail-panel">
           <button class="close-btn" @click="skillDetail = null"><Icon icon="mdi:close" /></button>
           <h3>
             <Icon :icon="skillDetail.icon" /> 
             {{ skillDetail.name }} (Lv.{{ getSkillLevel(skillDetail.id) }})
-            <span v-if="getSkillLevel(skillDetail.id) >= 15" style="color: #ffd700; font-size: 10px;">· 觉醒</span>
+            <span v-if="getSkillLevel(skillDetail.id) >= 10" style="color: #ffd700; font-size: 10px;">· 觉醒</span>
           </h3>
-         <!-- 觉醒进度条：15 → 10 -->
-<div v-if="getSkillLevel(skillDetail.id) < 10" class="awaken-progress">
-  <div class="awaken-label">觉醒进度：{{ getSkillLevel(skillDetail.id) }}/10</div>
-  <div class="awaken-bar">
-    <div class="awaken-fill" :style="{ width: (getSkillLevel(skillDetail.id) / 10 * 100) + '%' }"></div>
-  </div>
-</div>
-
-<!-- 觉醒标签：15 → 10 -->
-<span v-if="getSkillLevel(skillDetail.id) >= 10" style="color: #ffd700; font-size: 10px;">· 觉醒</span>
+          <div v-if="getSkillLevel(skillDetail.id) < 10" class="awaken-progress">
+            <div class="awaken-label">觉醒进度：{{ getSkillLevel(skillDetail.id) }}/10</div>
+            <div class="awaken-bar">
+              <div class="awaken-fill" :style="{ width: (getSkillLevel(skillDetail.id) / 10 * 100) + '%' }"></div>
+            </div>
+          </div>
+          <span v-if="getSkillLevel(skillDetail.id) >= 10" style="color: #ffd700; font-size: 10px;">· 觉醒</span>
           <p class="detail-desc">{{ skillDetail.desc }}</p>
           <div class="detail-grid">
             <div class="detail-item"><span class="label">类型</span><span>{{ getTypeLabel(skillDetail.type) }}</span></div>
@@ -163,10 +184,10 @@
             <div class="detail-item" v-if="skillDetail.element"><span class="label">属性</span><span>{{ getElementLabel(skillDetail.element) }}</span></div>
             <div class="detail-item"><span class="label">MP消耗</span><span>{{ skillDetail.mpCost || 0 }}</span></div>
             <div class="detail-item"><span class="label">当前倍率</span><span>{{ getSkillCurrentMul(skillDetail) }}x</span></div>
-<div class="detail-item" v-if="skillDetail.levelScaling?.baseMul">
-  <span class="label">倍率成长</span>
-  <span>{{ getGrowthDisplay(skillDetail) }}</span>
-</div>
+            <div class="detail-item" v-if="skillDetail.levelScaling?.baseMul">
+              <span class="label">倍率成长</span>
+              <span>{{ getGrowthDisplay(skillDetail) }}</span>
+            </div>
             <div class="detail-item full-width" v-if="skillDetail.effects?.length"><span class="label">附加效果</span><span>{{ skillDetail.effects.map(e => getEffectFullDesc(e)).join('；') }}</span></div>
           </div>
           <div class="detail-actions">
@@ -177,7 +198,7 @@
               <button class="pixel-btn small" v-if="!isEquipped(skillDetail.id)" @click="equipSkill(skillDetail.id)">装备</button>
               <button class="pixel-btn small danger" v-else @click="unequipSkill(skillDetail.id)">卸下</button>
             </template>
-            <button class="pixel-btn small" v-else @click="learnSkill(skillDetail.id)" :disabled="store.player.skillPoints < (skillDetail.learnCost || 2)">学习 ({{ skillDetail.learnCost || 2 }} SP)</button>
+            <button class="pixel-btn small" v-else @click="learnSkill(skillDetail.id)" :disabled="skillPoints < (skillDetail.learnCost || 2)">学习 ({{ skillDetail.learnCost || 2 }} SP)</button>
           </div>
         </div>
       </div>
@@ -186,7 +207,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, inject } from 'vue'
+import { ref, computed, onMounted, inject,watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
 
@@ -195,14 +216,61 @@ const emit = defineEmits(['close'])
 const showConfirm = inject('showConfirm', (msg) => Promise.resolve(confirm(msg)))
 const showToast = inject('showToast', (msg) => alert(msg))
 
+const props = defineProps({
+  mode: { type: String, default: 'player' },
+  companion: { type: Object, default: null }
+})
+
 const activeTab = ref('learn')
 const skillDetail = ref(null)
 const currentTripodSkillIndex = ref(0)
 const selectedElement = ref('all')
 
+// ── 根据模式选择数据源 ──
+const skillOwner = computed(() => {
+  if (props.mode === 'companion' && props.companion) return props.companion
+  return store.player
+})
+
+const skillPoints = computed(() => {
+  if (props.mode === 'companion' && props.companion) {
+    return store.player.skillPoints  // 伙伴模式也使用玩家技能点
+  }
+  return store.player.skillPoints
+})
+
+const skillsData = computed(() => {
+  if (props.mode === 'companion' && props.companion) return props.companion.skills || {}
+  return store.player.skills || {}
+})
+// 修改 equippedSkillIds 计算属性
+const equippedSkillIds = computed(() => {
+  if (props.mode === 'companion' && props.companion) {
+    // 优先从 skillSlots 对象读取
+    const slots = props.companion.skillSlots || {}
+    const idsFromSlots = Object.values(slots).filter(Boolean)
+    if (idsFromSlots.length > 0) return idsFromSlots
+    // 兼容旧数据：从 equippedSkills 数组读取
+    return props.companion.equippedSkills || []
+  }
+  return store.player.equippedSkills || []
+})
+const equippedSkills = computed(() =>
+  equippedSkillIds.value.map(id => store.config.skillPool.find(s => s.id === id)).filter(Boolean)
+)
+
+const currentTripodChoices = computed(() => {
+  if (props.mode === 'companion' && props.companion) {
+    if (!props.companion.tripodChoices) props.companion.tripodChoices = {}
+    return props.companion.tripodChoices
+  }
+  return store.player.tripodChoices || {}
+})
+
 const sortedSkillPool = computed(() =>
   [...(store.config.skillPool || [])].sort((a, b) => (isUnlocked(b.id) ? 1 : 0) - (isUnlocked(a.id) ? 1 : 0))
 )
+
 const filteredSkillPool = computed(() => {
   if (selectedElement.value === 'all') return sortedSkillPool.value
   return sortedSkillPool.value.filter(s => {
@@ -210,62 +278,75 @@ const filteredSkillPool = computed(() => {
     return s.element === selectedElement.value
   })
 })
-const equippedSkills = computed(() =>
-  (store.player.equippedSkills || []).map(id => store.config.skillPool.find(s => s.id === id)).filter(Boolean)
-)
 
 onMounted(() => {
-  if (!store.player.tripodChoices) store.player.tripodChoices = {}
-  if (!store.player.equippedSkills) store.player.equippedSkills = []
-  if (!store.player.skills) store.player.skills = {}
-  if (store.player.skillPoints === undefined) store.player.skillPoints = 5
+  if (props.mode === 'player') {
+    if (!store.player.tripodChoices) store.player.tripodChoices = {}
+    if (!store.player.equippedSkills) store.player.equippedSkills = []
+    if (!store.player.skills) store.player.skills = {}
+    if (store.player.skillPoints === undefined) store.player.skillPoints = 5
+  }
 })
 
-const tripodChoices = computed({
-  get: () => store.player.tripodChoices || {},
-  set: (v) => { store.player.tripodChoices = v; store.save() }
-})
+function isUnlocked(skillId) { return !!skillsData.value[skillId]?.unlocked }
+function isEquipped(skillId) { return equippedSkillIds.value.includes(skillId) }
+function getSkillLevel(skillId) { return skillsData.value[skillId]?.level || 1 }
 
 function openSkillDetail(skill) {
   skillDetail.value = store.config.skillPool.find(s => s.id === skill.id) || skill
 }
+
 function getSkillCurrentMul(skill) {
-  const level = getSkillLevel(skill.id);         // SkillPanel 里用这个
-  // const level = skillLevel;                   // useBattleState 里用这个（从 store.player.skills 获取）
-  const base = skill.baseMul || 0;
-  const basePerLevel = skill.levelScaling?.baseMul || 0.1;
-  
-  let mul = base;
+  const level = getSkillLevel(skill.id)
+  const base = skill.baseMul || 0
+  const basePerLevel = skill.levelScaling?.baseMul || 0.1
+  let mul = base
   for (let i = 2; i <= level; i++) {
-    const growthAtThisLevel = basePerLevel * (1 + (i - 1) * 0.08);
-    mul += growthAtThisLevel;
+    const growthAtThisLevel = basePerLevel * (1 + (i - 1) * 0.08)
+    mul += growthAtThisLevel
   }
-  
-  return mul.toFixed(2);
+  return mul.toFixed(2)
 }
+
 function getGrowthDisplay(skill) {
-  const level = getSkillLevel(skill.id);
-  const basePerLevel = skill.levelScaling?.baseMul || 0.1;
-  // 下一级的实际成长量
-  const nextGrowth = basePerLevel * (1 + level * 0.08);
-  return '+' + nextGrowth.toFixed(2) + '/级';
+  const level = getSkillLevel(skill.id)
+  const basePerLevel = skill.levelScaling?.baseMul || 0.1
+  const nextGrowth = basePerLevel * (1 + level * 0.08)
+  return '+' + nextGrowth.toFixed(2) + '/级'
 }
-// ================= 升级费用阶梯（10级后递增） =================
+
 function getUpgradeCost(level) {
-  if (level < 10) return 2         // 1-9级：2点
-  if (level < 15) return 2 + (level - 9) // 10级3点, 11级4点, ... 14级6点
-  return 5 + (level - 14)          // 15级6点, 16级7点...
+  if (level < 10) return 2
+  if (level < 15) return 2 + (level - 9)
+  return 5 + (level - 14)
 }
 
 async function handleResetSkills() {
   const ok = await showConfirm('确定要重置所有技能吗？\n所有技能点将返还，已学习技能将被遗忘。')
   if (!ok) return
+  if (props.mode === 'companion' && props.companion) {
+    const comp = props.companion
+    let refund = 0
+    for (const skill of store.config.skillPool || []) {
+      const state = comp.skills?.[skill.id]
+      if (!state?.unlocked) continue
+      refund += skill.learnCost || 0
+      if (state.level > 1) refund += getUpgradeCost(state.level - 1) * (state.level - 1)
+    }
+    comp.skills = {}
+    comp.equippedSkills = []
+    comp.tripodChoices = {}
+    comp.skillSpent = 0
+    store.save()
+    showToast('伙伴技能已重置，技能点已返还')
+    return
+  }
   let refund = 0
   for (const skill of store.config.skillPool || []) {
     const state = store.player.skills?.[skill.id]
     if (!state?.unlocked) continue
     refund += skill.learnCost || 0
-    if (state.level > 1) refund += getUpgradeCost(state.level - 1) * (state.level - 1) // 简化退还，实际应累加每级消耗
+    if (state.level > 1) refund += getUpgradeCost(state.level - 1) * (state.level - 1)
   }
   store.player.skills = {}
   store.player.equippedSkills = []
@@ -275,15 +356,22 @@ async function handleResetSkills() {
   showToast('技能点已重置！')
 }
 
-function isUnlocked(skillId) { return !!store.player.skills?.[skillId]?.unlocked }
-function isEquipped(skillId) { return store.player.equippedSkills?.includes(skillId) }
-function getSkillLevel(skillId) { return store.player.skills?.[skillId]?.level || 1 }
-
 function learnSkill(skillId) {
   const skill = store.config.skillPool.find(s => s.id === skillId)
   if (!skill) return
   const cost = skill.learnCost || 2
-  if (store.player.skillPoints < cost) return
+  if (skillPoints.value < cost) return
+  if (props.mode === 'companion' && props.companion) {
+    const comp = props.companion
+    if (!comp.skills) comp.skills = {}
+    if (!comp.skills[skillId]) comp.skills[skillId] = { unlocked: true, level: 1 }
+    else comp.skills[skillId].unlocked = true
+    comp.skillSpent = (comp.skillSpent || 0) + cost
+    store.player.skillPoints -= cost   // 关键：消耗玩家技能点
+    store.save()
+    if (skillDetail.value?.id === skillId) skillDetail.value = store.config.skillPool.find(s => s.id === skillId)
+    return
+  }
   if (!store.player.skills) store.player.skills = {}
   if (!store.player.skills[skillId]) store.player.skills[skillId] = { unlocked: true, level: 1 }
   else store.player.skills[skillId].unlocked = true
@@ -295,72 +383,99 @@ function learnSkill(skillId) {
 function upgradeSkill(skillId) {
   const skill = store.config.skillPool.find(s => s.id === skillId)
   if (!skill) return
-  
   const currentLevel = getSkillLevel(skillId)
   const cost = getUpgradeCost(currentLevel)
-  
-  if (!isUnlocked(skillId)) {
-    showToast('尚未学习该技能')
-    return
-  }
-  if (store.player.skillPoints < cost) {
-    showToast(`技能点不足 (需要${cost}点)`)
-    return
-  }
-
-  store.player.skillPoints -= cost
-  if (!store.player.skills) store.player.skills = {}
-  if (!store.player.skills[skillId]) store.player.skills[skillId] = { unlocked: true, level: 1 }
-  store.player.skills[skillId].level += 1
-  store.save()
-
-  if (skillDetail.value?.id === skillId) {
-    skillDetail.value = store.config.skillPool.find(s => s.id === skillId)
-  }
-  
-  const newLevel = getSkillLevel(skillId)
-  if (newLevel === 10) {
-    showToast(`${skill.name} 觉醒！已解锁元素反应！`)
+  if (!isUnlocked(skillId)) { showToast('尚未学习该技能'); return }
+  if (skillPoints.value < cost) { showToast(`技能点不足 (需要${cost}点)`); return }
+  if (props.mode === 'companion' && props.companion) {
+    const comp = props.companion
+    comp.skills[skillId].level += 1
+    comp.skillSpent += cost
+    store.save()
   } else {
-    showToast(`${skill.name} 升级至 Lv.${newLevel}，消耗 ${cost} 技能点`)
+    store.player.skillPoints -= cost
+    store.player.skills[skillId].level += 1
+    store.save()
   }
+  if (skillDetail.value?.id === skillId) skillDetail.value = store.config.skillPool.find(s => s.id === skillId)
+  const newLevel = getSkillLevel(skillId)
+  showToast(`${skill.name} 升级至 Lv.${newLevel}，消耗 ${cost} 技能点`)
 }
 
 function equipSkill(skillId) {
   if (isEquipped(skillId)) return
+  if (props.mode === 'companion' && props.companion) {
+    const comp = props.companion
+    // 写入 equippedSkills 数组（UI 展示用）
+    if (!comp.equippedSkills) comp.equippedSkills = []
+    if (comp.equippedSkills.length >= 4) { showToast('伙伴最多装备4个技能'); return }
+    comp.equippedSkills.push(skillId)
+    // 同时写入 skillSlots 对象（战斗引擎读取用）
+    if (!comp.skillSlots) comp.skillSlots = {}
+    const slotKeys = ['s1', 's2', 's3', 's4']
+    const emptySlot = slotKeys.find(key => !comp.skillSlots[key])
+    if (emptySlot) {
+      comp.skillSlots[emptySlot] = skillId
+    }
+    store.save()
+    return
+  }
+  // 玩家模式保持不变
   if (store.player.equippedSkills.length >= 4) { showToast('最多装备4个技能'); return }
   store.player.equippedSkills.push(skillId)
   store.save()
 }
 
 function unequipSkill(skillId) {
+  if (props.mode === 'companion' && props.companion) {
+    const comp = props.companion
+    const idx = comp.equippedSkills?.indexOf(skillId)
+    if (idx >= 0) { comp.equippedSkills.splice(idx, 1); store.save() }
+    return
+  }
   const idx = store.player.equippedSkills.indexOf(skillId)
   if (idx >= 0) { store.player.equippedSkills.splice(idx, 1); store.save() }
 }
 
 function moveUp(idx) {
-  if (idx > 0) {
-    const arr = store.player.equippedSkills
-    ;[arr[idx], arr[idx-1]] = [arr[idx-1], arr[idx]]
-    store.save()
+  if (props.mode === 'companion' && props.companion) {
+    const arr = props.companion.equippedSkills
+    if (idx > 0) { [arr[idx], arr[idx-1]] = [arr[idx-1], arr[idx]]; store.save() }
+    return
   }
+  const arr = store.player.equippedSkills
+  if (idx > 0) { [arr[idx], arr[idx-1]] = [arr[idx-1], arr[idx]]; store.save() }
 }
 
 function moveDown(idx) {
-  if (idx < store.player.equippedSkills.length - 1) {
-    const arr = store.player.equippedSkills
-    ;[arr[idx], arr[idx+1]] = [arr[idx+1], arr[idx]]
-    store.save()
+  if (props.mode === 'companion' && props.companion) {
+    const arr = props.companion.equippedSkills
+    if (idx < arr.length - 1) { [arr[idx], arr[idx+1]] = [arr[idx+1], arr[idx]]; store.save() }
+    return
   }
+  const arr = store.player.equippedSkills
+  if (idx < arr.length - 1) { [arr[idx], arr[idx+1]] = [arr[idx+1], arr[idx]]; store.save() }
 }
 
 function selectTripod(skillId, slotIdx, effIdx) {
+  if (props.mode === 'companion' && props.companion) {
+    const comp = props.companion
+    if (!comp.tripodChoices) comp.tripodChoices = {}
+    if (!comp.tripodChoices[skillId]) comp.tripodChoices[skillId] = {}
+    comp.tripodChoices[skillId][slotIdx] = String(effIdx)
+    store.save()
+    return
+  }
   if (!store.player.tripodChoices[skillId]) store.player.tripodChoices[skillId] = {}
   store.player.tripodChoices[skillId][slotIdx] = String(effIdx)
   store.save()
 }
+
 function isTripodSelected(skillId, slotIdx, effIdx) {
-  return String(store.player.tripodChoices[skillId]?.[slotIdx]) === String(effIdx)
+  const choices = props.mode === 'companion'
+    ? (props.companion?.tripodChoices || {})
+    : (store.player.tripodChoices || {})
+  return String(choices[skillId]?.[slotIdx]) === String(effIdx)
 }
 
 const elementTags = [
@@ -397,7 +512,20 @@ function getEffectTitle(eff) {
   }
   return titles[eff.type] || eff.type
 }
+const currentPage = ref(1)
+const pageSize = 6  // 每页显示的技能数量
 
+const totalPages = computed(() => Math.ceil(filteredSkillPool.value.length / pageSize))
+
+const paginatedSkills = computed(() => {
+  const start = (currentPage.value - 1) * pageSize
+  return filteredSkillPool.value.slice(start, start + pageSize)
+})
+
+// 切换元素过滤时重置页码
+watch(selectedElement, () => {
+  currentPage.value = 1
+})
 function getEffectFullDesc(eff) {
   const dur = eff.duration ? `持续${eff.duration}回合` : ''
   const chance = eff.chance !== undefined && eff.chance !== 100 ? `（${eff.chance}%几率）` : ''
@@ -427,28 +555,22 @@ function getEffectFullDesc(eff) {
 </script>
 
 <style scoped>
-/* ===== 原有样式保持不变 ===== */
 .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; z-index: 200; }
 .panel { width: 90vw; height: 90vh; padding: 16px; background: rgba(15,25,45,0.95); border: 2px solid #b89a6a; color: #ffd; font-family: 'Press Start 2P', cursive; display: flex; flex-direction: column; overflow-y: auto; position: relative; }
-
 .top-bar { display: flex; align-items: center; margin-bottom: 10px; }
-.top-left { display: flex; align-items: center; gap: 16px; }
 .top-title { font-size: 16px; color: #ffd700; display: flex; align-items: center; gap: 10px; margin: 0; white-space: nowrap; }
 .top-actions { display: flex; align-items: center; gap: 10px; font-size: 10px; color: #ffd700; margin-left: 16px; }
 .top-sp { white-space: nowrap; }
 .reset-btn { font-size: 7px; padding: 4px 10px; }
 .close-btn { background: none; border: none; color: #ffd; font-size: 20px; cursor: pointer; flex-shrink: 0; margin-left: auto; }
-
 .main-tabs { display: flex; gap: 6px; margin-bottom: 12px; }
 .main-tab { flex: 1; background: rgba(0,0,0,0.4); border: 1px solid rgba(184,154,106,0.4); padding: 8px; font-size: 9px; color: #aaa; display: flex; align-items: center; justify-content: center; gap: 4px; cursor: pointer; }
 .main-tab.active { background: rgba(255,215,0,0.15); border-color: #ffd700; color: #ffd700; }
-
 .element-filter { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 8px; }
-.filter-btn { border-radius: 6px;background: rgba(0,0,0,0.5); border: 1px solid #5a5a7a; padding: 4px 8px; font-size: 7px; color: #ccc; cursor: pointer; display: flex; align-items: center; gap: 3px; white-space: nowrap; flex-shrink: 0; }
+.filter-btn { border-radius: 6px; background: rgba(0,0,0,0.5); border: 1px solid #5a5a7a; padding: 4px 8px; font-size: 7px; color: #ccc; cursor: pointer; display: flex; align-items: center; gap: 3px; white-space: nowrap; flex-shrink: 0; }
 .filter-btn.active { background: rgba(255,215,0,0.2); border-color: #ffd700; color: #ffd; }
-
 .skill-list { display: flex; flex-direction: column; gap: 6px; flex: 1; }
-.skill-card { border-radius: 6px;background: rgba(255,255,255,0.05); border: 1px solid rgba(255,215,0,0.2); padding: 10px; cursor: pointer; }
+.skill-card { border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,215,0,0.2); padding: 10px; cursor: pointer; }
 .skill-card.locked { opacity: 0.5; }
 .skill-top { display: flex; align-items: center; gap: 8px; }
 .skill-icon { font-size: 22px; color: #ffd700; flex-shrink: 0; }
@@ -458,30 +580,27 @@ function getEffectFullDesc(eff) {
 .skill-element { font-size: 7px; margin-top: 2px; }
 .skill-mp { font-size: 8px; color: #aaa; }
 .skill-desc { font-size: 8px; color: #ccc; margin-top: 6px; line-height: 1.3; }
-
 .equipped-list-vertical { display: flex; flex-direction: column; gap: 8px; }
-.equipped-card { border-radius: 6px;background: rgba(255,255,255,0.05); border: 1px solid rgba(255,215,0,0.3); padding: 10px; display: flex; align-items: center; gap: 8px; }
+.equipped-card { border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,215,0,0.3); padding: 10px; display: flex; align-items: center; gap: 8px; }
 .equipped-card .skill-info { flex: 1; display: flex; flex-direction: column; }
 .order-btns { display: flex; gap: 3px; }
-
 .tripod-full { display: flex; flex-direction: column; gap: 12px; }
 .tripod-tabs { display: flex; gap: 4px; justify-content: flex-start; margin-bottom: 16px; }
-.tripod-tab {border-radius: 6px;width: 28px; height: 28px; background: rgba(0,0,0,0.4); border: 1px solid rgba(184,154,106,0.4); color: #aaa; font-family: inherit; font-size: 9px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.tripod-tab { border-radius: 6px; width: 28px; height: 28px; background: rgba(0,0,0,0.4); border: 1px solid rgba(184,154,106,0.4); color: #aaa; font-family: inherit; font-size: 9px; display: flex; align-items: center; justify-content: center; cursor: pointer; }
 .tripod-tab.active { background: rgba(255,215,0,0.2); border-color: #ffd700; color: #ffd700; }
 .skill-tripod-card { background: rgba(0,0,0,0.3); border: 1px solid rgba(255,215,0,0.2); padding: 12px; }
 .skill-tripod-card h3 { font-size: 12px; color: #ffd700; margin-bottom: 10px; }
 .tripod-block { margin-bottom: 12px; }
 .tripod-header { display: flex; justify-content: space-between; font-size: 9px; margin-bottom: 6px; }
 .tripod-choices { display: flex; flex-wrap: wrap; gap: 6px; }
-.choice-btn { border-radius: 6px;background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); padding: 8px 10px; cursor: pointer; text-align: left; flex: 1 1 150px; font-size: 7px; color: #ccc; }
+.choice-btn { border-radius: 6px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.15); padding: 8px 10px; cursor: pointer; text-align: left; flex: 1 1 150px; font-size: 7px; color: #ccc; }
 .choice-btn.active { background: rgba(255,215,0,0.2); border-color: #ffd700; color: #ffd; }
-.choice-btn.none { border-radius: 6px;flex: 0 0 auto; min-width: 70px; text-align: center; color: #666; }
+.choice-btn.none { border-radius: 6px; flex: 0 0 auto; min-width: 70px; text-align: center; color: #666; }
 .eff-title { font-weight: bold; margin-bottom: 3px; }
 .eff-desc { font-size: 6px; color: #aaa; line-height: 1.3; }
 .choice-btn.active .eff-desc { color: #ffd; }
-
 .skill-detail-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: flex; justify-content: center; align-items: center; z-index: 600; padding: 20px; }
-.skill-detail-panel { border-radius: 6px;background: rgba(15,25,45,0.98); border: 2px solid #b89a6a; padding: 20px; max-width: 500px; width: 100%; max-height: 80vh; overflow-y: auto; color: #ffd; font-family: 'Press Start 2P', cursive; position: relative; }
+.skill-detail-panel { border-radius: 6px; background: rgba(15,25,45,0.98); border: 2px solid #b89a6a; padding: 20px; max-width: 500px; width: 100%; max-height: 80vh; overflow-y: auto; color: #ffd; font-family: 'Press Start 2P', cursive; position: relative; }
 .skill-detail-panel h3 { font-size: 13px; color: #ffd700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
 .detail-desc { font-size: 9px; color: #ccc; margin-bottom: 12px; line-height: 1.4; }
 .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-bottom: 12px; }
@@ -493,10 +612,54 @@ function getEffectFullDesc(eff) {
 .pixel-btn.danger { background: rgba(255,100,100,0.2); border-color: #f44; }
 .pixel-btn.micro { font-size: 6px; padding: 3px 5px; min-width: unset; }
 .empty { text-align: center; color: #888; padding: 20px; font-size: 9px; }
-
-/* 觉醒进度条样式 */
 .awaken-progress { margin: 10px 0; }
 .awaken-label { font-size: 8px; color: #aaa; margin-bottom: 4px; }
 .awaken-bar { height: 6px; background: #2a2a3a; border-radius: 3px; overflow: hidden; }
-.awaken-fill { height: 100%; background: linear-gradient(90deg, #ffd700, #ff8c00); border-radius: 3px; transition: width 0.3s; }
+.awaken-fill { height: 100%; background: linear-gradient(90deg, #ffd700, #ff8c00);
+
+border-radius: 3px; transition: width 0.3s; }
+
+
+
+/* 分页区域 */
+.pagination-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.page-btn {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  background: rgba(0,0,0,0.5);
+  border: 1px solid #5a5a7a;
+  border-radius: 6px;
+  color: #ffd700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-size: 18px;
+}
+
+.page-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.page-btn:not(:disabled):hover {
+  background: rgba(255,215,0,0.2);
+  border-color: #ffd700;
+}
+
+.skill-list-pages {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* 原有的 .skill-card 等样式保持不变 */
 </style>

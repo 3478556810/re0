@@ -321,14 +321,25 @@ function executeSkill(engine, enemy, skill) {
 
 function applyEnemyLifesteal(enemy, target, damage) {
   if (!damage || damage <= 0 || target.hp <= 0) return
+
+  // 获取总吸血率（基础值 + Buff 加成）
   let totalLifesteal = enemy.lifesteal || 0
   enemy.effects?.forEach(eff => {
     if (eff.type === EFFECT_TYPES.LIFESTEAL_BUFF) {
       totalLifesteal += (eff.value || 0)
     }
   })
+
+  // ===== 硬性上限：总吸血率不超过 15% =====
+  totalLifesteal = Math.min(totalLifesteal, 15)
+
   if (totalLifesteal > 0) {
-    const drain = Math.floor(enemy.maxHp * totalLifesteal / 100)
+    // 混合公式：伤害吸血 + 生命百分比吸血
+    const damageDrain = Math.floor(damage * totalLifesteal / 100)           // 基于伤害的吸血
+    const hpDrain = Math.floor(enemy.maxHp * totalLifesteal / 100)          // 基于最大生命值的吸血
+    const drain = damageDrain + hpDrain
+    
+    // 不再设置上限，让 Boss 的吸血更有威胁性
     enemy.hp = Math.min(enemy.maxHp, enemy.hp + drain)
   }
 }

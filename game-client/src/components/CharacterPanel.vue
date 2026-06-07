@@ -229,6 +229,20 @@ const dodgeBonus = computed(() => Math.floor((store.playerStats.dodge || 0) - (s
 import { AFFIX_EFFECTS } from '../config/accessoryConfig'
 const showCombatDetail = ref(false)
 
+// 元素列表
+const elements = [
+  { key: 'fireDmg', name: '火', icon: 'mdi:fire' },
+  { key: 'waterDmg', name: '水', icon: 'mdi:water-outline' },
+  { key: 'thunderDmg', name: '雷', icon: 'mdi:lightning-bolt' },
+  { key: 'windDmg', name: '风', icon: 'mdi:weather-windy' },
+  { key: 'grassDmg', name: '草', icon: 'mdi:leaf' },
+  { key: 'iceDmg', name: '冰', icon: 'mdi:snowflake' },
+  { key: 'holyDmg', name: '圣', icon: 'mdi:brightness-7' },
+  { key: 'darkDmg', name: '暗', icon: 'mdi:moon-waning-crescent' },
+  { key: 'steelDmg', name: '钢', icon: 'mdi:cube-outline' },
+  { key: 'rockDmg', name: '岩', icon: 'mdi:terrain' }
+]
+
 const bossDmg = computed(() => store.playerStats.specialBossDmg || 0)
 const bossDmgBonus = computed(() => 0)
 
@@ -295,18 +309,7 @@ function onFileChange(e) {
   reader.readAsDataURL(file)
 }
 
-const elements = [
-  { key: 'fireDmg', name: '火', icon: 'mdi:fire' },
-  { key: 'waterDmg', name: '水', icon: 'mdi:water-outline' },
-  { key: 'thunderDmg', name: '雷', icon: 'mdi:lightning-bolt' },
-  { key: 'windDmg', name: '风', icon: 'mdi:weather-windy' },
-  { key: 'grassDmg', name: '草', icon: 'mdi:leaf' },
-  { key: 'iceDmg', name: '冰', icon: 'mdi:snowflake' },
-  { key: 'holyDmg', name: '圣', icon: 'mdi:brightness-7' },
-  { key: 'darkDmg', name: '暗', icon: 'mdi:moon-waning-crescent' },
-  { key: 'steelDmg', name: '钢', icon: 'mdi:cube-outline' },
-  { key: 'rockDmg', name: '岩', icon: 'mdi:terrain' }
-]
+
 </script>
 
 <style scoped>

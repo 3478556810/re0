@@ -63,7 +63,6 @@ function checkElementReaction(engine, attacker, target, skill, result, damage) {
       const allEnemies = engine.getAliveEnemies();
       const spreadElement = existingMark.element === 'wind' ? skill.element : existingMark.element;
       let spreadDmg = Math.floor(attacker.getEffectiveAttack() * 0.8 * scale);
-      // 扩散伤害也享受反应增幅（可选）
       spreadDmg = Math.floor(spreadDmg * masteryMultiplier);
       for (const enemy of allEnemies) {
         enemy.takeDamage(spreadDmg, attacker);
@@ -257,14 +256,11 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
 
     // ===== 统一无敌判定（基于标记） =====
     if (target.isBossInvincible) {
-      // 检查是否有特定弱点可以破无敌
       if (target.invincibleWeakness && skill.element === target.invincibleWeakness) {
         target.isBossInvincible = false
         target.invincibleReason = ''
-        // 移除可能关联的效果（如护盾）
         target.removeEffect(EFFECT_TYPES.SHIELD)
         result.messages.push(`无敌被${getElementLabel(skill.element)}属性打破！`)
-        // 继续正常伤害流程
       } else {
         result.messages.push(`${target.name} 免疫了所有伤害！`)
         result.hitDetails.push({
@@ -274,7 +270,7 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
           multiplier: 1,
           trueDmg: 0
         })
-        continue // 跳过本次攻击的所有后续逻辑
+        continue
       }
     }
 
@@ -313,7 +309,7 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
       critDmgOnMark: player.critDmgOnMark || 0
     }
 
-    // 条件增伤（碎冰、眩晕追击等）
+    // 条件增伤
     let conditionalBonus = 1.0
     if (skill.effects?.some(e => e.type === 'shatter') && target.effects?.some(e => e.type === 'freeze')) {
       conditionalBonus *= 2.0
@@ -353,18 +349,15 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
 
     const deathResult = target.takeDamage(damage, player)
 
-    // 闪避提示
     if (deathResult?.dodged) {
       result.messages.push(`${target.name} 闪避了攻击！`)
     }
-    // 无敌提示（如果 takeDamage 返回 invulnerable，说明未破防的无敌依然在）
     if (deathResult?.invulnerable) {
       result.messages.push(`${target.name} 免疫了所有伤害！`)
     }
 
     player._lastDamageDealt = damage
 
-    // 元素反应
     checkElementReaction(engine, player, target, skill, result, damage);
 
     if (window.recordDamage) {
@@ -423,7 +416,7 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
       target.effects = [...effects]
     }
 
-    // 低血量印记吸血
+    // 低血量印记吸血（保留基于伤害的公式，这是套装效果，不改）
     if (player.lowHpLifestealOnMark && player.hp < player.maxHp * 0.5) {
       const hasMark = target.effects.some(e => e.type === 'dragonMark')
       if (hasMark) {
@@ -459,20 +452,38 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
       }
     }
 
-    // 吸血/吸蓝
-    const actualHpLoss = Math.min(damage, hpBefore)
+    // ========== 玩家吸血（基于自身最大生命值） ==========
     let buffLifesteal = 0
     player.effects?.forEach(e => {
       if (e.type === EFFECT_TYPES.LIFESTEAL_BUFF) buffLifesteal += (e.value || 0)
     })
+
     const totalLifesteal = (player.lifesteal || 0) + (player.specialLifestealPercent || 0) + buffLifesteal
+
     if (totalLifesteal > 0) {
-      const drain = Math.floor(actualHpLoss * totalLifesteal / 100)
-      if (drain > 0) { player.hp = Math.min(player.maxHp, player.hp + drain); result.hpDrain += drain }
+      let drain = Math.floor(player.maxHp * totalLifesteal / 100)
+      
+      // AOE 技能吸血效率降低
+      if (isAoeDamage) {
+        drain = Math.floor(drain * 0.3)
+      }
+      
+      // 重伤惩罚
+      if (player.effects?.some(e => e.type === 'healReduction' || e.type === 'wounded')) {
+        drain = Math.floor(drain * 0.3)
+      }
+      
+      // 单次吸血上限：不超过最大生命值的 8%
+  
+      
+      player.hp = Math.min(player.maxHp, player.hp + drain)
+      result.hpDrain += drain
     }
+
+    // 吸蓝（保持原逻辑）
     const totalMpLifesteal = (player.mpLifesteal || 0) + (player.specialMpLifestealPercent || 0)
     if (totalMpLifesteal > 0) {
-      const drain = Math.floor(actualHpLoss * totalMpLifesteal / 100)
+      const drain = Math.floor(player.maxMp * totalMpLifesteal / 100)
       if (drain > 0) { player.mp = Math.min(player.maxMp, player.mp + drain); result.mpDrain += drain }
     }
     const mpOnHit = player.mpOnHit || 0

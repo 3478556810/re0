@@ -234,19 +234,60 @@ case 'dot':
   break;
 case 'heal':
   const healAmount = Math.floor(source.getEffectiveAttack() * value);
+  
   if (effDef.target === 'all' && engine) {
     // 治疗施法者
-    source.hp = Math.min(source.maxHp, source.hp + healAmount);
-    messages.push(`${source.name} 恢复了 ${healAmount} HP`);
+    source.hp = Math.min(source.maxHp, Math.floor(source.hp + healAmount));
     // 治疗伙伴
     if (engine.companion && engine.companion.hp > 0) {
-      engine.companion.hp = Math.min(engine.companion.maxHp, engine.companion.hp + healAmount);
-      messages.push(`${engine.companion.name} 恢复了 ${healAmount} HP`);
+      engine.companion.hp = Math.min(engine.companion.maxHp, Math.floor(engine.companion.hp + healAmount));
     }
   } else {
-    source.hp = Math.min(source.maxHp, source.hp + healAmount);
-    messages.push(`${source.name} 恢复了 ${healAmount} HP`);
+    source.hp = Math.min(source.maxHp, Math.floor(source.hp + healAmount));
   }
+  
+  // ========== 关键修复：圣光灌注 + 神圣赞美诗 + 回蓝 ==========
+  const talents = source.talents || {};
+  const companionTarget = (effDef.target === 'all' && engine?.companion) ? engine.companion : target;
+  
+  // 检查目标是否是伙伴
+  if (companionTarget && companionTarget.isCompanion) {
+    // 圣光灌注
+    if (talents['o_notable_heal']) {
+      companionTarget.addEffect({
+        type: 'buff', stat: 'atk', value: 0.4, duration: 2, stackable: false
+      });
+      companionTarget.addEffect({
+        type: 'buff', stat: 'critDmg', value: 1.0, duration: 2, stackable: false
+      });
+    }
+    
+    // 神圣赞美诗
+    if (talents['s_notable_heal']) {
+      companionTarget.addEffect({
+        type: 'buff', stat: 'atk', value: 0.5, duration: 2, stackable: false
+      });
+      companionTarget.addEffect({
+        type: 'buff', stat: 'critDmg', value: 1.2, duration: 2, stackable: false
+      });
+    }
+    
+    // 智慧之泉（治疗时回复3% MP）
+    if (talents['o_notable_mp']) {
+      const regen = Math.floor(source.maxMp * 0.03);
+      source.mp = Math.min(source.maxMp, source.mp + regen);
+    }
+    
+    // 神启（治疗时回复4% MP）
+    if (talents['s_notable_mp']) {
+      const regen = Math.floor(source.maxMp * 0.04);
+      source.mp = Math.min(source.maxMp, source.mp + regen);
+    }
+  }
+  
+  // ========== 不再播报治疗消息（避免刷屏） ==========
+  // 如果需要保留消息但缩短，可以只保留极简提示
+  // messages.push(`${source.name} 恢复了 ${healAmount} HP`);
   break;
 case 'buff':
   if (effDef.stat) {
