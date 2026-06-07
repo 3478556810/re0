@@ -47,6 +47,13 @@ import { spawnEnemy } from './config/biomeConfig'
 let raidCheckInterval = null
 
 onMounted(() => {
+
+
+  if (!store.activeCompanionId && store.companions?.length > 0) {
+    store.activeCompanionId = store.companions[0].id
+    store.save()
+  }
+
   raidCheckInterval = setInterval(() => {
     if (!store.isStoryMode || store.storyEndTime) return
     const key = 'story_raid_clears'

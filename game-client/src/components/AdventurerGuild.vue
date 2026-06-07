@@ -155,25 +155,34 @@ const availableMonsterIds = computed(() => {
   }
   return ids
 })
-
 const availableMonsters = computed(() => {
   const { minFloor, maxFloor } = getFloorRangeForCurrentRank();
+  const dungeon = dungeonConfigs.value['shadow_abyss'];
+  if (!dungeon || !dungeon.monstersByFloor) return [];
+
+  const monsterIdsInRange = new Set();
+  for (let floor = minFloor; floor <= maxFloor; floor++) {
+    const floorMonsters = dungeon.monstersByFloor[String(floor)] || [];
+    // 排除 Boss 层（5、10、15、20 等）
+    if (floor % 5 === 0) continue;
+    floorMonsters.forEach(id => monsterIdsInRange.add(id));
+  }
+
   return monsterTemplates.value.filter(m => {
-    if (!availableMonsterIds.value.has(m.id)) return false;
+    if (!monsterIdsInRange.has(m.id)) return false;
     if (m.isBoss) return false;
+    if (m.isRaidBoss) return false;
     if (m.id === 'training_dummy') return false;
-    const monsterMinFloor = getMonsterMinFloor(m.id);
-    return monsterMinFloor >= minFloor && monsterMinFloor <= maxFloor;
+    return true;
   });
 });
 
-
 function getFloorRangeForCurrentRank() {
   const rankIndex = rankConfig.findIndex(r => r.name === store.player.rank);
-  if (rankIndex === -1) return { minFloor: 1, maxFloor: 4 };  // 默认黑铁 1-4层
+  if (rankIndex === -1) return { minFloor: 1, maxFloor: 4 };
   
-  const maxFloor = (rankIndex + 1) * 5 - 1;  // 黑铁4F，青铜9F，白银14F...
-  const minFloor = rankIndex === 0 ? 1 : rankIndex * 5;  // 黑铁1F起，青铜5F起，白银10F起...
+  const maxFloor = (rankIndex + 1) * 5 - 1;  // 黄金→19F
+  const minFloor = rankIndex === 0 ? 1 : rankIndex * 5;  // 黑铁→1F，青铜→5F，白银→10F，黄金→15F...
   
   return { minFloor, maxFloor };
 }
@@ -183,17 +192,7 @@ function getMaxFloorForCurrentRank() {
   if (rankIndex === -1) return 4; // 默认1-4层
   return (rankIndex + 1) * 5 - 1; // 黑铁→4F，青铜→9F，白银→14F...
 }
-function getMonsterMinFloor(monsterId) {
-  let minFloor = 999
-  for (const [dgId, dg] of Object.entries(dungeonConfigs.value)) {
-    for (const [floor, monsters] of Object.entries(dg.monstersByFloor || {})) {
-      if (monsters.includes(monsterId)) {
-        minFloor = Math.min(minFloor, parseInt(floor))
-      }
-    }
-  }
-  return minFloor === 999 ? 1 : minFloor
-}
+
 function getMonsterFloor(monsterId) {
   const floors = [];
   for (const dg of Object.values(dungeonConfigs.value)) {

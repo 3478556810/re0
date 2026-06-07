@@ -109,7 +109,7 @@ import SkillPanel from './SkillPanel.vue'
 import DungeonSelectPanel from './DungeonSelectPanel.vue'
 import AffectionPanel from './AffectionPanel.vue'
 import RaidPanel from './RaidPanel.vue'
-import CompanionPanel from './CompanionPanel.vue'
+import CompanionPanel from './CompanionPanel/CompanionPanel.vue'
 import ProfessionPanel from './class/ClassPanel.vue'
 
 // 速通战斗记录

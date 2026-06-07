@@ -1,31 +1,32 @@
 [
   {
+    "_comment": "===== 雷属性技能 =====",
     "id": "thunder_shock",
     "name": "雷电",
-    "desc": "雷属性全体攻击，概率眩晕。",
+    "desc": "雷属性全体攻击，低概率眩晕。清场型AOE。",
     "icon": "mdi:lightning-bolt",
     "type": "active",
     "target": "aoe",
     "element": "thunder",
     "mpCost": 12,
-    "baseMul": 1.1,
+    "baseMul": 1.5,
     "maxLevel": 10,
     "upgradeCost": 3,
     "learnCost": 3,
-    "levelScaling": { "baseMul": 0.09 },
+    "levelScaling": { "baseMul": 0.10 },
     "effects": [
-      { "type": "stun", "duration": 1, "chance": 30 }
+      { "type": "stun", "duration": 1, "chance": 25 }
     ],
     "tripods": [
-      { "name": "高压", "unlockLevel": 4, "effects": [{ "type": "stun", "duration": 1, "chance": 40 }] },
-      { "name": "连锁闪电", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 50, "target": "aoe" }] },
+      { "name": "高压", "unlockLevel": 4, "effects": [{ "type": "stun", "duration": 1, "chance": 35 }] },
+      { "name": "连锁闪电", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 30, "target": "aoe", "chance": 100 }] },
       { "name": "电磁场", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.25, "stat": "critRate", "duration": 3, "chance": 100, "target": "self" }] }
     ]
   },
   {
     "id": "lightning_spear",
     "name": "雷枪",
-    "desc": "雷属性单体高伤。",
+    "desc": "雷属性单体高伤，精准狙杀。",
     "icon": "mdi:lightning-bolt-outline",
     "type": "active",
     "target": "single",
@@ -38,9 +39,30 @@
     "levelScaling": { "baseMul": 0.22 },
     "effects": [],
     "tripods": [
-      { "name": "穿透", "unlockLevel": 4, "effects": [{ "type": "trueDmg", "value": 0.2, "chance": 100 }] },
-      { "name": "连锁", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 40, "target": "aoe" }] },
-      { "name": "雷神", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.3, "stat": "atk", "duration": 3, "chance": 100, "target": "self" }] }
+      { "name": "穿透", "unlockLevel": 4, "effects": [{ "type": "trueDmg", "value": 0.15, "chance": 100 }] },
+      { "name": "连锁", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 25, "target": "aoe", "chance": 100 }] },
+      { "name": "雷神", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.25, "stat": "atk", "duration": 2, "chance": 100, "target": "self" }] }
+    ]
+  },
+  {
+    "id": "thunder_storm",
+    "name": "雷霆万钧",
+    "desc": "雷属性全体高伤，无控制但伤害倍率极高。",
+    "icon": "mdi:weather-lightning",
+    "type": "active",
+    "target": "aoe",
+    "element": "thunder",
+    "mpCost": 18,
+    "baseMul": 2.0,
+    "maxLevel": 10,
+    "upgradeCost": 5,
+    "learnCost": 5,
+    "levelScaling": { "baseMul": 0.18 },
+    "effects": [],
+    "tripods": [
+      { "name": "暴雷", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.3, "stat": "critDmg", "duration": 3, "chance": 100, "target": "self" }] },
+      { "name": "余震", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 20, "target": "aoe", "chance": 100 }] },
+      { "name": "天罚", "unlockLevel": 10, "effects": [{ "type": "trueDmg", "value": 0.2, "chance": 100 }] }
     ]
   }
 ]

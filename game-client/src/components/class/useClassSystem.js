@@ -11,32 +11,30 @@ export function useClassSystem() {
   const classDesc = computed(() => currentClass.value.desc)
   const classBonuses = computed(() => currentClass.value.bonuses)
 
-  // 一转职业
-  const firstJobs = computed(() => {
-    return Object.values(CLASS_DEFS)
-      .filter(c => c.tier === 1)
-      .map(c => ({
-        ...c,
-        unlocked: store.player.level >= 10
-      }))
-  })
+const firstJobs = computed(() => {
+  return Object.values(CLASS_DEFS)
+    .filter(c => c.tier === 1)
+    .map(c => ({
+      ...c,
+      unlocked: store.player.level >= (c.reqLevel || 1)  // 使用 CLASS_DEFS 中的值
+    }))
+})
 
-  // 二转职业
-  const secondJobs = computed(() => {
-    const current = store.player.class
-    let parentId = current
-    const def = CLASS_DEFS[current]
-    if (def && def.tier === 2) parentId = def.parent
-    else if (def && def.tier === 1) parentId = current
-    else parentId = 'warrior'
+const secondJobs = computed(() => {
+  const current = store.player.class
+  let parentId = current
+  const def = CLASS_DEFS[current]
+  if (def && def.tier === 2) parentId = def.parent
+  else if (def && def.tier === 1) parentId = current
+  else parentId = 'warrior'
 
-    return Object.values(CLASS_DEFS)
-      .filter(c => c.tier === 2 && c.parent === parentId)
-      .map(c => ({
-        ...c,
-        unlocked: store.player.level >= (c.reqLevel || 25)
-      }))
-  })
+  return Object.values(CLASS_DEFS)
+    .filter(c => c.tier === 2 && c.parent === parentId)
+    .map(c => ({
+      ...c,
+      unlocked: store.player.level >= (c.reqLevel || 15)  // 使用 CLASS_DEFS 中的值
+    }))
+})
 
   const isAdvancedClass = computed(() => {
     const def = CLASS_DEFS[store.player.class]

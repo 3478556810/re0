@@ -1,25 +1,13 @@
 <template>
   <div class="overlay">
     <div class="panel">
-      <!-- 顶部栏 -->
+      <!-- 顶部栏（极致精简） -->
       <div class="top-bar">
-        <h2><Icon icon="mdi:castle" /> 徽记兑换</h2>
+        <div class="token-badge">
+          <Icon icon="mdi:castle" />
+          <span>{{ tokenCount }}</span>
+        </div>
         <button class="close-btn" @click="$emit('close')"><Icon icon="mdi:close" /></button>
-      </div>
-
-      <!-- 余额信息 -->
-      <div class="balance-row">
-        <div class="balance-card">
-          <Icon icon="mdi:castle" class="balance-icon" />
-          <div class="balance-info">
-            <div class="balance-label">当前徽记</div>
-            <div class="balance-value">{{ tokenCount }} 个</div>
-          </div>
-        </div>
-        <div class="discount-badge" v-if="discountPercent > 0">
-          <Icon icon="mdi:brightness-percent" />
-          段位折扣 {{ discountPercent }}%
-        </div>
       </div>
 
       <!-- 商品列表 -->
@@ -29,9 +17,7 @@
             <div class="item-info">
               <div class="item-name">{{ item.name }}</div>
               <div class="item-desc">{{ item.desc }}</div>
-              <!-- 抽奖包预览 -->
               <div v-if="item.type === 'gacha' && item.gachaPool" class="gacha-preview">
-                <span class="gacha-label">可能获得：</span>
                 <span v-for="(r, idx) in getGachaPreview(item.gachaPool)" :key="idx" class="gacha-tag">
                   {{ r }}
                 </span>
@@ -45,7 +31,6 @@
                 <s>{{ item.cost }}</s> <strong>{{ actualCost(item) }}</strong>
               </span>
               <span v-else><strong>{{ item.cost }}</strong></span>
-              徽记
             </div>
             <button
               class="buy-btn"
@@ -214,85 +199,52 @@ function buy(item) {
 }
 
 .panel {
-  width: 95vw;
-  height: 92vh;
-  max-width: 700px;
+  width: 100vw;
+  height: 100vh;
   background: rgba(15,25,45,0.95);
-  border: 2px solid #b89a6a;
-  border-radius: 24px;
-  padding: 20px;
   color: #ffd;
   font-family: 'Press Start 2P', cursive;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  padding: 8px 12px;
+  box-sizing: border-box;
 }
 
-/* 顶部栏 */
+/* 顶部栏（极简） */
 .top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16px;
+  padding: 4px 0;
+  margin-bottom: 8px;
   flex-shrink: 0;
-}
-.top-bar h2 {
-  font-size: 16px;
-  color: #ffd700;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0;
-}
-.close-btn {
-  background: none; border: none;
-  color: #ffd; font-size: 24px;
-  cursor: pointer; padding: 4px;
 }
 
-/* 余额行 */
-.balance-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 20px;
-  flex-shrink: 0;
-  flex-wrap: wrap;
-}
-.balance-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(255,215,0,0.1);
-  border: 1px solid rgba(255,215,0,0.3);
-  border-radius: 16px;
-  padding: 12px 18px;
-}
-.balance-icon {
-  font-size: 32px;
-  color: #ffd700;
-}
-.balance-label {
-  font-size: 9px;
-  color: #ccc;
-  margin-bottom: 2px;
-}
-.balance-value {
-  font-size: 20px;
-  color: #ffd700;
-  font-weight: bold;
-}
-.discount-badge {
-  font-size: 11px;
-  background: rgba(76,175,80,0.2);
-  border: 1px solid #4caf50;
-  border-radius: 10px;
-  padding: 8px 14px;
-  color: #4caf50;
+.token-badge {
   display: flex;
   align-items: center;
   gap: 6px;
+  background: rgba(255,215,0,0.15);
+  border: 1px solid rgba(255,215,0,0.3);
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 12px;
+  color: #ffd700;
+}
+
+.close-btn {
+  background: rgba(255,100,100,0.15);
+  border: 1px solid #ff5555;
+  color: #ffaaaa;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 0;
 }
 
 /* 商品列表 */
@@ -301,63 +253,52 @@ function buy(item) {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  padding-right: 4px;
+  gap: 8px;
 }
 
 /* 商品卡片 */
 .shop-card {
   background: rgba(255,255,255,0.05);
   border: 1px solid rgba(184,154,106,0.3);
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: 12px;
+  padding: 12px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
-  transition: border-color 0.2s;
+  gap: 8px;
 }
+
 .shop-card.card-gacha {
   border-color: rgba(147,112,219,0.4);
   background: rgba(147,112,219,0.08);
 }
-.card-top {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-.item-info {
-  flex: 1;
-}
+
 .item-name {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: bold;
   color: #ffd;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
+
 .item-desc {
-  font-size: 10px;
+  font-size: 8px;
   color: #ccc;
-  line-height: 1.5;
+  line-height: 1.4;
 }
 
 /* 抽奖预览 */
 .gacha-preview {
   display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 8px;
+  gap: 4px;
+  margin-top: 6px;
   flex-wrap: wrap;
 }
-.gacha-label {
-  font-size: 8px;
-  color: #aaa;
-}
+
 .gacha-tag {
-  font-size: 9px;
+  font-size: 7px;
   background: rgba(255,215,0,0.15);
   border: 1px solid rgba(255,215,0,0.3);
-  border-radius: 6px;
-  padding: 3px 8px;
+  border-radius: 4px;
+  padding: 2px 6px;
   color: #ffd700;
 }
 
@@ -366,34 +307,39 @@ function buy(item) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
 }
+
 .item-cost {
-  font-size: 13px;
+  font-size: 10px;
   color: #ffd700;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
+
 .item-cost s {
   color: #888;
-  font-size: 11px;
+  font-size: 8px;
 }
+
 .buy-btn {
   background: rgba(255,215,0,0.15);
   border: 1px solid #ffd700;
-  border-radius: 10px;
-  padding: 10px 24px;
-  font-size: 13px;
+  border-radius: 8px;
+  padding: 6px 16px;
+  font-size: 10px;
   color: #ffd;
   font-family: 'Press Start 2P', cursive;
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
 }
+
 .buy-btn:hover {
   background: rgba(255,215,0,0.3);
 }
+
 .buy-btn.disabled {
   opacity: 0.3;
   cursor: not-allowed;
@@ -401,12 +347,14 @@ function buy(item) {
 
 /* 滚动条美化 */
 .shop-list::-webkit-scrollbar {
-  width: 4px;
+  width: 3px;
 }
+
 .shop-list::-webkit-scrollbar-track {
   background: rgba(255,255,255,0.05);
   border-radius: 2px;
 }
+
 .shop-list::-webkit-scrollbar-thumb {
   background: rgba(255,215,0,0.3);
   border-radius: 2px;

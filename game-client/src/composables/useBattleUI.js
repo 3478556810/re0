@@ -7,7 +7,18 @@ export function useBattleUI() {
 const floatingMessage = reactive({ visible: false, text: '', type: 'info' })
 
 // showMessage 增加第三个参数 type
+// showMessage 增加第三个参数 type
 function showMessage(text, duration = 5000) {
+  // ========== 嘎掉所有治疗/护盾/增益类消息 ==========
+  const skipKeywords = [
+    '恢复了', 'HP', '护盾', '防御力提升了', '闪避率提升了',
+    '再生', '净化', '保护', '提升了', '加强了'
+  ]
+  if (skipKeywords.some(keyword => text.includes(keyword))) {
+    return Promise.resolve()  // 直接静默跳过
+  }
+  // =================================================
+
   // 自动根据文本内容判断消息类型
   let type = 'info';
   if (text.includes('(暴击)')) type = 'crit';
@@ -36,9 +47,10 @@ function showMessage(text, duration = 5000) {
     }, duration);
   });
 }
-  let messageTimeout = null
-  let messageResolve = null
-  let globalSkipHandler = null
+
+let messageTimeout = null
+let messageResolve = null
+let globalSkipHandler = null
 
 
 

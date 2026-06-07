@@ -151,10 +151,11 @@ function generateRandomEquipment(tag, monsterLevel, playerLevel) {
 /* ==================== 战斗奖励 ==================== */
 export function getRewards(engine) {
   if (engine.winner !== 'player') {
-    return { exp: 0, materials: [], accessories: [], equipments: [], gems: [] }
+    return { exp: 0, materials: [], accessories: [], equipments: [], gems: [], companionExp: 0 }
   }
 
   let exp = 0
+  let companionExp = 0
   const materials = []
   const equipments = []
   const gems = []
@@ -162,11 +163,14 @@ export function getRewards(engine) {
   const doubleDrop = engine.player?.doubleDrop || 0
   const playerLevel = engine.player?.level || 1
 
+  // 检查伙伴是否存活
+  const companionAlive = engine.companion && engine.companion.hp > 0
+
   for (const e of engine.enemies) {
     try {
       const monsterLevel = e.level || (e.base?.level) || 1
 
-      // 经验值（等级差修正）
+      // 玩家经验值（等级差修正）
       const levelDiff = monsterLevel - playerLevel
       let expMultiplier = 1.0
       if (levelDiff >= 5) expMultiplier = 2.0
@@ -177,66 +181,71 @@ export function getRewards(engine) {
       else expMultiplier = 0.6
       exp += Math.floor(monsterLevel * 15 * expMultiplier)
 
+      // 伙伴经验（玩家经验的80%）
+      if (companionAlive) {
+        companionExp += Math.floor(monsterLevel * 12 * expMultiplier)
+      }
+// 在 rewards.js 的 getRewards 中，return 之前
+// 在 getRewards 中，计算完 companionExp 之后，return 之前
+// 在 getRewards 中，return 之前
+console.log('🔍 经验双倍检查, talents:', engine.player?.talents)
+console.log('🔍 s_exp_boost:', engine.player?.talents?.['s_exp_boost'])
+if (engine.player?.talents?.['s_exp_boost']) {
+    companionExp *= 2
+    console.log('🔍 经验已翻倍:', companionExp)
+}
       // 材料掉落
-     // 材料掉落
-const mats = e.base?.materials || (e.base?.material ? [e.base.material] : [])
-for (const matDef of mats) {
-    const dropRate = matDef.dropRate ?? 100
-    if (Math.random() * 100 < dropRate) {
-        let qty = matDef.qty || 1
-        if (doubleDrop > 0 && Math.random() * 100 < doubleDrop) qty *= 2
+      const mats = e.base?.materials || (e.base?.material ? [e.base.material] : [])
+      for (const matDef of mats) {
+        const dropRate = matDef.dropRate ?? 100
+        if (Math.random() * 100 < dropRate) {
+          let qty = matDef.qty || 1
+          if (doubleDrop > 0 && Math.random() * 100 < doubleDrop) qty *= 2
 
-        // ✅ 关键：如果是 gem_random，跳过并触发随机宝石逻辑
-        if (matDef.id === 'gem_random') {
+          if (matDef.id === 'gem_random') {
             const gemDefs = engine.config?.gemDefinitions || []
             if (gemDefs.length > 0) {
-                const eligible = gemDefs.filter(g => g.level === 7)
-                if (eligible.length > 0) {
-                    const gem = eligible[Math.floor(Math.random() * eligible.length)]
-                    gems.push({ id: gem.id, name: gem.name, qty: 1 })
-                }
+              const eligible = gemDefs.filter(g => g.level === 7)
+              if (eligible.length > 0) {
+                const gem = eligible[Math.floor(Math.random() * eligible.length)]
+                gems.push({ id: gem.id, name: gem.name, qty: 1 })
+              }
             }
-            continue; // 跳过普通材料处理
-        }
+            continue
+          }
 
-        // 其他宝石类掉落
-        if (matDef.id?.startsWith('gem_')) {
+          if (matDef.id?.startsWith('gem_')) {
             gems.push({ id: matDef.id, name: matDef.name || matDef.id, qty })
-        } else {
+          } else {
             materials.push({ id: matDef.id, name: matDef.name || matDef.id, qty })
+          }
         }
-    }
-}
+      }
 
       // 副本Boss特殊掉落（品质魔石 + 专属材料 + 7级宝石）
-// 副本Boss特殊掉落（品质魔石 + 专属材料 + 7级宝石）
-if (e.isRaidBoss || e.base?.isRaidBoss) {
-    const bossId = e.id || e.base?.id
+      if (e.isRaidBoss || e.base?.isRaidBoss) {
+        const bossId = e.id || e.base?.id
 
-    // 品质魔石
-    let qualityStoneQty = 2
-    if (bossId === 'raid_bishop') qualityStoneQty = 5
-    else if (bossId === 'raid_lava_core') qualityStoneQty = 4
-    else if (bossId === 'raid_gladiator') qualityStoneQty = 3
-    materials.push({ id: 'quality_stone', name: '品质魔石', qty: qualityStoneQty })
+        let qualityStoneQty = 2
+        if (bossId === 'raid_bishop') qualityStoneQty = 5
+        else if (bossId === 'raid_lava_core') qualityStoneQty = 4
+        else if (bossId === 'raid_gladiator') qualityStoneQty = 3
+        materials.push({ id: 'quality_stone', name: '品质魔石', qty: qualityStoneQty })
 
-    // ✅ 核心：在这里硬编码 7 级宝石掉落
-    const gemDefs = engine.config?.gemDefinitions || []
-    if (gemDefs.length > 0) {
-        const eligible = gemDefs.filter(g => g.level === 7)
-        if (eligible.length > 0) {
+        const gemDefs = engine.config?.gemDefinitions || []
+        if (gemDefs.length > 0) {
+          const eligible = gemDefs.filter(g => g.level === 7)
+          if (eligible.length > 0) {
             const gem = eligible[Math.floor(Math.random() * eligible.length)]
             gems.push({ id: gem.id, name: gem.name, qty: 1 })
-          
+          }
         }
-    } 
 
-    // 概率掉落装备
-    if (Math.random() < 0.4) {
-        const eq = generateRandomEquipment('boss', 21, playerLevel)
-        if (eq) equipments.push(eq)
-    }
-}
+        if (Math.random() < 0.4) {
+          const eq = generateRandomEquipment('boss', 21, playerLevel)
+          if (eq) equipments.push(eq)
+        }
+      }
 
       // 塔Boss掉落套装材料 + 宝石
       if (e.isBoss && !e.isRaidBoss && !(e.base?.isRaidBoss)) {
@@ -278,7 +287,6 @@ if (e.isRaidBoss || e.base?.isRaidBoss) {
 
       // 普通小怪装备掉落 + 宝石掉落
       if (!e.isBoss && !(e.base && e.base.isBoss)) {
-        // 宝石掉落（6%概率掉落1~2级）
         const gemDefs = engine.config?.gemDefinitions || []
         if (Math.random() < 0.06) {
           const eligible = gemDefs.filter(g => g.level >= 1 && g.level <= 2)
@@ -288,7 +296,6 @@ if (e.isRaidBoss || e.base?.isRaidBoss) {
           }
         }
 
-        // 装备掉落
         let dropRate = 0.12
         if (playerLevel <= 5) dropRate = 0.30
         else if (playerLevel <= 10) dropRate = 0.22
@@ -308,5 +315,10 @@ if (e.isRaidBoss || e.base?.isRaidBoss) {
     }
   }
 
-  return { exp, materials, accessories: [], equipments, gems }
+  // 如果伙伴在战斗中阵亡，经验减半
+  if (!companionAlive && engine.companion) {
+    companionExp = Math.floor(companionExp * 0.5)
+  }
+
+  return { exp, materials, accessories: [], equipments, gems, companionExp }
 }
