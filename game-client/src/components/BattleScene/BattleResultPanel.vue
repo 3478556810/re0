@@ -1,11 +1,14 @@
 <template>
-  <div class="overlay" @click.self="$emit('close')">
+  <div class="overlay">
     <div class="result-panel pixel-panel">
       <!-- 标题 -->
       <h2 class="title">
         <Icon icon="mdi:trophy" />
         战斗胜利！
         <span class="exp-inline">经验 +{{ displayedExp }}</span>
+        <span class="exp-inline companion-exp" v-if="reward.companionExp > 0">
+          伙伴经验 +{{ reward.companionExp }}
+        </span>
       </h2>
 
       <!-- 奖励区域（紧凑竖向排列） -->
@@ -14,10 +17,14 @@
         <div class="reward-row" v-if="reward.materials && reward.materials.length">
           <div class="section-label"><Icon icon="mdi:package-variant-closed" /> 材料</div>
           <div class="grid-area">
-            <div v-for="(m, idx) in reward.materials" :key="m.id + idx" class="material-card">
+            <div v-for="(m, idx) in visibleMaterials" :key="m.id + idx" class="material-card">
               <Icon :icon="materialIcon(m.id)" class="mat-icon" />
               <span class="mat-name">{{ getMaterialName(m.id) }}</span>
               <span class="mat-qty" v-if="m.qty > 1">x{{ m.qty }}</span>
+            </div>
+            <div v-if="reward.materials.length > maxVisible" class="material-card more-card">
+              <Icon icon="mdi:dots-horizontal" class="mat-icon" />
+              <span class="mat-name">还有 +{{ reward.materials.length - maxVisible }} 种</span>
             </div>
           </div>
         </div>
@@ -26,38 +33,51 @@
         <div class="reward-row" v-if="reward.accessories && reward.accessories.length">
           <div class="section-label"><Icon icon="mdi:gem" /> 饰品</div>
           <div class="grid-area">
-            <div v-for="acc in reward.accessories" :key="acc.id" class="acc-card">
+            <div v-for="acc in visibleAccessories" :key="acc.id" class="acc-card">
               <Icon :icon="acc.icon || 'mdi:ring'" class="mat-icon" />
               <span class="mat-name" :style="{ color: qualityColor(acc.quality) }">{{ acc.name }}</span>
+            </div>
+            <div v-if="reward.accessories.length > maxVisible" class="acc-card more-card">
+              <Icon icon="mdi:dots-horizontal" class="mat-icon" />
+              <span class="mat-name">还有 +{{ reward.accessories.length - maxVisible }} 件</span>
             </div>
           </div>
         </div>
 
-        <!-- 装备（无属性详情） -->
+        <!-- 装备 -->
         <div class="reward-row" v-if="reward.equipments && reward.equipments.length">
           <div class="section-label"><Icon icon="mdi:sword" /> 装备</div>
           <div class="grid-area">
-            <div v-for="eq in reward.equipments" :key="eq.id" class="acc-card">
+            <div v-for="eq in visibleEquipments" :key="eq.id" class="acc-card">
               <Icon :icon="equipmentIcon(eq.part)" class="mat-icon" />
               <span class="mat-name" :style="{ color: qualityColor(eq.quality) }">{{ eq.name }}</span>
             </div>
+            <div v-if="reward.equipments.length > maxVisible" class="acc-card more-card">
+              <Icon icon="mdi:dots-horizontal" class="mat-icon" />
+              <span class="mat-name">还有 +{{ reward.equipments.length - maxVisible }} 件</span>
+            </div>
           </div>
         </div>
-<!-- 宝石 -->
-<div class="reward-row" v-if="reward.gems && reward.gems.length">
-  <div class="section-label"><Icon icon="mdi:rhombus-split" /> 宝石</div>
-  <div class="grid-area">
-    <div v-for="(g, idx) in reward.gems" :key="g.id + idx" class="material-card">
-      <div
-        class="gem-core"
-        :class="'gem-tier-' + getGemTier(g.id)"
-        :style="{ '--gem-color': gemColor(g.id), width: '28px', height: '28px' }"
-      ></div>
-      <span class="mat-name">{{ g.name }}</span>
-      <span class="mat-qty" v-if="g.qty > 1">x{{ g.qty }}</span>
-    </div>
-  </div>
-</div>
+
+        <!-- 宝石 -->
+        <div class="reward-row" v-if="reward.gems && reward.gems.length">
+          <div class="section-label"><Icon icon="mdi:rhombus-split" /> 宝石</div>
+          <div class="grid-area">
+            <div v-for="(g, idx) in visibleGems" :key="g.id + idx" class="material-card">
+              <div
+                class="gem-core"
+                :class="'gem-tier-' + getGemTier(g.id)"
+                :style="{ '--gem-color': gemColor(g.id), width: '28px', height: '28px' }"
+              ></div>
+              <span class="mat-name">{{ g.name }}</span>
+              <span class="mat-qty" v-if="g.qty > 1">x{{ g.qty }}</span>
+            </div>
+            <div v-if="reward.gems.length > maxVisible" class="material-card more-card">
+              <Icon icon="mdi:dots-horizontal" class="mat-icon" />
+              <span class="mat-name">还有 +{{ reward.gems.length - maxVisible }} 颗</span>
+            </div>
+          </div>
+        </div>
 
         <!-- 完全无掉落时显示 -->
         <div v-if="!hasAnyReward" class="empty-row">无战利品</div>
@@ -90,7 +110,8 @@ const emit = defineEmits(['close', 'next', 'retreat'])
 const store = useGameStore()
 
 const displayedExp = ref(0)
-let animFrame = null
+const maxVisible = 5 // 每类最多显示5个，超出用"还有更多"替代
+
 const gemColors = {
   atk: '#e74c3c',
   def: '#3498db',
@@ -98,6 +119,12 @@ const gemColors = {
   critDmg: '#9b59b6',
   speed: '#f1c40f'
 }
+
+// 只显示前 maxVisible 个
+const visibleMaterials = computed(() => (props.reward?.materials || []).slice(0, maxVisible))
+const visibleAccessories = computed(() => (props.reward?.accessories || []).slice(0, maxVisible))
+const visibleEquipments = computed(() => (props.reward?.equipments || []).slice(0, maxVisible))
+const visibleGems = computed(() => (props.reward?.gems || []).slice(0, maxVisible))
 
 function gemColor(gemId) {
   const parts = gemId?.split('_')
@@ -110,6 +137,7 @@ function getGemTier(gemId) {
   const level = parseInt(parts?.[2]) || 1
   return level
 }
+
 watch(() => props.reward?.exp, (newExp) => {
   if (!newExp || newExp <= 0) return
   const target = newExp
@@ -121,7 +149,7 @@ watch(() => props.reward?.exp, (newExp) => {
     const progress = Math.min(elapsed / duration, 1)
     displayedExp.value = Math.floor(progress * target)
     if (progress < 1) {
-      animFrame = requestAnimationFrame(animate)
+      requestAnimationFrame(animate)
     }
   }
   requestAnimationFrame(animate)
@@ -129,7 +157,7 @@ watch(() => props.reward?.exp, (newExp) => {
 
 const hasAnyReward = computed(() => {
   const r = props.reward
-  return (r.materials?.length || r.accessories?.length || r.equipments?.length) > 0
+  return (r?.materials?.length || r?.accessories?.length || r?.equipments?.length || r?.gems?.length) > 0
 })
 
 function getMaterialName(id) {
@@ -150,6 +178,9 @@ function materialIcon(id) {
     obsidian: 'mdi:circle-multiple',
     dragon_ore: 'mdi:dragon',
     dungeon_token: 'mdi:castle',
+    quality_stone: 'mdi:star-circle',
+    gladiator_medal: 'mdi:medal',
+    cooling_crystal: 'mdi:snowflake',
   }
   return icons[id] || 'mdi:circle'
 }
@@ -173,9 +204,7 @@ function equipmentIcon(part) {
 </script>
 
 <style scoped>
-/* 宝石卡片 */
-
-/* ========== 遮罩 ========== */
+/* ========== 遮罩（移除点击关闭） ========== */
 .overlay {
   position: fixed;
   inset: 0;
@@ -198,8 +227,8 @@ function equipmentIcon(part) {
   box-shadow: 0 0 40px rgba(0,0,0,0.6);
   width: min(85vw, 85vh, 450px);
   max-width: 450px;
-  height: auto;                     /* 高度由内容决定 */
-  max-height: 90vh;                 /* 防止过高 */
+  height: auto;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   padding: 12px 10px 10px;
@@ -224,13 +253,17 @@ function equipmentIcon(part) {
   padding: 2px 8px;
   border-radius: 14px;
 }
+.companion-exp {
+  background: rgba(255,105,180,0.2);
+  color: #ff69b4;
+}
 
 /* ========== 奖励列表（紧凑） ========== */
 .reward-list {
-  flex-shrink: 0;                   /* 不拉伸 */
+  flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;                         /* 类别间距小 */
+  gap: 6px;
   margin-bottom: 8px;
 }
 
@@ -250,7 +283,7 @@ function equipmentIcon(part) {
   gap: 4px;
 }
 
-/* 网格内容区（自动填满横向，无多余空白） */
+/* 网格内容区 */
 .grid-area {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
@@ -272,7 +305,16 @@ function equipmentIcon(part) {
 .mat-name { font-size: clamp(5px, 0.9vw, 7px); color: #ddd; text-align: center; word-break: break-all; line-height: 1.2; }
 .mat-qty { font-size: 5px; color: #aaa; background: rgba(0,0,0,0.5); padding: 1px 4px; border-radius: 8px; }
 
-/* 饰品 / 装备卡片（极简） */
+/* 更多占位卡片 */
+.more-card {
+  opacity: 0.6;
+  border-style: dashed;
+}
+.more-card .mat-name {
+  color: #888;
+}
+
+/* 饰品 / 装备卡片 */
 .acc-card {
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(184,154,106,0.3);

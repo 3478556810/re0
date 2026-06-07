@@ -1,6 +1,6 @@
 <template>
   <div class="battle-container">
-    <!-- Boss 独立血条（仅在 Boss 战时显示） -->
+    <!-- Boss 独立血条 -->
     <BossHealthBar
       v-if="isBossBattle && bossData"
       :boss-data="bossData"
@@ -42,7 +42,7 @@
     <div class="decoration tree2"></div>
     <div class="decoration rock"></div>
 
-    <!-- 敌人面板（只显示小怪立绘和卡片） -->
+    <!-- 敌人面板 -->
     <EnemyPanel
       :hide-hp-bar="isBossBattle"
       :boss-phase-anim-trigger="bossPhaseAnimTrigger"
@@ -54,26 +54,30 @@
       @show-effect-bubble="showEffectBubble"
     />
 
-    <!-- 玩家面板 -->
     <PlayerPanel
-      :player-stats="playerStats"
-      :player-shield="playerShield"
-      :player-effects="playerEffectsDisplay"
-      :companion="companion"
-      :companion-hp-percent="companionHpPercent"
-      :player-hp-percent="playerHpPercent"
-      :player-mp="store.player.mp"
-      :player-max-mp="store.player.maxMp"
-      :display-exp="displayExp"
-      :next-level-exp="nextLevelExp"
-      :display-exp-percent="displayExpPercent"
-      :game-over="gameOver"
-      :player-turn="playerTurn"
-      :waiting="waiting"
-      :show-result="showResult"
-      @flee="fleeBattle"
-      @show-effect-bubble="showEffectBubble"
-    />
+  :player-stats="playerStats"
+  :player-shield="playerShield"
+  :player-effects="playerEffectsDisplay"
+  :companion="companion"
+  :companion-hp-percent="companionHpPercent"
+  :companion-mp="companion?.mp || 0"
+  :companion-max-mp="companion?.maxMp || 0"
+  :companion-exp="companion?.exp || 0"
+  :companion-next-exp="companion?.nextExp || 0"
+  :companion-exp-percent="companion?.expPercent || 0"
+  :player-hp-percent="playerHpPercent"
+  :player-mp="store.player.mp"
+  :player-max-mp="store.player.maxMp"
+  :display-exp="displayExp"
+  :next-level-exp="nextLevelExp"
+  :display-exp-percent="displayExpPercent"
+  :game-over="gameOver"
+  :player-turn="playerTurn"
+  :waiting="waiting"
+  :show-result="showResult"
+  @flee="fleeBattle"
+  @show-effect-bubble="showEffectBubble"
+/>
 
     <!-- 浮动消息 -->
     <Transition name="fade">
@@ -98,22 +102,19 @@
       </div>
     </Transition>
 
-    <!-- 技能栏（阶段无敌动画期间隐藏） -->
-<!-- 技能栏和逃跑按钮容器 -->
-<div v-if="!gameOver && playerTurn && !waiting && !showResult" class="skill-flee-row">
-  <SkillBar
-    :skills="battleSkills"
-    :player-mp="store.player.mp"
-    @use-skill="useSkill"
-    @show-preview="showSkillPreview"
-    @hide-preview="hideSkillPreview"
-  />
-  <button class="pixel-btn warning" @click="fleeBattle">
-    <Icon icon="streamline-freehand:safety-fire-exit" /> 逃跑
-  </button>
-</div>
+    <!-- 技能栏和逃跑按钮容器 -->
+    <div v-if="!gameOver && playerTurn && !waiting && !showResult" class="skill-flee-row">
+      <SkillBar
+        :skills="battleSkills"
+        :player-mp="store.player.mp"
+        @use-skill="handleSkillClick"
+      />
+      <button class="pixel-btn warning" @click="fleeBattle">
+        <Icon icon="streamline-freehand:safety-fire-exit" /> 逃跑
+      </button>
+    </div>
 
-    <!-- 技能预览浮层 -->
+    <!-- 技能预览浮层（单击显示，双击释放） -->
     <div
       v-if="skillPreview.visible"
       class="skill-preview"
@@ -122,6 +123,7 @@
       <div class="preview-name">{{ skillPreview.name }}</div>
       <div class="preview-desc">{{ skillPreview.desc }}</div>
       <div class="preview-dmg">预期伤害：{{ skillPreview.dmg }}</div>
+      <div class="preview-tip">再次点击确认释放</div>
       <div v-if="skillPreview.mul > 1" class="preview-mul">克制倍率：{{ skillPreview.mul }}x</div>
     </div>
 
@@ -144,11 +146,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useGameStore } from '@/store/gameStore'
 import { useBattleState } from '@/composables/useBattleState'
 import { useBattleUI } from '@/composables/useBattleUI'
+import { calculateDamage } from '../../combat/damageCalculator'  // 新增导入
 import EnemyPanel from './EnemyPanel.vue'
 import PlayerPanel from './PlayerPanel.vue'
 import SkillBar from './SkillBar.vue'
@@ -175,7 +178,7 @@ const emit = defineEmits(['victory', 'exit', 'nextFloor', 'retreatToDungeon'])
 const store = useGameStore()
 
 const {
-  engine,   
+  engine,
   enemies,
   currentTargetIndex,
   playerEffectsDisplay,
@@ -214,20 +217,107 @@ const {
   effectBubble,
   showEffectBubble: uiShowEffectBubble,
   hideEffectBubbleOnOutsideClick,
-  skillPreview,
-  showSkillPreview: uiShowSkillPreview,
-  hideSkillPreview,
   destroyUI
 } = useBattleUI()
 
-// ---------------------- 小怪数据（给 BossHealthBar 显示血条） ----------------------
+// ========== 技能预览浮层 ==========
+const skillPreview = reactive({
+  visible: false,
+  name: '',
+  desc: '',
+  x: 0,
+  y: 0,
+  dmg: 0,
+  mul: 1
+})
+
+// 使用引擎真实计算公式计算预览伤害
+function calcSkillDamage(skill) {
+  const target = enemies.value?.[currentTargetIndex.value]
+  if (!target) return { damage: 0, multiplier: 1 }
+
+  const attackerSnap = {
+    attack: store.playerStats.attack || 10,
+    critRate: store.playerStats.critRate || 5,
+    critDmg: store.playerStats.critDmg || 150,
+    element: skill.element || '',
+    effects: store.playerStats.effects || [],
+    fireDmg: store.playerStats.fireDmg || 0,
+    waterDmg: store.playerStats.waterDmg || 0,
+    thunderDmg: store.playerStats.thunderDmg || 0,
+    windDmg: store.playerStats.windDmg || 0,
+    grassDmg: store.playerStats.grassDmg || 0,
+    iceDmg: store.playerStats.iceDmg || 0,
+    holyDmg: store.playerStats.holyDmg || 0,
+    darkDmg: store.playerStats.darkDmg || 0,
+    rockDmg: store.playerStats.rockDmg || 0,
+    steelDmg: store.playerStats.steelDmg || 0,
+  }
+
+  const defenderSnap = {
+    defense: target.defense || target.getEffectiveDefense?.() || 0,
+    element: target.element || '',
+    effects: target.effects || [],
+    hpPercent: target.hp / target.maxHp,
+    maxHp: target.maxHp,
+    hp: target.hp
+  }
+
+  const { damage, multiplier } = calculateDamage(attackerSnap, defenderSnap, skill)
+  return { damage, multiplier }
+}
+
+// 修复浮动消息颜色
+function showInfo(text, duration = 2000) {
+  floatingMessage.value = { visible: true, text, type: 'info' }
+  clearTimeout(showInfo._timer)
+  showInfo._timer = setTimeout(() => {
+    floatingMessage.value = { ...floatingMessage.value, visible: false }
+  }, duration)
+}
+
+// ========== 单击显示预览，双击释放 ==========
+const pendingSkill = ref(null)
+
+async function handleSkillClick(skill) {
+  if (skill.mpCost > 0 && store.player.mp < skill.mpCost) {
+    showInfo('MP不足！', 1500)
+    return
+  }
+
+  // 第一次点击：显示预览浮层
+  if (!pendingSkill.value || pendingSkill.value.id !== skill.id) {
+    pendingSkill.value = skill
+    const { damage, multiplier } = calcSkillDamage(skill)
+    skillPreview.name = skill.name
+    skillPreview.desc = skill.desc || ''
+    skillPreview.dmg = damage
+    skillPreview.mul = multiplier
+    skillPreview.x = Math.min(window.innerWidth - 180, window.innerWidth / 2 - 80)
+    skillPreview.y = Math.max(100, window.innerHeight / 2 - 60)
+    skillPreview.visible = true
+
+    clearTimeout(pendingSkill._timeout)
+    pendingSkill._timeout = setTimeout(() => {
+      pendingSkill.value = null
+      skillPreview.visible = false
+    }, 2500)
+    return
+  }
+
+  // 第二次点击同一技能：释放
+  clearTimeout(pendingSkill._timeout)
+  pendingSkill.value = null
+  skillPreview.visible = false
+  await battleUseSkill(skill, showMessage)
+}
+
+// ---------------------- 小怪数据 ----------------------
 const minionList = computed(() => {
   if (!enemies.value) return []
   return enemies.value
     .filter(e => {
-      // 临时：只要不是 boss 且存活，就当作小怪显示
       if (e.hp <= 0) return false
-      // 假设索引0是boss，后面可以根据 isBoss 标记完善
       return e !== enemies.value[0]
     })
     .map(e => ({
@@ -283,15 +373,12 @@ const playerHpPercent = computed(() => (store.player.hp / store.player.maxHp) * 
 
 const bossPhaseAnimTrigger = ref(0)
 
-// ---------------------- 阶段无敌动画控制 ----------------------
-
-
 // ---------------------- 事件处理 ----------------------
 const onBossPhaseChange = (phaseIndex, phaseConfig) => {
   triggerScreenShake(0.5)
   bossPhaseAnimTrigger.value++
   showEdgeGlow(phaseConfig.color, 0.8)
-  showMessage(`【${phaseConfig.name}】${phaseConfig.tip}`, 2)
+  showMessage(`【${phaseConfig.name}】${phaseConfig.tip}`, 2000, 'info')
 }
 
 const triggerScreenShake = (duration = 0.4) => {
@@ -321,14 +408,6 @@ const showEffectBubble = (effect, maxHp, event) => {
 
 const fleeBattle = () => emit('exit')
 
-const useSkill = async (skill) => {
-  await battleUseSkill(skill, showMessage)
-}
-
-const showSkillPreview = (skill, event) => {
-  uiShowSkillPreview(skill, event, store, enemies, currentTargetIndex)
-}
-
 const gameOverHandler = () => {
   handleGameOver()
   if (gameOverMsg.value === '战斗失败') emit('exit')
@@ -356,18 +435,14 @@ const onRetreat = () => {
 
 // ---------------------- 生命周期 ----------------------
 onMounted(() => {
-  console.log('onMounted, store.battleEnemies 已设置:', props.enemies)
   store.battleEnemies = props.enemies
   initEngine(props.enemies)
 
-  // 设置 engine 的阶段变化回调（给 UI 播特效）
   if (engine.value && engine.value.onPhaseChange !== undefined) {
     engine.value.onPhaseChange = onBossPhaseChange
   }
 
-
-
-  showMessage('敌人出现了！')
+  showMessage('敌人出现了！', 2000, 'info')
   document.addEventListener('click', hideEffectBubbleOnOutsideClick)
 })
 

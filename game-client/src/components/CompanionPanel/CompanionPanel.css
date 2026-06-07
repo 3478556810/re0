@@ -1,0 +1,179 @@
+.overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  backdrop-filter: blur(10px);
+  display: flex; justify-content: center; align-items: center;
+  z-index: 200;
+}
+
+.panel {
+  width: 100vw;
+  height: 100vh;
+  background: rgba(15,25,45,0.95);
+  color: #ffd;
+  font-family: 'Press Start 2P', cursive;
+  display: flex; flex-direction: column;
+  padding: 16px 20px;
+  box-sizing: border-box;
+  position: relative;
+  overflow: hidden;
+}
+
+.top-bar {
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 10px; flex-shrink: 0;
+}
+.top-bar h2 {
+  font-size: 14px; color: #ffd700; margin: 0;
+  display: flex; align-items: center; gap: 8px;
+}
+.close-btn {
+  background: none; border: none; color: #ffd; font-size: 20px;
+  cursor: pointer; z-index: 10;
+}
+
+.tabs {
+  display: flex; gap: 8px; margin-bottom: 12px; flex-shrink: 0;
+}
+.tab {
+  flex: 1; background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(184,154,106,0.4);
+  border-radius: 10px; padding: 10px; font-size: 9px; color: #aaa;
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; cursor: pointer; transition: 0.2s;
+}
+.tab.active {
+  background: rgba(255,215,0,0.15); border-color: #ffd700; color: #ffd700;
+}
+
+.tab-content {
+  flex: 1;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* 属性页样式（与之前一致） */
+.stats-content {
+  display: flex; flex-direction: column; gap: 12px;
+}
+
+.companion-header {
+  display: flex; align-items: center; gap: 12px;
+  background: rgba(0,0,0,0.3); border: 1px solid rgba(255,215,0,0.2);
+  border-radius: 14px; padding: 12px; margin-bottom: 12px;
+}
+.companion-avatar {
+  width: 56px; height: 56px;
+  background: rgba(255,215,0,0.15); border-radius: 12px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.avatar-icon { font-size: 32px; color: #ffd700; }
+.companion-info { flex: 1; }
+.companion-name { font-size: 11px; margin-bottom: 6px; }
+.progress-row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.exp-area, .affection-area { display: flex; align-items: center; gap: 6px; font-size: 7px; }
+.progress-label { min-width: 28px; }
+.progress-bar-bg { width: 80px; height: 5px; background: #2a2a3a; border-radius: 3px; overflow: hidden; }
+.progress-bar-fill { height: 100%; background: #4caf50; border-radius: 3px; transition: width 0.2s; }
+.progress-bar-fill.affection { background: linear-gradient(90deg, #ff69b4, #ff1493); }
+.progress-text { min-width: 40px; }
+
+.switch-section { margin-bottom: 16px; }
+.switch-section .pixel-btn {
+  font-size: 7px; padding: 4px 10px;
+  background: rgba(0,0,0,0.5); border: 1px solid #5a5a7a;
+  color: #ffd; border-radius: 6px; cursor: pointer;
+  display: flex; align-items: center; gap: 4px;
+}
+.companion-switch-list {
+  background: rgba(0,0,0,0.9); border: 1px solid #b89a6a;
+  border-radius: 12px; margin-top: 8px; max-height: 160px; overflow-y: auto;
+}
+.switch-item {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; cursor: pointer;
+  border-bottom: 1px solid rgba(255,255,255,0.1); font-size: 8px;
+}
+.switch-item.active { background: rgba(255,215,0,0.2); }
+.switch-level { margin-left: auto; font-size: 7px; }
+
+.section { margin-bottom: 16px; }
+.section h3 {
+  font-size: 9px; color: #ffd700; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 6px;
+  border-bottom: 1px solid rgba(255,215,0,0.2); padding-bottom: 4px;
+}
+.stat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+.stat-item {
+  display: flex; justify-content: space-between;
+  font-size: 8px; padding: 4px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.stat-label { color: #ccc; display: flex; align-items: center; gap: 4px; }
+.bonus-value { color: #4caf50; }
+
+.empty { text-align: center; color: #888; font-size: 9px; padding: 30px; }
+
+/* 内嵌的 SkillPanel 强制内联 */
+.tab-content .overlay {
+  position: relative !important;
+  inset: auto !important;
+  background: transparent !important;
+  backdrop-filter: none !important;
+  z-index: auto !important;
+  display: block !important;
+  width: 100% !important;
+  height: auto !important;
+}
+.tab-content .panel.pixel-panel {
+  width: 100% !important;
+  height: auto !important;
+  max-height: none !important;
+  padding: 0 !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  overflow-y: visible !important;
+  position: static !important;
+}
+.tab-content .close-btn {
+  display: none !important;
+}
+
+/* 强制内嵌 SkillPanel 不滚动，由外层 .tab-content 统一滚动 */
+.tab-content .panel.pixel-panel {
+  overflow-y: visible !important;
+  max-height: none !important;
+}
+
+/* 如果 SkillPanel 内部的分页区域可能有固定高度，也一并取消 */
+.tab-content .skill-list-pages {
+  max-height: none !important;
+  overflow-y: visible !important;
+}
+/* 战斗详情折叠 */
+.collapsible-header {
+  cursor: pointer;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.collapse-icon {
+  margin-left: auto;
+  font-size: 16px;
+}
+
+/* 分隔横线 */
+.stat-divider {
+  grid-column: span 2;
+  border-top: 1px solid rgba(255,215,0,0.3);
+  margin: 4px 0 6px 0;
+}
+
+/* 统计网格调整为两列 */
+.stat-list {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px 12px;
+}

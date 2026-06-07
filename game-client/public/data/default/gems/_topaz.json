@@ -8,5 +8,5 @@
   { "id": "gem_topaz_7", "name": "圣光审判·7级", "type": "speed", "value": 68, "level": 7, "color": "#f1c40f", "icon": "mdi:rhombus" },
   { "id": "gem_topaz_8", "name": "圣光审判·8级", "type": "speed", "value": 95, "level": 8, "color": "#f1c40f", "icon": "mdi:rhombus" },
   { "id": "gem_topaz_9", "name": "圣光审判·9级", "type": "speed", "value": 128, "level": 9, "color": "#f1c40f", "icon": "mdi:rhombus" },
-  { "id": "gem_topaz_10", "name": "圣光审判·10级", "type": "speed", "value": 250, "level": 10, "color": "#f1c40f", "icon": "mdi:rhombus" }
+  { "id": "gem_topaz_10", "name": "圣光审判·10级", "type": "speed", "value": 180, "level": 10, "color": "#f1c40f", "icon": "mdi:rhombus" }
 ]

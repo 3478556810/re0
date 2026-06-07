@@ -10,12 +10,20 @@ import { useRank } from './modules/rank'
 import { useCombatStats } from './modules/combatStats'
 import { loadContentPacks } from '../utils/contentLoader'
 import { defaultConfig } from './modules/config'
+import { useCompanion } from './modules/companion'
+
+// 简单生成饰品（需根据实际实现替换）
+function generateAccessoryLoot(params, worldLevel) {
+  // 占位实现，实际应调用 config 中的 accessory 生成函数
+  return { id: `acc_${Date.now()}`, name: '随机饰品', quality: 'purple', level: params.level || 1, atk: 10, def: 5 }
+}
 
 export const useGameStore = defineStore('game', () => {
   // 初始化所有模块
   const playerModule = usePlayer()
   const inventoryModule = useInventory()
   const worldModule = useWorld()
+  const companionModule = useCompanion()
 
   // config 直接使用 defaultConfig，不要省略
   const config = reactive(defaultConfig)
@@ -36,25 +44,23 @@ export const useGameStore = defineStore('game', () => {
   const rankModule = useRank(playerModule.player, pendingRankUp, pendingTargetRank, config)
 
   // 套装效果配置（暂时保留在主 store 中）
- const setBonuses = {
-  dragon_set: {
-    3: { desc: '攻击时为目标附加「龙焰印记」3回合，使其受到伤害+30%', dragonMarkOnHit: 0.30 },
-    6: { desc: '龙焰印记增伤+60%；自身生命低于50%时，对印记目标吸血40%', dragonMarkOnHit: 0.60, lowHpLifestealOnMark: 40 }
-  },
-  shadow_set: {
-    3: { desc: '攻击时为目标附加「暗蚀印记」3回合，使其受到伤害+25%；自身暴击率+12%', shadowMarkOnHit: 0.25, critRate: 12 },
-    6: { desc: '暗蚀印记增伤+50%；对印记目标暴击伤害+100%', shadowMarkOnHit: 0.50, critDmgOnMark: 100 }
-  },
-  crimson_set: {
-    3: { desc: '对生命高于70%的敌人伤害+35%', specialFullHpDmg: 35 },
-    6: { desc: '对生命低于30%的敌人伤害+60%；攻击Boss时额外+30%伤害', specialLowHpDmg: 60, specialBossDmg: 30 }
+  const setBonuses = {
+    dragon_set: {
+      3: { desc: '攻击时为目标附加「龙焰印记」3回合，使其受到伤害+30%', dragonMarkOnHit: 0.30 },
+      6: { desc: '龙焰印记增伤+60%；自身生命低于50%时，对印记目标吸血40%', dragonMarkOnHit: 0.60, lowHpLifestealOnMark: 40 }
+    },
+    shadow_set: {
+      3: { desc: '攻击时为目标附加「暗蚀印记」3回合，使其受到伤害+25%；自身暴击率+12%', shadowMarkOnHit: 0.25, critRate: 12 },
+      6: { desc: '暗蚀印记增伤+50%；对印记目标暴击伤害+100%', shadowMarkOnHit: 0.50, critDmgOnMark: 100 }
+    },
+    crimson_set: {
+      3: { desc: '对生命高于70%的敌人伤害+35%', specialFullHpDmg: 35 },
+      6: { desc: '对生命低于30%的敌人伤害+60%；攻击Boss时额外+30%伤害', specialLowHpDmg: 60, specialBossDmg: 30 }
+    }
   }
-}
+  config.setBonuses = setBonuses
 
-
-config.setBonuses = setBonuses
-
-const combatModule = useCombatStats(inventoryModule.equipment, config, playerModule.player);
+  const combatModule = useCombatStats(inventoryModule.equipment, config, playerModule.player)
 
   // 其他 refs
   const pendingDungeonPanel = ref(false)
@@ -69,43 +75,43 @@ const combatModule = useCombatStats(inventoryModule.equipment, config, playerMod
   function save() {
     const state = {
       player: { ...playerModule.player },
-     inventory: inventoryModule.inventory.map(item => {
-  if (!item) return null
-  return {
-    id: item.id, part: item.part || item.type, name: item.name,
-    quality: item.quality, level: item.level || 1,
-    atk: item.atk || 0, def: item.def || 0,
-    baseAtk: item.baseAtk || 10, baseDef: item.baseDef || 5,
-    extraStats: item.extraStats ? { ...item.extraStats } : {},
-    _initialExtraStats: item._initialExtraStats ? { ...item._initialExtraStats } : {},
-    affixes: item.affixes ? item.affixes.map(a => ({ id: a.id, level: a.level })) : [],
-    fixedAffix: item.fixedAffix ? { ...item.fixedAffix } : null,
-    bossDmgBonus: item.bossDmgBonus || 0,
-    setId: item.setId || '',
-    levelFailCount: item.levelFailCount || 0,
-    qualityFailCount: item.qualityFailCount || 0,
-    levelRequired: item.levelRequired || 1,
-    gemSlots: item.gemSlots || 0,
-    type: item.type || item.part
-  }
-}),
-      materials: Object.fromEntries(Object.entries(inventoryModule.materials).map(([k,v]) => [k, { ...v }])),
-     equipment: Object.fromEntries(Object.entries(inventoryModule.equipment).map(([k, v]) => {
-  if (!v) return [k, null]
-  return [k, {
-    id: v.id, part: v.part || v.type, name: v.name, quality: v.quality,
-    level: v.level || 1, atk: v.atk || 0, def: v.def || 0,
-    baseAtk: v.baseAtk || 10, baseDef: v.baseDef || 5,
-    extraStats: v.extraStats ? { ...v.extraStats } : {},
-    _initialExtraStats: v._initialExtraStats ? { ...v._initialExtraStats } : {},
-    affixes: v.affixes ? v.affixes.map(a => ({ id: a.id, level: a.level })) : [],
-    fixedAffix: v.fixedAffix ? { ...v.fixedAffix } : null,
-    bossDmgBonus: v.bossDmgBonus || 0,
-    setId: v.setId || '', levelFailCount: v.levelFailCount || 0,
-    qualityFailCount: v.qualityFailCount || 0,
-    levelRequired: v.levelRequired || 1, gemSlots: v.gemSlots || 0
-  }]
-})),
+      inventory: inventoryModule.inventory.map(item => {
+        if (!item) return null
+        return {
+          id: item.id, part: item.part || item.type, name: item.name,
+          quality: item.quality, level: item.level || 1,
+          atk: item.atk || 0, def: item.def || 0,
+          baseAtk: item.baseAtk || 10, baseDef: item.baseDef || 5,
+          extraStats: item.extraStats ? { ...item.extraStats } : {},
+          _initialExtraStats: item._initialExtraStats ? { ...item._initialExtraStats } : {},
+          affixes: item.affixes ? item.affixes.map(a => ({ id: a.id, level: a.level })) : [],
+          fixedAffix: item.fixedAffix ? { ...item.fixedAffix } : null,
+          bossDmgBonus: item.bossDmgBonus || 0,
+          setId: item.setId || '',
+          levelFailCount: item.levelFailCount || 0,
+          qualityFailCount: item.qualityFailCount || 0,
+          levelRequired: item.levelRequired || 1,
+          gemSlots: item.gemSlots || 0,
+          type: item.type || item.part
+        }
+      }),
+      materials: Object.fromEntries(Object.entries(inventoryModule.materials).map(([k, v]) => [k, { ...v }])),
+      equipment: Object.fromEntries(Object.entries(inventoryModule.equipment).map(([k, v]) => {
+        if (!v) return [k, null]
+        return [k, {
+          id: v.id, part: v.part || v.type, name: v.name, quality: v.quality,
+          level: v.level || 1, atk: v.atk || 0, def: v.def || 0,
+          baseAtk: v.baseAtk || 10, baseDef: v.baseDef || 5,
+          extraStats: v.extraStats ? { ...v.extraStats } : {},
+          _initialExtraStats: v._initialExtraStats ? { ...v._initialExtraStats } : {},
+          affixes: v.affixes ? v.affixes.map(a => ({ id: a.id, level: a.level })) : [],
+          fixedAffix: v.fixedAffix ? { ...v.fixedAffix } : null,
+          bossDmgBonus: v.bossDmgBonus || 0,
+          setId: v.setId || '', levelFailCount: v.levelFailCount || 0,
+          qualityFailCount: v.qualityFailCount || 0,
+          levelRequired: v.levelRequired || 1, gemSlots: v.gemSlots || 0
+        }]
+      })),
       world: { ...worldModule.world },
       weather: { ...worldModule.weather },
       facilities: { bank: { ...facilities.bank }, stocks: [], farm: [] },
@@ -118,7 +124,9 @@ const combatModule = useCombatStats(inventoryModule.equipment, config, playerMod
       pendingTargetRank: pendingTargetRank.value,
       defeated: Array.from(defeatedEnemies.value),
       explored: Array.from(exploredTiles.value),
-      currentEvent: currentEvent.value ? { ...currentEvent.value } : null
+      currentEvent: currentEvent.value ? { ...currentEvent.value } : null,
+      companions: companionModule.getSaveData(),
+      activeCompanionId: companionModule.activeCompanionId.value
     }
     localStorage.setItem('star-trails-save', JSON.stringify(state))
   }
@@ -134,50 +142,47 @@ const combatModule = useCombatStats(inventoryModule.equipment, config, playerMod
     try {
       const data = JSON.parse(saved)
       Object.assign(playerModule.player, data.player || {})
-    const savedInv = (data.inventory || []).map(item => {
-  if (!item) return null
-  return {
-    ...item,
-    part: item.part || item.type,
-    extraStats: item.extraStats || {},
-    _initialExtraStats: item._initialExtraStats || { ...(item.extraStats || {}) },
-    affixes: item.affixes || [],
-    fixedAffix: item.fixedAffix || null,
-    bossDmgBonus: item.bossDmgBonus || 0,
-    level: item.level || 1,
-    baseAtk: item.baseAtk || 10,
-    baseDef: item.baseDef || 5,
-    levelFailCount: item.levelFailCount || 0,
-    qualityFailCount: item.qualityFailCount || 0
-  }
-})
-inventoryModule.inventory.splice(0, inventoryModule.inventory.length, ...savedInv)
-inventoryModule.inventory.splice(0, inventoryModule.inventory.length, ...savedInv)
+      const savedInv = (data.inventory || []).map(item => {
+        if (!item) return null
+        return {
+          ...item,
+          part: item.part || item.type,
+          extraStats: item.extraStats || {},
+          _initialExtraStats: item._initialExtraStats || { ...(item.extraStats || {}) },
+          affixes: item.affixes || [],
+          fixedAffix: item.fixedAffix || null,
+          bossDmgBonus: item.bossDmgBonus || 0,
+          level: item.level || 1,
+          baseAtk: item.baseAtk || 10,
+          baseDef: item.baseDef || 5,
+          levelFailCount: item.levelFailCount || 0,
+          qualityFailCount: item.qualityFailCount || 0
+        }
+      })
+      inventoryModule.inventory.splice(0, inventoryModule.inventory.length, ...savedInv)
       for (const key of Object.keys(inventoryModule.materials)) delete inventoryModule.materials[key]
       Object.assign(inventoryModule.materials, data.materials || {})
       // 恢复装备时确保所有字段完整
-const savedEquipment = data.equipment || {}
-for (const slot of Object.keys(inventoryModule.equipment)) {
-  const saved = savedEquipment[slot]
-  if (saved) {
-    inventoryModule.equipment[slot] = {
-      ...saved,
-      part: saved.part || saved.type,
-      type: saved.type || saved.part,
-      extraStats: saved.extraStats || {},
-      _initialExtraStats: saved._initialExtraStats || { ...saved.extraStats },
-      affixes: saved.affixes || [],
-      fixedAffix: saved.fixedAffix || null,
-      bossDmgBonus: saved.bossDmgBonus || 0,
-      levelFailCount: saved.levelFailCount || 0,
-      qualityFailCount: saved.qualityFailCount || 0
-    }
-  } else {
-    inventoryModule.equipment[slot] = null
-  }
-}
-
-
+      const savedEquipment = data.equipment || {}
+      for (const slot of Object.keys(inventoryModule.equipment)) {
+        const saved = savedEquipment[slot]
+        if (saved) {
+          inventoryModule.equipment[slot] = {
+            ...saved,
+            part: saved.part || saved.type,
+            type: saved.type || saved.part,
+            extraStats: saved.extraStats || {},
+            _initialExtraStats: saved._initialExtraStats || { ...saved.extraStats },
+            affixes: saved.affixes || [],
+            fixedAffix: saved.fixedAffix || null,
+            bossDmgBonus: saved.bossDmgBonus || 0,
+            levelFailCount: saved.levelFailCount || 0,
+            qualityFailCount: saved.qualityFailCount || 0
+          }
+        } else {
+          inventoryModule.equipment[slot] = null
+        }
+      }
 
       Object.assign(worldModule.world, data.world || {})
       Object.assign(worldModule.weather, data.weather || {})
@@ -186,25 +191,40 @@ for (const slot of Object.keys(inventoryModule.equipment)) {
       huntQuestModule.activeHuntQuests.value = data.activeHuntQuests || []
       Object.assign(affectionModule.affection, data.affection || {})
 
-
       // 遍历背包和装备，补全 baseAtk/baseDef
-function patchItem(item) {
-  if (!item) return item;
-  if (item.baseAtk === undefined) item.baseAtk = 10;
-  if (item.baseDef === undefined) item.baseDef = 5;
-  return item;
-}
-// 对背包应用
-inventoryModule.inventory.forEach(patchItem);
-// 对装备应用
-Object.values(inventoryModule.equipment).forEach(patchItem);
+      function patchItem(item) {
+        if (!item) return item
+        if (item.baseAtk === undefined) item.baseAtk = 10
+        if (item.baseDef === undefined) item.baseDef = 5
+        return item
+      }
+      inventoryModule.inventory.forEach(patchItem)
+      Object.values(inventoryModule.equipment).forEach(patchItem)
+
       storyBestTime.value = data.storyBestTime ?? null
       pendingRankUp.value = data.pendingRankUp ?? false
       pendingTargetRank.value = data.pendingTargetRank ?? null
       defeatedEnemies.value = new Set(data.defeated || [])
       exploredTiles.value = new Set(data.explored || [])
       currentEvent.value = data.currentEvent || { title: '', description: '', effects: [] }
-    } catch (e) { console.error('存档加载失败', e) }
+
+      // 恢复伙伴数据
+     // 恢复伙伴数据
+if (data.companions) {
+  companionModule.loadFromSave(data.companions)
+} else {
+  // 没有存档时，用 config 初始化
+  const chars = config.characters || {}
+  companionModule.initCompanions(chars)
+}
+      if (data.activeCompanionId) {
+        companionModule.activeCompanionId.value = data.activeCompanionId
+     } else if (companionModule.companions.value.length) {  // 正确
+        companionModule.activeCompanionId.value = companionModule.companions[0].id
+      }
+    } catch (e) {
+      console.error('存档加载失败', e)
+    }
     if (!pendingRankUp.value) {
       const currentIdx = rankModule.rankConfig.findIndex(r => r.name === playerModule.player.rank)
       if (currentIdx !== -1 && currentIdx < rankModule.rankConfig.length - 1 && playerModule.player.rankExp >= rankModule.rankConfig[currentIdx].requiredExp) {
@@ -221,20 +241,28 @@ Object.values(inventoryModule.equipment).forEach(patchItem);
   }
 
   loadContentPacks().then(packConfig => {
-    
     for (const key of Object.keys(packConfig)) config[key] = packConfig[key]
     save()
   })
 
   load()
-// 在 gameStore.js 的 defineStore 内部，return 之前添加：
-const _refreshSetBonuses = () => {
-  // 触发 activeSetBonuses 和 playerStats 重新计算
-  combatModule.activeSetBonuses.value = { ...combatModule.activeSetBonuses.value }
+
+  const _refreshSetBonuses = () => {
+    combatModule.activeSetBonuses.value = { ...combatModule.activeSetBonuses.value }
+  }
+// 在 load() 函数调用之后，添加这两行
+
+
+// 初始化伙伴（如果没有存档数据，就用 config 生成）
+if (!companionModule.companions.value || companionModule.companions.value.length === 0) {
+  const chars = config.characters || {}
+  companionModule.initCompanions(chars)
 }
   // 返回所有属性和方法
   return {
-    player: playerModule.player, _refreshSetBonuses,
+    initCompanions: (chars) => companionModule.initCompanions(chars || config.characters || {}),
+    player: playerModule.player,
+    _refreshSetBonuses,
     inventory: inventoryModule.inventory,
     materials: inventoryModule.materials,
     equipment: inventoryModule.equipment,
@@ -260,21 +288,19 @@ const _refreshSetBonuses = () => {
     exploredTiles,
     currentEvent,
     facilities,
+    companions: companionModule.companions,
+    activeCompanion: companionModule.activeCompanion,
     addGold: (amount) => playerModule.addGold(amount, save),
     addMaterial: (id, name, qty) => inventoryModule.addMaterial(id, name, qty, save),
     addExperience: (exp) => playerModule.addExperience(exp, save),
     equipItem: (item) => inventoryModule.equipItem(item, save),
     unequip: (slot) => inventoryModule.unequip(slot, save),
     equipAccessory: (acc, slot) => inventoryModule.equipAccessory(acc, slot, save),
-    
-   respawn: () => {
-  // 回满血
-  playerModule.player.hp = playerModule.player.maxHp;
-  playerModule.player.mp = playerModule.player.maxMp;
-  // 可选：重置到某个默认坐标（如果你还有地图的话）
-  // world.currentBiome = 'town'; world.playerX = 5; world.playerY = 4;
-  save();
-},
+    respawn: () => {
+      playerModule.player.hp = playerModule.player.maxHp
+      playerModule.player.mp = playerModule.player.maxMp
+      save()
+    },
     setRespawnPoint: worldModule.setRespawnPoint,
     advanceTime: (minutes) => worldModule.advanceTime(minutes, facilities),
     startDungeon: dungeonModule.startDungeon,
@@ -282,57 +308,43 @@ const _refreshSetBonuses = () => {
     retreat: () => dungeonModule.retreat(worldModule.world.day),
     getRandomMonsterForFloor: () => dungeonModule.getRandomMonsterForFloor(playerModule.worldLevel.value),
     acceptHuntQuest: (quest) => huntQuestModule.acceptHuntQuest(quest, save),
-updateHuntProgress: (enemyIds) => huntQuestModule.updateHuntProgress(
-  enemyIds,
-  rankModule.addRankExperience,
-  (amount) => playerModule.addGold(amount, save),
-  rankModule.completeRankUp,
-  (points) => { playerModule.player.skillPoints += points },   // ← 新增
-  save
-),
+    updateHuntProgress: (enemyIds) => huntQuestModule.updateHuntProgress(
+      enemyIds,
+      rankModule.addRankExperience,
+      (amount) => playerModule.addGold(amount, save),
+      rankModule.completeRankUp,
+      (points) => { playerModule.player.skillPoints += points },
+      save
+    ),
     abandonHuntQuest: (questId) => huntQuestModule.abandonHuntQuest(questId, save),
     getAffectionLevel: affectionModule.getAffectionLevel,
     getAffectionTitle: affectionModule.getAffectionTitle,
     applyAffection: (changes) => affectionModule.applyAffection(changes, save),
     addRankExperience: (exp) => rankModule.addRankExperience(exp, save),
-   completeRankUp: () => {
-  const previousRank = playerModule.player.rank
-  const ok = rankModule.completeRankUp()
-  if (!ok) return false
-
-  // 升段奖励
-  const rankIndex = rankModule.rankConfig.findIndex(r => r.name === playerModule.player.rank)
- 
-  playerModule.addGold(bonusGold, save)
-
-  // 奖励紫色饰品一件（等级根据段位）
-  const accLevel = 15 + rankIndex * 2
-  const accessory = generateAccessoryLoot({ level: accLevel, tag: 'boss' }, playerModule.worldLevel.value)
-  if (accessory) {
-    inventoryModule.inventory.push(accessory)
-  }
-
-  // 技能点奖励
-const skillPoints = 3 + rankIndex * 2  // 黑铁→青铜3点，青铜→白银5点...
-store.player.skillPoints += skillPoints
-
-// 金币奖励
-const bonusGold = 2000 + rankIndex * 1000
-playerModule.addGold(bonusGold, save)
-
-// 宝石奖励
-const gemDefs = config.gemDefinitions || []
-const gemLevel = 3 + rankIndex
-const eligible = gemDefs.filter(g => g.level === gemLevel)
-if (eligible.length > 0) {
-    const gem = eligible[Math.floor(Math.random() * eligible.length)]
-    store.inventory.push({ id: gem.id, name: gem.name, qty: 1 })
-}
-
-  save()
-  window.showToast?.(`晋升为 ${playerModule.player.rank}！获得 ${bonusGold}G 和稀有饰品！`)
-  return true
-},
+    completeRankUp: () => {
+      const ok = rankModule.completeRankUp()
+      if (!ok) return false
+      const rankIndex = rankModule.rankConfig.findIndex(r => r.name === playerModule.player.rank)
+      const bonusGold = 2000 + rankIndex * 1000
+      const skillPoints = 3 + rankIndex * 2
+      playerModule.addGold(bonusGold, save)
+      playerModule.player.skillPoints += skillPoints
+      const accLevel = 15 + rankIndex * 2
+      const accessory = generateAccessoryLoot({ level: accLevel, tag: 'boss' }, playerModule.worldLevel.value)
+      if (accessory) {
+        inventoryModule.inventory.push(accessory)
+      }
+      const gemDefs = config.gemDefinitions || []
+      const gemLevel = 3 + rankIndex
+      const eligible = gemDefs.filter(g => g.level === gemLevel)
+      if (eligible.length > 0) {
+        const gem = eligible[Math.floor(Math.random() * eligible.length)]
+        inventoryModule.inventory.push({ id: gem.id, name: gem.name, qty: 1 })
+      }
+      save()
+      window.showToast?.(`晋升为 ${playerModule.player.rank}！获得 ${bonusGold}G 和稀有饰品！`)
+      return true
+    },
     getBossForRank: () => rankModule.getBossForRank(dungeonModule.dungeon),
     rankConfig: rankModule.rankConfig,
     getSkillById: (id) => playerModule.getSkillById(config.skillPool, id),
@@ -355,7 +367,12 @@ if (eligible.length > 0) {
     isEnemyDefeated: (x, y) => defeatedEnemies.value.has(`${x},${y}`),
     exploreTile: (x, y) => { exploredTiles.value.add(`${x},${y}`); save() },
     isTileExplored: (x, y) => exploredTiles.value.has(`${x},${y}`),
-    rollAccessoryForEnemy: (enemyName) => { /* 可保留空实现或导入原始函数 */ },
-    setBonuses
+    rollAccessoryForEnemy: (enemyName) => { /* 可保留空实现 */ },
+    setBonuses,
+    addCompanionExp: companionModule.addCompanionExp,
+    restoreCompanion: companionModule.restoreCompanion,
+    addAffectionToCompanion: companionModule.addAffection,
+    allocateCompanionTalent: companionModule.allocateTalent,
+    getCompanionStats: companionModule.getCombatStats
   }
 })
