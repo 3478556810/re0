@@ -8,5 +8,5 @@
   { "id": "gem_ruby_7", "name": "绯红之月·7级", "type": "atk", "value": 200, "level": 7, "color": "#e74c3c", "icon": "mdi:rhombus" },
   { "id": "gem_ruby_8", "name": "绯红之月·8级", "type": "atk", "value": 280, "level": 8, "color": "#e74c3c", "icon": "mdi:rhombus" },
   { "id": "gem_ruby_9", "name": "绯红之月·9级", "type": "atk", "value": 380, "level": 9, "color": "#e74c3c", "icon": "mdi:rhombus" },
-  { "id": "gem_ruby_10", "name": "绯红之月·10级", "type": "atk", "value": 750, "level": 10, "color": "#e74c3c", "icon": "mdi:rhombus" }
+  { "id": "gem_ruby_10", "name": "绯红之月·10级", "type": "atk", "value": 500, "level": 10, "color": "#e74c3c", "icon": "mdi:rhombus" }
 ]

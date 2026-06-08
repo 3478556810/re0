@@ -8,5 +8,5 @@
   { "id": "gem_amethyst_7", "name": "永夜幻影·7级", "type": "critDmg", "value": 135, "level": 7, "color": "#9b59b6", "icon": "mdi:rhombus" },
   { "id": "gem_amethyst_8", "name": "永夜幻影·8级", "type": "critDmg", "value": 190, "level": 8, "color": "#9b59b6", "icon": "mdi:rhombus" },
   { "id": "gem_amethyst_9", "name": "永夜幻影·9级", "type": "critDmg", "value": 255, "level": 9, "color": "#9b59b6", "icon": "mdi:rhombus" },
-  { "id": "gem_amethyst_10", "name": "永夜幻影·10级", "type": "critDmg", "value": 500, "level": 10, "color": "#9b59b6", "icon": "mdi:rhombus" }
+  { "id": "gem_amethyst_10", "name": "永夜幻影·10级", "type": "critDmg", "value": 350, "level": 10, "color": "#9b59b6", "icon": "mdi:rhombus" }
 ]

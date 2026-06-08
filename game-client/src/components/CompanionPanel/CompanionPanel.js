@@ -68,34 +68,120 @@ const companionSkillPoints = computed(() => {
       { key: 'rockDmg', name: '岩', icon: 'mdi:terrain' }
     ]
 
-    const companionStats = computed(() => {
-      const comp = currentCompanion.value
-      if (!comp) return { atk:0, def:0, hp:0, mp:0, speed:0, critRate:5, critDmg:150, dodge:0, trueDmg:0,
-        fireDmg:0, waterDmg:0, thunderDmg:0, windDmg:0, grassDmg:0, iceDmg:0, holyDmg:0, darkDmg:0, steelDmg:0, rockDmg:0 }
-      const bonus = affectionBonus.value
-      return {
-        atk: (comp.baseAtk || 10) + bonus.atk,
-        def: (comp.baseDef || 5) + bonus.def,
-        hp: (comp.baseHp || 100) + bonus.hp,
-        mp: comp.baseMp || 30,
-        speed: (comp.baseSpeed || 10) + bonus.speed,
-        critRate: 5,
-        critDmg: 150,
-        dodge: comp.dodge || 0,
-        trueDmg: comp.trueDmg || 0,
-        fireDmg: comp.fireDmg || 0,
-        waterDmg: comp.waterDmg || 0,
-        thunderDmg: comp.thunderDmg || 0,
-        windDmg: comp.windDmg || 0,
-        grassDmg: comp.grassDmg || 0,
-        iceDmg: comp.iceDmg || 0,
-        holyDmg: comp.holyDmg || 0,
-        darkDmg: comp.darkDmg || 0,
-        steelDmg: comp.steelDmg || 0,
-        rockDmg: comp.rockDmg || 0
-      }
-    })
+ const companionStats = computed(() => {
+  const comp = currentCompanion.value
+  if (!comp) return { atk:0, def:0, hp:0, mp:0, speed:0, critRate:5, critDmg:150, dodge:0, trueDmg:0,
+    fireDmg:0, waterDmg:0, thunderDmg:0, windDmg:0, grassDmg:0, iceDmg:0, holyDmg:0, darkDmg:0, steelDmg:0, rockDmg:0 }
 
+  const player = store.player
+  const playerStats = store.playerStats
+  const originalAttack = playerStats.attack || 10
+  const originalDefense = playerStats.defense || 5
+  const originalMaxHp = playerStats.maxHp || 100
+  const originalMaxMp = playerStats.maxMp || 30
+  const originalSpeed = playerStats.speed || 10
+  const originalCritRate = playerStats.critRate || 5
+  const originalCritDmg = playerStats.critDmg || 150
+
+  const companionLevel = comp.level || 1
+  const affectionLevel = comp.affection || 0
+  const affectionBonusLv = Math.floor(affectionLevel / 200)
+
+  const isHealer = ['archmage', 'elemental', 'paladin', 'oracle', 'seer'].includes(player.class)
+  const isOracle = ['oracle', 'seer'].includes(player.class)
+  const talents = player.talents || {}
+  const hasSoulLink = isOracle && talents['o_keystone_link']
+  const hasSoulResonance = isOracle && talents['s_keystone_link']
+  const hasLifeConvert = isOracle && talents['o_life_convert']
+  const hasDefConvert = isOracle && talents['o_def_convert']
+  const hasLifePraise = isOracle && talents['s_notable_life']
+  const hasSteelSong = isOracle && talents['s_notable_steel']
+
+  let atkRate = isHealer ? 0.9 : 0.6
+  let defRate = isHealer ? 0.7 : 0.4
+  let hpRate  = isHealer ? 0.9 : 0.6
+
+  if (hasSoulLink) { atkRate += 0.1; defRate += 0.1; hpRate += 0.1 }
+  if (hasSoulResonance) { atkRate += 0.2; defRate += 0.2; hpRate += 0.2 }
+
+  // 小节点：继承率提升
+  if (talents['o_companion1']) { atkRate += 0.1; defRate += 0.1; hpRate += 0.1 }
+  if (talents['s_companion4']) { atkRate += 0.15; defRate += 0.15; hpRate += 0.15 }
+
+  // 自身基础 + 等级成长
+  const selfBaseAtk = (comp.baseAtk || 25) + companionLevel * 3
+  const selfBaseDef = (comp.baseDef || 12) + companionLevel * 2
+  const selfBaseHp = (comp.baseHp || 200) + companionLevel * 20
+
+  const inheritedAtk = Math.floor(originalAttack * atkRate)
+  const inheritedDef = Math.floor(originalDefense * defRate)
+  const inheritedHp = Math.floor(originalMaxHp * hpRate)
+
+  let attack = selfBaseAtk + inheritedAtk + affectionBonusLv * 20
+  let defense = selfBaseDef + inheritedDef + affectionBonusLv * 10
+  let hp = selfBaseHp + inheritedHp + affectionBonusLv * 50
+  let speed = originalSpeed + 5 + affectionBonusLv * 2
+  let critRate = Math.floor(originalCritRate * 0.8)
+  let critDmg = Math.floor(originalCritDmg * 0.8)
+
+  // 基石额外继承
+  if (isOracle) {
+    let extraAtkRate = 0, extraDefRate = 0, extraHpRate = 0
+    if (hasSoulLink) { extraAtkRate += 0.4; extraDefRate += 0.4; extraHpRate += 0.4 }
+    if (hasSoulResonance) { extraAtkRate += 0.8; extraDefRate += 0.8; extraHpRate += 0.8 }
+    attack += Math.floor(originalAttack * extraAtkRate)
+    defense += Math.floor(originalDefense * extraDefRate)
+    hp += Math.floor(originalMaxHp * extraHpRate)
+  }
+
+  // 伙伴攻击力% 乘算
+  let finalAtkMult = 1.0
+  if (talents['o_companion2']) finalAtkMult += 0.1
+  if (talents['s_companion5']) finalAtkMult += 0.15
+  attack = Math.floor(attack * finalAtkMult)
+
+  // 伙伴暴伤固定值
+  if (talents['o_companion3']) critDmg += 15
+  if (talents['s_companion6']) critDmg += 20
+
+  // 生命转化 / 生命礼赞
+  if (hasLifeConvert) {
+    const bonusAtkPct = Math.floor(originalMaxHp / 100) * 3
+    attack += Math.floor(attack * bonusAtkPct / 100)
+  }
+  if (hasLifePraise) {
+    const bonusAtkPct = Math.floor(originalMaxHp / 100) * 4
+    attack += Math.floor(attack * bonusAtkPct / 100)
+  }
+  if (hasDefConvert) {
+    critDmg += Math.floor(originalDefense / 50) * 5
+  }
+  if (hasSteelSong) {
+    critDmg += Math.floor(originalDefense / 50) * 6
+  }
+
+  return {
+    atk: attack,
+    def: defense,
+    hp: hp,
+    mp: Math.max(Math.floor(originalMaxMp * 0.6), 50),
+    speed: speed,
+    critRate: critRate,
+    critDmg: critDmg,
+    dodge: comp.dodge || 0,
+    trueDmg: comp.trueDmg || 0,
+    fireDmg: playerStats.fireDmg || 0,
+    waterDmg: playerStats.waterDmg || 0,
+    thunderDmg: playerStats.thunderDmg || 0,
+    windDmg: playerStats.windDmg || 0,
+    grassDmg: playerStats.grassDmg || 0,
+    iceDmg: playerStats.iceDmg || 0,
+    holyDmg: playerStats.holyDmg || 0,
+    darkDmg: playerStats.darkDmg || 0,
+    steelDmg: playerStats.steelDmg || 0,
+    rockDmg: playerStats.rockDmg || 0
+  }
+})
     const companionTalentPoints = computed(() => {
       const aff = currentCompanion.value?.affection || 0
       const lv = Math.floor(aff / 200)

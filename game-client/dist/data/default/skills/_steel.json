@@ -1,9 +1,8 @@
 [
   {
-    "_comment": "===== 钢属性技能 =====",
     "id": "steel_armor",
     "name": "钢甲",
-    "desc": "全队获得护盾+防御Buff+反伤光环。",
+    "desc": "全队获得护盾+防御Buff+反伤光环",
     "icon": "mdi:cube-outline",
     "type": "active",
     "target": "all",
@@ -15,20 +14,20 @@
     "learnCost": 2,
     "levelScaling": { "shieldValue": 15 },
     "effects": [
-      { "type": "buff", "value": 0.35, "stat": "def", "duration": 3, "chance": 100 },
-      { "type": "shield", "value": 0.4, "duration": 3, "chance": 100 },
-      { "type": "reflect", "value": 0.35, "duration": 3, "chance": 100, "target": "all" }
+      { "type": "buff", "value": 0.2, "stat": "def", "duration": 3, "chance": 100 },
+      { "type": "shield", "value": 0.3, "duration": 3, "chance": 100 },
+      { "type": "reflect", "value": 0.2, "duration": 3, "chance": 100, "target": "all" }
     ],
     "tripods": [
-      { "name": "坚韧", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.25, "stat": "maxHp", "duration": 3, "chance": 100, "target": "all" }] },
-      { "name": "反伤光环", "unlockLevel": 7, "effects": [{ "type": "reflect", "value": 0.25, "duration": 3, "chance": 100, "target": "all" }] },
-      { "name": "钢之意志", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.3, "stat": "atk", "duration": 3, "chance": 100, "target": "all" }] }
+      { "name": "坚韧", "unlockLevel": 4, "effects": [{ "type": "buff", "value": 0.15, "stat": "maxHp", "duration": 3, "chance": 100, "target": "all" }] },
+      { "name": "反伤光环", "unlockLevel": 7, "effects": [{ "type": "reflect", "value": 0.15, "duration": 3, "chance": 100, "target": "all" }] },
+      { "name": "钢之意志", "unlockLevel": 10, "effects": [{ "type": "shield", "value": 0.2, "duration": 3, "chance": 100, "target": "all" }] }
     ]
   },
   {
     "id": "steel_blade",
     "name": "钢刃",
-    "desc": "钢属性单体攻击。无视40%防御并附加真实伤害。",
+    "desc": "钢属性单体攻击，无视40%防御并附加真实伤害",
     "icon": "mdi:sword-cross",
     "type": "active",
     "target": "single",
@@ -46,13 +45,13 @@
     "tripods": [
       { "name": "锋利", "unlockLevel": 4, "effects": [{ "type": "trueDmg", "value": 0.3, "chance": 100 }] },
       { "name": "破甲", "unlockLevel": 7, "effects": [{ "type": "debuff", "value": -0.35, "stat": "def", "duration": 3, "chance": 100 }] },
-      { "name": "钢躯", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.3, "stat": "def", "duration": 3, "chance": 100, "target": "self" }] }
+      { "name": "钢躯", "unlockLevel": 10, "effects": [{ "type": "shield", "value": 0.2, "duration": 3, "chance": 100, "target": "self" }] }
     ]
   },
   {
     "id": "steel_storm",
     "name": "钢铁风暴",
-    "desc": "钢属性全体攻击，附带防御降低效果。",
+    "desc": "钢属性全体攻击，附带防御降低效果",
     "icon": "mdi:sword-rotate",
     "type": "active",
     "target": "aoe",
@@ -69,7 +68,7 @@
     "tripods": [
       { "name": "旋风斩", "unlockLevel": 4, "effects": [{ "type": "extraAction", "value": 30, "target": "aoe", "chance": 100 }] },
       { "name": "钢铁雨", "unlockLevel": 7, "effects": [{ "type": "debuff", "value": -0.35, "stat": "def", "duration": 3, "chance": 100 }] },
-      { "name": "淬火", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.25, "stat": "critRate", "duration": 3, "chance": 100, "target": "self" }] }
+      { "name": "淬火", "unlockLevel": 10, "effects": [{ "type": "trueDmg", "value": 0.15, "chance": 100 }] }
     ]
   }
 ]

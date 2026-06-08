@@ -1,7 +1,11 @@
 // src/combat/rewards.js
 import { rollQuality, QUALITY_STATS_MULTIPLIER, QUALITY_WEIGHTS } from '../config/accessoryConfig'
 import { AFFIX_EFFECTS, QUALITY_AFFIX_LEVEL_MIN } from '../config/accessoryConfig'
-
+// ========== 新增：全局掉落衰减系数（可随时调整平衡性） ==========
+const GLOBAL_MAT_DROP_RATE = 0.7    // 材料掉率系数（0.7 = 原概率的70%）
+const GLOBAL_EQUIP_DROP_MULT = 0.7  // 装备掉率系数
+const GLOBAL_GEM_DROP_MULT = 0.7    // 宝石掉率系数（普通怪）
+// ================================================================
 /* ==================== 攻击/防御词条分类 ==================== */
 const OFFENSIVE_AFFIX_KEYS = ['grudge','voodooDoll','bluntWeapon','elementMaster','ambushMaster','fortune']
 const DEFENSIVE_AFFIX_KEYS = ['armorBreak','manaResonance','adrenaline','tenacity','phoenix','bossHunter']
@@ -162,15 +166,13 @@ export function getRewards(engine) {
 
   const doubleDrop = engine.player?.doubleDrop || 0
   const playerLevel = engine.player?.level || 1
-
-  // 检查伙伴是否存活
   const companionAlive = engine.companion && engine.companion.hp > 0
 
   for (const e of engine.enemies) {
     try {
       const monsterLevel = e.level || (e.base?.level) || 1
 
-      // 玩家经验值（等级差修正）
+      // 经验值计算（保持原逻辑）
       const levelDiff = monsterLevel - playerLevel
       let expMultiplier = 1.0
       if (levelDiff >= 5) expMultiplier = 2.0
@@ -181,27 +183,26 @@ export function getRewards(engine) {
       else expMultiplier = 0.6
       exp += Math.floor(monsterLevel * 15 * expMultiplier)
 
-      // 伙伴经验（玩家经验的80%）
       if (companionAlive) {
         companionExp += Math.floor(monsterLevel * 12 * expMultiplier)
       }
-// 在 rewards.js 的 getRewards 中，return 之前
-// 在 getRewards 中，计算完 companionExp 之后，return 之前
-// 在 getRewards 中，return 之前
-console.log('🔍 经验双倍检查, talents:', engine.player?.talents)
-console.log('🔍 s_exp_boost:', engine.player?.talents?.['s_exp_boost'])
-if (engine.player?.talents?.['s_exp_boost']) {
-    companionExp *= 2
-    console.log('🔍 经验已翻倍:', companionExp)
-}
-      // 材料掉落
+
+      // 如果玩家有经验天赋，伙伴经验翻倍（保持原样）
+      if (engine.player?.talents?.['s_exp_boost']) {
+        companionExp *= 2
+      }
+
+      // ---------- 材料掉落（应用全局衰减） ----------
       const mats = e.base?.materials || (e.base?.material ? [e.base.material] : [])
       for (const matDef of mats) {
-        const dropRate = matDef.dropRate ?? 100
-        if (Math.random() * 100 < dropRate) {
-          let qty = matDef.qty || 1
+        // 原掉率 × 全局系数
+        const effectiveRate = (matDef.dropRate ?? 100) * GLOBAL_MAT_DROP_RATE
+        if (Math.random() * 100 < effectiveRate) {
+          // 数量也乘以系数并向上取整
+          let qty = Math.max(1, Math.floor((matDef.qty || 1) * GLOBAL_MAT_DROP_RATE))
           if (doubleDrop > 0 && Math.random() * 100 < doubleDrop) qty *= 2
 
+          // 处理随机宝石ID或固定宝石ID
           if (matDef.id === 'gem_random') {
             const gemDefs = engine.config?.gemDefinitions || []
             if (gemDefs.length > 0) {
@@ -222,10 +223,10 @@ if (engine.player?.talents?.['s_exp_boost']) {
         }
       }
 
-      // 副本Boss特殊掉落（品质魔石 + 专属材料 + 7级宝石）
+      // ---------- 副本Boss特殊掉落（保持不变） ----------
       if (e.isRaidBoss || e.base?.isRaidBoss) {
+        // ... 原代码不动
         const bossId = e.id || e.base?.id
-
         let qualityStoneQty = 2
         if (bossId === 'raid_bishop') qualityStoneQty = 5
         else if (bossId === 'raid_lava_core') qualityStoneQty = 4
@@ -247,33 +248,27 @@ if (engine.player?.talents?.['s_exp_boost']) {
         }
       }
 
-      // 塔Boss掉落套装材料 + 宝石
+      // ---------- 塔Boss特殊掉落（保持不变） ----------
       if (e.isBoss && !e.isRaidBoss && !(e.base?.isRaidBoss)) {
         const bossId = e.id || e.base?.id
-
         if (bossId === 'boss_shadow_lord') {
-          materials.push({ id: 'dungeon_token', name: '地下城徽记', qty: 3, dropRate: 100 })
+          materials.push({ id: 'dungeon_token', name: '地下城徽记', qty: 3 })
           materials.push(
-            { id: 'obsidian', name: '黑曜石', qty: 8, dropRate: 100 },
-            { id: 'crystal_shard', name: '晶簇碎片', qty: 5, dropRate: 100 }
+            { id: 'obsidian', name: '黑曜石', qty: 8 },
+            { id: 'crystal_shard', name: '晶簇碎片', qty: 5 }
           )
         }
         if (bossId === 'boss_fire_dragon') {
-          materials.push({ id: 'dungeon_token', name: '地下城徽记', qty: 3, dropRate: 100 })
-          materials.push({ id: 'dragon_ore', name: '龙鳞矿', qty: 8, dropRate: 100 })
+          materials.push({ id: 'dungeon_token', name: '地下城徽记', qty: 3 })
+          materials.push({ id: 'dragon_ore', name: '龙鳞矿', qty: 8 })
         }
 
         const gemDefs = engine.config?.gemDefinitions || []
         if (gemDefs.length > 0) {
           let minLevel = 1, maxLevel = 1, gemQty = 0
-
-          if (bossId === 'boss_goblin_king') {
-            minLevel = 3; maxLevel = 5; gemQty = 2
-          } else if (bossId === 'boss_shadow_lord') {
-            minLevel = 4; maxLevel = 6; gemQty = 3
-          } else if (bossId === 'boss_fire_dragon') {
-            minLevel = 5; maxLevel = 7; gemQty = 4
-          }
+          if (bossId === 'boss_goblin_king') { minLevel = 3; maxLevel = 5; gemQty = 2 }
+          else if (bossId === 'boss_shadow_lord') { minLevel = 4; maxLevel = 6; gemQty = 3 }
+          else if (bossId === 'boss_fire_dragon') { minLevel = 5; maxLevel = 7; gemQty = 4 }
 
           for (let i = 0; i < gemQty; i++) {
             const eligible = gemDefs.filter(g => g.level >= minLevel && g.level <= maxLevel)
@@ -285,10 +280,11 @@ if (engine.player?.talents?.['s_exp_boost']) {
         }
       }
 
-      // 普通小怪装备掉落 + 宝石掉落
+      // ---------- 普通小怪装备掉落（应用全局系数） ----------
       if (!e.isBoss && !(e.base && e.base.isBoss)) {
+        // 宝石掉落衰减
         const gemDefs = engine.config?.gemDefinitions || []
-        if (Math.random() < 0.06) {
+        if (Math.random() < 0.06 * GLOBAL_GEM_DROP_MULT) {
           const eligible = gemDefs.filter(g => g.level >= 1 && g.level <= 2)
           if (eligible.length > 0) {
             const gem = eligible[Math.floor(Math.random() * eligible.length)]
@@ -296,6 +292,7 @@ if (engine.player?.talents?.['s_exp_boost']) {
           }
         }
 
+        // 装备掉率衰减
         let dropRate = 0.12
         if (playerLevel <= 5) dropRate = 0.30
         else if (playerLevel <= 10) dropRate = 0.22
@@ -304,6 +301,8 @@ if (engine.player?.talents?.['s_exp_boost']) {
         if (monsterLevel < playerLevel - 5) dropRate *= 0.5
         else if (monsterLevel < playerLevel) dropRate *= 0.8
         else if (monsterLevel > playerLevel + 3) dropRate *= 1.2
+
+        dropRate *= GLOBAL_EQUIP_DROP_MULT   // ← 应用全局装备衰减
 
         if (Math.random() < dropRate) {
           const eq = generateRandomEquipment(e.base?.tag || 'normal', monsterLevel, playerLevel)
@@ -315,7 +314,6 @@ if (engine.player?.talents?.['s_exp_boost']) {
     }
   }
 
-  // 如果伙伴在战斗中阵亡，经验减半
   if (!companionAlive && engine.companion) {
     companionExp = Math.floor(companionExp * 0.5)
   }
