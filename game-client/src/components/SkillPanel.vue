@@ -324,7 +324,7 @@ function getUpgradeCost(level) {
 async function handleResetSkills() {
   const ok = await showConfirm('确定要重置所有技能吗？\n所有技能点将返还，已学习技能将被遗忘。')
   if (!ok) return
-  if (props.mode === 'companion' && props.companion) {
+if (props.mode === 'companion' && props.companion) {
     const comp = props.companion
     let refund = 0
     for (const skill of store.config.skillPool || []) {
@@ -337,10 +337,13 @@ async function handleResetSkills() {
     comp.equippedSkills = []
     comp.tripodChoices = {}
     comp.skillSpent = 0
+ comp.skillSlots = {}
+    store.player.skillPoints += refund  // 返还给玩家
     store.save()
+    
     showToast('伙伴技能已重置，技能点已返还')
     return
-  }
+}
   let refund = 0
   for (const skill of store.config.skillPool || []) {
     const state = store.player.skills?.[skill.id]
@@ -387,12 +390,13 @@ function upgradeSkill(skillId) {
   const cost = getUpgradeCost(currentLevel)
   if (!isUnlocked(skillId)) { showToast('尚未学习该技能'); return }
   if (skillPoints.value < cost) { showToast(`技能点不足 (需要${cost}点)`); return }
-  if (props.mode === 'companion' && props.companion) {
+ if (props.mode === 'companion' && props.companion) {
     const comp = props.companion
     comp.skills[skillId].level += 1
     comp.skillSpent += cost
+    store.player.skillPoints -= cost   // 关键：消耗玩家的技能点
     store.save()
-  } else {
+}else {
     store.player.skillPoints -= cost
     store.player.skills[skillId].level += 1
     store.save()
@@ -406,16 +410,23 @@ function equipSkill(skillId) {
   if (isEquipped(skillId)) return
   if (props.mode === 'companion' && props.companion) {
     const comp = props.companion
-    // 写入 equippedSkills 数组（UI 展示用）
     if (!comp.equippedSkills) comp.equippedSkills = []
-    if (comp.equippedSkills.length >= 4) { showToast('伙伴最多装备4个技能'); return }
+    if (comp.equippedSkills.length >= 4) {
+      showToast('伙伴最多装备4个技能')
+      return
+    }
+    // 写入数组（UI显示用）
     comp.equippedSkills.push(skillId)
-    // 同时写入 skillSlots 对象（战斗引擎读取用）
+    // 写入 slot 对象（战斗引擎用）
     if (!comp.skillSlots) comp.skillSlots = {}
     const slotKeys = ['s1', 's2', 's3', 's4']
     const emptySlot = slotKeys.find(key => !comp.skillSlots[key])
     if (emptySlot) {
       comp.skillSlots[emptySlot] = skillId
+    } else {
+      // 理论上不会发生，但可以强制覆盖最后一个槽位或报错
+      showToast('技能槽位异常，请先卸下一个技能')
+      return
     }
     store.save()
     return
@@ -429,12 +440,29 @@ function equipSkill(skillId) {
 function unequipSkill(skillId) {
   if (props.mode === 'companion' && props.companion) {
     const comp = props.companion
+    // 从 equippedSkills 中移除
     const idx = comp.equippedSkills?.indexOf(skillId)
-    if (idx >= 0) { comp.equippedSkills.splice(idx, 1); store.save() }
+    if (idx >= 0) {
+      comp.equippedSkills.splice(idx, 1)
+    }
+    // 从 skillSlots 中清除对应的槽位
+    if (comp.skillSlots) {
+      for (const slot of Object.keys(comp.skillSlots)) {
+        if (comp.skillSlots[slot] === skillId) {
+          delete comp.skillSlots[slot]
+          // 或者设置为 null，取决于你后续的判断，建议 delete
+        }
+      }
+    }
+    store.save()
     return
   }
+  // 玩家模式保持原样
   const idx = store.player.equippedSkills.indexOf(skillId)
-  if (idx >= 0) { store.player.equippedSkills.splice(idx, 1); store.save() }
+  if (idx >= 0) {
+    store.player.equippedSkills.splice(idx, 1)
+    store.save()
+  }
 }
 
 function moveUp(idx) {

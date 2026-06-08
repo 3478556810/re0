@@ -126,15 +126,14 @@ mage: {
     { id: 'o_companion3', x: 26, y: 65, type: 'small', icon: 'mdi:account-heart', name: '灵魂同调', effect: '伙伴暴击伤害 +15%', cost: 2, connections: ['o_companion2'] },
     { id: 'o_life_convert', x: 18, y: 58, type: 'notable', icon: 'mdi:heart', name: '生命转化', effect: '每100点生命值<br/>伙伴攻击力 +3%', cost: 3, connections: ['o_companion3'] },
     { id: 'o_def_convert', x: 12, y: 52, type: 'notable', icon: 'mdi:shield', name: '钢铁意志', effect: '每50点防御值<br/>伙伴暴击伤害 +5%', cost: 3, connections: ['o_life_convert'] },
-    { id: 'o_keystone_link', x: 5, y: 44, type: 'keystone', icon: 'mdi:link', name: '灵魂链接', effect: '装备/刻印属性<br/>自身只继承40%<br/>伙伴继承100%', cost: 5, connections: ['o_def_convert'] },
-
+   { id: 'o_keystone_link', x: 5, y: 44, type: 'keystone', icon: 'mdi:link', name: '灵魂链接', effect: '伙伴额外继承玩家<br/>40% 攻击/防御/生命', cost: 5, connections: ['o_def_convert'] },
     // ========== 左路延伸：神谕者专属伙伴强化 ==========
     { id: 's_companion4', x: 30, y: 42, type: 'small', icon: 'mdi:account-heart', name: '圣约', effect: '伙伴继承属性 +15%', cost: 1, connections: ['o_keystone_link'], reqClass: 'seer' },
     { id: 's_companion5', x: 22, y: 36, type: 'small', icon: 'mdi:account-heart', name: '圣灵共鸣', effect: '伙伴攻击力 +15%', cost: 1, connections: ['s_companion4'], reqClass: 'seer' },
     { id: 's_companion6', x: 14, y: 30, type: 'small', icon: 'mdi:account-heart', name: '圣灵同调', effect: '伙伴暴击伤害 +20%', cost: 2, connections: ['s_companion5'], reqClass: 'seer' },
     { id: 's_notable_life', x: 8, y: 24, type: 'notable', icon: 'mdi:heart', name: '生命礼赞', effect: '每100点生命值<br/>伙伴攻击力 +4%', cost: 3, connections: ['s_companion6'], reqClass: 'seer' },
     { id: 's_notable_steel', x: 2, y: 18, type: 'notable', icon: 'mdi:shield', name: '钢铁圣歌', effect: '每50点防御值<br/>伙伴暴击伤害 +6%', cost: 3, connections: ['s_notable_life'], reqClass: 'seer' },
-    { id: 's_keystone_link', x: -4, y: 12, type: 'keystone', icon: 'mdi:link', name: '灵魂共鸣', effect: '装备/刻印属性<br/>自身只继承30%<br/>伙伴继承120%', cost: 5, connections: ['s_notable_steel'], reqClass: 'seer' },
+   { id: 's_keystone_link', x: -4, y: 12, type: 'keystone', icon: 'mdi:link', name: '灵魂共鸣', effect: '伙伴额外继承玩家<br/>80% 攻击/防御/生命', cost: 5, connections: ['s_notable_steel'], reqClass: 'seer' },
 
     // ========== 右路：治疗强化（织光者基础） ==========
     { id: 'o_heal1', x: 58, y: 78, type: 'small', icon: 'mdi:heart', name: '治愈之光', effect: '治疗效果 +12%', cost: 1, connections: ['o_start'] },

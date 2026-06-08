@@ -253,24 +253,22 @@ case 'heal':
   // 检查目标是否是伙伴
   if (companionTarget && companionTarget.isCompanion) {
     // 圣光灌注
-    if (talents['o_notable_heal']) {
-      companionTarget.addEffect({
-        type: 'buff', stat: 'atk', value: 0.4, duration: 2, stackable: false
-      });
-      companionTarget.addEffect({
-        type: 'buff', stat: 'critDmg', value: 1.0, duration: 2, stackable: false
-      });
-    }
+companionTarget.addEffect({
+  type: 'holyAnthem',
+  atkPercent: 40,
+  critDmgPercent: 100,
+  duration: 4,
+  stackable: false
+});
     
     // 神圣赞美诗
-    if (talents['s_notable_heal']) {
-      companionTarget.addEffect({
-        type: 'buff', stat: 'atk', value: 0.5, duration: 2, stackable: false
-      });
-      companionTarget.addEffect({
-        type: 'buff', stat: 'critDmg', value: 1.2, duration: 2, stackable: false
-      });
-    }
+companionTarget.addEffect({
+  type: 'holyAnthem',
+  atkPercent: 50,
+  critDmgPercent: 120,
+  duration: 4,
+  stackable: false
+});
     
     // 智慧之泉（治疗时回复3% MP）
     if (talents['o_notable_mp']) {

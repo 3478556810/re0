@@ -373,6 +373,10 @@ if (!companionModule.companions.value || companionModule.companions.value.length
     restoreCompanion: companionModule.restoreCompanion,
     addAffectionToCompanion: companionModule.addAffection,
     allocateCompanionTalent: companionModule.allocateTalent,
-    getCompanionStats: companionModule.getCombatStats
+    getCompanionStats: companionModule.getCombatStats,changeClassWithRecalc: (newClass) => {
+  playerModule.player.class = newClass
+  playerModule.recalculateBaseStats(newClass)
+  save()
+}
   }
 })

@@ -1,6 +1,5 @@
 [
   {
-    "_comment": "===== 雷属性技能 =====",
     "id": "thunder_shock",
     "name": "雷电",
     "desc": "雷属性全体攻击，低概率眩晕。清场型AOE。",
@@ -15,10 +14,10 @@
     "learnCost": 3,
     "levelScaling": { "baseMul": 0.10 },
     "effects": [
-      { "type": "stun", "duration": 1, "chance": 25 }
+      { "type": "stun", "duration": 1, "chance": 20 }
     ],
     "tripods": [
-      { "name": "高压", "unlockLevel": 4, "effects": [{ "type": "stun", "duration": 1, "chance": 35 }] },
+      { "name": "高压", "unlockLevel": 4, "effects": [{ "type": "stun", "duration": 1, "chance": 30 }] },
       { "name": "连锁闪电", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 30, "target": "aoe", "chance": 100 }] },
       { "name": "电磁场", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.25, "stat": "critRate", "duration": 3, "chance": 100, "target": "self" }] }
     ]

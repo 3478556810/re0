@@ -1,10 +1,8 @@
 import { calculateDamage } from '../damageCalculator'
 import { EFFECT_TYPES } from '../effectDefs'
 import { applySkillEffects } from '../effects/skillEffects'
-import { UnitState } from '../UnitState'
 import { bossMechanics } from '../engine/mechanics/bossMechanics'
 
-// ==================== 旧版 enemyTurn ====================
 export function executeEnemyTurn(engine) {
   const results = []
   engine.player.effects.forEach(eff => {
@@ -73,7 +71,6 @@ export function executeEnemyTurn(engine) {
   return results
 }
 
-// ==================== 新版单个敌人行动 ====================
 export function executeSingleEnemyAction(engine, enemy) {
   if (enemy.isStunned()) {
     const freeze = enemy.effects.find(e => e.type === EFFECT_TYPES.FREEZE)
@@ -89,22 +86,17 @@ export function executeSingleEnemyAction(engine, enemy) {
   }
 
   if (!enemy._skillCooldowns) enemy._skillCooldowns = {}
-
   for (const key of Object.keys(enemy._skillCooldowns)) {
     if (enemy._skillCooldowns[key] > 0) enemy._skillCooldowns[key]--
   }
 
-  // ★ 强制释放阶段机制技能
   if (enemy._pendingMechanicSkill) {
     const skillName = enemy._pendingMechanicSkill
     delete enemy._pendingMechanicSkill
     const forcedSkill = enemy.skills?.find(s => s.name === skillName)
-    if (forcedSkill) {
-      return executeSkill(engine, enemy, forcedSkill)
-    }
+    if (forcedSkill) return executeSkill(engine, enemy, forcedSkill)
   }
 
-  // ★ 没有匹配技能时，直接触发机制
   if (enemy._pendingMechanicDirect) {
     const mechName = enemy._pendingMechanicDirect
     delete enemy._pendingMechanicDirect
@@ -135,20 +127,11 @@ export function executeSingleEnemyAction(engine, enemy) {
     if (hpPercent <= 0.25) currentPhase = 4
   }
 
-  const phaseSkills = enemy.skills.filter(skill => {
-    const unlock = skill.unlockPhase || 1
-    return unlock <= currentPhase
-  })
-
-  const availableSkills = phaseSkills.filter(skill => {
-    const cd = enemy._skillCooldowns[skill.name] || 0
-    return cd <= 0
-  })
+  const phaseSkills = enemy.skills.filter(skill => (skill.unlockPhase || 1) <= currentPhase)
+  const availableSkills = phaseSkills.filter(skill => (enemy._skillCooldowns[skill.name] || 0) <= 0)
 
   if (availableSkills.length === 0 && phaseSkills.length > 0) {
-    for (const skill of phaseSkills) {
-      enemy._skillCooldowns[skill.name] = 0
-    }
+    for (const skill of phaseSkills) enemy._skillCooldowns[skill.name] = 0
     availableSkills.push(...phaseSkills)
   }
 
@@ -168,24 +151,17 @@ export function executeSingleEnemyAction(engine, enemy) {
       }
       return true
     })
-    if (safeBuffs.length > 0) {
-      chosenSkill = safeBuffs[Math.floor(Math.random() * safeBuffs.length)]
-    } else if (attackSkills.length > 0) {
-      chosenSkill = attackSkills[Math.floor(Math.random() * attackSkills.length)]
-    }
+    if (safeBuffs.length > 0) chosenSkill = safeBuffs[Math.floor(Math.random() * safeBuffs.length)]
+    else if (attackSkills.length > 0) chosenSkill = attackSkills[Math.floor(Math.random() * attackSkills.length)]
   }
-  if (!chosenSkill) {
-    chosenSkill = finalPool[Math.floor(Math.random() * finalPool.length)]
-  }
+  if (!chosenSkill) chosenSkill = finalPool[Math.floor(Math.random() * finalPool.length)]
 
-  if (chosenSkill.cooldown) {
-    enemy._skillCooldowns[chosenSkill.name] = chosenSkill.cooldown
-  }
+  if (chosenSkill.cooldown) enemy._skillCooldowns[chosenSkill.name] = chosenSkill.cooldown
 
   return executeSkill(engine, enemy, chosenSkill)
 }
 
-// ==================== 辅助函数 ====================
+// ======================= 辅助函数 =======================
 
 function buildAttackResult(engine, enemy, target, skill) {
   const a = { attack: enemy.getEffectiveAttack(), critRate: enemy.critRate, critDmg: enemy.critDmg, trueDmg: enemy.trueDmg }
@@ -223,6 +199,7 @@ function executeSkill(engine, enemy, skill) {
   } else if (skill.target === 'aoe' || skill.target === 'all') {
     target = 'aoe'
   } else {
+    // ★ 核心修改：目标池包含伙伴
     const targets = [engine.player]
     if (engine.companion?.hp > 0) targets.push(engine.companion)
     target = targets[Math.floor(Math.random() * targets.length)]
@@ -255,7 +232,6 @@ function executeSkill(engine, enemy, skill) {
           res.messages.push(`${skill.name} 对 ${t.name} 造成 ${calc.damage} 伤害`)
           if (calc.crit) res.messages.push('(暴击)')
         }
-
         if (t === engine.player) deathResult = dResult
       }
     } else if (target && target !== enemy) {
@@ -321,25 +297,15 @@ function executeSkill(engine, enemy, skill) {
 
 function applyEnemyLifesteal(enemy, target, damage) {
   if (!damage || damage <= 0 || target.hp <= 0) return
-
-  // 获取总吸血率（基础值 + Buff 加成）
   let totalLifesteal = enemy.lifesteal || 0
   enemy.effects?.forEach(eff => {
-    if (eff.type === EFFECT_TYPES.LIFESTEAL_BUFF) {
-      totalLifesteal += (eff.value || 0)
-    }
+    if (eff.type === EFFECT_TYPES.LIFESTEAL_BUFF) totalLifesteal += (eff.value || 0)
   })
-
-  // ===== 硬性上限：总吸血率不超过 15% =====
   totalLifesteal = Math.min(totalLifesteal, 15)
-
   if (totalLifesteal > 0) {
-    // 混合公式：伤害吸血 + 生命百分比吸血
-    const damageDrain = Math.floor(damage * totalLifesteal / 100)           // 基于伤害的吸血
-    const hpDrain = Math.floor(enemy.maxHp * totalLifesteal / 100)          // 基于最大生命值的吸血
+    const damageDrain = Math.floor(damage * totalLifesteal / 100)
+    const hpDrain = Math.floor(enemy.maxHp * totalLifesteal / 100)
     const drain = damageDrain + hpDrain
-    
-    // 不再设置上限，让 Boss 的吸血更有威胁性
     enemy.hp = Math.min(enemy.maxHp, enemy.hp + drain)
   }
 }

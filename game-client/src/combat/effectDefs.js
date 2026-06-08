@@ -29,6 +29,7 @@ export const EFFECT_TYPES = {
    DRAGON_MARK: 'dragonMark',
 SHADOW_MARK: 'shadowMark',
 BURN: 'burn',
+  holyAnthem: 'holyAnthem',
 };
 
 export const effectDefaults = {

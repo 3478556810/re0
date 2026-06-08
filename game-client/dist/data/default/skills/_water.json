@@ -2,7 +2,7 @@
   {
     "id": "water_jet",
     "name": "水枪术",
-    "desc": "水属性单体攻击，削弱目标防御，为自己回复法力。",
+    "desc": "水属性单体攻击，削弱目标防御，为自己回复法力",
     "icon": "mdi:water",
     "type": "active",
     "target": "single",
@@ -14,19 +14,18 @@
     "learnCost": 2,
     "levelScaling": { "baseMul": 0.13 },
     "effects": [
-      { "type": "debuff", "value": -0.25, "stat": "def", "duration": 3, "chance": 80 },
-      { "type": "mpDrain", "value": 5, "chance": 100, "target": "self" }
+      { "type": "debuff", "value": -0.30, "stat": "def", "duration": 3, "chance": 100 }
     ],
     "tripods": [
-      { "name": "高压水刃", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": -0.35, "stat": "def", "duration": 3, "chance": 100 }] },
-      { "name": "水流环绕", "unlockLevel": 7, "effects": [{ "type": "buff", "value": 0.2, "stat": "def", "duration": 3, "chance": 100, "target": "self" }] },
+      { "name": "高压水刃", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": -0.40, "stat": "def", "duration": 3 }] },
+      { "name": "水流环绕", "unlockLevel": 7, "effects": [{ "type": "shield", "value": 0.2, "duration": 3, "chance": 100, "target": "self" }] },
       { "name": "洪水", "unlockLevel": 10, "effects": [{ "type": "extraAction", "value": 35, "chance": 100, "target": "aoe" }] }
     ]
   },
   {
     "id": "healing_rain",
     "name": "治愈之雨",
-    "desc": "水属性辅助。全队获得强力再生，并清除所有中毒和流血效果。",
+    "desc": "水属性辅助。全队获得强力再生，并清除所有中毒和流血效果",
     "icon": "mdi:weather-rainy",
     "type": "active",
     "target": "all",
@@ -39,12 +38,35 @@
     "levelScaling": { "healAmount": 10 },
     "effects": [
       { "type": "regen", "value": 0.1, "duration": 5, "chance": 100, "target": "all" },
-      { "type": "cleanseDot", "chance": 100, "note": "清除所有DOT和流血效果" }
+      { "type": "cleanseDot", "chance": 100 }
     ],
     "tripods": [
       { "name": "甘霖", "unlockLevel": 4, "effects": [{ "type": "regen", "value": 0.15, "duration": 5, "chance": 100, "target": "all" }] },
       { "name": "净化之雨", "unlockLevel": 7, "effects": [{ "type": "cleanse", "chance": 100 }] },
-      { "name": "潮汐之力", "unlockLevel": 10, "effects": [{ "type": "buff", "value": 0.25, "stat": "atk", "duration": 3, "chance": 100, "target": "all" }] }
+      { "name": "潮汐之力", "unlockLevel": 10, "effects": [{ "type": "shield", "value": 0.25, "duration": 3, "chance": 100, "target": "all" }] }
+    ]
+  },
+  {
+    "id": "water_spout",
+    "name": "水龙卷",
+    "desc": "水属性单体攻击，对减速或冻结目标伤害翻倍",
+    "icon": "mdi:water-outline",
+    "type": "active",
+    "target": "single",
+    "element": "water",
+    "mpCost": 14,
+    "baseMul": 2.5,
+    "maxLevel": 10,
+    "upgradeCost": 4,
+    "learnCost": 4,
+    "levelScaling": { "baseMul": 0.20 },
+    "effects": [
+      { "type": "shatter", "value": 2.0, "note": "对减速或冻结目标伤害翻倍" }
+    ],
+    "tripods": [
+      { "name": "漩涡", "unlockLevel": 4, "effects": [{ "type": "debuff", "value": -0.15, "stat": "speed", "duration": 3, "chance": 100 }] },
+      { "name": "激流", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 40, "chance": 100 }] },
+      { "name": "深海", "unlockLevel": 10, "effects": [{ "type": "freeze", "duration": 1, "chance": 50 }] }
     ]
   }
 ]

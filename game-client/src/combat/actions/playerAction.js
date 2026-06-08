@@ -1,203 +1,7 @@
-// src/combat/actions/playerAction.js
 import { calculateDamage } from '../damageCalculator'
 import { EFFECT_TYPES } from '../effectDefs'
 import { applySkillEffects } from '../effects/skillEffects'
-
-// ======================= 元素反应表 =======================
-const ELEMENT_REACTIONS = {
-  'fire_water': { name: '蒸发', dmgMul: 1.2 },
-  'fire_thunder': { name: '超载', aoeDmgMul: 0.5 },
-  'fire_grass': { name: '燃烧', dotValue: 0.4, dotDuration: 3 },
-  'thunder_water': { name: '感电', chainDmgMul: 0.3, chainCount: 3 },
-  'ice_water': { name: '冻结', dmgMul: 1.0, freezeDuration: 1 },
-  'ice_thunder': { name: '超导', dmgMul: 0.6, defReduce: 0.4, defDuration: 3 },
-  'grass_water': { name: '生长', healPercent: 0.20 },
-  'dark_holy': { name: '湮灭', dmgMul: 0.5 },
-  'fire_rock': { name: '熔岩', dotValue: 0.4, dotDuration: 3 },
-  'fire_poison': { name: '毒爆', burstPerStack: 0.04 },
-  // 扩散系列
-  'fire_wind': { name: '扩散', spread: true },
-  'grass_wind': { name: '扩散', spread: true },
-  'ice_wind': { name: '扩散', spread: true },
-  'dark_wind': { name: '扩散', spread: true },
-  'holy_wind': { name: '扩散', spread: true },
-  'poison_wind': { name: '扩散', spread: true },
-  'rock_wind': { name: '扩散', spread: true },
-  'thunder_wind': { name: '扩散', spread: true },
-  'water_wind': { name: '扩散', spread: true }
-};
-
-function getElementLabel(element) {
-  const map = {
-    fire: '火', water: '水', thunder: '雷', wind: '风',
-    grass: '草', ice: '冰', holy: '圣', dark: '暗',
-    rock: '岩', steel: '钢', poison: '毒'
-  };
-  return map[element] || element;
-}
-
-function checkElementReaction(engine, attacker, target, skill, result, damage) {
-  const skills = engine.playerSkills || {};
-  const skillState = skills[skill.id];
-  const skillLevel = skillState ? skillState.level : 0;
-  if (skillLevel < 10) return;
-  if (!skill.element) return;
-
-  const existingMark = target.effects.find(e =>
-    e.type === 'element_mark' && e.element !== skill.element
-  );
-
-  // 从玩家对象获取职业机制
-  const player = engine.player;
-  const masteryMultiplier = (player.classMechanism === 'elemental_mastery') ? 1.5 : 1.0;
-
-  if (existingMark) {
-    const key = [existingMark.element, skill.element].sort().join('_');
-    const reaction = ELEMENT_REACTIONS[key];
-    if (!reaction) return;
-
-    const scale = 1 + Math.max(0, skillLevel - 10) * 0.1;
-
-    // 扩散
-    if (reaction.spread) {
-      const allEnemies = engine.getAliveEnemies();
-      const spreadElement = existingMark.element === 'wind' ? skill.element : existingMark.element;
-      let spreadDmg = Math.floor(attacker.getEffectiveAttack() * 0.8 * scale);
-      spreadDmg = Math.floor(spreadDmg * masteryMultiplier);
-      for (const enemy of allEnemies) {
-        enemy.takeDamage(spreadDmg, attacker);
-      }
-      for (const enemy of allEnemies) {
-        const existing = enemy.effects.find(e => e.type === 'element_mark');
-        if (existing) enemy.removeEffect('element_mark');
-        enemy.addEffect({
-          type: 'element_mark',
-          element: spreadElement,
-          duration: 5,
-          stackable: false
-        });
-      }
-      if (existingMark.element === 'wind') {
-        target.removeEffect('element_mark');
-      }
-      result.messages.push(`触发元素反应：扩散！造成 ${spreadDmg} 伤害，并扩散${getElementLabel(spreadElement)}印记`);
-      return;
-    }
-
-    // 伤害乘算反应（蒸发、湮灭、冻结、超导）
-    if (reaction.dmgMul) {
-      const markDamage = existingMark.markDamage || damage;
-      const totalBaseDamage = damage + markDamage;
-      let reactionDamage = Math.floor(totalBaseDamage * reaction.dmgMul * scale);
-      reactionDamage = Math.floor(reactionDamage * masteryMultiplier);
-      target.takeDamage(reactionDamage, attacker);
-      if (reaction.freezeDuration) {
-        target.addEffect({ type: EFFECT_TYPES.FREEZE, duration: reaction.freezeDuration, stackable: false });
-        result.messages.push(`触发元素反应：${reaction.name}！造成 ${reactionDamage} 伤害并冻结目标`);
-      } else if (reaction.defReduce) {
-        target.addEffect({ type: EFFECT_TYPES.DEF_DOWN, value: -reaction.defReduce, duration: reaction.defDuration, stackable: false });
-        result.messages.push(`触发元素反应：${reaction.name}！造成 ${reactionDamage} 伤害并降低防御`);
-      } else {
-        result.messages.push(`触发元素反应：${reaction.name}！造成 ${reactionDamage} 点额外伤害`);
-      }
-      target.removeEffect('element_mark');
-      return;
-    }
-
-    // 超载 (AOE)
-    if (reaction.aoeDmgMul) {
-      let aoeDmg = Math.floor(damage * reaction.aoeDmgMul * scale);
-      aoeDmg = Math.floor(aoeDmg * masteryMultiplier);
-      const aliveEnemies = engine.getAliveEnemies();
-      for (const enemy of aliveEnemies) {
-        enemy.takeDamage(aoeDmg, attacker);
-      }
-      result.messages.push(`触发元素反应：${reaction.name}！对所有敌人造成 ${aoeDmg} 伤害`);
-      target.removeEffect('element_mark');
-      return;
-    }
-
-    // 感电 (连锁)
-    if (reaction.chainDmgMul) {
-      let chainDmg = Math.floor(damage * reaction.chainDmgMul * scale);
-      chainDmg = Math.floor(chainDmg * masteryMultiplier);
-      target.takeDamage(chainDmg, attacker);
-      result.messages.push(`触发元素反应：${reaction.name}！额外造成 ${chainDmg} 伤害`);
-
-      const otherEnemies = engine.getAliveEnemies().filter(e => e !== target && e.hp > 0);
-      let currentDmg = chainDmg;
-      for (let i = 0; i < Math.min(reaction.chainCount, otherEnemies.length); i++) {
-        const nextTarget = otherEnemies[i % otherEnemies.length];
-        currentDmg = Math.floor(currentDmg * 0.7);
-        if (currentDmg <= 0) break;
-        nextTarget.takeDamage(currentDmg, attacker);
-        result.messages.push(`感电弹射到 ${nextTarget.name}，造成 ${currentDmg} 伤害`);
-      }
-      target.removeEffect('element_mark');
-      return;
-    }
-
-    // DOT 附加（燃烧、熔岩）
-    if (reaction.dotValue) {
-      const dotDmg = Math.floor(attacker.getEffectiveAttack() * reaction.dotValue);
-      target.addEffect({
-        type: EFFECT_TYPES.BURN,
-        value: reaction.dotValue,
-        duration: reaction.dotDuration || 3,
-        stackable: true,
-        maxStacks: 5,
-        casterAttack: attacker.getEffectiveAttack()
-      });
-      result.messages.push(`触发元素反应：${reaction.name}！目标被灼烧，每回合损失 ${dotDmg} 点生命`);
-      target.removeEffect('element_mark');
-      return;
-    }
-
-    // 毒爆
-    if (reaction.burstPerStack) {
-      const poison = target.effects.find(e => e.type === EFFECT_TYPES.DOT && e.isPercentHp);
-      if (poison) {
-        const stacks = poison.stacks || 1;
-        let burstDmg = Math.floor(target.maxHp * reaction.burstPerStack * stacks);
-        burstDmg = Math.floor(burstDmg * masteryMultiplier);
-        target.takeDamage(burstDmg, attacker);
-        target.removeEffect(EFFECT_TYPES.DOT);
-        result.messages.push(`触发元素反应：${reaction.name}！引爆 ${stacks} 层中毒，造成 ${burstDmg} 伤害`);
-      } else {
-        result.messages.push(`触发元素反应：${reaction.name}，但目标没有中毒效果`);
-      }
-      target.removeEffect('element_mark');
-      return;
-    }
-
-    // 生长（治疗）
-    if (reaction.healPercent) {
-      const healPlayer = Math.floor(attacker.maxHp * reaction.healPercent);
-      attacker.hp = Math.min(attacker.maxHp, attacker.hp + healPlayer);
-      result.messages.push(`触发元素反应：${reaction.name}！恢复 ${healPlayer} 生命`);
-      if (engine.companion && engine.companion.hp > 0) {
-        const healComp = Math.floor(engine.companion.maxHp * reaction.healPercent);
-        engine.companion.hp = Math.min(engine.companion.maxHp, engine.companion.hp + healComp);
-        result.messages.push(`同伴恢复 ${healComp} 生命`);
-      }
-      target.removeEffect('element_mark');
-      return;
-    }
-
-    target.removeEffect('element_mark');
-
-  } else {
-    if (skill.target !== 'aoe') {
-      target.addEffect({
-        type: 'element_mark',
-        markDamage: damage,
-        element: skill.element,
-        duration: 5,
-        stackable: false
-      });
-    }
-  }
-}
+import { checkElementReaction } from './elementReaction'   // ★ 新增导入
 
 export function executePlayerAction(engine, skill, targetIndex, options = {}) {
   const { player, enemies } = engine
@@ -230,31 +34,88 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
     return result
   }
 
-  if (skill.healMul) {
-    if (skill.target === 'all') {
-      const healAmount = Math.floor(player.getEffectiveAttack() * skill.healMul)
-      player.hp = Math.min(player.maxHp, player.hp + healAmount)
-      result.healing = healAmount
-      result.messages.push(`${player.name} 恢复了 ${healAmount} HP`)
-      if (engine.companion && engine.companion.hp > 0) {
-        const compHeal = Math.floor(player.getEffectiveAttack() * skill.healMul)
-        engine.companion.hp = Math.min(engine.companion.maxHp, engine.companion.hp + compHeal)
-        result.messages.push(`${engine.companion.name} 恢复了 ${compHeal} HP`)
-      }
-    } else {
-      const heal = Math.floor(player.getEffectiveAttack() * skill.healMul)
-      player.hp = Math.min(player.maxHp, player.hp + heal)
-      result.healing = heal
-      result.messages.push(`${player.name} 恢复了 ${heal} HP`)
+ if (skill.healMul) {
+  const totalHealMul = skill.healMul * (1 + (player.healBonus || 0) / 100)
+  if (skill.target === 'all') {
+    const healAmount = Math.floor(player.getEffectiveAttack() * totalHealMul)
+    player.hp = Math.min(player.maxHp, player.hp + healAmount)
+    result.healing = healAmount
+    result.messages.push(`${player.name} 恢复了 ${healAmount} HP`)
+    if (engine.companion && engine.companion.hp > 0) {
+      const compHeal = Math.floor(player.getEffectiveAttack() * totalHealMul)
+      engine.companion.hp = Math.min(engine.companion.maxHp, engine.companion.hp + compHeal)
+      result.messages.push(`${engine.companion.name} 恢复了 ${compHeal} HP`)
     }
-    return result
+  } else {
+    const heal = Math.floor(player.getEffectiveAttack() * totalHealMul)
+    player.hp = Math.min(player.maxHp, player.hp + heal)
+    result.healing = heal
+    result.messages.push(`${player.name} 恢复了 ${heal} HP`)
   }
+
+  // 治疗附加效果（守护之光、圣光灌注等）
+  if (talents['o_heal3'] || talents['s_heal6']) {
+    // 给目标添加护盾
+    const shieldValue = Math.floor(player.getEffectiveAttack() * 0.3)
+    if (skill.target === 'all') {
+      player.addEffect({ type: EFFECT_TYPES.SHIELD, value: shieldValue, duration: 3 })
+      if (engine.companion?.hp > 0) engine.companion.addEffect({ type: EFFECT_TYPES.SHIELD, value: shieldValue, duration: 3 })
+    } else {
+      player.addEffect({ type: EFFECT_TYPES.SHIELD, value: shieldValue, duration: 3 })
+    }
+    result.messages.push('圣光护盾守护友方')
+  }
+
+  const applyBuff = (target, atkBonus, critDmgBonus) => {
+    target.addEffect({ type: EFFECT_TYPES.ATK_UP, value: atkBonus / 100, duration: 3 })
+    target.addEffect({ type: 'critDmgUp', value: critDmgBonus, duration: 3 })
+  }
+
+if (talents['o_notable_heal']) {
+  player.addEffect({
+    type: 'holyAnthem',
+    value: { atkPercent: 40, critDmgPercent: 100 },
+    duration: 4,      // 根据实际需求设置
+    stackable: false
+  });
+  if (engine.companion?.hp > 0) {
+    engine.companion.addEffect({
+      type: 'holyAnthem',
+      value: { atkPercent: 40, critDmgPercent: 100 },
+      duration: 4,
+      stackable: false
+    });
+  }
+  result.messages.push('圣光灌注：攻击力+40%，暴击伤害+100%');
+}
+
+if (talents['s_notable_heal']) {
+  const effectValue = { atkPercent: 50, critDmgBonus: 120 }
+  player.addEffect({
+    type: EFFECT_TYPES.HOLY_ANTHEM,
+    value: effectValue,
+    duration: 3,
+    stackable: false
+  })
+  if (engine.companion?.hp > 0) {
+    engine.companion.addEffect({
+      type: EFFECT_TYPES.HOLY_ANTHEM,
+      value: effectValue,
+      duration: 3,
+      stackable: false
+    })
+  }
+  result.messages.push('神圣赞美诗：攻击力+50%，暴击伤害+120%')
+}
+
+  return result
+}
 
   let totalDamage = 0
   for (const target of targets) {
     if (target.hp <= 0) continue
 
-    // ===== 统一无敌判定（基于标记） =====
+    // 无敌判定
     if (target.isBossInvincible) {
       if (target.invincibleWeakness && skill.element === target.invincibleWeakness) {
         target.isBossInvincible = false
@@ -346,7 +207,6 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
     }
 
     const hpBefore = target.hp
-
     const deathResult = target.takeDamage(damage, player)
 
     if (deathResult?.dodged) {
@@ -358,7 +218,13 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
 
     player._lastDamageDealt = damage
 
-    checkElementReaction(engine, player, target, skill, result, damage);
+    // ★★★ 元素反应调用（已解耦） ★★★
+    const skillLevel = (engine.playerSkills[skill.id]?.level) || 0
+    const masteryMultiplier = (player.classMechanism === 'elemental_mastery') ? 1.5 : 1.0
+    checkElementReaction(engine, player, target, skill, result, damage, {
+      skillLevel,
+      masteryMultiplier
+    })
 
     if (window.recordDamage) {
       window.recordDamage(damage, crit, shadowTrueDmg || 0)
@@ -416,7 +282,7 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
       target.effects = [...effects]
     }
 
-    // 低血量印记吸血（保留基于伤害的公式，这是套装效果，不改）
+    // 低血量印记吸血
     if (player.lowHpLifestealOnMark && player.hp < player.maxHp * 0.5) {
       const hasMark = target.effects.some(e => e.type === 'dragonMark')
       if (hasMark) {
@@ -452,35 +318,21 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
       }
     }
 
-    // ========== 玩家吸血（基于自身最大生命值） ==========
+    // 吸血
     let buffLifesteal = 0
     player.effects?.forEach(e => {
       if (e.type === EFFECT_TYPES.LIFESTEAL_BUFF) buffLifesteal += (e.value || 0)
     })
-
     const totalLifesteal = (player.lifesteal || 0) + (player.specialLifestealPercent || 0) + buffLifesteal
-
     if (totalLifesteal > 0) {
       let drain = Math.floor(player.maxHp * totalLifesteal / 100)
-      
-      // AOE 技能吸血效率降低
-      if (isAoeDamage) {
-        drain = Math.floor(drain * 0.3)
-      }
-      
-      // 重伤惩罚
-      if (player.effects?.some(e => e.type === 'healReduction' || e.type === 'wounded')) {
-        drain = Math.floor(drain * 0.3)
-      }
-      
-      // 单次吸血上限：不超过最大生命值的 8%
-  
-      
+      if (isAoeDamage) drain = Math.floor(drain * 0.3)
+      if (player.effects?.some(e => e.type === 'healReduction' || e.type === 'wounded')) drain = Math.floor(drain * 0.3)
       player.hp = Math.min(player.maxHp, player.hp + drain)
       result.hpDrain += drain
     }
 
-    // 吸蓝（保持原逻辑）
+    // 吸蓝
     const totalMpLifesteal = (player.mpLifesteal || 0) + (player.specialMpLifestealPercent || 0)
     if (totalMpLifesteal > 0) {
       const drain = Math.floor(player.maxMp * totalMpLifesteal / 100)
@@ -512,7 +364,7 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
 
   result.damage = totalDamage
 
-  // 追加攻击
+  // 追加攻击（保持不变）
   if (skill.extraActions?.length && !engine.battleOver) {
     for (const action of skill.extraActions) {
       if (action.note === '追加攻击' || action.type === 'extraAction') {

@@ -1,12 +1,12 @@
 {
   "hero": {
-  "id": "hero",
-  "name": "勇者",
-  "icon": "mdi:account",
-  "portrait": "hero.png",
-  "color": "#FFD700",
-  "desc": "你自己"
-},
+    "id": "hero",
+    "name": "勇者",
+    "icon": "mdi:account",
+    "portrait": "hero.png",
+    "color": "#FFD700",
+    "desc": "你自己"
+  },
   "freyja": {
     "id": "freyja",
     "name": "芙蕾雅",
@@ -16,22 +16,7 @@
     "icon": "mdi:sword-cross",
     "portrait": "freyja.png",
     "color": "#C4A3D4",
-    "desc": "银色头发的剑士，冷淡但可靠。"
-  },
-  "ain": {
-    "id": "ain",
-    "name": "艾因",
-    "icon": "mdi:account",
-    "portrait": "ain.png",
-    "color": "#5B8DEF",
-    "desc": "蓝发的冒险者，你的队友。"
-  },
-  "liz": {
-    "id": "liz",
-    "name": "莉兹",
-    "icon": "mdi:fire",
-    "portrait": "liz.png",
-    "color": "#F7A8B8",
-    "desc": "元气满满的少女魔法师。"
+    "desc": "银色头发的剑士，冷淡但可靠。",
+    "isCompanion": true
   }
 }
