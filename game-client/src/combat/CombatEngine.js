@@ -130,7 +130,41 @@ export class CombatEngine {
       }
     }
 
+    // 玩家效果结算
     this.player.onTurnEnd(this)
+
+
+
+    // 生命之泉 / 天赐恩典 自动治疗
+const talents = this.player.talents || {}
+if (talents['o_keystone_heal'] || talents['s_keystone_heal']) {
+  const targets = [this.player]
+  if (this.companion && this.companion.hp > 0) targets.push(this.companion)
+  const lowest = targets.reduce((min, t) => t.hp / t.maxHp < min.hp / min.maxHp ? t : min, targets[0])
+  
+  const healPercent = talents['s_keystone_heal'] ? 0.20 : 0.15
+  const healAmount = Math.floor(lowest.maxHp * healPercent)
+  lowest.hp = Math.min(lowest.maxHp, lowest.hp + healAmount)
+  
+  this._pendingMessages = this._pendingMessages || []
+  this._pendingMessages.push(`生命之泉为 ${lowest.name} 恢复了 ${healAmount} HP`)
+
+  if (talents['s_keystone_heal']) {
+    // 附加神圣赞美诗效果
+    const atkUp = { type: EFFECT_TYPES.ATK_UP, value: 0.5, duration: 1 }
+    const critDmgUp = { type: 'critDmgUp', value: 120, duration: 1 }
+    lowest.addEffect(atkUp)
+    lowest.addEffect(critDmgUp)
+    this._pendingMessages.push('天赐恩典：附加神圣赞美诗效果')
+  }
+}
+
+    // ★ 伙伴效果结算（新增）
+    if (this.companion && this.companion.hp > 0) {
+      this.companion.onTurnEnd(this)
+    }
+
+    // 敌人效果结算
     this.enemies.forEach(e => e.onTurnEnd(this))
 
     // ===== 无敌机制倒计时和解除判定 =====
@@ -202,7 +236,7 @@ export class CombatEngine {
       this.battleOver = true
       this.winner = 'player'
     }
-  }
+}
 
   getAliveEnemies() {
     return this.enemies.filter(e => e.hp > 0)

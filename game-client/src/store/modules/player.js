@@ -4,28 +4,28 @@ import { reactive, computed } from 'vue'
 // 职业初始属性及成长配置
 const CLASS_BASE_STATS = {
   wanderer: {
-    hp: 800, mp: 80, attack: 30, defense: 18, speed: 12,
-    growth: { hp: 150, mp: 15, attack: 6, defense: 6, speed: 1 }
+    hp: 2500, mp: 200, attack: 150, defense: 90, speed: 60,
+    growth: { hp: 500, mp: 40, attack: 30, defense: 18, speed: 6 }
   },
   warrior: {
-    hp: 1000, mp: 60, attack: 35, defense: 25, speed: 10,
-    growth: { hp: 200, mp: 10, attack: 8, defense: 8, speed: 1 }
+    hp: 3500, mp: 150, attack: 175, defense: 125, speed: 50,
+    growth: { hp: 700, mp: 30, attack: 40, defense: 25, speed: 5 }
   },
   mage: {
-    hp: 600, mp: 150, attack: 40, defense: 12, speed: 12,
-    growth: { hp: 100, mp: 30, attack: 10, defense: 3, speed: 2 }
+    hp: 1800, mp: 400, attack: 200, defense: 60, speed: 60,
+    growth: { hp: 300, mp: 80, attack: 50, defense: 12, speed: 6 }
   },
   ranger: {
-    hp: 700, mp: 90, attack: 30, defense: 15, speed: 18,
-    growth: { hp: 120, mp: 15, attack: 7, defense: 4, speed: 3 }
+    hp: 2200, mp: 220, attack: 150, defense: 75, speed: 90,
+    growth: { hp: 400, mp: 40, attack: 35, defense: 15, speed: 9 }
   },
   oracle: {
-    hp: 900, mp: 120, attack: 20, defense: 20, speed: 10,
-    growth: { hp: 180, mp: 25, attack: 4, defense: 8, speed: 1 }
+    hp: 3000, mp: 350, attack: 100, defense: 100, speed: 50,
+    growth: { hp: 600, mp: 70, attack: 20, defense: 20, speed: 5 }
   }
-}
+};
 
-// 二转职业 → 对应一转（用于继承成长）
+// 二转职业继承父职业成长（保持不变）
 const ADVANCED_PARENT = {
   berserker: 'warrior',
   paladin: 'warrior',
@@ -33,8 +33,7 @@ const ADVANCED_PARENT = {
   elemental: 'mage',
   sniper: 'ranger',
   shadow: 'ranger'
-}
-
+};
 function getClassConfig(className) {
   // 直接匹配
   if (CLASS_BASE_STATS[className]) return CLASS_BASE_STATS[className]
@@ -73,7 +72,9 @@ export function usePlayer() {
       fire_slash: { unlocked: true, level: 1 }
     },
     tripodChoices: {},
-    gems: {}
+    gems: {},
+        talents: {},            // 已分配的天赋节点 { nodeId: true }
+    talentHistory: []       // 持久化历史记录，存储 { nodeId, cost } 对象数组
   })
 
   const worldLevel = computed(() => {
@@ -167,5 +168,22 @@ export function usePlayer() {
     return true
   }
 
-  return { player, worldLevel, addExperience, addGold, getPlayerSkills, equipSkill, unequipSkill, moveSkillUp, moveSkillDown }
+
+
+function recalculateBaseStats(newClass) {
+  const cfg = getClassConfig(newClass)
+  if (!cfg) return
+  const lv = player.level - 1
+  player.maxHp = cfg.hp + cfg.growth.hp * lv
+  player.hp = player.maxHp // 重置后回满血
+  player.maxMp = cfg.mp + cfg.growth.mp * lv
+  player.mp = player.maxMp
+  player.attack = cfg.attack + cfg.growth.attack * lv
+  player.defense = cfg.defense + cfg.growth.defense * lv
+  player.speed = cfg.speed + cfg.growth.speed * lv
+}
+
+// 记得将 recalculateBaseStats 暴露出去
+return { player, worldLevel, addExperience, addGold, getPlayerSkills, equipSkill, unequipSkill, moveSkillUp, moveSkillDown, recalculateBaseStats }
+
 }

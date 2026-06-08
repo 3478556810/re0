@@ -8,5 +8,5 @@
   { "id": "gem_emerald_7", "name": "绿野仙踪·7级", "type": "hp", "value": 1350, "level": 7, "color": "#2ecc71", "icon": "mdi:rhombus" },
   { "id": "gem_emerald_8", "name": "绿野仙踪·8级", "type": "hp", "value": 1900, "level": 8, "color": "#2ecc71", "icon": "mdi:rhombus" },
   { "id": "gem_emerald_9", "name": "绿野仙踪·9级", "type": "hp", "value": 2550, "level": 9, "color": "#2ecc71", "icon": "mdi:rhombus" },
-  { "id": "gem_emerald_10", "name": "绿野仙踪·10级", "type": "hp", "value": 5000, "level": 10, "color": "#2ecc71", "icon": "mdi:rhombus" }
+  { "id": "gem_emerald_10", "name": "绿野仙踪·10级", "type": "hp", "value": 3000, "level": 10, "color": "#2ecc71", "icon": "mdi:rhombus" }
 ]

@@ -161,23 +161,33 @@ export function useCombatStats(equipment, config, player) {
     // ========== 10. 天赋盘百分比加成 ==========
     applyTalentBonuses(base, player.talents || {}, player.class)
 
-    // ========== 11. 职业机制 ==========
+    // ========== 11. 神谕者治疗加成 & 光环（合并，只声明一次 talents）==========
+    const talents = player.talents || {}
+    const isOracle = ['oracle', 'seer'].includes(player.class)
+    let healBonus = 0
+
+    if (isOracle || ['paladin'].includes(player.class)) {
+      // 治疗节点
+      if (talents['o_heal1']) healBonus += 12
+      if (talents['o_heal2']) healBonus += 12
+      if (talents['s_heal4']) healBonus += 15
+      if (talents['s_heal5']) healBonus += 15
+
+      // 光环节点
+      if (talents['s_aura1']) base.attack += Math.floor(base.attack * 0.08)
+      if (talents['s_aura2']) base.defense += Math.floor(base.defense * 0.10)
+      if (talents['s_notable_aura']) {
+        base.attack += Math.floor(base.attack * 0.12)
+        base.dmgTaken = (base.dmgTaken || 0) - 8
+      }
+    }
+
+    base.healBonus = healBonus
+
+    // ========== 12. 职业机制 ==========
     applyClassMechanism(base, player.class)
 
-
-
-
-// 在 playerStats computed 中，return base 之前
-const talents = player.talents || {}
-const isOracle = ['oracle', 'seer'].includes(player.class)
-
-if (isOracle && talents['o_keystone_link']) {
-  const selfRate = talents['s_keystone_link'] ? 0.7 : 0.6  // 神谕者30%，织光者40%
-  base.attack = Math.floor(base.attack * selfRate)
-  base.defense = Math.floor(base.defense * selfRate)
-  base.maxHp = Math.floor(base.maxHp * selfRate)
-}
-  // ========== 最终取整，消灭所有浮点数 ==========
+    // ========== 最终取整 ==========
     base.attack = Math.floor(base.attack || 0)
     base.defense = Math.floor(base.defense || 0)
     base.maxHp = Math.floor(base.maxHp || 0)
@@ -197,10 +207,8 @@ if (isOracle && talents['o_keystone_link']) {
       if (typeof base[key] === 'number') base[key] = Math.floor(base[key])
     }
 
-
-
     return base
-  })
+})
 
   return { totalAffixLevels, activeAffixEffects, activeSetBonuses, playerStats }
 }

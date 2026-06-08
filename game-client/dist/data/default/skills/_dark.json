@@ -1,9 +1,8 @@
 [
   {
-    "_comment": "===== 暗属性技能 =====",
     "id": "dark_bolt",
     "name": "暗影弹",
-    "desc": "暗属性单体攻击，附加暗蚀印记造成基于最大生命的真实伤害。",
+    "desc": "暗属性单体攻击，施加灵魂灼烧造成持续伤害",
     "icon": "mdi:moon-waning-crescent",
     "type": "active",
     "target": "single",
@@ -14,17 +13,19 @@
     "upgradeCost": 3,
     "learnCost": 2,
     "levelScaling": { "baseMul": 0.15 },
-    "effects": [],
+    "effects": [
+      { "type": "dot", "value": 0.3, "duration": 3, "chance": 100, "stackable": true, "maxStacks": 3 }
+    ],
     "tripods": [
-      { "name": "蚀骨", "unlockLevel": 4, "effects": [{ "type": "trueDmg", "value": 0.15, "chance": 100 }] },
-      { "name": "暗影波", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 30, "target": "aoe", "chance": 100 }] },
+      { "name": "蚀骨", "unlockLevel": 4, "effects": [{ "type": "dot", "value": 0.4, "duration": 3 }] },
+      { "name": "暗影波", "unlockLevel": 7, "effects": [{ "type": "dot", "value": 0.3, "duration": 3, "target": "aoe", "chance": 60 }] },
       { "name": "深渊", "unlockLevel": 10, "effects": [{ "type": "debuff", "value": -0.3, "stat": "def", "duration": 3, "chance": 100 }] }
     ]
   },
   {
     "id": "void_curse",
     "name": "虚空诅咒",
-    "desc": "暗属性技能，施加暗蚀印记，每层造成基于最大生命值的真实伤害。",
+    "desc": "暗属性技能，施加必灭诅咒，数回合后造成基于期间所受伤害的真实伤害",
     "icon": "mdi:ghost",
     "type": "active",
     "target": "single",
@@ -34,20 +35,20 @@
     "maxLevel": 10,
     "upgradeCost": 3,
     "learnCost": 3,
-    "levelScaling": { "markValue": 0.01 },
+    "levelScaling": { "markValue": 0.05 },
     "effects": [
-      { "type": "debuff", "stat": "shadowMark", "value": 0.02, "duration": 5, "chance": 100 }
+      { "type": "debuff", "stat": "voidCurse", "value": 0.4, "duration": 3, "chance": 100 }
     ],
     "tripods": [
-      { "name": "强化诅咒", "unlockLevel": 4, "effects": [{ "type": "debuff", "stat": "shadowMark", "value": 0.03, "duration": 5 }] },
-      { "name": "蔓延", "unlockLevel": 7, "effects": [{ "type": "debuff", "stat": "shadowMark", "value": 0.02, "duration": 5, "target": "aoe" }] },
+      { "name": "强化诅咒", "unlockLevel": 4, "effects": [{ "type": "debuff", "stat": "voidCurse", "value": 0.55, "duration": 3 }] },
+      { "name": "蔓延", "unlockLevel": 7, "effects": [{ "type": "debuff", "stat": "voidCurse", "value": 0.4, "duration": 3, "target": "aoe" }] },
       { "name": "凋零", "unlockLevel": 10, "effects": [{ "type": "debuff", "value": -0.3, "stat": "def", "duration": 5, "chance": 100 }] }
     ]
   },
   {
     "id": "dark_explosion",
     "name": "暗影爆发",
-    "desc": "暗属性全体攻击，引爆暗蚀印记造成额外伤害。",
+    "desc": "暗属性全体攻击，引爆目标身上的灵魂灼烧",
     "icon": "mdi:explosion",
     "type": "active",
     "target": "aoe",
@@ -58,9 +59,11 @@
     "upgradeCost": 4,
     "learnCost": 4,
     "levelScaling": { "baseMul": 0.14 },
-    "effects": [],
+    "effects": [
+      { "type": "dotBurst", "value": 2.0, "note": "引爆灵魂灼烧，每层造成攻击力×2.0伤害" }
+    ],
     "tripods": [
-      { "name": "爆印", "unlockLevel": 4, "effects": [{ "type": "dotBurst", "value": 0.06, "note": "引爆暗蚀印记，每层额外伤害" }] },
+      { "name": "爆印", "unlockLevel": 4, "effects": [{ "type": "dotBurst", "value": 2.5 }] },
       { "name": "暗影风暴", "unlockLevel": 7, "effects": [{ "type": "extraAction", "value": 30, "target": "aoe", "chance": 100 }] },
       { "name": "虚空", "unlockLevel": 10, "effects": [{ "type": "trueDmg", "value": 0.25, "chance": 100 }] }
     ]

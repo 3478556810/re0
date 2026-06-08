@@ -11,8 +11,7 @@ const floatingMessage = reactive({ visible: false, text: '', type: 'info' })
 function showMessage(text, duration = 5000) {
   // ========== 嘎掉所有治疗/护盾/增益类消息 ==========
   const skipKeywords = [
-    '恢复了', 'HP', '护盾', '防御力提升了', '闪避率提升了',
-    '再生', '净化', '保护', '提升了', '加强了'
+    '恢复了', 'HP', '护盾', '防御力提升了'
   ]
   if (skipKeywords.some(keyword => text.includes(keyword))) {
     return Promise.resolve()  // 直接静默跳过

@@ -181,7 +181,6 @@ function onNodeClick({ node }) {
   if (!def) return
 
   const reqLevel = def.reqLevel || 0
-
   if (store.player.level < reqLevel) {
     showToast(`需要等级 ${reqLevel}`)
     return
@@ -197,14 +196,14 @@ function onNodeClick({ node }) {
     }
   }
 
-  store.player.class = jobId
-  store.save()
+  // 原：store.player.class = jobId; store.save()
+  store.changeClassWithRecalc(jobId)   // 使用新方法
   showToast(`已转职为 ${def.name}`)
 }
 
+
 function resetClass() {
-  store.player.class = 'wanderer'
-  store.save()
+  store.changeClassWithRecalc('wanderer')   // 重置为流浪者并重算属性
   showToast('已重置为流浪者')
 }
 

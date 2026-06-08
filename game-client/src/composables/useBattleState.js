@@ -14,7 +14,7 @@ const EFFECT_NAMES = {
   maxHpUp: '最大生命', dodgeUp: '闪避率',
   shield: '护盾', regen: '再生', dot: '中毒', bleed: '流血',
   stun: '眩晕', freeze: '冻结', silence: '沉默',
-  reflect: '反伤', lifestealBuff: '吸血强化',
+  reflect: '反伤', lifestealBuff: '吸血强化',  holyAnthem: '神圣赞美诗',
   weak: '虚弱', taunt: '嘲讽',
   holyMark: '光之烙印', dragonMark: '龙焰印记', shadowMark: '暗蚀印记',
   element_mark: '元素印记'
@@ -92,7 +92,6 @@ function initEngine(enemiesInput) {
     const companionId = store.activeCompanionId || store.player.currentCompanion
     let companionUnit = null
 
-    // ========== 保存原始玩家属性（灵魂链接削减前） ==========
     const originalAttack = store.playerStats.attack || 10
     const originalDefense = store.playerStats.defense || 5
     const originalMaxHp = store.playerStats.maxHp || 100
@@ -108,7 +107,8 @@ function initEngine(enemiesInput) {
 
         if (companionSave) {
           const affectionLevel = store.getAffectionLevel?.(companionId) || 1
-          const lv = Math.floor(affectionLevel / 200)
+          const companionLevel = companionSave.level || 1
+          const affectionBonusLv = Math.floor(affectionLevel / 200)
 
           const isHealer = ['archmage', 'elemental', 'paladin', 'oracle', 'seer'].includes(store.player.class)
           const isOracle = ['oracle', 'seer'].includes(store.player.class)
@@ -125,61 +125,69 @@ function initEngine(enemiesInput) {
           let defRate = isHealer ? 0.7 : 0.4
           let hpRate  = isHealer ? 0.9 : 0.6
 
-          if (hasSoulLink) {
-            atkRate += 0.10
-            defRate += 0.10
-            hpRate  += 0.10
-          }
+          // 基石继承率调整（基础部分，额外部分稍后处理）
+          if (hasSoulLink) { atkRate += 0.1; defRate += 0.1; hpRate += 0.1 }
+          if (hasSoulResonance) { atkRate += 0.2; defRate += 0.2; hpRate += 0.2 }
 
-          if (hasSoulResonance) {
-            atkRate += 0.20
-            defRate += 0.20
-            hpRate  += 0.20
-          }
+          // 小节点：继承率提升
+          if (talents['o_companion1']) { atkRate += 0.1; defRate += 0.1; hpRate += 0.1 }
+          if (talents['s_companion4']) { atkRate += 0.15; defRate += 0.15; hpRate += 0.15 }
 
-          // ========== 关键修复：伙伴自身基础 + 继承玩家 + 好感度固定值 ==========
-          // 伙伴自身基础属性（已包含等级成长）
-          const selfBaseAtk = companionSave.baseAtk || 25
-          const selfBaseDef = companionSave.baseDef || 12
-          const selfBaseHp = companionSave.baseHp || 200
+          // 自身基础 + 等级成长
+          const selfBaseAtk = (companionSave.baseAtk || 25) + companionLevel * 3
+          const selfBaseDef = (companionSave.baseDef || 12) + companionLevel * 2
+          const selfBaseHp = (companionSave.baseHp || 200) + companionLevel * 20
 
-          // 继承玩家的部分
           const inheritedAtk = Math.floor(originalAttack * atkRate)
           const inheritedDef = Math.floor(originalDefense * defRate)
           const inheritedHp = Math.floor(originalMaxHp * hpRate)
 
-          // 累加：自身基础 + 继承玩家 + 好感度等级固定值
-          let attack = selfBaseAtk + inheritedAtk + lv * 20
-          let defense = selfBaseDef + inheritedDef
-          let hp = selfBaseHp + inheritedHp + lv * 50
-          const speed = originalSpeed + 5 + lv * 2
-          const critRate = Math.floor(originalCritRate * 0.8)
+          let attack = selfBaseAtk + inheritedAtk + affectionBonusLv * 20
+          let defense = selfBaseDef + inheritedDef + affectionBonusLv * 10
+          let hp = selfBaseHp + inheritedHp + affectionBonusLv * 50
+          let speed = originalSpeed + 5 + affectionBonusLv * 2
+          let critRate = Math.floor(originalCritRate * 0.8)
           let critDmg = Math.floor(originalCritDmg * 0.8)
 
-          // 生命转化（基于玩家原始生命计算额外加成）
+          // 基石额外继承（不削弱玩家）
+          if (isOracle) {
+            let extraAtkRate = 0, extraDefRate = 0, extraHpRate = 0
+            if (hasSoulLink) { extraAtkRate += 0.4; extraDefRate += 0.4; extraHpRate += 0.4 }
+            if (hasSoulResonance) { extraAtkRate += 0.8; extraDefRate += 0.8; extraHpRate += 0.8 }
+            attack += Math.floor(originalAttack * extraAtkRate)
+            defense += Math.floor(originalDefense * extraDefRate)
+            hp += Math.floor(originalMaxHp * extraHpRate)
+          }
+
+          // 伙伴攻击力% 直接乘算
+          let finalAtkMult = 1.0
+          if (talents['o_companion2']) finalAtkMult += 0.1
+          if (talents['s_companion5']) finalAtkMult += 0.15
+          attack = Math.floor(attack * finalAtkMult)
+
+          // 伙伴暴伤固定值
+          if (talents['o_companion3']) critDmg += 15
+          if (talents['s_companion6']) critDmg += 20
+
+          // 生命转化 / 生命礼赞
           if (hasLifeConvert) {
             const bonusAtkPct = Math.floor(originalMaxHp / 100) * 3
             attack += Math.floor(attack * bonusAtkPct / 100)
           }
-
-          // 生命礼赞
           if (hasLifePraise) {
             const bonusAtkPct = Math.floor(originalMaxHp / 100) * 4
             attack += Math.floor(attack * bonusAtkPct / 100)
           }
-
-          // 钢铁意志
           if (hasDefConvert) {
             const bonusCritDmg = Math.floor(originalDefense / 50) * 5
             critDmg += bonusCritDmg
           }
-
-          // 钢铁圣歌
           if (hasSteelSong) {
             const bonusCritDmg = Math.floor(originalDefense / 50) * 6
             critDmg += bonusCritDmg
           }
 
+          // 构建伙伴技能（保持原样）
           const skillSlots = companionSave.skillSlots || {}
           const companionSkillsData = companionSave.skills || {}
           const companionSkillDefs = []
@@ -210,7 +218,8 @@ function initEngine(enemiesInput) {
 
           companionUnit = {
             id: companionId,
-            level: companionSave.level || 1,
+            level: companionLevel,
+            dmgTaken: store.playerStats.dmgTaken || 0,
             name: companionSave.name || '伙伴',
             icon: companionSave.icon || 'mdi:account-heart',
             isCompanion: true,
@@ -219,19 +228,13 @@ function initEngine(enemiesInput) {
             maxMp: Math.max(Math.floor(originalMaxMp * 0.6), 50),
             speed, critRate, critDmg,
             skills: companionSkillDefs,
-            // 新增：继承玩家的特殊属性
-    specialBossDmg: store.playerStats.specialBossDmg || 0,
-    specialFullHpDmg: store.playerStats.specialFullHpDmg || 0,
-    specialIgnoreDef: store.playerStats.specialIgnoreDef || 0,
-    
-    // 继承玩家的元素伤害
-    fireDmg: store.playerStats.fireDmg || 0,
-    waterDmg: store.playerStats.waterDmg || 0,
-    thunderDmg: store.playerStats.thunderDmg || 0,
-    // ... 其他元素同理
-    
-    // 继承吸血
-    lifesteal: store.playerStats.lifesteal || 0,
+            specialBossDmg: store.playerStats.specialBossDmg || 0,
+            specialFullHpDmg: store.playerStats.specialFullHpDmg || 0,
+            specialIgnoreDef: store.playerStats.specialIgnoreDef || 0,
+            fireDmg: store.playerStats.fireDmg || 0,
+            waterDmg: store.playerStats.waterDmg || 0,
+            thunderDmg: store.playerStats.thunderDmg || 0,
+            lifesteal: store.playerStats.lifesteal || 0,
           }
         }
       }

@@ -1,51 +1,100 @@
 [
   {
-    "id": "rock_golem", "name": "岩石魔像", "tag": "strong", "isBoss": false,
-    "baseHp": 1500, "baseAtk": 80, "baseDef": 70, "exp": 180,
+    "id": "rock_golem",
+    "name": "岩石魔像",
+    "tag": "strong",
+    "isBoss": false,
+    "baseHp": 1500,
+    "baseAtk": 80,
+    "baseDef": 70,
+    "exp": 180,
     "materials": [
-      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 65, "qty": 3 },
-      { "id": "iron_ore", "name": "铁矿石", "dropRate": 60, "qty": 3 }
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 50, "qty": 1 },
+      { "id": "iron_ore", "name": "铁矿石", "dropRate": 40, "qty": 1 }
     ],
-    "icon": "mdi:stone", "element": "rock", "trait": "坚硬",
-    "critRate": 0, "critDmg": 0, "lifesteal": 0, "luck": 0,
+    "icon": "mdi:stone",
+    "element": "rock",
+    "trait": "坚硬",
+    "critRate": 0,
+    "critDmg": 0,
+    "lifesteal": 0,
+    "luck": 0,
     "skillsText": "[{\"name\":\"落石\",\"mpCost\":0,\"element\":\"rock\",\"baseMul\":1.8,\"effects\":[]}]",
-    "minLevel": 5, "maxLevel": 18, "levelRange": [5, 18]
+    "minLevel": 5,
+    "maxLevel": 18,
+    "levelRange": [5, 18]
   },
   {
-    "id": "fire_elemental", "name": "灼炎之灵", "tag": "strong", "isBoss": false,
-    "baseHp": 1200, "baseAtk": 90, "baseDef": 28, "exp": 200,
+    "id": "fire_elemental",
+    "name": "灼炎之灵",
+    "tag": "strong",
+    "isBoss": false,
+    "baseHp": 1200,
+    "baseAtk": 90,
+    "baseDef": 28,
+    "exp": 200,
     "materials": [
-      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 70, "qty": 3 },
-      { "id": "gold_ore", "name": "金矿石", "dropRate": 30, "qty": 2 }
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 55, "qty": 1 },
+      { "id": "gold_ore", "name": "金矿石", "dropRate": 25, "qty": 1 }
     ],
-    "icon": "mdi:fire-circle", "element": "fire",
-    "critRate": 0, "critDmg": 0, "lifesteal": 0, "luck": 0,
+    "icon": "mdi:fire-circle",
+    "element": "fire",
+    "critRate": 0,
+    "critDmg": 0,
+    "lifesteal": 0,
+    "luck": 0,
     "skillsText": "[{\"name\":\"火球\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"fire\",\"baseMul\":1.6,\"effects\":[{\"type\":\"dot\",\"value\":0.15,\"duration\":3,\"chance\":80,\"target\":\"aoe\"}]}]",
-    "minLevel": 6, "maxLevel": 22, "levelRange": [6, 22]
+    "minLevel": 6,
+    "maxLevel": 22,
+    "levelRange": [6, 22]
   },
   {
-    "id": "shadow_wraith", "name": "暗影幽魂", "tag": "strong", "isBoss": false,
-    "baseHp": 1100, "baseAtk": 85, "baseDef": 24, "exp": 210,
+    "id": "shadow_wraith",
+    "name": "暗影幽魂",
+    "tag": "strong",
+    "isBoss": false,
+    "baseHp": 1100,
+    "baseAtk": 85,
+    "baseDef": 24,
+    "exp": 210,
     "materials": [
-      { "id": "spider_silk", "name": "蛛魔丝", "dropRate": 55, "qty": 2 },
-      { "id": "crystal_shard", "name": "晶簇碎片", "dropRate": 25, "qty": 2 }
+      { "id": "spider_silk", "name": "蛛魔丝", "dropRate": 45, "qty": 1 },
+      { "id": "crystal_shard", "name": "晶簇碎片", "dropRate": 20, "qty": 1 }
     ],
-    "icon": "mdi:ghost", "element": "dark",
-    "critRate": 25, "critDmg": 60, "lifesteal": 10, "luck": 0,
+    "icon": "mdi:ghost",
+    "element": "dark",
+    "critRate": 25,
+    "critDmg": 60,
+    "lifesteal": 10,
+    "luck": 0,
     "skillsText": "[{\"name\":\"暗影球\",\"mpCost\":0,\"element\":\"dark\",\"baseMul\":1.8,\"effects\":[{\"type\":\"debuff\",\"value\":-0.15,\"stat\":\"atk\",\"duration\":3,\"chance\":70}]}]",
-    "minLevel": 8, "maxLevel": 25, "levelRange": [8, 25]
+    "minLevel": 8,
+    "maxLevel": 25,
+    "levelRange": [8, 25]
   },
   {
-    "id": "rock_golem_elite", "name": "磐石巨像", "tag": "strong", "isBoss": false,
-    "baseHp": 2800, "baseAtk": 100, "baseDef": 90, "exp": 350,
+    "id": "rock_golem_elite",
+    "name": "磐石巨像",
+    "tag": "strong",
+    "isBoss": false,
+    "baseHp": 2800,
+    "baseAtk": 100,
+    "baseDef": 90,
+    "exp": 350,
     "materials": [
-      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 80, "qty": 4 },
-      { "id": "gold_ore", "name": "金矿石", "dropRate": 35, "qty": 3 },
-      { "id": "silver_ore", "name": "银矿石", "dropRate": 35, "qty": 3 }
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 60, "qty": 1 },
+      { "id": "gold_ore", "name": "金矿石", "dropRate": 30, "qty": 1 }
     ],
-    "icon": "mdi:stone", "element": "rock", "trait": "坚壁",
-    "critRate": 5, "critDmg": 20, "lifesteal": 0, "luck": 0,
+    "icon": "mdi:stone",
+    "element": "rock",
+    "trait": "坚壁",
+    "critRate": 5,
+    "critDmg": 20,
+    "lifesteal": 0,
+    "luck": 0,
     "skillsText": "[{\"name\":\"地震\",\"mpCost\":0,\"target\":\"aoe\",\"baseMul\":1.2,\"effects\":[]},{\"name\":\"石化皮肤\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"buff\",\"stat\":\"def\",\"value\":0.5,\"duration\":3,\"chance\":100}]}]",
-    "minLevel": 8, "maxLevel": 22, "levelRange": [8, 22]
+    "minLevel": 8,
+    "maxLevel": 22,
+    "levelRange": [8, 22]
   }
 ]

@@ -11,9 +11,17 @@
       @touchmove="onTouchMoveAll"
       @touchend="onTouchEndAll"
     >
+      <!-- SP 显示（左上） -->
       <div class="sp-fixed">
         <Icon icon="mdi:star-four-points" />
         <span>SP：<strong>{{ skillPoints }}</strong></span>
+      </div>
+
+      <!-- 回退按钮（右上） -->
+      <div class="rollback-fixed">
+        <button class="rollback-btn" @click.stop="handleRollback" title="撤销最近一次加点">
+          <Icon icon="mdi:undo-variant" /> 回退
+        </button>
       </div>
 
       <div
@@ -58,16 +66,14 @@ const props = defineProps({
   skillPoints: Number
 })
 
-const emit = defineEmits(['allocate'])
+const emit = defineEmits(['allocate', 'rollback'])
 
 // 缩放与平移
-const scale = ref(0.65) // 初始缩放稍微小一点，看到更多节点
+const scale = ref(0.65)
 const panX = ref(0)
 const panY = ref(0)
-
 const canvasRef = ref(null)
 
-// 网格的固定尺寸（单位像素）
 const GRID_WIDTH = 1000
 const GRID_HEIGHT = 700
 
@@ -90,7 +96,7 @@ onMounted(() => {
   initPosition()
 })
 
-// 节点点击交互（保留职业限制等逻辑）
+// 节点可用性判断
 function canAllocate(node) {
   if (node.reqClass && store.player.class !== node.reqClass) return false
   if (node.cost === 0) return !node.allocated
@@ -146,7 +152,12 @@ function handleNodeClick(node) {
   }
 }
 
-// 拖拽事件
+// 回退按钮处理
+function handleRollback() {
+  emit('rollback')
+}
+
+// ========== 拖拽/缩放事件（原有逻辑不变） ==========
 let isDragging = false, startX, startY, lastPanX, lastPanY
 function onDragStart(e) {
   if (e.button !== 0) return
@@ -162,7 +173,6 @@ function onWheel(e) {
   scale.value = Math.min(2.5, Math.max(0.35, scale.value + delta))
 }
 
-// 触屏事件
 let touchStartDist = 0, touchStartScale = 1
 let touchStartX = 0, touchStartY = 0, touchLastPanX = 0, touchLastPanY = 0
 let isTouching = false
@@ -225,7 +235,32 @@ function onTouchEndAll() { isTouching = false; touchStartDist = 0 }
   pointer-events: none;
 }
 
-/* 改成固定尺寸，不再使用 min-，避免内容压缩 */
+.rollback-fixed {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+}
+.rollback-btn {
+  background: rgba(0,0,0,0.7);
+  border: 1px solid #ff8888;
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-size: 8px;
+  color: #ffaaaa;
+  font-family: 'Press Start 2P', monospace;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  transition: 0.2s;
+}
+.rollback-btn:hover {
+  background: rgba(255,136,136,0.2);
+  border-color: #ff5555;
+  color: #ff8888;
+}
+
 .talent-grid {
   position: relative;
   width: 1000px;

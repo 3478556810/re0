@@ -1,9 +1,8 @@
 [
   {
-    "_comment": "===== 毒属性技能 =====",
     "id": "poison_sting",
     "name": "毒刺",
-    "desc": "毒属性单体攻击，附加中毒效果，可叠加。",
+    "desc": "毒属性单体攻击，附加中毒效果，可叠加",
     "icon": "mdi:needle",
     "type": "active",
     "target": "single",
@@ -26,7 +25,7 @@
   {
     "id": "poison_bomb",
     "name": "毒爆弹",
-    "desc": "毒属性全体攻击，引爆中毒层数造成额外爆发伤害。",
+    "desc": "毒属性全体攻击，引爆中毒层数造成额外爆发伤害",
     "icon": "mdi:biohazard",
     "type": "active",
     "target": "aoe",
