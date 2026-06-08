@@ -10,7 +10,7 @@
     "exp": 80,
     "materials": [
       { "id": "bat_wing", "name": "幽蝠翼膜", "dropRate": 50, "qty": 1 },
-      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 20, "qty": 1 }
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 70, "qty": 2 }
     ],
     "icon": "mdi:bat",
     "element": "dark",
@@ -34,7 +34,7 @@
     "exp": 85,
     "materials": [
       { "id": "spider_silk", "name": "蛛魔丝", "dropRate": 50, "qty": 1 },
-      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 20, "qty": 1 }
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 70, "qty": 2 }
     ],
     "icon": "mdi:spider",
     "element": "ice",

@@ -37,6 +37,10 @@
        <button class="corner-btn" @click="openPanel('guild')">
       <Icon icon="mdi:town-hall" /><span>协会</span>
     </button>
+    <!-- 放在 corner-top-row 最后或 corner-vert-col 合适位置 -->
+<button class="corner-btn" @click="openPanel('market')">
+  <Icon icon="mdi:store" /><span>交易行</span>
+</button>
   </div>
 
   <!-- 竖列：4个独立按钮 -->
@@ -79,6 +83,8 @@
 <ProfessionPanel v-if="currentPanel === 'profession'" @close="popPanel" />
     <!-- 面板组件（保持不变） -->
     <!-- 面板组件 -->
+
+    <MarketPanel v-if="currentPanel === 'market'" @close="popPanel" />
 <RaidPanel v-if="currentPanel === 'raid'" @close="popPanel" @startBattle="emit('startBattle', $event)" />
     <DungeonSelectPanel v-if="showDungeonSelect" @close="showDungeonSelect = false" @select="onDungeonSelected" />
     <DevPanel v-if="currentPanel === 'dev'" @close="popPanel" />
@@ -111,7 +117,7 @@ import AffectionPanel from './AffectionPanel.vue'
 import RaidPanel from './RaidPanel.vue'
 import CompanionPanel from './CompanionPanel/CompanionPanel.vue'
 import ProfessionPanel from './class/ClassPanel.vue'
-
+import MarketPanel from './MarketPanel.vue'
 // 速通战斗记录
 const speedrunStats = reactive({
   maxDamage: 0,

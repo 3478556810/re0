@@ -145,21 +145,25 @@ const companionSkillPoints = computed(() => {
   if (talents['s_companion6']) critDmg += 20
 
   // 生命转化 / 生命礼赞
-  if (hasLifeConvert) {
-    const bonusAtkPct = Math.floor(originalMaxHp / 100) * 3
-    attack += Math.floor(attack * bonusAtkPct / 100)
-  }
-  if (hasLifePraise) {
-    const bonusAtkPct = Math.floor(originalMaxHp / 100) * 4
-    attack += Math.floor(attack * bonusAtkPct / 100)
-  }
-  if (hasDefConvert) {
-    critDmg += Math.floor(originalDefense / 50) * 5
-  }
-  if (hasSteelSong) {
-    critDmg += Math.floor(originalDefense / 50) * 6
-  }
+  // 生命转化 / 生命礼赞（削弱后）
+if (hasLifeConvert) {
+  const bonusAtkPct = Math.floor(originalMaxHp / 500) * 2   // 每500血+2%
+  attack += Math.floor(attack * bonusAtkPct / 100)
+}
+if (hasLifePraise) {
+  const bonusAtkPct = Math.floor(originalMaxHp / 500) * 3   // 每500血+3%
+  attack += Math.floor(attack * bonusAtkPct / 100)
+}
 
+// 钢铁意志 / 钢铁圣歌（削弱后）
+if (hasDefConvert) {
+  const bonusCritDmg = Math.floor(originalDefense / 300) * 3 // 每300防+3%
+  critDmg += bonusCritDmg
+}
+if (hasSteelSong) {
+  const bonusCritDmg = Math.floor(originalDefense / 300) * 4 // 每300防+4%
+  critDmg += bonusCritDmg
+}
   return {
     atk: attack,
     def: defense,

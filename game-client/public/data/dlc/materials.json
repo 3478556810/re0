@@ -13,7 +13,6 @@
   { "id": "crystal_shard", "name": "晶簇碎片", "type": "forge", "price": 500 },
   { "id": "obsidian", "name": "黑曜石", "type": "forge", "price": 1200 },
   { "id": "dragon_ore", "name": "龙鳞矿", "type": "forge", "price": 3000 },
-  { "id": "quality_stone", "name": "品质魔石", "type": "upgrade", "price": 2000 },
   { "id": "gladiator_medal", "name": "角斗士勋章", "type": "raid", "price": 5000 },
   { "id": "cooling_crystal", "name": "冷却水晶", "type": "raid", "price": 8000 },
   { "id": "shadow_crystal", "name": "圣光碎片", "type": "raid", "price": 12000 }

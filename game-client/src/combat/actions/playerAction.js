@@ -34,79 +34,92 @@ export function executePlayerAction(engine, skill, targetIndex, options = {}) {
     return result
   }
 
- if (skill.healMul) {
-  const totalHealMul = skill.healMul * (1 + (player.healBonus || 0) / 100)
+if (skill.healMul || skill.effects?.some(e => e.type === 'heal' || e.type === 'healPercent')) {
+  // 1. 攻击力加成治疗
+  const totalHealMul = (skill.healMul || 0) * (1 + (player.healBonus || 0) / 100)
+  const atkHeal = Math.floor(player.getEffectiveAttack() * totalHealMul)
+  
+  // 2. 生命值百分比治疗
+  const percentEffect = skill.effects?.find(e => e.type === 'healPercent')
+  const percentHeal = percentEffect ? Math.floor(player.maxHp * percentEffect.value) : 0
+  
+  // 3. 总治疗量
+  const healAmount = Math.max(0, atkHeal + percentHeal)
+
+  // 4. 治疗目标（群体或单体）
   if (skill.target === 'all') {
-    const healAmount = Math.floor(player.getEffectiveAttack() * totalHealMul)
     player.hp = Math.min(player.maxHp, player.hp + healAmount)
     result.healing = healAmount
     result.messages.push(`${player.name} 恢复了 ${healAmount} HP`)
+    
     if (engine.companion && engine.companion.hp > 0) {
-      const compHeal = Math.floor(player.getEffectiveAttack() * totalHealMul)
+      // 伙伴治疗：也享受相同的百分比加成（基于伙伴自身最大生命值）
+      const compAtkHeal = Math.floor(player.getEffectiveAttack() * totalHealMul)
+      const compPercentHeal = percentEffect ? Math.floor(engine.companion.maxHp * percentEffect.value) : 0
+      const compHeal = Math.max(0, compAtkHeal + compPercentHeal)
       engine.companion.hp = Math.min(engine.companion.maxHp, engine.companion.hp + compHeal)
       result.messages.push(`${engine.companion.name} 恢复了 ${compHeal} HP`)
     }
   } else {
-    const heal = Math.floor(player.getEffectiveAttack() * totalHealMul)
-    player.hp = Math.min(player.maxHp, player.hp + heal)
-    result.healing = heal
-    result.messages.push(`${player.name} 恢复了 ${heal} HP`)
+    player.hp = Math.min(player.maxHp, player.hp + healAmount)
+    result.healing = healAmount
+    result.messages.push(`${player.name} 恢复了 ${healAmount} HP`)
   }
 
-  // 治疗附加效果（守护之光、圣光灌注等）
-  if (talents['o_heal3'] || talents['s_heal6']) {
-    // 给目标添加护盾
-    const shieldValue = Math.floor(player.getEffectiveAttack() * 0.3)
+  // 5. 治疗附加效果（护盾、攻击力buff等，保持不变）
+if (talents['o_heal3'] || talents['s_heal6']) {
+    // 护盾值大幅增强：生命值 + 攻击力混合
+    const shieldValue = Math.floor(player.maxHp * 0.15) + Math.floor(player.getEffectiveAttack() * 0.5)
+    
     if (skill.target === 'all') {
-      player.addEffect({ type: EFFECT_TYPES.SHIELD, value: shieldValue, duration: 3 })
-      if (engine.companion?.hp > 0) engine.companion.addEffect({ type: EFFECT_TYPES.SHIELD, value: shieldValue, duration: 3 })
+        player.addEffect({ type: EFFECT_TYPES.SHIELD, value: shieldValue, duration: 3 })
+        if (engine.companion?.hp > 0) {
+            engine.companion.addEffect({ type: EFFECT_TYPES.SHIELD, value: shieldValue, duration: 3 })
+        }
     } else {
-      player.addEffect({ type: EFFECT_TYPES.SHIELD, value: shieldValue, duration: 3 })
+        player.addEffect({ type: EFFECT_TYPES.SHIELD, value: shieldValue, duration: 3 })
     }
-    result.messages.push('圣光护盾守护友方')
-  }
+    result.messages.push(`圣光护盾吸收 ${shieldValue} 伤害`)
+}
 
-  const applyBuff = (target, atkBonus, critDmgBonus) => {
-    target.addEffect({ type: EFFECT_TYPES.ATK_UP, value: atkBonus / 100, duration: 3 })
-    target.addEffect({ type: 'critDmgUp', value: critDmgBonus, duration: 3 })
-  }
-
-if (talents['o_notable_heal']) {
-  player.addEffect({
-    type: 'holyAnthem',
-    value: { atkPercent: 40, critDmgPercent: 100 },
-    duration: 4,      // 根据实际需求设置
-    stackable: false
-  });
-  if (engine.companion?.hp > 0) {
-    engine.companion.addEffect({
+  // 圣光灌注
+  if (talents['o_notable_heal']) {
+    player.addEffect({
       type: 'holyAnthem',
       value: { atkPercent: 40, critDmgPercent: 100 },
       duration: 4,
       stackable: false
-    });
+    })
+    if (engine.companion?.hp > 0) {
+      engine.companion.addEffect({
+        type: 'holyAnthem',
+        value: { atkPercent: 40, critDmgPercent: 100 },
+        duration: 4,
+        stackable: false
+      })
+    }
+    result.messages.push('圣光灌注：攻击力+40%，暴击伤害+100%')
   }
-  result.messages.push('圣光灌注：攻击力+40%，暴击伤害+100%');
-}
 
-if (talents['s_notable_heal']) {
-  const effectValue = { atkPercent: 50, critDmgBonus: 120 }
-  player.addEffect({
-    type: EFFECT_TYPES.HOLY_ANTHEM,
-    value: effectValue,
-    duration: 3,
-    stackable: false
-  })
-  if (engine.companion?.hp > 0) {
-    engine.companion.addEffect({
+  // 神圣赞美诗
+  if (talents['s_notable_heal']) {
+    const effectValue = { atkPercent: 50, critDmgBonus: 120 }
+    player.addEffect({
       type: EFFECT_TYPES.HOLY_ANTHEM,
       value: effectValue,
       duration: 3,
       stackable: false
     })
+    if (engine.companion?.hp > 0) {
+      engine.companion.addEffect({
+        type: EFFECT_TYPES.HOLY_ANTHEM,
+        value: effectValue,
+        duration: 3,
+        stackable: false
+      })
+    }
+    result.messages.push('神圣赞美诗：攻击力+50%，暴击伤害+120%')
   }
-  result.messages.push('神圣赞美诗：攻击力+50%，暴击伤害+120%')
-}
 
   return result
 }
