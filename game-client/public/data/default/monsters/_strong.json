@@ -9,7 +9,7 @@
     "baseDef": 70,
     "exp": 180,
     "materials": [
-      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 50, "qty": 1 },
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 50, "qty": 3 },
       { "id": "iron_ore", "name": "铁矿石", "dropRate": 40, "qty": 1 }
     ],
     "icon": "mdi:stone",
@@ -34,7 +34,7 @@
     "baseDef": 28,
     "exp": 200,
     "materials": [
-      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 55, "qty": 1 },
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 55, "qty": 3 },
       { "id": "gold_ore", "name": "金矿石", "dropRate": 25, "qty": 1 }
     ],
     "icon": "mdi:fire-circle",
@@ -59,7 +59,7 @@
     "exp": 210,
     "materials": [
       { "id": "spider_silk", "name": "蛛魔丝", "dropRate": 45, "qty": 1 },
-      { "id": "crystal_shard", "name": "晶簇碎片", "dropRate": 20, "qty": 1 }
+      { "id": "crystal_shard", "name": "晶簇碎片", "dropRate": 20, "qty": 3 }
     ],
     "icon": "mdi:ghost",
     "element": "dark",
@@ -82,7 +82,7 @@
     "baseDef": 90,
     "exp": 350,
     "materials": [
-      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 60, "qty": 1 },
+      { "id": "small_magic_stone", "name": "魔石碎片", "dropRate": 60, "qty": 3},
       { "id": "gold_ore", "name": "金矿石", "dropRate": 30, "qty": 1 }
     ],
     "icon": "mdi:stone",

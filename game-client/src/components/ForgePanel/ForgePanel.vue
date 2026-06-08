@@ -4,7 +4,6 @@
       <button class="close-btn" @click="$emit('close')"><Icon icon="mdi:close" /></button>
       <h2><Icon icon="mdi:anvil" /> 锻造</h2>
 
-      <!-- 模式切换标签 -->
       <div class="mode-tabs">
         <button :class="['mode-btn', { active: forgeMode === 'craft' }]" @click="forgeMode = 'craft'">
           <Icon icon="mdi:hammer" /> 制作装备
@@ -14,15 +13,12 @@
         </button>
       </div>
 
-      <!-- 制作模式 -->
+      <!-- 制作模式（不变） -->
       <template v-if="forgeMode === 'craft'">
         <div class="forge-filter">
-          <button
-            v-for="set in setFilterOptions"
-            :key="set.value"
+          <button v-for="set in setFilterOptions" :key="set.value"
             :class="['filter-btn', { active: currentSetFilter === set.value }]"
-            @click="currentSetFilter = set.value"
-          >
+            @click="currentSetFilter = set.value">
             {{ set.label }}
           </button>
         </div>
@@ -77,14 +73,10 @@
 
       <!-- 强化模式 -->
       <template v-if="forgeMode === 'upgrade'">
-        <!-- 装备筛选标签 -->
         <div class="equip-filter">
-          <button
-            v-for="opt in equipFilterOptions"
-            :key="opt.value"
+          <button v-for="opt in equipFilterOptions" :key="opt.value"
             :class="['filter-btn', { active: equipFilter === opt.value }]"
-            @click="equipFilter = opt.value"
-          >
+            @click="equipFilter = opt.value">
             {{ opt.label }}
           </button>
         </div>
@@ -92,14 +84,19 @@
         <div class="upgrade-layout">
           <div class="upgrade-equip-list">
             <div v-if="filteredUpgradeableItems.length === 0" class="empty-mats">没有可强化的装备</div>
-            <div
-              v-for="item in filteredUpgradeableItems"
-              :key="item.id"
-              class="upgrade-card"
-            :class="['quality-' + item.quality, { equipped: item.equipped }]"
-              @click="selectForUpgrade(item)"
-            >
-              <div class="upgrade-name">{{ item.name }} <span class="acc-level">Lv.{{ item.level }}</span></div>
+            <div v-for="item in filteredUpgradeableItems" :key="item.id"
+              class="upgrade-card" :class="['quality-' + item.quality, { equipped: item.equipped }]"
+              @click="selectForUpgrade(item)">
+              <div class="upgrade-name">
+                {{ item.name }}
+                <span class="acc-level">Lv.{{ item.level }}</span>
+                <!-- 根据等级显示多个菱形 -->
+                <span class="diamond-group" v-if="Math.floor(item.level / 20) > 0">
+                  <span v-for="n in Math.floor(item.level / 20)" :key="n" class="golden-diamond">
+                    <Icon icon="mdi:rhombus" />
+                  </span>
+                </span>
+              </div>
               <div class="upgrade-quality" :style="{ color: qualityColor(item.quality) }">{{ qualityLabel(item.quality) }}</div>
               <div class="upgrade-stats">
                 <span v-if="item.atk > 0">攻 +{{ item.atk }}</span>
@@ -113,7 +110,14 @@
           </div>
 
           <div class="upgrade-detail" v-if="selectedUpgradeItem">
-            <h3>强化 {{ selectedUpgradeItem.name }}</h3>
+            <h3>
+              强化 {{ selectedUpgradeItem.name }}
+              <span class="diamond-group" v-if="Math.floor(selectedUpgradeItem.level / 20) > 0">
+                <span v-for="n in Math.floor(selectedUpgradeItem.level / 20)" :key="n" class="golden-diamond">
+                  <Icon icon="mdi:rhombus" />
+                </span>
+              </span>
+            </h3>
             <div class="upgrade-info">
               <div>品质：<span :style="{ color: qualityColor(selectedUpgradeItem.quality) }">{{ qualityLabel(selectedUpgradeItem.quality) }}</span></div>
               <div>等级：Lv.{{ selectedUpgradeItem.level }}</div>
@@ -122,15 +126,12 @@
                 <span v-if="selectedUpgradeItem.atk > 0 && selectedUpgradeItem.def > 0"> | </span>
                 <span v-if="selectedUpgradeItem.def > 0">防御 +{{ selectedUpgradeItem.def }}</span>
               </div>
-              
-              <!-- 副词条显示 -->
               <div v-if="selectedUpgradeItem.extraStats && Object.keys(selectedUpgradeItem.extraStats).length" class="upgrade-extra-section">
                 <div class="upgrade-extra-title">附加属性</div>
                 <div v-for="(val, key) in selectedUpgradeItem.extraStats" :key="key" class="upgrade-extra-row">
                   {{ getExtraStatName(key) }} +{{ val }}
                 </div>
               </div>
-
               <div v-if="selectedUpgradeItem.affixes?.length" class="upgrade-affixes">
                 词条：
                 <div class="affix-tags">
@@ -145,15 +146,8 @@
               </div>
             </div>
             <div class="upgrade-actions">
-          <button class="pixel-btn primary" @click="upgradeLevel(selectedUpgradeItem)">
-  <Icon icon="mdi:arrow-up-bold" /> 升级 ({{ levelUpgradeCost(selectedUpgradeItem).gold }}G) - {{ Math.floor(getLevelSuccessRate(selectedUpgradeItem) * 100) }}%
-</button>
-
-              <button class="pixel-btn primary" @click="upgradeQuality(selectedUpgradeItem)" :disabled="!canUpgradeQuality(selectedUpgradeItem)">
-                <Icon icon="mdi:star" /> 升品 ({{ qualityUpgradeCost(selectedUpgradeItem).gold }}G) - {{ Math.floor(getQualitySuccessRate(selectedUpgradeItem) * 100) }}%
-              </button>
-              <button class="pixel-btn warning" @click="reforgeAffixes(selectedUpgradeItem)" :disabled="!canReforge(selectedUpgradeItem)">
-                <Icon icon="mdi:refresh" /> 重铸词条 ({{ reforgeCost(selectedUpgradeItem).gold }}G)
+              <button class="pixel-btn primary" @click="upgradeLevel(selectedUpgradeItem)">
+                <Icon icon="mdi:arrow-up-bold" /> 强化 ({{ levelUpgradeCost(selectedUpgradeItem).gold }}G) - {{ Math.floor(getLevelSuccessRate(selectedUpgradeItem) * 100) }}%
               </button>
             </div>
           </div>
@@ -185,16 +179,9 @@ const {
   getExtraStatName,
   getAffixName,
   getLevelSuccessRate,
-  getQualitySuccessRate,
   levelUpgradeCost,
   canUpgradeLevel,
   upgradeLevel,
-  qualityUpgradeCost,
-  canUpgradeQuality,
-  upgradeQuality,
-  reforgeCost,
-  canReforge,
-  reforgeAffixes,
   selectForUpgrade
 } = useForgePanel()
 </script>

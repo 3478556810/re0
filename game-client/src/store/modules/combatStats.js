@@ -226,7 +226,7 @@ function applyTalentBonuses(stats, allocatedTalents, classId) {
 
   let atkPct = 0, defPct = 0, hpPct = 0, spdPct = 0
   let critRate = 0, critDmg = 0, dodge = 0
-  let allElemDmgPct = 0
+  let allElemDmgPct = 0, maxMpPct = 0, mpCostReduction = 0
 
   for (const node of tree.nodes) {
     if (!allocatedTalents[node.id]) continue
@@ -235,34 +235,52 @@ function applyTalentBonuses(stats, allocatedTalents, classId) {
       const m = effect.match(regex)
       return m ? parseFloat(m[1]) : 0
     }
-    atkPct += match(/攻击\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+
+    // 攻击/防御/生命/速度
+    atkPct += match(/攻击力?\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
     defPct += match(/防御\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
-    hpPct += match(/生命\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+    hpPct  += match(/(?:最大HP|生命值?)\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
     spdPct += match(/速度\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+
+    // 暴击/闪避
     critRate += match(/暴击率\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
-    critDmg += match(/暴击伤害\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
-    dodge += match(/闪避\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
-    allElemDmgPct += match(/全元素伤害\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+    critDmg  += match(/暴击伤害\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+    dodge    += match(/闪避\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+
+    // 元素伤害（核心：识别「元素伤害」「全元素伤害」）
+    allElemDmgPct += match(/(?:全)?元素伤害\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+
+    // MP 和 MP消耗
+    maxMpPct += match(/最大MP\s*[+]\s*(\d+(?:\.\d+)?)\s*%/i)
+    mpCostReduction += match(/MP消耗\s*[降低\-]\s*(\d+(?:\.\d+)?)\s*%/i)
   }
 
-  // 攻击/防御/生命等：基于当前数值的百分比加成（这是对的，保留不动）
+  // 应用加成
   if (atkPct > 0) stats.attack += Math.floor(stats.attack * atkPct / 100)
   if (defPct > 0) stats.defense += Math.floor(stats.defense * defPct / 100)
-  if (hpPct > 0) stats.maxHp += Math.floor(stats.maxHp * hpPct / 100)
+  if (hpPct > 0)  stats.maxHp += Math.floor(stats.maxHp * hpPct / 100)
   if (spdPct > 0) stats.speed += Math.floor(stats.speed * spdPct / 100)
   if (critRate > 0) stats.critRate = (stats.critRate || 0) + critRate
-  if (critDmg > 0) stats.critDmg = (stats.critDmg || 0) + critDmg
-  if (dodge > 0) stats.dodge = (stats.dodge || 0) + dodge
+  if (critDmg > 0)  stats.critDmg = (stats.critDmg || 0) + critDmg
+  if (dodge > 0)    stats.dodge = (stats.dodge || 0) + dodge
 
-  // 全元素伤害：直接加到各元素伤害的百分比值上（不再乘攻击力）
+  // 元素伤害（写入所有元素键）
   if (allElemDmgPct > 0) {
     const elems = ['fire','water','thunder','wind','grass','ice','holy','dark','rock','steel']
     for (const elem of elems) {
       const key = elem + 'Dmg'
-      if (typeof stats[key] === 'number') {
-        stats[key] += allElemDmgPct
-      }
+      if (typeof stats[key] !== 'number') stats[key] = 0
+      stats[key] += allElemDmgPct
     }
+  }
+
+  // MP相关
+  if (maxMpPct > 0) {
+    stats.maxMp = Math.floor((stats.maxMp || 0) * (1 + maxMpPct / 100))
+    stats.mp = Math.min(stats.mp || 0, stats.maxMp)
+  }
+  if (mpCostReduction > 0) {
+    stats.mpCostReduction = Math.min(50, (stats.mpCostReduction || 0) + mpCostReduction)
   }
 }
 // ==================== 职业机制 ====================

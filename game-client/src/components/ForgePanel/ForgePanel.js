@@ -10,7 +10,7 @@ export function useForgePanel() {
   const selectedUpgradeItem = ref(null)
   const equipFilter = ref('all')
 
-  // ========== 副词条生成函数 ==========
+  // ========== 副词条池（制作时随机生成一个） ==========
   const ATTACK_AFFIX_POOL = [
     { id: 'atk', name: '攻击力', type: 'flat', min: 5, max: 25 },
     { id: 'atkPercent', name: '攻击百分比', type: 'percent', min: 3, max: 15 },
@@ -76,14 +76,6 @@ export function useForgePanel() {
     return Math.min(1, base + failCount * 0.1)
   }
 
-  function getQualitySuccessRate(item) {
-    const config = store.config.enhanceConfig?.qualityUpgrade?.[item.quality]
-    if (!config) return 0
-    const base = config.successRate || 0.5
-    const failCount = item.qualityFailCount || 0
-    return Math.min(1, base + failCount * 0.15)
-  }
-
   // ========== 套装筛选 ==========
   const setFilterOptions = computed(() => {
     const sets = new Set(store.config.forgeRecipes.map(r => r.setId).filter(Boolean))
@@ -92,9 +84,7 @@ export function useForgePanel() {
       dragon_set: '龙骸', shadow_set: '暗影咒装', crimson_set: '血怒',
       iron_set: '铁之意志', spider_set: '蛛丝暗影', stone_set: '石魔之力',
     }
-    sets.forEach(id => {
-      options.push({ label: setNames[id] || id, value: id })
-    })
+    sets.forEach(id => options.push({ label: setNames[id] || id, value: id }))
     return options
   })
 
@@ -103,39 +93,25 @@ export function useForgePanel() {
     return store.config.forgeRecipes.filter(r => r.setId === currentSetFilter.value)
   })
 
-  // ========== 强化装备列表（合并背包 + 已装备，带 equipped 标记） ==========
+  // ========== 强化装备列表（合并背包 + 已装备） ==========
   const equippedItems = computed(() => {
     const eq = store.equipment || {}
     return Object.values(eq)
       .filter(item => item && item.id && (item.part || item.type))
-      .map(item => ({
-        ...item,
-        part: item.part || item.type,
-        quality: item.quality || 'white',
-        equipped: true
-      }))
+      .map(item => ({ ...item, part: item.part || item.type, quality: item.quality || 'white', equipped: true }))
   })
 
   const inventoryItems = computed(() => {
     return (store.inventory || [])
       .filter(item => item && (item.part || item.type))
-      .map(item => ({
-        ...item,
-        part: item.part || item.type,
-        quality: item.quality || 'white',
-        equipped: false
-      }))
+      .map(item => ({ ...item, part: item.part || item.type, quality: item.quality || 'white', equipped: false }))
   })
 
   const allUpgradeable = computed(() => {
     const map = new Map()
-    for (const item of equippedItems.value) {
-      map.set(item.id, { ...item, equipped: true })
-    }
+    for (const item of equippedItems.value) map.set(item.id, { ...item, equipped: true })
     for (const item of inventoryItems.value) {
-      if (!map.has(item.id)) {
-        map.set(item.id, { ...item, equipped: false })
-      }
+      if (!map.has(item.id)) map.set(item.id, { ...item, equipped: false })
     }
     return Array.from(map.values())
   })
@@ -148,35 +124,22 @@ export function useForgePanel() {
 
   const filteredUpgradeableItems = computed(() => {
     let items = allUpgradeable.value
-    if (equipFilter.value === 'equipped') {
-      items = items.filter(item => item.equipped === true)
-    } else if (equipFilter.value === 'unequipped') {
-      items = items.filter(item => !item.equipped)
-    }
+    if (equipFilter.value === 'equipped') items = items.filter(item => item.equipped === true)
+    else if (equipFilter.value === 'unequipped') items = items.filter(item => !item.equipped)
     return items.filter(item => item.part && item.quality)
   })
 
-  // ========== 统一同步工具 ==========
+  // ========== 同步工具 ==========
   function syncItemEverywhere(item) {
-    // 同步已装备栏
     const equipment = store.equipment
     if (equipment) {
       for (const slot in equipment) {
-        if (equipment[slot]?.id === item.id) {
-          equipment[slot] = { ...item }
-          break
-        }
+        if (equipment[slot]?.id === item.id) { equipment[slot] = { ...item }; break }
       }
     }
-    // 同步背包
     const invIndex = store.inventory.findIndex(i => i?.id === item.id)
-    if (invIndex !== -1) {
-      store.inventory.splice(invIndex, 1, { ...item })
-    }
-    // 同步当前选中的升级物品
-    if (selectedUpgradeItem.value?.id === item.id) {
-      selectedUpgradeItem.value = { ...item }
-    }
+    if (invIndex !== -1) store.inventory.splice(invIndex, 1, { ...item })
+    if (selectedUpgradeItem.value?.id === item.id) selectedUpgradeItem.value = { ...item }
   }
 
   function materialIcon(id) {
@@ -193,10 +156,7 @@ export function useForgePanel() {
     return icons[id] || 'mdi:circle'
   }
 
-  function hasMaterial(id, need) {
-    const mat = store.materials[id]
-    return mat && mat.qty >= need
-  }
+  function hasMaterial(id, need) { const mat = store.materials[id]; return mat && mat.qty >= need }
 
   function qualityColor(q) {
     const map = { white: '#ccc', green: '#4caf50', blue: '#2196f3', purple: '#9c27b0', red: '#ff4444' }
@@ -213,19 +173,17 @@ export function useForgePanel() {
     return AFFIX_EFFECTS[id]?.name || id
   }
 
-  // ========== 制作系统 ==========
+  // ========== 制作系统（80%成功率，25%跳品） ==========
   function canCraft(recipe) {
     if (store.player.gold < recipe.goldCost) return false
     return recipe.materials.every(mat => hasMaterial(mat.id, mat.qty))
   }
 
   function rollQualityForCraft(baseQuality) {
-    if (Math.random() < 0.1) {
+    if (Math.random() < 0.25) {
       const qualities = ['white', 'green', 'blue', 'purple', 'red']
-      const currentIdx = qualities.indexOf(baseQuality)
-      if (currentIdx < qualities.length - 1) {
-        return qualities[currentIdx + 1]
-      }
+      const idx = qualities.indexOf(baseQuality)
+      if (idx < qualities.length - 1) return qualities[idx + 1]
     }
     return baseQuality
   }
@@ -252,6 +210,13 @@ export function useForgePanel() {
     store.addGold(-recipe.goldCost)
     for (const mat of recipe.materials) store.addMaterial(mat.id, '', -mat.qty)
 
+    // 成功率 80%
+    if (Math.random() >= 0.8) {
+      window.showToast('制作失败，材料已消耗')
+      store.save()
+      return
+    }
+
     const quality = rollQualityForCraft(recipe.quality || 'white')
     const playerLv = store.player.level
     const itemLevel = Math.max(1, playerLv + Math.floor(Math.random() * 5) - 2)
@@ -270,17 +235,10 @@ export function useForgePanel() {
     const def = isDefensivePart ? Math.floor(baseDef * qualityMult * levelBonus * craftedMultiplier) : 0
 
     const affixes = generateAffixesForCraft(quality, itemLevel)
-    const extraStats = generateExtraStat(recipe.type || 'weapon', quality, itemLevel)
-    if (part === 'shoes') {
-      extraStats.speed = (extraStats.speed || 0) + 2 + Math.floor(Math.random() * 5)
-    }
+    const extraStats = generateExtraStat(part, quality, itemLevel)
+    if (part === 'shoes') extraStats.speed = (extraStats.speed || 0) + 2 + Math.floor(Math.random() * 5)
 
-    const fixedAffix = {
-      id: 'bossDmgFix',
-      level: 15,
-      desc: '对Boss伤害 +18%',
-      fixed: true
-    }
+    const fixedAffix = { id: 'bossDmgFix', level: 15, desc: '对Boss伤害 +18%', fixed: true }
 
     const item = {
       id: `equip_${Date.now()}_${Math.random()}`,
@@ -292,14 +250,13 @@ export function useForgePanel() {
       levelFailCount: 0,
       qualityFailCount: 0,
       quality: quality,
-      atk: atk,
-      def: def,
+      atk, def,
       baseAtk: recipe.baseAtk || 10,
       baseDef: recipe.baseDef || 5,
-      qualityMult: qualityMult,
-      extraStats: extraStats,
-      affixes: affixes,
-      fixedAffix: fixedAffix,
+      qualityMult,
+      extraStats,
+      affixes,
+      fixedAffix,
       bossDmgBonus: 18,
       levelRequired: recipe.levelRequired || 1,
       gemSlots: recipe.gemSlots || 0,
@@ -308,13 +265,12 @@ export function useForgePanel() {
 
     store.inventory.push(item)
     store.save()
-    window.showToast(`成功制作 ${item.name}！已放入背包。`)
+    const jumpMsg = quality !== recipe.quality ? '（品质提升！）' : ''
+    window.showToast(`成功制作 ${item.name}！${jumpMsg}已放入背包。`)
   }
 
-  // ========== 强化系统 ==========
-  function selectForUpgrade(item) {
-    selectedUpgradeItem.value = item
-  }
+  // ========== 强化系统（仅等级强化） ==========
+  function selectForUpgrade(item) { selectedUpgradeItem.value = item }
 
   function normalizeMaterials(cost) {
     if (!cost.materials) return []
@@ -325,118 +281,35 @@ export function useForgePanel() {
   function levelUpgradeCost(item) {
     const config = store.config.enhanceConfig?.levelUp?.perLevel(item.level, item.quality)
     if (!config) return { gold: 99999, materials: [] }
-    const materials = normalizeMaterials(config)
-    return { gold: config.gold || 99999, materials }
+    return { gold: config.gold || 99999, materials: normalizeMaterials(config) }
   }
 
-  function canUpgradeLevel(item) {
-    if (!item || item.level >= 99) return false
+ function canUpgradeLevel(item) {
+    if (!item) return false
+    if (item.level >= 100) {
+        // 返回 false，但在调用处提示满级
+        return false
+    }
     const cost = levelUpgradeCost(item)
     if (store.player.gold < cost.gold) return false
     return cost.materials.every(mat => hasMaterial(mat.id, mat.qty))
-  }
-
-  function qualityUpgradeCost(item) {
-    const config = store.config.enhanceConfig?.qualityUpgrade?.[item.quality]
-    if (!config) return { gold: 99999, materials: [] }
-    const materials = normalizeMaterials(config)
-    return { gold: config.gold || 99999, materials }
-  }
-
-  function canUpgradeQuality(item) {
-    if (!item || item.quality === 'red') return false
-    const levelRequirements = { white: 10, green: 20, blue: 30, purple: 40 }
-    const requiredLevel = levelRequirements[item.quality] || 0
-    if (item.level < requiredLevel) return false
-    const cost = qualityUpgradeCost(item)
-    if (store.player.gold < cost.gold) return false
-    return cost.materials.every(mat => hasMaterial(mat.id, mat.qty))
-  }
-
- function upgradeQuality(item) {
-  if (!canUpgradeQuality(item)) return window.showToast('材料或金币不足！')
-  const cost = qualityUpgradeCost(item)
-  store.addGold(-cost.gold)
-  for (const mat of cost.materials) store.addMaterial(mat.id, '', -mat.qty)
-
-  const successRate = getQualitySuccessRate(item)
-  if (Math.random() < successRate) {
-    // 保存升品前的属性
-    const oldAtk = item.atk
-    const oldDef = item.def
-
-    const qualities = ['white', 'green', 'blue', 'purple', 'red']
-    const idx = qualities.indexOf(item.quality)
-    item.quality = qualities[idx + 1]
-    item.qualityMult = QUALITY_STATS_MULTIPLIER[item.quality] || 1
-    item.level = 1
-    item.qualityFailCount = 0
-
-    const part = item.part || item.type || 'armor'
-    const isOffensive = ['weapon', 'gauntlet'].includes(part)
-    const isDefensive = ['armor', 'helmet', 'pants', 'shoes'].includes(part)
-
-    // 升品直接提升 20%
-    if (isOffensive) {
-      item.atk = Math.floor(oldAtk * 1.2)
-      item.def = 0
-    } else if (isDefensive) {
-      item.atk = 0
-      item.def = Math.floor(oldDef * 1.2)
-    } else {
-      item.atk = Math.floor(oldAtk * 1.2)
-      item.def = Math.floor(oldDef * 1.2)
-    }
-
-    syncItemEverywhere(item)
-    store.save()
-    window.showToast(`${item.name} 品质提升为 ${qualityLabel(item.quality)}！攻击力提升了 20%`)
-  } else {
-    item.qualityFailCount = (item.qualityFailCount || 0) + 1
-    syncItemEverywhere(item)
-    store.save()
-    window.showToast(`升品失败！下次成功率 ${Math.floor(getQualitySuccessRate(item) * 100)}%`)
-  }
 }
-  function reforgeCost(item) {
-    const config = store.config.enhanceConfig?.affixReroll
-    if (!config) return { gold: 99999, materials: [] }
-    const materials = normalizeMaterials(config)
-    return { gold: config.gold || 99999, materials }
-  }
 
-  function canReforge(item) {
-    const cost = reforgeCost(item)
-    if (store.player.gold < cost.gold) return false
-    return cost.materials.every(mat => hasMaterial(mat.id, mat.qty))
-  }
-
-  function reforgeAffixes(item) {
-    if (!canReforge(item)) return window.showToast('材料或金币不足！')
-    const cost = reforgeCost(item)
-    store.addGold(-cost.gold)
-    for (const mat of cost.materials) store.addMaterial(mat.id, '', -mat.qty)
-
-    const affixKeys = Object.keys(AFFIX_EFFECTS)
-    const minLevel = QUALITY_AFFIX_LEVEL_MIN[item.quality] || 1
-    const randomCount = Math.min(2, 1 + Math.floor(Math.random() * 2))
-    const newRandomAffixes = []
-    const used = new Set()
-    for (let i = 0; i < randomCount; i++) {
-      const key = affixKeys[Math.floor(Math.random() * affixKeys.length)]
-      if (used.has(key)) continue
-      used.add(key)
-      const level = Math.min(5, Math.max(minLevel, Math.floor(item.level / 10) + 1))
-      newRandomAffixes.push({ id: key, level })
+function upgradeLevel(item) {
+    if (!item) return
+    if (item.level >= 100) {
+        window.showToast('装备已达到最高等级')
+        return
     }
-    item.affixes = newRandomAffixes
-    syncItemEverywhere(item)
-    store.save()
-    window.showToast(`${item.name} 的词条已重铸！`)
-  }
-
-  function upgradeLevel(item) {
-    if (!canUpgradeLevel(item)) return window.showToast('材料或金币不足！');
+    if (!canUpgradeLevel(item)) {
+        // 再区分一下是满级还是资源不足
+        if (item.level >= 100) {
+            window.showToast('装备已达到最高等级')
+        } else {
+            window.showToast('材料或金币不足！')
+        }
+        return
+    }
     const cost = levelUpgradeCost(item);
     store.addGold(-cost.gold);
     for (const mat of cost.materials) store.addMaterial(mat.id, '', -mat.qty);
@@ -488,15 +361,16 @@ export function useForgePanel() {
       item.levelFailCount = 0;
       syncItemEverywhere(item);
       store.save();
-      window.showToast(`${item.name} 升级为 Lv.${item.level}！攻击+${atkGrowth}`);
+      window.showToast(`${item.name} 强化成功！当前 Lv.${item.level}`);
     } else {
       item.levelFailCount = (item.levelFailCount || 0) + 1;
       syncItemEverywhere(item);
       store.save();
-      window.showToast(`升级失败！下次成功率 ${Math.floor(getLevelSuccessRate(item) * 100)}%`);
+      window.showToast(`强化失败！下次成功率 ${Math.floor(getLevelSuccessRate(item) * 100)}%`);
     }
   }
 
+  // ========== 导出 ==========
   return {
     store,
     forgeMode,
@@ -514,18 +388,11 @@ export function useForgePanel() {
     getExtraStatName,
     getAffixName,
     getLevelSuccessRate,
-    getQualitySuccessRate,
     canCraft,
     craft,
     levelUpgradeCost,
     canUpgradeLevel,
     upgradeLevel,
-    qualityUpgradeCost,
-    canUpgradeQuality,
-    upgradeQuality,
-    reforgeCost,
-    canReforge,
-    reforgeAffixes,
     selectForUpgrade
   }
 }

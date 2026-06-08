@@ -44,20 +44,47 @@ export const useGameStore = defineStore('game', () => {
   const rankModule = useRank(playerModule.player, pendingRankUp, pendingTargetRank, config)
 
   // 套装效果配置（暂时保留在主 store 中）
-  const setBonuses = {
-    dragon_set: {
-      3: { desc: '攻击时为目标附加「龙焰印记」3回合，使其受到伤害+30%', dragonMarkOnHit: 0.30 },
-      6: { desc: '龙焰印记增伤+60%；自身生命低于50%时，对印记目标吸血40%', dragonMarkOnHit: 0.60, lowHpLifestealOnMark: 40 }
+const setBonuses = {
+  // 龙骸套装 —— 强化持续输出与收割
+  dragon_set: {
+    3: { 
+      desc: '攻击时为目标附加「龙焰印记」3回合，使其受到伤害+20%', 
+      dragonMarkOnHit: 0.20   // 原 0.30 → 0.20（基础增伤略降）
     },
-    shadow_set: {
-      3: { desc: '攻击时为目标附加「暗蚀印记」3回合，使其受到伤害+25%；自身暴击率+12%', shadowMarkOnHit: 0.25, critRate: 12 },
-      6: { desc: '暗蚀印记增伤+50%；对印记目标暴击伤害+100%', shadowMarkOnHit: 0.50, critDmgOnMark: 100 }
+    6: { 
+      desc: '龙焰印记增伤+80%；自身生命低于50%时，对印记目标吸血60%', 
+      dragonMarkOnHit: 0.60,         // 原 0.60 不变，但3件套降低，6件套总体增伤 0.80（0.20+0.60）
+      lowHpLifestealOnMark: 60       // 吸血提升至 60%，增强残局生存
+    }
+  },
+
+  // 暗影套装 —— 平衡暴击与增伤，不再无脑强
+  shadow_set: {
+    3: { 
+      desc: '攻击时为目标附加「暗蚀印记」3回合，使其受到伤害+18%；自身暴击率+10%', 
+      shadowMarkOnHit: 0.18,        // 原 0.25 → 0.18（降低初始增伤）
+      critRate: 10                  // 暴击率 12% → 10%
     },
-    crimson_set: {
-      3: { desc: '对生命高于70%的敌人伤害+35%', specialFullHpDmg: 35 },
-      6: { desc: '对生命低于30%的敌人伤害+60%；攻击Boss时额外+30%伤害', specialLowHpDmg: 60, specialBossDmg: 30 }
+    6: { 
+      desc: '暗蚀印记增伤+42%；对印记目标暴击伤害+80%', 
+      shadowMarkOnHit: 0.42,        // 原 0.50 → 0.42（总增伤从0.75降到0.60）
+      critDmgOnMark: 80             // 暴伤加成从100%降到80%
+    }
+  },
+
+  // 血怒套装 —— 大幅强化满血爆发与斩杀
+  crimson_set: {
+    3: { 
+      desc: '对生命高于70%的敌人伤害+55%', 
+      specialFullHpDmg: 55          // 原 35 → 55（满血增伤大幅提高）
+    },
+    6: { 
+      desc: '对生命低于30%的敌人伤害+90%；攻击Boss时额外+45%伤害', 
+      specialLowHpDmg: 90,          // 原 60 → 90（斩杀线更恐怖）
+      specialBossDmg: 45            // 原 30 → 45（Boss增伤提升）
     }
   }
+}
   config.setBonuses = setBonuses
 
   const combatModule = useCombatStats(inventoryModule.equipment, config, playerModule.player)

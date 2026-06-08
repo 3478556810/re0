@@ -6,10 +6,10 @@
     "tag": "raid_boss",
     "isBoss": true,
     "isRaidBoss": true,
-    "baseHp": 900000,
-    "baseAtk": 400,
-    "baseDef": 300,
-    "exp": 2000,
+    "baseHp": 2400000,
+    "baseAtk": 900,
+    "baseDef": 700,
+    "exp": 3500,
     "traits": ["revive"],
     "enrageTurn": 8,
     "raidId": "arena",
@@ -19,33 +19,33 @@
     ],
     "icon": "mdi:axe-battle",
     "element": "fire",
-    "critRate": 20,
-    "critDmg": 120,
-    "lifesteal": 4,
+    "critRate": 25,
+    "critDmg": 150,
+    "lifesteal": 8,
     "luck": 30,
     "mechanics": ["blood_ritual"],
     "phaseTransitions": [
       {
         "atHpPercent": 0.75,
         "mechanic": "blood_ritual",
-        "buffSelf": { "stat": "atk", "value": 0.10 },
+        "buffSelf": { "stat": "atk", "value": 0.15 },
         "message": "角斗士·血斧开始鲜血仪式，召唤图腾！"
       },
       {
         "atHpPercent": 0.50,
         "mechanic": "blood_ritual",
-        "buffSelf": { "stat": "atk", "value": 0.10 },
+        "buffSelf": { "stat": "atk", "value": 0.15 },
         "message": "鲜血仪式再次触发，图腾更加强韧！"
       },
       {
         "atHpPercent": 0.25,
         "mechanic": "blood_ritual",
-        "buffSelf": { "stat": "atk", "value": 0.20 },
+        "buffSelf": { "stat": "atk", "value": 0.25 },
         "enrageNow": true,
         "message": "角斗士·血斧陷入狂怒，攻击力大幅提升！"
       }
     ],
-    "skillsText": "[{\"name\":\"裂地斩\",\"mpCost\":0,\"target\":\"single\",\"baseMul\":3.5,\"effects\":[{\"type\":\"bleed\",\"value\":0.10,\"duration\":3,\"chance\":100}]},{\"name\":\"血之盛宴\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"buff\",\"stat\":\"atk\",\"value\":0.25,\"duration\":5,\"chance\":100}],\"cooldown\":4},{\"name\":\"鲜血仪式\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[],\"cooldown\":6,\"mechanic\":\"blood_ritual\",\"mechanicParams\":{\"totemHp\":12000,\"duration\":3}}]",
+    "skillsText": "[{\"name\":\"裂地斩\",\"mpCost\":0,\"target\":\"single\",\"baseMul\":4.5,\"effects\":[{\"type\":\"bleed\",\"value\":0.12,\"duration\":3,\"chance\":100}]},{\"name\":\"血之盛宴\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"buff\",\"stat\":\"atk\",\"value\":0.35,\"duration\":5,\"chance\":100}],\"cooldown\":4},{\"name\":\"鲜血仪式\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[],\"cooldown\":6,\"mechanic\":\"blood_ritual\",\"mechanicParams\":{\"totemHp\":30000,\"duration\":3}}]",
     "minLevel": 10,
     "maxLevel": 30,
     "levelRange": [10, 30]
@@ -57,10 +57,10 @@
     "tag": "raid_boss",
     "isBoss": true,
     "isRaidBoss": true,
-    "baseHp": 2000000,
-    "baseAtk": 500,
-    "baseDef": 400,
-    "exp": 3500,
+    "baseHp": 5000000,
+    "baseAtk": 1200,
+    "baseDef": 900,
+    "exp": 6000,
     "traits": ["revive"],
     "enrageTurn": 7,
     "raidId": "volcano",
@@ -70,33 +70,33 @@
     ],
     "icon": "mdi:lava-lamp",
     "element": "fire",
-    "critRate": 25,
-    "critDmg": 150,
-    "lifesteal": 5,
+    "critRate": 30,
+    "critDmg": 180,
+    "lifesteal": 10,
     "luck": 35,
     "mechanics": ["lava_shield"],
     "phaseTransitions": [
       {
         "atHpPercent": 0.75,
         "mechanic": "lava_shield",
-        "buffSelf": { "stat": "def", "value": 0.15 },
+        "buffSelf": { "stat": "def", "value": 0.20 },
         "message": "炎核·熔岩巨像激活熔岩护盾！"
       },
       {
         "atHpPercent": 0.50,
         "mechanic": "lava_shield",
-        "buffSelf": { "stat": "def", "value": 0.15 },
+        "buffSelf": { "stat": "def", "value": 0.20 },
         "message": "熔岩护盾再次激活，反伤效果增强！"
       },
       {
         "atHpPercent": 0.25,
         "mechanic": "lava_shield",
-        "buffSelf": { "stat": "atk", "value": 0.20 },
+        "buffSelf": { "stat": "atk", "value": 0.25 },
         "enrageNow": true,
         "message": "熔岩巨像核心过热，攻击力暴涨！"
       }
     ],
-    "skillsText": "[{\"name\":\"熔岩爆裂\",\"mpCost\":0,\"target\":\"single\",\"element\":\"fire\",\"baseMul\":4.5,\"effects\":[{\"type\":\"debuff\",\"stat\":\"def\",\"value\":-0.50,\"duration\":3,\"chance\":100}]},{\"name\":\"熔岩护盾\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"shield\",\"value\":0.40,\"duration\":3,\"chance\":100},{\"type\":\"reflect\",\"value\":0.30,\"duration\":3,\"chance\":100}],\"cooldown\":5,\"mechanic\":\"lava_shield\"},{\"name\":\"陨石天降\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"fire\",\"baseMul\":5.0,\"effects\":[{\"type\":\"burn\",\"value\":0.40,\"duration\":3,\"chance\":100,\"target\":\"aoe\",\"stackable\":true,\"maxStacks\":5}],\"cooldown\":6}]",
+    "skillsText": "[{\"name\":\"熔岩爆裂\",\"mpCost\":0,\"target\":\"single\",\"element\":\"fire\",\"baseMul\":5.5,\"effects\":[{\"type\":\"debuff\",\"stat\":\"def\",\"value\":-0.50,\"duration\":3,\"chance\":100}]},{\"name\":\"熔岩护盾\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"shield\",\"value\":0.50,\"duration\":3,\"chance\":100},{\"type\":\"reflect\",\"value\":0.40,\"duration\":3,\"chance\":100}],\"cooldown\":5,\"mechanic\":\"lava_shield\"},{\"name\":\"陨石天降\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"fire\",\"baseMul\":6.5,\"effects\":[{\"type\":\"burn\",\"value\":0.50,\"duration\":3,\"chance\":100,\"target\":\"aoe\",\"stackable\":true,\"maxStacks\":5}],\"cooldown\":6}]",
     "minLevel": 15,
     "maxLevel": 35,
     "levelRange": [15, 35]
@@ -108,10 +108,10 @@
     "tag": "raid_boss",
     "isBoss": true,
     "isRaidBoss": true,
-    "baseHp": 5500000,
-    "baseAtk": 650,
-    "baseDef": 500,
-    "exp": 5000,
+    "baseHp": 12000000,
+    "baseAtk": 1600,
+    "baseDef": 1100,
+    "exp": 9000,
     "traits": ["revive"],
     "enrageTurn": 6,
     "raidId": "sanctuary",
@@ -120,33 +120,33 @@
     ],
     "icon": "mdi:ghost",
     "element": "dark",
-    "critRate": 30,
-    "critDmg": 200,
-    "lifesteal": 6,
+    "critRate": 35,
+    "critDmg": 250,
+    "lifesteal": 12,
     "luck": 50,
     "mechanics": ["shadow_clone", "void_curse"],
     "phaseTransitions": [
       {
         "atHpPercent": 0.75,
         "mechanic": "shadow_clone",
-        "buffSelf": { "stat": "atk", "value": 0.10 },
+        "buffSelf": { "stat": "atk", "value": 0.15 },
         "message": "永夜主教召唤暗影分身，隐匿于黑暗之中！"
       },
       {
         "atHpPercent": 0.50,
         "mechanic": "void_curse",
-        "buffSelf": { "stat": "def", "value": 0.15 },
+        "buffSelf": { "stat": "def", "value": 0.20 },
         "message": "永夜主教释放虚空诅咒，侵蚀你的生命！"
       },
       {
         "atHpPercent": 0.25,
         "mechanic": "shadow_clone",
-        "buffSelf": { "stat": "atk", "value": 0.20 },
+        "buffSelf": { "stat": "atk", "value": 0.25 },
         "enrageNow": true,
         "message": "永夜主教召唤更多分身，进入狂暴状态！"
       }
     ],
-    "skillsText": "[{\"name\":\"暗影突刺\",\"mpCost\":0,\"target\":\"single\",\"element\":\"dark\",\"baseMul\":5.5,\"effects\":[{\"type\":\"bleed\",\"value\":0.15,\"duration\":3,\"chance\":100},{\"type\":\"debuff\",\"stat\":\"def\",\"value\":-0.50,\"duration\":3,\"chance\":100}]},{\"name\":\"暗影弹幕\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":3.0,\"effects\":[{\"type\":\"bleed\",\"value\":0.10,\"duration\":3,\"chance\":100,\"target\":\"aoe\"}],\"ignoreDef\":50},{\"name\":\"召唤暗影分身\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[],\"cooldown\":5,\"mechanic\":\"shadow_clone\",\"mechanicParams\":{\"count\":3,\"hpRatio\":0.4,\"atkRatio\":0.4,\"cloneName\":\"暗影分身\"}},{\"name\":\"永夜降临\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":6.5,\"effects\":[],\"cooldown\":10,\"note\":\"第10回合释放全场秒杀技\"}]",
+    "skillsText": "[{\"name\":\"暗影突刺\",\"mpCost\":0,\"target\":\"single\",\"element\":\"dark\",\"baseMul\":6.5,\"effects\":[{\"type\":\"bleed\",\"value\":0.18,\"duration\":3,\"chance\":100},{\"type\":\"debuff\",\"stat\":\"def\",\"value\":-0.50,\"duration\":3,\"chance\":100}]},{\"name\":\"暗影弹幕\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":4.0,\"effects\":[{\"type\":\"bleed\",\"value\":0.12,\"duration\":3,\"chance\":100,\"target\":\"aoe\"}],\"ignoreDef\":50},{\"name\":\"召唤暗影分身\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[],\"cooldown\":5,\"mechanic\":\"shadow_clone\",\"mechanicParams\":{\"count\":3,\"hpRatio\":0.4,\"atkRatio\":0.4,\"cloneName\":\"暗影分身\"}},{\"name\":\"永夜降临\",\"mpCost\":0,\"target\":\"aoe\",\"element\":\"dark\",\"baseMul\":8.0,\"effects\":[],\"cooldown\":10,\"note\":\"第10回合释放全场秒杀技\"}]",
     "minLevel": 20,
     "maxLevel": 40,
     "levelRange": [20, 40]
