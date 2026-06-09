@@ -72,7 +72,6 @@
       <div class="companion-info">
         <div class="companion-name">{{ companion.name }}Lv.{{ companion.level }}</div>
 
-        <!-- 伙伴效果图标 -->
         <div class="companion-effects" v-if="companionEffects.length">
           <div
             v-for="eff in companionEffects"
@@ -119,7 +118,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import { getEffectIcon, getEffectTooltip } from '@/composables/useBattleHelpers'
 
@@ -156,9 +155,27 @@ const companionEffects = computed(() => {
   return comp.effects.filter(e => e.duration > 0)
 })
 
+// 受击动画状态
 const playerHit = ref(false)
 const playerFlash = ref(false)
 const playerShakeX = ref(0)
+
+// 监听血量减少，触发动画
+let lastHp = props.playerStats.hp
+watch(() => props.playerStats.hp, (newHp, oldHp) => {
+  if (newHp < oldHp) {
+    // 血量减少，播放受击效果
+    playerHit.value = true
+    playerFlash.value = true
+    playerShakeX.value = -6
+    setTimeout(() => {
+      playerHit.value = false
+      playerFlash.value = false
+      playerShakeX.value = 0
+    }, 200)
+  }
+  lastHp = newHp
+}, { immediate: false })
 </script>
 
 <style scoped>
@@ -225,5 +242,19 @@ const playerShakeX = ref(0)
 /* 所有效果图标兼容电脑点击 */
 .effect-badge {
   cursor: pointer;
+}
+
+/* ===== 玩家受击闪光+晃动动画 ===== */
+.flash-white {
+  animation: hitFlashShake 0.2s ease-out;
+}
+
+@keyframes hitFlashShake {
+  0% { filter: brightness(1); transform: translateX(0); }
+  20% { filter: brightness(2.5); transform: translateX(-4px); }
+  40% { transform: translateX(4px); }
+  60% { transform: translateX(-2px); }
+  80% { transform: translateX(2px); }
+  100% { filter: brightness(1); transform: translateX(0); }
 }
 </style>
