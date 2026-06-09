@@ -67,12 +67,8 @@ export function useDungeon(configRef) { // configRef 是 config reactive 的引�
   const wLv = worldLevel
 
   // 怪物数量
-let count = 1
-if (floor % 5 === 0) count = 1                 // Boss层 1只
-else if (floor >= 10) count = 2 + Math.floor(Math.random() * 3)  // 10层+ 2~4只
-else if (floor >= 6) count = 2 + Math.floor(Math.random() * 2)   // 6~9层 2~3只
-else if (floor >= 3) count = 2                                 // 3~5层 2只
-else count = 2 + Math.floor(Math.random() * 2)                 // 1~2层 2~3只
+// 根据楼层决定怪物数量
+const count = floor % 5 === 0 ? 1 : 2 + Math.floor(Math.random() * 2);
 
   const pool = dg.monstersByFloor[floor] || dg.monstersByFloor[1] || ['slime']
   const uniquePool = [...new Set(pool)]
