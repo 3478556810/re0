@@ -98,7 +98,7 @@
 .player-bottom-area {
   display: flex; align-items: flex-end; gap: 10px;
 }
-.player-sprite {
+.player-sprite { 
   width: 140px; height: 140px;
   display: flex; align-items: center; justify-content: center;
   filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
@@ -594,4 +594,24 @@
 .skill-flee-row .pixel-btn.warning .iconify {
   font-size: 14px;
   vertical-align: middle;
+}
+
+
+/* Boss 受击闪光（复用敌人动画） */
+.boss-sprite-container.flash-white .big-sprite-img {
+  animation: hitFlashShake 0.2s ease-out;
+}
+
+/* 低血量效果：红色光晕 + 持续颤抖 */
+.boss-sprite-container.low-hp .big-sprite-img {
+  filter: drop-shadow(0 0 8px red);
+  animation: lowHpShake 1s infinite;
+}
+
+@keyframes lowHpShake {
+  0% { transform: translate(0,0); }
+  25% { transform: translate(-1px,1px); }
+  50% { transform: translate(1px,-1px); }
+  75% { transform: translate(-1px,-1px); }
+  100% { transform: translate(0,0); }
 }

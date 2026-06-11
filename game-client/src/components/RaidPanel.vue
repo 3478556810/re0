@@ -84,7 +84,7 @@
 import { computed } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useGameStore } from '../store/gameStore'
-
+import { createRaidMonster } from '@/config/raidHelpers'
 const store = useGameStore()
 const emit = defineEmits(['close', 'startBattle'])
 
@@ -106,30 +106,11 @@ const raidClears = computed(() => {
   return { raid_gladiator: false, raid_lava_core: false, raid_bishop: false }
 })
 
+
+
 function enterRaid(bossId) {
-  const template = store.config.monsterTemplates.find(m => m.id === bossId)
-  if (!template) return
-
-const raidMultiplier = {
-    'raid_gladiator': { hp: 2.0, atk: 2.0, def: 1.3 },
-    'raid_lava_core': { hp: 2.0, atk: 2.2, def: 1.5 },
-    'raid_bishop': { hp: 2.4, atk: 2.8, def: 1.8 },
-}
-  const mult = raidMultiplier[bossId] || { hp: 1.0, atk: 1.0, def: 1.0 }
-
- const monster = {
-    ...template,
-    level: 21,
-    hp: Math.floor(template.baseHp * mult.hp),
-    maxHp: Math.floor(template.baseHp * mult.hp),
-    atk: Math.floor(template.baseAtk * mult.atk),
-    def: Math.floor(template.baseDef * mult.def),
-    icon: template.icon,
-    element: template.element,
-    isBoss: true,
-    isRaidBoss: true,          // ← 确保这行存在
-    skills: JSON.parse(template.skillsText || '[]'),
-}
+  const monster = createRaidMonster(bossId)
+  if (!monster) return
 
   store.dungeon.isRaidBattle = true
   store.dungeon.currentRaidBoss = bossId

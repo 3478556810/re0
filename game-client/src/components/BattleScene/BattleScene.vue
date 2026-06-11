@@ -11,23 +11,6 @@
       @show-effect-bubble="(eff, maxHp, event) => showEffectBubble(eff, maxHp, event)"
     />
 
-    <!-- Boss 立绘（左上角，可点击选中） -->
-    <div
-      v-if="isBossBattle && bossEnemy"
-      class="boss-sprite-container"
-      :class="{ 'target-boss': bossEnemyIndex === currentTargetIndex }"
-      @click="selectTarget(bossEnemyIndex)"
-    >
-      <div class="boss-sprite">
-        <img
-          v-if="getCustomImage && getCustomImage(bossEnemy.id)"
-          :src="getCustomImage(bossEnemy.id)"
-          class="big-sprite-img"
-        />
-        <Icon v-else :icon="bossEnemy.icon || 'mdi:help-circle'" class="big-sprite-icon" />
-      </div>
-    </div>
-
     <!-- 任务完成提示 -->
     <Transition name="fade">
       <div v-if="questCompleteHint" class="quest-hint-fixed">
@@ -49,35 +32,37 @@
       :enemies="enemies"
       :current-target-index="currentTargetIndex"
       :hit-enemy-index="hitEnemyIndex"
+      :attacking-enemy-index="attackingEnemyIndex" 
       :floating-numbers="floatingNumbers"
       @select-target="selectTarget"
       @show-effect-bubble="showEffectBubble"
     />
 
     <PlayerPanel
-  :player-stats="playerStats"
-  :player-shield="playerShield"
-  :player-effects="playerEffectsDisplay"
-  :companion="companion"
-  :companion-hp-percent="companionHpPercent"
-  :companion-mp="companion?.mp || 0"
-  :companion-max-mp="companion?.maxMp || 0"
-  :companion-exp="companion?.exp || 0"
-  :companion-next-exp="companion?.nextExp || 0"
-  :companion-exp-percent="companion?.expPercent || 0"
-  :player-hp-percent="playerHpPercent"
-  :player-mp="store.player.mp"
-  :player-max-mp="store.player.maxMp"
-  :display-exp="displayExp"
-  :next-level-exp="nextLevelExp"
-  :display-exp-percent="displayExpPercent"
-  :game-over="gameOver"
-  :player-turn="playerTurn"
-  :waiting="waiting"
-  :show-result="showResult"
-  @flee="fleeBattle"
-  @show-effect-bubble="showEffectBubble"
-/>
+      :player-stats="playerStats"
+      :player-shield="playerShield"
+      :player-effects="playerEffectsDisplay"
+      :is-player-attacking="isPlayerAttacking"
+      :companion="companion"
+      :companion-hp-percent="companionHpPercent"
+      :companion-mp="companion?.mp || 0"
+      :companion-max-mp="companion?.maxMp || 0"
+      :companion-exp="companion?.exp || 0"
+      :companion-next-exp="companion?.nextExp || 0"
+      :companion-exp-percent="companion?.expPercent || 0"
+      :player-hp-percent="playerHpPercent"
+      :player-mp="store.player.mp"
+      :player-max-mp="store.player.maxMp"
+      :display-exp="displayExp"
+      :next-level-exp="nextLevelExp"
+      :display-exp-percent="displayExpPercent"
+      :game-over="gameOver"
+      :player-turn="playerTurn"
+      :waiting="waiting"
+      :show-result="showResult"
+      @flee="fleeBattle"
+      @show-effect-bubble="showEffectBubble"
+    />
 
     <!-- 浮动消息 -->
     <Transition name="fade">
@@ -127,13 +112,19 @@
       <div v-if="skillPreview.mul > 1" class="preview-mul">克制倍率：{{ skillPreview.mul }}x</div>
     </div>
 
-    <!-- 战斗失败面板 -->
-    <div v-if="gameOver && gameOverMsg === '战斗失败'" class="game-over-panel">
-      {{ gameOverMsg }}
-      <button class="pixel-btn" @click="gameOverHandler">确定</button>
-    </div>
+    <!-- ★★★ 注意：删除了原来的普通游戏结束面板，完全由新的结算面板替代 ★★★ -->
 
-    <!-- 战斗结果面板 -->
+    <!-- 副本结算面板（胜利或失败） -->
+    <RaidResultPanel
+      v-if="showRaidResult"
+      :reward="totalReward"
+      :stats="raidResultStats"
+      :defeated="raidDefeated"
+      @close="onRaidResultClose"
+      @retry="onRaidRetry"
+    />
+
+    <!-- 普通战斗结果面板（仅胜利时使用，失败时不再显示） -->
     <BattleResultPanel
       v-if="showResult"
       :reward="totalReward"
@@ -146,24 +137,24 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, onUnmounted, computed } from 'vue'
+import { ref, reactive, onMounted, onUnmounted, computed, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import { useGameStore } from '@/store/gameStore'
 import { useBattleState } from '@/composables/useBattleState'
 import { useBattleUI } from '@/composables/useBattleUI'
-import { calculateDamage } from '../../combat/damageCalculator'  // 新增导入
+import { calculateDamage } from '../../combat/damageCalculator'
 import EnemyPanel from './EnemyPanel.vue'
 import PlayerPanel from './PlayerPanel.vue'
 import SkillBar from './SkillBar.vue'
 import BattleResultPanel from './BattleResultPanel.vue'
 import BossHealthBar from './BossHealthBar.vue'
 import '@/assets/css/BattleScene.css'
-import { getSortedEffects } from '@/composables/useBattleHelpers'
 import {
   getEffectDisplayName,
   getEffectDisplayValue,
   getEffectTooltip
 } from '@/composables/useBattleHelpers'
+import RaidResultPanel from './RaidResultPanel.vue'
 
 const props = defineProps({
   enemies: Array,
@@ -173,7 +164,7 @@ const props = defineProps({
   isBossBattle: Boolean
 })
 
-const emit = defineEmits(['victory', 'exit', 'nextFloor', 'retreatToDungeon'])
+const emit = defineEmits(['victory', 'exit', 'nextFloor', 'retreatToDungeon', 'retry'])
 
 const store = useGameStore()
 
@@ -207,9 +198,35 @@ const {
   getCompanionImage,
   floatingNumbers,
   destroy: destroyState,
-  hitEnemyIndex
+  showRaidResult,
+  raidResultStats,
+  raidDefeated,
+  hitEnemyIndex,
+  isPlayerAttacking, // ★ 只在此处声明一次
+  attackingEnemyIndex 
 } = useBattleState()
 
+// ★★★ 修复后的副本结算关闭方法（仅此一份）★★★
+function onRaidResultClose() {
+    saveRewards()
+    showRaidResult.value = false
+
+    if (raidDefeated.value) {
+        // 失败退出时恢复满血，避免大地图 0 血
+        store.player.hp = store.player.maxHp
+        store.player.mp = store.player.maxMp
+        store.save()
+        emit('exit')
+    } else {
+        emit('victory', totalReward.value)
+    }
+}
+
+function onRaidRetry() {
+  showRaidResult.value = false
+  store.dungeon.isRaidBattle = false  // ★ 先重置，再重新进入副本
+  emit('retry')
+}
 const {
   floatingMessage,
   showMessage,
@@ -231,7 +248,6 @@ const skillPreview = reactive({
   mul: 1
 })
 
-// 使用引擎真实计算公式计算预览伤害
 function calcSkillDamage(skill) {
   const target = enemies.value?.[currentTargetIndex.value]
   if (!target) return { damage: 0, multiplier: 1 }
@@ -267,7 +283,6 @@ function calcSkillDamage(skill) {
   return { damage, multiplier }
 }
 
-// 修复浮动消息颜色
 function showInfo(text, duration = 2000) {
   floatingMessage.value = { visible: true, text, type: 'info' }
   clearTimeout(showInfo._timer)
@@ -276,7 +291,6 @@ function showInfo(text, duration = 2000) {
   }, duration)
 }
 
-// ========== 单击显示预览，双击释放 ==========
 const pendingSkill = ref(null)
 
 async function handleSkillClick(skill) {
@@ -285,7 +299,6 @@ async function handleSkillClick(skill) {
     return
   }
 
-  // 第一次点击：显示预览浮层
   if (!pendingSkill.value || pendingSkill.value.id !== skill.id) {
     pendingSkill.value = skill
     const { damage, multiplier } = calcSkillDamage(skill)
@@ -305,7 +318,6 @@ async function handleSkillClick(skill) {
     return
   }
 
-  // 第二次点击同一技能：释放
   clearTimeout(pendingSkill._timeout)
   pendingSkill.value = null
   skillPreview.visible = false
@@ -341,11 +353,6 @@ const bossEnemy = computed(() => {
   return enemies.value.find(e => e.isBoss) || enemies.value[0]
 })
 
-const bossEnemyIndex = computed(() => {
-  if (!bossEnemy.value) return -1
-  return enemies.value.indexOf(bossEnemy.value)
-})
-
 const bossData = computed(() => {
   if (!isBossBattle.value || !enemies.value.length) return null
   const boss = bossEnemy.value
@@ -373,7 +380,6 @@ const playerHpPercent = computed(() => (store.player.hp / store.player.maxHp) * 
 
 const bossPhaseAnimTrigger = ref(0)
 
-// ---------------------- 事件处理 ----------------------
 const onBossPhaseChange = (phaseIndex, phaseConfig) => {
   triggerScreenShake(0.5)
   bossPhaseAnimTrigger.value++
@@ -408,8 +414,8 @@ const showEffectBubble = (effect, maxHp, event) => {
 
 const fleeBattle = () => emit('exit')
 
+// ★★★ 普通战斗失败处理：直接退出，不经过 handleGameOver ★★★
 const gameOverHandler = () => {
-  handleGameOver()
   if (gameOverMsg.value === '战斗失败') emit('exit')
 }
 
@@ -452,5 +458,3 @@ onUnmounted(() => {
   document.removeEventListener('click', hideEffectBubbleOnOutsideClick)
 })
 </script>
-
-

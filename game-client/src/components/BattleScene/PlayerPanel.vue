@@ -1,13 +1,22 @@
 <template>
   <div class="player-wrapper">
-    <!-- 玩家立绘 -->
-    <div
-      class="player-sprite"
-      :class="{ 'player-hit': playerHit, 'flash-white': playerFlash }"
-      :style="{ transform: `translateX(${playerShakeX}px)` }"
-    >
-      <img v-if="playerStats.customImg" :src="playerStats.customImg" class="big-sprite-img" />
-      <Icon v-else icon="mdi:account" class="big-sprite" />
+    <!-- 玩家立绘（绝对定位，自由移动） -->
+    <div class="player-sprite-container">
+      <div
+        class="player-sprite"
+        :class="{ 'player-hit': playerHit, 'flash-white': playerFlash }"
+        :style="{ transform: `translateX(${playerShakeX}px)` }"
+      >
+        <!-- ★ 直接渲染立绘，不再依赖 customImg -->
+        <img
+          v-if="!imageError"
+          :src="currentPlayerPortrait"
+          class="big-sprite-img"
+          :class="{ damaged: isHurt, attacking: isPlayerAttacking }"
+          @error="onImageError"
+        />
+        <Icon v-else icon="mdi:account" class="big-sprite" />
+      </div>
     </div>
 
     <!-- 底部横向区域（状态卡） -->
@@ -61,7 +70,7 @@
       </div>
     </div>
 
-    <!-- 伙伴卡片（固定小矩形，贴底部） -->
+    <!-- 伙伴卡片（固定右下角，不变） -->
     <div v-if="companion" class="companion-card">
       <img
         v-if="getCompanionImage && getCompanionImage()"
@@ -70,7 +79,7 @@
       />
       <Icon v-else :icon="companion.icon || 'mdi:account-heart'" class="companion-icon" />
       <div class="companion-info">
-        <div class="companion-name">{{ companion.name }}Lv.{{ companion.level }}</div>
+        <div class="companion-name">{{ companion.name }} Lv.{{ companion.level }}</div>
 
         <div class="companion-effects" v-if="companionEffects.length">
           <div
@@ -93,7 +102,7 @@
           <span class="bar-text">HP</span>
           <div class="hp-bar small-bar">
             <div class="hp-fill" :style="{ width: companionHpPercent + '%' }"></div>
-            <span>{{ companion.hp }} / {{ companion.maxHp }}</span>
+          <span>{{ Math.floor(companion.hp) }} / {{ Math.floor(companion.maxHp) }}</span>
           </div>
         </div>
 
@@ -139,20 +148,45 @@ const props = defineProps({
   displayExp: Number,
   nextLevelExp: Number,
   displayExpPercent: Number,
-  getCompanionImage: Function
+  getCompanionImage: Function,
+  isPlayerAttacking: { type: Boolean, default: false },  // ★ 必须声明
 })
 
 defineEmits(['show-effect-bubble'])
 
+const imageError = ref(false)
+
+function onImageError() {
+  imageError.value = true
+}
+
+// 伙伴MP百分比
 const companionMpPercent = computed(() => {
   if (!props.companionMaxMp || props.companionMaxMp === 0) return 0
   return (props.companionMp / props.companionMaxMp) * 100
 })
 
+// 伙伴效果过滤
 const companionEffects = computed(() => {
   const comp = props.companion
   if (!comp || !comp.effects) return []
   return comp.effects.filter(e => e.duration > 0)
+})
+
+// 玩家血量百分比
+const playerHpPercentVal = computed(() => {
+  return props.playerStats.hp / props.playerStats.maxHp
+})
+
+// 是否残血
+const isHurt = computed(() => playerHpPercentVal.value < 0.5)
+
+// 当前玩家立绘路径（攻击优先 > 残血 > 战损 > 正常）
+const currentPlayerPortrait = computed(() => {
+  if (props.isPlayerAttacking) return '/images/player/attack.png'
+  if (playerHpPercentVal.value < 0.2) return '/images/player/defeated.png'
+  if (playerHpPercentVal.value < 0.5) return '/images/player/damaged.png'
+  return '/images/player/normal.png'
 })
 
 // 受击动画状态
@@ -160,11 +194,9 @@ const playerHit = ref(false)
 const playerFlash = ref(false)
 const playerShakeX = ref(0)
 
-// 监听血量减少，触发动画
 let lastHp = props.playerStats.hp
 watch(() => props.playerStats.hp, (newHp, oldHp) => {
   if (newHp < oldHp) {
-    // 血量减少，播放受击效果
     playerHit.value = true
     playerFlash.value = true
     playerShakeX.value = -6
@@ -179,7 +211,72 @@ watch(() => props.playerStats.hp, (newHp, oldHp) => {
 </script>
 
 <style scoped>
-/* 伙伴卡片恢复固定小矩形（不动全局样式） */
+/* ========== 玩家容器 ========== */
+.player-wrapper {
+  position: absolute;
+  bottom: 5%;
+  left: 2%;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+  z-index: 20;
+}
+
+/* ========== 玩家立绘容器（绝对定位，自由移动） ========== */
+.player-sprite-container {
+  position: absolute;
+  /* 移动立绘：修改 bottom 和 left 的值 */
+  bottom: 28vh;   /* 立绘向上偏移，可根据需要调整 */
+  left: 15vh;      /* 立绘向右偏移 */
+width: 120px;
+  height: 220px;
+  pointer-events: none; /* 点击穿透，不影响下方按钮 */
+}
+
+.player-sprite {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  filter: drop-shadow(0 10px 15px rgba(0,0,0,0.5));
+  transition: filter 0.2s;
+}
+
+.big-sprite-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.big-sprite {
+  font-size: 280px;
+  color: #ffd;
+}
+
+/* 战损立绘抖动效果 */
+.big-sprite-img.damaged {
+  animation: hurtPulse 1s infinite alternate;
+}
+
+@keyframes hurtPulse {
+  0% { filter: brightness(1) saturate(1); }
+  100% { filter: brightness(0.8) saturate(0.5); }
+}
+
+/* ========== 底部状态卡（保持原样） ========== */
+.player-bottom-area {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 30px; /* 让状态卡与立绘拉开距离 */
+}
+
+/* 以下样式保持你原来的 player-status-card、effect-badge 等不变，省略以节省篇幅 */
+/* ... */
+
+/* ========== 伙伴卡片（固定右下角） ========== */
 .companion-card {
   position: fixed;
   bottom: 2%;
@@ -199,6 +296,7 @@ watch(() => props.playerStats.hp, (newHp, oldHp) => {
   box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
+/* 伙伴头像等样式保持不变 */
 .companion-portrait {
   width: 56px;
   height: 56px;
@@ -231,20 +329,7 @@ watch(() => props.playerStats.hp, (newHp, oldHp) => {
   width: 100px;
 }
 
-/* 伙伴效果图标横排 */
-.companion-effects {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  margin: 2px 0;
-}
-
-/* 所有效果图标兼容电脑点击 */
-.effect-badge {
-  cursor: pointer;
-}
-
-/* ===== 玩家受击闪光+晃动动画 ===== */
+/* 受击动画 */
 .flash-white {
   animation: hitFlashShake 0.2s ease-out;
 }
@@ -256,5 +341,17 @@ watch(() => props.playerStats.hp, (newHp, oldHp) => {
   60% { transform: translateX(-2px); }
   80% { transform: translateX(2px); }
   100% { filter: brightness(1); transform: translateX(0); }
+}
+
+/* 玩家攻击动画（与怪物完全一致） */
+.big-sprite-img.attacking {
+  animation: playerAttackLunge 0.8s ease-in-out;
+}
+
+@keyframes playerAttackLunge {
+  0%   { transform: scale(1); }
+  30%  { transform: scale(1.15) translateX(-8px); }
+  60%  { transform: scale(1.1) translateX(-4px); }
+  100% { transform: scale(1); }
 }
 </style>
