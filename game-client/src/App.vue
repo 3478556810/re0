@@ -30,6 +30,7 @@
       @flee="onBattleExit"
       @exit="onBattleExit"
       @nextFloor="onNextFloor"
+       @retry="handleRaidRetry"
       @retreatToDungeon="() => { inBattle = false; store.pendingDungeonPanel = true }"
     />
   </div>
@@ -43,6 +44,8 @@ import MainScreen from './components/MainScreen.vue'
 import BattleScene from './components/BattleScene/BattleScene.vue'
 import { useGameStore } from './store/gameStore'
 import { spawnEnemy } from './config/biomeConfig'
+import { createRaidMonster } from '@/config/raidHelpers'
+import { nextTick } from 'vue' // 确保已导入
 // ✅ 终极方案：每 1 秒检查一次 story_raid_clears，全通即触发
 let raidCheckInterval = null
 
@@ -64,7 +67,46 @@ onMounted(() => {
     }
   }, 1000)
 })
+// ★ 修复后的重试函数
 
+
+// 删除原来的 handleRaidRetry，换成这个
+async function handleRaidRetry() {
+  const bossId = store.dungeon.currentRaidBoss
+  if (!bossId) return
+
+  // 1. 恢复血量
+  store.player.hp = store.player.maxHp
+  store.player.mp = store.player.maxMp
+  if (store.activeCompanionId && store.companions?.length) {
+    const comp = store.companions.find(c => c.id === store.activeCompanionId)
+    if (comp) {
+      comp.hp = comp.baseHp || comp.maxHp || 200
+      comp.mp = comp.baseMp || comp.maxMp || 50
+    }
+  }
+  store.save()
+
+  // 2. 生成新怪物
+  const monster = createRaidMonster(bossId)
+  if (!monster) return
+
+  // 3. 暂时清空敌人，触发组件卸载
+  currentEnemies.value = []
+  // 等待 Vue 完成销毁（确保旧引擎 onUnmounted 执行）
+  await nextTick()
+  await new Promise(resolve => setTimeout(resolve, 50))
+
+  // 4. 清理全局引擎残留（若有）
+  if (window.__engine) {
+    window.__engine.battleOver = true
+    window.__engine = null
+  }
+
+  // 5. 递增 key 并重新填充敌人，强制重建组件（inBattle 保持 true，无闪烁）
+  battleKey.value++
+  currentEnemies.value = [monster]
+}
 onUnmounted(() => {
   if (raidCheckInterval) clearInterval(raidCheckInterval)
 })

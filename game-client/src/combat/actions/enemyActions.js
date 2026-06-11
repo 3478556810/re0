@@ -2,7 +2,8 @@ import { calculateDamage } from '../damageCalculator'
 import { EFFECT_TYPES } from '../effectDefs'
 import { applySkillEffects } from '../effects/skillEffects'
 import { bossMechanics } from '../engine/mechanics/bossMechanics'
-
+import { playVoice } from '@/utils/audio'   // ← 新增这一行
+import { monsterSpeech } from '@/config/monsterSpeech'
 export function executeEnemyTurn(engine) {
   const results = []
   engine.player.effects.forEach(eff => {
@@ -72,6 +73,7 @@ export function executeEnemyTurn(engine) {
 }
 
 export function executeSingleEnemyAction(engine, enemy) {
+  if (enemy.hp <= 0) return { messages: [] }
   if (enemy.isStunned()) {
     const freeze = enemy.effects.find(e => e.type === EFFECT_TYPES.FREEZE)
     enemy.removeEffect(freeze ? EFFECT_TYPES.FREEZE : EFFECT_TYPES.STUN)

@@ -27,28 +27,7 @@
       </div>
     </div>
 
-    <!-- ===== 小怪血条列表（移到外面，独立渲染） ===== -->
-    <div class="minion-list" v-if="minionList.length">
-      <div
-        v-for="minion in minionList"
-        :key="minion.id"
-        class="minion-bar"
-        :class="{ 'minion-totem': minion.isTotem, 'minion-clone': minion.isClone }"
-      >
-        <div class="minion-header">
-          <span class="minion-name">{{ minion.name }}</span>
-          <span class="minion-hp-text">
-            {{ Math.floor(minion.currentHp) }} / {{ minion.maxHp }}
-          </span>
-        </div>
-        <div class="minion-hp-bg">
-          <div
-            class="minion-hp-fill"
-            :style="{ width: (minion.currentHp / minion.maxHp) * 100 + '%' }"
-          ></div>
-        </div>
-      </div>
-    </div>
+   
   </div>
 </template>
 <script setup>
@@ -288,60 +267,5 @@ const getEffectClass = (eff) => {
 }
 
 
-/* 小怪血条列表 */
-.minion-list {
-  margin-top: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
 
-.minion-bar {
-  background: rgba(20, 20, 35, 0.8);
-  border: 1px solid rgba(255, 215, 0, 0.25);
-  border-radius: 6px;
-  padding: 4px 8px;
-}
-
-.minion-header {
-  display: flex;
-  justify-content: space-between;
-  font-size: 9px;
-  color: #ccc;
-  margin-bottom: 2px;
-}
-
-.minion-name {
-  color: #f0c674;
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.minion-hp-text {
-  color: #ffaa66;
-  font-family: 'Press Start 2P', monospace;
-}
-
-.minion-hp-bg {
-  height: 10px;
-  background: #2a1f1f;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.minion-hp-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #d97706, #fbbf24);
-  transition: width 0.2s ease;
-}
-
-/* 可选：区分图腾和分身颜色 */
-.minion-totem .minion-hp-fill {
-  background: linear-gradient(90deg, #7c3aed, #a78bfa);
-}
-.minion-clone .minion-hp-fill {
-  background: linear-gradient(90deg, #dc2626, #f87171);
-}
 </style>
