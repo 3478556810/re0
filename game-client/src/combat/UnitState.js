@@ -1,6 +1,7 @@
 import { EFFECT_TYPES } from './effectDefs'
 import { bossMechanics } from './engine/mechanics/bossMechanics'
-
+import { playVoice } from '@/utils/audio'   // ← 新增
+import { monsterSpeech } from '@/config/monsterSpeech'
 export class UnitState {
   constructor(baseStats, isPlayer = false) {
     // 在 UnitState 构造函数中，添加以下属性
@@ -178,6 +179,8 @@ addEffect(effectDef) {
   }
 
   onTurnEnd(engine) {
+     if (engine && engine.battleOver) return  // ★ 引擎已结束，不再结算任何效果
+     if (this.hp <= 0) return  // ★ 死亡单位不再结算任何回合效果
     // 减少冷却
     if (this._reviveCooldown > 0) this._reviveCooldown--;
     if (this._deathSaveCooldown > 0) this._deathSaveCooldown--;
@@ -278,7 +281,19 @@ this.effects.filter(e => e.type === EFFECT_TYPES.BURN).forEach(e => {
         this.hp -= totalDotDmg;
         if (this.hp < 0) this.hp = 0;
     }
-
+if (this.hp <= 0) {
+    if (!this._playedDefeatVoice) {
+        playVoice(this.id, 'defeat')
+        this._playedDefeatVoice = true
+        
+        const speechText = monsterSpeech[this.id]?.defeat
+        if (speechText) {
+            const self = this
+            self.speech = speechText
+            setTimeout(() => { self.speech = '' }, 2000)
+        }
+    }
+}
     // 机制钩子
     this.effects.forEach(eff => {
         if (eff.mechanic && bossMechanics[eff.mechanic]?.onTick) {
@@ -411,9 +426,13 @@ this.effects.filter(e => e.type === EFFECT_TYPES.BURN).forEach(e => {
         }
     }
 
-    // 真正扣血
-    this.hp -= damage;
-    if (this.hp < 0) this.hp = 0;
+   // 真正扣血
+this.hp -= damage;
+
+
+
+if (this.hp < 0) this.hp = 0;
+
 
     // 反伤
     let reflectDmg = 0;

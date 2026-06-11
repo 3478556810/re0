@@ -27,8 +27,8 @@ export function useCompanion() {
         icon: char.icon || 'mdi:account-heart',
         baseHp: char.baseHp || 500,        // 原 200 → 500
         baseMp: char.baseMp || 80,         // 原 30 → 80
-        baseAtk: char.baseAttack || 35,    // 原 25 → 35
-        baseDef: char.baseDefense || 20,   // 原 12 → 20
+        baseAtk: char.baseAttack || 120,    // 原 25 → 35for (const enemy of alive) {
+        baseDef: char.baseDefense || 70,   // 原 12 → 20
         baseSpeed: char.baseSpeed || 16,   // 原 14 → 16
         level: 1,
         exp: 0,
@@ -66,8 +66,8 @@ export function useCompanion() {
         ...c,
         baseHp: c.baseHp ?? 500,
         baseMp: c.baseMp ?? 80,
-        baseAtk: c.baseAtk ?? 35,
-        baseDef: c.baseDef ?? 20,
+        baseAtk: c.baseAtk ?? 120,
+        baseDef: c.baseDef ?? 70,
         baseSpeed: c.baseSpeed ?? 16,
         skillPoints: c.skillPoints ?? 10,
         skillSlots: c.skillSlots || {},

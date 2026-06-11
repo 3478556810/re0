@@ -66,9 +66,8 @@ export function useDungeon(configRef) { // configRef 是 config reactive 的引�
   const floor = dungeon.currentFloor
   const wLv = worldLevel
 
-  // 怪物数量
-// 根据楼层决定怪物数量
-const count = floor % 5 === 0 ? 1 : 2 + Math.floor(Math.random() * 2);
+  // 怪物数量：Boss层1只，普通层2~3只
+  const count = floor % 5 === 0 ? 1 : 2 + Math.floor(Math.random() * 2)
 
   const pool = dg.monstersByFloor[floor] || dg.monstersByFloor[1] || ['slime']
   const uniquePool = [...new Set(pool)]
@@ -79,31 +78,32 @@ const count = floor % 5 === 0 ? 1 : 2 + Math.floor(Math.random() * 2);
     const template = configRef.monsterTemplates.find(t => t.id === pickId)
     if (!template) continue
 
-    // 等级：基础每层+3，世界等级+1.5，取整避免小数
-  // 从 floor * 3 + wLv * 1.5 改为 floor * 2 + wLv
-const baseLevel = Math.round(floor * 2 + wLv)
-    const randomOffset = Math.floor(Math.random() * 3) - 1  // -1 到 +1
+    // 等级：基于世界等级（每级+7级）和楼层（每层+0.8级），确保高世界等级怪物远超玩家
+    // 世界等级2时基础等级 = 2*7 = 14，加上楼层偏移可达15+
+    const baseLevel = Math.max(1, Math.floor(wLv * 7 + floor * 0.8))
+    const randomOffset = Math.floor(Math.random() * 3) - 1  // -1,0,1
     let level = baseLevel + randomOffset
 
+    // 等级限制（若模板有上限则不能超过，若无则放宽到99）
     const minLv = template.levelRange?.[0] ?? template.minLevel ?? 1
     const maxLv = template.levelRange?.[1] ?? template.maxLevel ?? 99
     level = Math.max(minLv, Math.min(maxLv, level))
 
-    // 属性成长按楼层递增（系数可以是小数，但结果取整）
-    // 属性成长随怪物自身等级，每级 +8%，20级 ≈ 2.52 倍，比楼层系数温和得多
-// 10层后怪物属性开始缓慢增长
-const scale = dungeon.currentFloor >= 10 
-  ? 1 + (dungeon.currentFloor - 9) * 0.04 
-  : 1
+    // 属性缩放：攻击力与世界等级强相关（每级+40%），生命/防御中等（每级+20%）
+    const worldAtkBonus = wLv * 0.4
+    const worldDefHpBonus = wLv * 0.2
+    const floorBonus = floor * 0.06    // 楼层每层+6%
+    const atkScale = 1 + worldAtkBonus + floorBonus
+    const defHpScale = 1 + worldDefHpBonus + floorBonus
 
     selected.push({
       ...template,
-      level,                                         // 已经是整数
-      hp: Math.floor(template.baseHp * scale),
-      maxHp: Math.floor(template.baseHp * scale),
-      atk: Math.floor(template.baseAtk * scale),
-      def: Math.floor(template.baseDef * scale),
-      exp: Math.floor((template.exp || 20) * scale * 1.2),
+      level,
+      hp: Math.floor(template.baseHp * defHpScale),
+      maxHp: Math.floor(template.baseHp * defHpScale),
+      atk: Math.floor(template.baseAtk * atkScale),
+      def: Math.floor(template.baseDef * defHpScale),
+      exp: Math.floor((template.exp || 20) * atkScale * 1.2),
     })
   }
 
