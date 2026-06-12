@@ -1,125 +1,147 @@
 <template>
   <div class="overlay">
     <div class="result-panel pixel-panel">
-      <!-- 标题 + 经验（保持不变） -->
+      <!-- 标题 + 经验 -->
       <h2 class="title">
-        <Icon icon="mdi:trophy" />
-        战斗胜利！
-        <span class="exp-inline">经验 +{{ displayedExp }}</span>
-        <span class="exp-inline companion-exp" v-if="reward.companionExp > 0">
+        <Icon :icon="defeated ? 'mdi:skull-crossbones' : 'mdi:trophy'" />
+        {{ defeated ? '战斗失败' : '战斗胜利！' }}
+        <span class="exp-inline" v-if="!defeated">经验 +{{ displayedExp }}</span>
+        <span class="exp-inline companion-exp" v-if="!defeated && reward.companionExp > 0">
           伙伴经验 +{{ reward.companionExp }}
         </span>
       </h2>
 
-      <!-- 标签栏（仅当存在多个页面时显示） -->
-      <div class="tabs" v-if="pages.length > 1">
-        <button
-          v-for="(page, index) in pages"
-          :key="index"
-          :class="{ active: currentPage === index }"
-          @click="goToPage(index)"
-        >
-          {{ page.label }}
-        </button>
-      </div>
+      <!-- 奖励内容仅在胜利时显示 -->
+      <template v-if="!defeated">
+        <!-- 标签栏（仅当存在多个页面时显示） -->
+        <div class="tabs" v-if="pages.length > 1">
+          <button
+            v-for="(page, index) in pages"
+            :key="index"
+            :class="{ active: currentPage === index }"
+            @click="goToPage(index)"
+          >
+            {{ page.label }}
+          </button>
+        </div>
 
-      <!-- 滑动容器 -->
-      <div
-        class="swiper-container"
-        ref="swiperRef"
-        @scroll="onScroll"
-        v-if="pages.length"
-      >
+        <!-- 滑动容器 -->
         <div
-          class="swiper-page"
-          v-for="(page, pageIndex) in pages"
-          :key="pageIndex"
+          class="swiper-container"
+          ref="swiperRef"
+          @scroll="onScroll"
+          v-if="pages.length"
         >
-          <!-- 根据类型渲染对应区块（材料 / 装备 / 饰品 / 宝石） -->
-          <div v-for="(item, idx) in page.items" :key="idx">
-            <!-- 材料区块 -->
-            <div class="reward-row" v-if="item.type === 'materials'">
-              <div class="section-label"><Icon icon="mdi:package-variant-closed" /> 材料</div>
-              <div class="grid-area">
-                <div v-for="(m, idx2) in item.data.slice(0, maxVisible)" :key="m.id + idx2" class="material-card">
-                  <Icon :icon="materialIcon(m.id)" class="mat-icon" />
-                  <span class="mat-name">{{ getMaterialName(m.id) }}</span>
-                  <span class="mat-qty" v-if="m.qty > 1">x{{ m.qty }}</span>
+          <div
+            class="swiper-page"
+            v-for="(page, pageIndex) in pages"
+            :key="pageIndex"
+          >
+            <div v-for="(item, idx) in page.items" :key="idx">
+              <!-- 材料区块 -->
+              <div class="reward-row" v-if="item.type === 'materials'">
+                <div class="section-label"><Icon icon="mdi:package-variant-closed" /> 材料</div>
+                <div class="grid-area">
+                  <div v-for="(m, idx2) in item.data.slice(0, maxVisible)" :key="m.id + idx2" class="material-card">
+                    <Icon :icon="materialIcon(m.id)" class="mat-icon" />
+                    <span class="mat-name">{{ getMaterialName(m.id) }}</span>
+                    <span class="mat-qty" v-if="m.qty > 1">x{{ m.qty }}</span>
+                  </div>
+                  <div v-if="item.data.length > maxVisible" class="material-card more-card">
+                    <Icon icon="mdi:dots-horizontal" class="mat-icon" />
+                    <span class="mat-name">还有 +{{ item.data.length - maxVisible }} 种</span>
+                  </div>
                 </div>
-                <div v-if="item.data.length > maxVisible" class="material-card more-card">
-                  <Icon icon="mdi:dots-horizontal" class="mat-icon" />
-                  <span class="mat-name">还有 +{{ item.data.length - maxVisible }} 种</span>
+              </div>
+
+              <!-- 装备区块 -->
+              <div class="reward-row" v-if="item.type === 'equipments'">
+                <div class="section-label"><Icon icon="mdi:sword" /> 装备</div>
+                <div class="grid-area">
+                  <div v-for="eq in item.data.slice(0, maxVisible)" :key="eq.id" class="acc-card">
+                    <Icon :icon="equipmentIcon(eq.part)" class="mat-icon" />
+                    <span class="mat-name" :style="{ color: qualityColor(eq.quality) }">{{ eq.name }}</span>
+                  </div>
+                  <div v-if="item.data.length > maxVisible" class="acc-card more-card">
+                    <Icon icon="mdi:dots-horizontal" class="mat-icon" />
+                    <span class="mat-name">还有 +{{ item.data.length - maxVisible }} 件</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 饰品区块 -->
+              <div class="reward-row" v-if="item.type === 'accessories'">
+                <div class="section-label"><Icon icon="mdi:gem" /> 饰品</div>
+                <div class="grid-area">
+                  <div v-for="acc in item.data.slice(0, maxVisible)" :key="acc.id" class="acc-card">
+                    <Icon :icon="acc.icon || 'mdi:ring'" class="mat-icon" />
+                    <span class="mat-name" :style="{ color: qualityColor(acc.quality) }">{{ acc.name }}</span>
+                  </div>
+                  <div v-if="item.data.length > maxVisible" class="acc-card more-card">
+                    <Icon icon="mdi:dots-horizontal" class="mat-icon" />
+                    <span class="mat-name">还有 +{{ item.data.length - maxVisible }} 件</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 宝石 -->
+              <div v-if="item.type === 'gems'">
+                <div class="section-label"><Icon icon="mdi:rhombus-split" /> 宝石</div>
+                <div class="grid-area">
+                  <div v-for="(g, idx) in item.data.slice(0, maxVisible)" :key="g.id + idx" class="material-card">
+                    <div
+                      class="gem-core"
+                      :class="'gem-tier-' + getGemTier(g.id)"
+                      :style="{ '--gem-color': gemColor(g.id), width: '28px', height: '28px' }"
+                    ></div>
+                    <span class="mat-name">{{ g.name }}</span>
+                    <span class="mat-qty" v-if="g.qty > 1">x{{ g.qty }}</span>
+                  </div>
+                  <div v-if="item.data.length > maxVisible" class="material-card more-card">
+                    <Icon icon="mdi:dots-horizontal" class="mat-icon" />
+                    <span class="mat-name">还有 +{{ item.data.length - maxVisible }} 颗</span>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
+        </div>
 
-            <!-- 装备区块 -->
-            <div class="reward-row" v-if="item.type === 'equipments'">
-              <div class="section-label"><Icon icon="mdi:sword" /> 装备</div>
-              <div class="grid-area">
-                <div v-for="eq in item.data.slice(0, maxVisible)" :key="eq.id" class="acc-card">
-                  <Icon :icon="equipmentIcon(eq.part)" class="mat-icon" />
-                  <span class="mat-name" :style="{ color: qualityColor(eq.quality) }">{{ eq.name }}</span>
-                </div>
-                <div v-if="item.data.length > maxVisible" class="acc-card more-card">
-                  <Icon icon="mdi:dots-horizontal" class="mat-icon" />
-                  <span class="mat-name">还有 +{{ item.data.length - maxVisible }} 件</span>
-                </div>
-              </div>
-            </div>
+        <!-- 完全无掉落提示 -->
+        <div v-if="!hasAnyReward" class="empty-row">无战利品</div>
+      </template>
 
-            <!-- 饰品区块 -->
-            <div class="reward-row" v-if="item.type === 'accessories'">
-              <div class="section-label"><Icon icon="mdi:gem" /> 饰品</div>
-              <div class="grid-area">
-                <div v-for="acc in item.data.slice(0, maxVisible)" :key="acc.id" class="acc-card">
-                  <Icon :icon="acc.icon || 'mdi:ring'" class="mat-icon" />
-                  <span class="mat-name" :style="{ color: qualityColor(acc.quality) }">{{ acc.name }}</span>
-                </div>
-                <div v-if="item.data.length > maxVisible" class="acc-card more-card">
-                  <Icon icon="mdi:dots-horizontal" class="mat-icon" />
-                  <span class="mat-name">还有 +{{ item.data.length - maxVisible }} 件</span>
-                </div>
-              </div>
-            </div>
-
-          <!-- 宝石 -->
-<div v-if="item.type === 'gems'">
-  <div class="section-label"><Icon icon="mdi:rhombus-split" /> 宝石</div>
-  <div class="grid-area">
-    <div v-for="(g, idx) in item.data.slice(0, maxVisible)" :key="g.id + idx" class="material-card">
-      <!-- 使用全局的 gem-core 类，动态绑定等级和颜色 -->
-      <div
-        class="gem-core"
-        :class="'gem-tier-' + getGemTier(g.id)"
-        :style="{ '--gem-color': gemColor(g.id), width: '28px', height: '28px' }"
-      ></div>
-      <span class="mat-name">{{ g.name }}</span>
-      <span class="mat-qty" v-if="g.qty > 1">x{{ g.qty }}</span>
-    </div>
-    <div v-if="item.data.length > maxVisible" class="material-card more-card">
-      <Icon icon="mdi:dots-horizontal" class="mat-icon" />
-      <span class="mat-name">还有 +{{ item.data.length - maxVisible }} 颗</span>
-    </div>
-  </div>
-</div>
-</div></div></div>
-      <!-- 完全无掉落提示 -->
-      <div v-if="!hasAnyReward" class="empty-row">无战利品</div>
-
-      <!-- 底部按钮（保持原样） -->
+      <!-- ★★★ 底部按钮逻辑优化 ★★★ -->
       <div class="buttons">
-        <button class="pixel-btn primary" @click="$emit('next')" v-if="showDungeon">
-          <Icon icon="mdi:arrow-down-bold" /> 下一层
-        </button>
-        <button class="pixel-btn warning" @click="$emit('retreat')" v-if="showDungeon">
-          <Icon icon="mdi:exit-run" /> 撤退
-        </button>
-        <button class="pixel-btn primary" @click="$emit('close')" v-if="!showDungeon">确定</button>
-      </div>
+  <!-- 无限塔胜利：继续 / 撤退 -->
+  <template v-if="isTower && !defeated">
+    <button class="pixel-btn primary" @click="$emit('next')">
+      <Icon icon="mdi:arrow-down-bold" /> 继续
+    </button>
+    <button class="pixel-btn warning" @click="$emit('retreat')">
+      <Icon icon="mdi:exit-run" /> 撤退
+    </button>
+  </template>
+
+  <!-- 普通地下城胜利：下一层 / 撤退 -->
+  <template v-if="!isTower && !defeated && showDungeon">
+    <button class="pixel-btn primary" @click="$emit('next')">
+      <Icon icon="mdi:arrow-down-bold" /> 下一层
+    </button>
+    <button class="pixel-btn warning" @click="$emit('retreat')">
+      <Icon icon="mdi:exit-run" /> 撤退
+    </button>
+  </template>
+
+  <!-- 普通/失败/非地下城：确定 -->
+  <button v-if="!isTower && (defeated || !showDungeon)" class="pixel-btn primary" @click="$emit('close')">
+    <Icon icon="mdi:check" /> 确定
+  </button>
+</div>
     </div>
   </div>
 </template>
+
 <script setup>
 import { ref, watch, computed } from 'vue'
 import { Icon } from '@iconify/vue'
@@ -127,13 +149,18 @@ import { useGameStore } from '@/store/gameStore'
 
 const props = defineProps({
   reward: Object,
-  showDungeon: Boolean
+  showDungeon: Boolean,
+    isTower: { type: Boolean, default: false },
+  defeated: {
+    type: Boolean,
+    default: false
+  }
 })
 const emit = defineEmits(['close', 'next', 'retreat'])
 const store = useGameStore()
 
 const displayedExp = ref(0)
-const maxVisible = 5 // 每类最多显示5个，超出用"还有更多"替代
+const maxVisible = 5
 
 const gemColors = {
   atk: '#e74c3c',
@@ -143,7 +170,6 @@ const gemColors = {
   speed: '#f1c40f'
 }
 
-// 只显示前 maxVisible 个
 const visibleMaterials = computed(() => (props.reward?.materials || []).slice(0, maxVisible))
 const visibleAccessories = computed(() => (props.reward?.accessories || []).slice(0, maxVisible))
 const visibleEquipments = computed(() => (props.reward?.equipments || []).slice(0, maxVisible))
@@ -181,7 +207,6 @@ watch(() => props.reward?.exp, (newExp) => {
 const swiperRef = ref(null)
 const currentPage = ref(0)
 
-// 将奖励数据智能分组为“装备材料”与“饰品宝石”两个页面（空页自动前移）
 const pages = computed(() => {
   const result = []
   const page1Items = []
@@ -200,7 +225,6 @@ const pages = computed(() => {
 
 const hasAnyReward = computed(() => pages.value.length > 0)
 
-// 滑动监听，实时更新当前页索引
 const onScroll = () => {
   if (!swiperRef.value) return
   const scrollLeft = swiperRef.value.scrollLeft

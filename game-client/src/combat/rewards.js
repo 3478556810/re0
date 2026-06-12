@@ -227,11 +227,8 @@ export function getRewards(engine) {
       if (e.isRaidBoss || e.base?.isRaidBoss) {
         // ... 原代码不动
         const bossId = e.id || e.base?.id
-        let qualityStoneQty = 2
-        if (bossId === 'raid_bishop') qualityStoneQty = 5
-        else if (bossId === 'raid_lava_core') qualityStoneQty = 4
-        else if (bossId === 'raid_gladiator') qualityStoneQty = 3
-        materials.push({ id: 'quality_stone', name: '品质魔石', qty: qualityStoneQty })
+      
+       
 
         const gemDefs = engine.config?.gemDefinitions || []
         if (gemDefs.length > 0) {

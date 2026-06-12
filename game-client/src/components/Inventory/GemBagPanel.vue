@@ -201,18 +201,19 @@ const backpackGems = computed(() => {
   const counts = {}
   for (const item of store.inventory) {
     if (item?.id?.startsWith('gem_')) {
-      counts[item.id] = (counts[item.id] || 0) + item.qty
+      const qty = item.qty ?? 1   // 若 qty 不存在则默认为 1
+      counts[item.id] = (counts[item.id] || 0) + qty
     }
   }
   return Object.entries(counts).map(([gemId, qty]) => {
     const def = findGem(gemId)
     return {
       id: gemId, name: def?.name || gemId, color: def?.color || '#888',
-      type: def?.type || '?', value: def?.value || 0, level: def?.level || 1, qty
+      type: def?.type || '?', value: def?.value || 0, level: def?.level || 1,
+      qty: Number.isFinite(qty) ? qty : 0   // 最终确保数字
     }
   })
 })
-
 // 同时按等级和类别筛选背包
 const filteredGems = computed(() => {
   let list = backpackGems.value

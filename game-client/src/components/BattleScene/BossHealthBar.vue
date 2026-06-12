@@ -3,10 +3,10 @@
     <div class="boss-info">
       <div class="boss-name">{{ bossData.name }}</div>
       <div class="boss-phase" :style="{ color: phaseColor }">{{ phaseText }}</div>
-      <div class="boss-hp-numbers">{{ Math.floor(bossData.currentHp) }} / {{ bossData.maxHp }}</div>
+     <div class="boss-hp-numbers">{{ Math.floor(displayHp) }} / {{ bossData.maxHp }}</div>
     </div>
     <div class="boss-hp-bg">
-      <div class="boss-hp-fill" :style="{ width: hpPercent + '%', background: phaseBarGradient }"></div>
+     <div class="boss-hp-fill" :style="{ width: (displayHp / bossData.maxHp) * 100 + '%', background: phaseBarGradient }"></div>
     </div>
     <div class="phase-tip" v-if="phaseTip"><Icon :icon="phaseIcon" /> {{ phaseTip }}</div>
 
@@ -31,7 +31,7 @@
   </div>
 </template>
 <script setup>
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch , onBeforeUnmount} from 'vue'
 import { Icon } from '@iconify/vue'
 import { getEffectIcon, getEffectTooltip, getSortedEffects ,
   getElementMarkClass,       // ✅ 新增
@@ -99,6 +99,38 @@ const getEffectClass = (eff) => {
   if (eff.type === 'atkUp' || eff.type === 'defUp' || eff.type === 'spdUp' || eff.type === 'regen') return 'effect-buff'
   return 'effect-debuff'
 }
+
+const displayHp = ref(props.bossData.currentHp)
+let hpAnimTimer = null
+
+watch(() => props.bossData.currentHp, (newHp, oldHp) => {
+  if (newHp < oldHp) {
+    // 血量减少时，启动平滑动画（3秒过渡）
+    const duration = 3000
+    const startHp = oldHp
+    const endHp = newHp
+    const startTime = Date.now()
+    if (hpAnimTimer) clearInterval(hpAnimTimer)
+    hpAnimTimer = setInterval(() => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      displayHp.value = Math.floor(startHp + (endHp - startHp) * progress)
+      if (progress >= 1) {
+        clearInterval(hpAnimTimer)
+        hpAnimTimer = null
+        displayHp.value = endHp
+      }
+    }, 16)
+  } else {
+    // 血量增加或不变时，立即更新
+    displayHp.value = newHp
+    if (hpAnimTimer) { clearInterval(hpAnimTimer); hpAnimTimer = null }
+  }
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  if (hpAnimTimer) clearInterval(hpAnimTimer)
+})
 </script>
 
 

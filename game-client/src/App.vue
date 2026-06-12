@@ -20,19 +20,18 @@
       @start-battle="onStartBattle"
     />
 
-    <BattleScene
-      v-else
-      :key="battleKey"
-      :enemies="currentEnemies"
-      :storyBattle="!!storyBattleConfig"
-      @victory="onVictory"
-      @defeat="onBattleDefeat"
-      @flee="onBattleExit"
-      @exit="onBattleExit"
-      @nextFloor="onNextFloor"
-       @retry="handleRaidRetry"
-      @retreatToDungeon="() => { inBattle = false; store.pendingDungeonPanel = true }"
-    />
+   <BattleScene
+  v-else
+  :key="battleKey"
+  :enemies="currentEnemies"
+  :storyBattle="!!storyBattleConfig"
+  @victory="onVictory"
+  @defeat="onBattleDefeat"
+  @flee="onBattleExit"
+  @exit="onBattleExit"
+  @next-floor="onNextFloor"   
+  @retreatToDungeon="() => { inBattle = false; store.pendingDungeonPanel = true }"
+/>
   </div>
 </template>
 
@@ -46,8 +45,10 @@ import { useGameStore } from './store/gameStore'
 import { spawnEnemy } from './config/biomeConfig'
 import { createRaidMonster } from '@/config/raidHelpers'
 import { nextTick } from 'vue' // 确保已导入
+import { generateTowerMonsters } from '@/config/towerGenerator'
 // ✅ 终极方案：每 1 秒检查一次 story_raid_clears，全通即触发
 let raidCheckInterval = null
+// 在 onMounted 内部，已有代码之后添加
 
 onMounted(() => {
 
@@ -71,42 +72,7 @@ onMounted(() => {
 
 
 // 删除原来的 handleRaidRetry，换成这个
-async function handleRaidRetry() {
-  const bossId = store.dungeon.currentRaidBoss
-  if (!bossId) return
 
-  // 1. 恢复血量
-  store.player.hp = store.player.maxHp
-  store.player.mp = store.player.maxMp
-  if (store.activeCompanionId && store.companions?.length) {
-    const comp = store.companions.find(c => c.id === store.activeCompanionId)
-    if (comp) {
-      comp.hp = comp.baseHp || comp.maxHp || 200
-      comp.mp = comp.baseMp || comp.maxMp || 50
-    }
-  }
-  store.save()
-
-  // 2. 生成新怪物
-  const monster = createRaidMonster(bossId)
-  if (!monster) return
-
-  // 3. 暂时清空敌人，触发组件卸载
-  currentEnemies.value = []
-  // 等待 Vue 完成销毁（确保旧引擎 onUnmounted 执行）
-  await nextTick()
-  await new Promise(resolve => setTimeout(resolve, 50))
-
-  // 4. 清理全局引擎残留（若有）
-  if (window.__engine) {
-    window.__engine.battleOver = true
-    window.__engine = null
-  }
-
-  // 5. 递增 key 并重新填充敌人，强制重建组件（inBattle 保持 true，无闪烁）
-  battleKey.value++
-  currentEnemies.value = [monster]
-}
 onUnmounted(() => {
   if (raidCheckInterval) clearInterval(raidCheckInterval)
 })
@@ -190,8 +156,7 @@ function onVictory(reward) {
       sessionStorage.setItem(key, JSON.stringify(clears))
       console.log('✅ 进度已保存:', clears)
     }
-    store.dungeon.isRaidBattle = false
-    store.dungeon.currentRaidBoss = null
+   
   }
 
   // ✅ 全通检测（任何时候，只要剧情模式且全通且未结算就触发）
@@ -213,6 +178,8 @@ function onVictory(reward) {
 }
 
 function onBattleExit() {
+     store.towerMode = false      // 强制退出无限塔
+    store.towerFloor = 1
   inBattle.value = false
   if (storyBattleConfig.value) {
     const nextNode = storyBattleConfig.value.fleeNext || storyBattleConfig.value.loseNext
@@ -258,6 +225,11 @@ const builtin = {
 }
 
 function onStartBattle(monstersOrConfig, storyNodeId = null) {
+    // 简单判断：如果传入的怪物没有 isRaidBoss 属性，才清除副本标记
+    const firstMonster = Array.isArray(monstersOrConfig) ? monstersOrConfig[0] : monstersOrConfig;
+    if (firstMonster && !firstMonster.isRaidBoss) {
+        store.dungeon.isRaidBattle = false;
+    }
   if (typeof monstersOrConfig === 'object' && monstersOrConfig.enemies) {
     storyBattleConfig.value = monstersOrConfig
     storyNodeBeforeBattle.value = storyNodeId
@@ -307,17 +279,19 @@ function onStartBattle(monstersOrConfig, storyNodeId = null) {
 }
 
 function onNextFloor() {
-  if (!store.dungeon.active) {
-    inBattle.value = false
-    return
-  }
-  const monsters = store.getRandomMonsterForFloor()
-  if (!monsters || monsters.length === 0) {
-    inBattle.value = false
-    return
-  }
-  onStartBattle(monsters)
+    if (!store.dungeon.active) {
+        inBattle.value = false
+        return
+    }
+    const monsters = store.getRandomMonsterForFloor()
+    if (!monsters || monsters.length === 0) {
+        inBattle.value = false
+        return
+    }
+    onStartBattle(monsters)
 }
+
+
 
 // 键盘调试
 function onKeyDebug(e) {
@@ -327,6 +301,18 @@ function onKeyDebug(e) {
 }
 
 let timeInterval
+// 在 onMounted 内部添加
+watch(inBattle, (newVal, oldVal) => {
+    // 从战斗中退出（true → false）时，检查并恢复血量
+    if (oldVal === true && newVal === false) {
+        if (store.player.hp <= 0) {
+            console.warn('战斗结束检测到0血，自动恢复')
+            store.player.hp = store.player.maxHp
+            store.player.mp = store.player.maxMp
+            store.save()
+        }
+    }
+})
 onMounted(() => {
   if (!import.meta.env.DEV) {
     const setFullscreenState = () => { isFullscreen.value = !!document.fullscreenElement }

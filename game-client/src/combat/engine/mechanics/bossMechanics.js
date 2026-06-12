@@ -37,33 +37,51 @@ export const bossMechanics = {
   },
 
   // ---------- 鲜血图腾 ----------
-  blood_ritual: {
-    onCast(skill, caster, engine) {
-      const totemHp = skill.mechanicParams?.totemHp || Math.floor(caster.maxHp * 0.1)
-      const totem = new UnitState({
-        id: 'totem_' + Date.now(),
-        name: '鲜血图腾',
-        hp: totemHp,
-        maxHp: totemHp,
-        attack: 0,
-        defense: 0,
-        speed: 0,
-        element: '',
-        icon: 'mdi:holy-water',
-        isTotem: true,
-        masterId: caster.id || caster.name,
-        _deathTimer: 3
-      })
-      engine.enemies.push(totem)
+  // ---------- 鲜血仪式（召唤图腾+分身）----------
+// ---------- 鲜血仪式（召唤2个分身）----------
+blood_ritual: {
+  onCast(skill, caster, engine) {
+    const params = skill.mechanicParams || {}
+    const cloneHpRatio = params.cloneHpRatio || 0.5
+    const cloneAtkRatio = params.cloneAtkRatio || 0.8
+    const cloneSkills = params.cloneSkills || '[{"name":"裂地斩","mpCost":0,"target":"single","baseMul":5.0,"effects":[{"type":"bleed","value":0.12,"duration":3,"chance":100}]}]'
 
-      // Boss进入无敌
-      caster._invulnerable = true
-      caster._invulnerableSource = 'totem'
+    // 检查场上剩余位置（最多3个敌人，包含Boss）
+    const currentCount = engine.enemies.filter(e => e.hp > 0).length
+    const maxClones = Math.min(2, 3 - currentCount) // 最多2个分身，且不超过3上限
 
-      engine._pendingMessages = engine._pendingMessages || []
-      engine._pendingMessages.push('鲜血仪式！图腾存在期间角斗士无敌！')
+    if (maxClones <= 0) {
+      engine._pendingMessages.push('没有足够空间召唤分身！')
+      return
     }
-  },
+
+    // Boss进入无敌
+    caster._invulnerable = true
+    caster._invulnerableSource = 'clones'
+
+    for (let i = 0; i < maxClones; i++) {
+      const clone = new UnitState({
+         id: 'raid_gladiator_clone', 
+        name: `${caster.name}的分身`,
+        hp: Math.floor(caster.maxHp * cloneHpRatio),
+        maxHp: Math.floor(caster.maxHp * cloneHpRatio),
+        attack: Math.floor(caster.attack * cloneAtkRatio),
+        defense: caster.defense,
+        speed: caster.speed,
+        element: caster.element || 'fire',
+        icon: caster.icon || 'mdi:axe-battle',
+        isClone: true,
+        masterId: caster.id || caster.name,
+        portraitId: 'raid_gladiator',  // ★ 立绘指向Boss的文件夹
+        skillsText: cloneSkills
+      })
+      engine.enemies.push(clone)
+    }
+
+    engine._pendingMessages = engine._pendingMessages || []
+    engine._pendingMessages.push(`鲜血仪式！召唤了 ${maxClones} 个分身，角斗士进入无敌状态！`)
+  }
+},
 
   // ---------- 熔岩护盾 ----------
   lava_shield: {

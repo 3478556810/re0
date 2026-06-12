@@ -129,7 +129,7 @@
 .hp-bar { background: #603020; }
 .mp-bar { background: #2c3e66; }
 .exp-bar { background: #2c2c2c; }
-.hp-fill { background: #4caf50; height: 100%; transition: width 0.3s; }
+.hp-fill { background: #4caf50; height: 100%; transition: width 3s ease-out; /* ★ 让血量变化有平滑过渡 */ }
 .mp-fill { background: #4488ff; height: 100%; }
 .exp-fill { background: #ffffff; height: 100%; }
 .hp-bar span, .mp-bar span, .exp-bar span {
@@ -141,7 +141,7 @@
 .shield-fill {
   position: absolute; top: 0; left: 0; height: 100%;
   background: rgba(0, 150, 255, 0.6); border-radius: 6px;
-  z-index: 2;
+  z-index: 2;  transition: width 0.8s ease-out;
 }
 .hp-fill, .mp-fill, .exp-fill { position: relative; z-index: 1; }
 
@@ -614,4 +614,21 @@
   50% { transform: translate(1px,-1px); }
   75% { transform: translate(-1px,-1px); }
   100% { transform: translate(0,0); }
+}
+
+.tower-floor-display {
+  position: fixed;  /* 改为 fixed，相对于视口 */
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.75);
+  border: 2px solid #ffd700;
+  border-radius: 12px;
+  padding: 6px 16px;
+  color: #ffd700;
+  font-size: 14px;
+  font-family: 'Press Start 2P', cursive;
+  z-index: 999;     /* 确保最高 */
+  text-shadow: 1px 1px 0 #000;
+  pointer-events: none;
 }

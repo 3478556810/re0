@@ -47,8 +47,8 @@
           <span class="bar-text">HP</span>
           <div class="hp-bar">
             <div v-if="playerShield > 0" class="shield-fill" :style="{ width: (playerShield / playerStats.maxHp) * 100 + '%' }"></div>
-            <div class="hp-fill" :style="{ width: playerHpPercent + '%' }"></div>
-            <span>{{ playerStats.hp }} / {{ playerStats.maxHp }}</span>
+          <div class="hp-fill" :style="{ width: (displayHp / playerStats.maxHp) * 100 + '%' }"></div>
+          <span>{{ Math.floor(displayHp) }} / {{ playerStats.maxHp }}</span>
           </div>
         </div>
 
@@ -72,6 +72,14 @@
 
     <!-- 伙伴卡片（固定右下角，不变） -->
     <div v-if="companion" class="companion-card">
+      <div class="companion-strategy">
+<button 
+  class="pixel-btn micro" 
+  @click="toggleCompanionStrategy"
+>
+  <Icon :icon="strategyIcon" /> {{ strategyLabel }}
+</button>
+</div>
       <img
         v-if="getCompanionImage && getCompanionImage()"
         :src="getCompanionImage()"
@@ -130,6 +138,12 @@
 import { ref, computed, watch } from 'vue'
 import { Icon } from '@iconify/vue'
 import { getEffectIcon, getEffectTooltip } from '@/composables/useBattleHelpers'
+import { onBeforeUnmount } from 'vue'  // 如果顶部没有导入，需要加上
+
+import { useGameStore } from '@/store/gameStore'
+
+const store = useGameStore()
+
 
 const props = defineProps({
   playerStats: Object,
@@ -194,6 +208,70 @@ const playerHit = ref(false)
 const playerFlash = ref(false)
 const playerShakeX = ref(0)
 
+
+
+
+const displayHp = ref(props.playerStats.hp)
+let hpAnimTimer = null
+
+watch(() => props.playerStats.hp, (newHp, oldHp) => {
+  if (newHp < oldHp) {
+    // 血量减少时，启动平滑动画
+    const duration = 3000
+    const startHp = oldHp
+    const endHp = newHp
+    const startTime = Date.now()
+    if (hpAnimTimer) clearInterval(hpAnimTimer)
+    hpAnimTimer = setInterval(() => {
+      const elapsed = Date.now() - startTime
+      const progress = Math.min(elapsed / duration, 1)
+      displayHp.value = Math.floor(startHp + (endHp - startHp) * progress)
+      if (progress >= 1) {
+        clearInterval(hpAnimTimer)
+        hpAnimTimer = null
+        displayHp.value = endHp
+      }
+    }, 16)
+  } else {
+    // 血量增加或不变时，立即更新
+    displayHp.value = newHp
+    if (hpAnimTimer) { clearInterval(hpAnimTimer); hpAnimTimer = null }
+  }
+}, { immediate: true })
+
+onBeforeUnmount(() => {
+  if (hpAnimTimer) clearInterval(hpAnimTimer)
+})
+
+const companionStrategy = computed({
+  get: () => store.companionStrategy,
+  set: (val) => { store.companionStrategy = val }
+})
+
+const strategyLabel = computed(() => {
+  switch (companionStrategy.value) {
+    case 'free': return '自由行动'
+    case 'heal': return '优先治疗'
+    case 'attack': return '全力输出'
+  }
+})
+
+const strategyIcon = computed(() => {
+  switch (companionStrategy.value) {
+    case 'free': return 'mdi:auto-fix'
+    case 'heal': return 'mdi:heart-pulse'
+    case 'attack': return 'mdi:sword-cross'
+  }
+})
+
+function toggleCompanionStrategy() {
+  if (store.companionStrategy === 'free') store.companionStrategy = 'heal'
+  else if (store.companionStrategy === 'heal') store.companionStrategy = 'attack'
+  else store.companionStrategy = 'free'
+  store.save()
+  // 不需要手动同步引擎，因为 useBattleState 中的 sync 会自动应用新策略
+}
+
 let lastHp = props.playerStats.hp
 watch(() => props.playerStats.hp, (newHp, oldHp) => {
   if (newHp < oldHp) {
@@ -208,6 +286,10 @@ watch(() => props.playerStats.hp, (newHp, oldHp) => {
   }
   lastHp = newHp
 }, { immediate: false })
+
+
+
+
 </script>
 
 <style scoped>
