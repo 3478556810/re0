@@ -99,14 +99,14 @@ export function useBattleResult(store, totalReward, questHintText, questComplete
       totalReward.value.equipments.forEach(eq => store.inventory.push(eq))
     }
     if (totalReward.value.gems?.length) {
-      for (const gem of totalReward.value.gems) {
-        const existing = store.inventory.find(i => i.id === gem.id)
-        if (existing) {
-          existing.qty = (existing.qty || 1) + gem.qty
-        } else {
-          store.inventory.push({ id: gem.id, name: gem.name, qty: gem.qty })
-        }
-      }
+ for (const gem of totalReward.value.gems) {
+  const existing = store.inventory.find(i => i.id === gem.id)
+  if (existing) {
+    existing.qty = (existing.qty || 1) + (gem.qty || 1)
+  } else {
+    store.inventory.push({ id: gem.id, name: gem.name, qty: gem.qty || 1 })
+  }
+}
     }
     const tokenQty = Math.random() < 0.3 ? 3 : 2
     store.addMaterial('dungeon_token', '地下城徽记', tokenQty)

@@ -13,6 +13,7 @@
           :isHit="sprite.originalIndex === hitEnemyIndex"
           :isAttacking="sprite.originalIndex === attackingEnemyIndex"
           :floatingNumbers="floatingNumbers.filter(f => f.targetIndex === sprite.originalIndex)"
+          :boss-phase-anim-trigger="bossPhaseAnimTrigger" 
           @select="$emit('select-target', sprite.originalIndex)"
           @show-bubble="(eff, maxHp, event) => $emit('show-effect-bubble', eff, maxHp, event)"
         />

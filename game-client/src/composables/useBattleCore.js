@@ -34,7 +34,8 @@ if (window.__engine) {
         maxMp: store.playerStats.maxMp || 30,
         speed: store.playerStats.speed || 10,
         critRate: store.playerStats.critRate || 5,
-        critDmg: store.playerStats.critDmg || 150
+        critDmg: store.playerStats.critDmg || 150,
+      strategy: store.companionStrategy,  // 从全局读取
       })
     }
 

@@ -427,11 +427,11 @@ if (this.hp <= 0) {
     }
 
    // 真正扣血
-this.hp -= damage;
+const actualDamage = Math.min(damage, this.hp);
+this.hp -= actualDamage;
 
 
 
-if (this.hp < 0) this.hp = 0;
 
 
     // 反伤
