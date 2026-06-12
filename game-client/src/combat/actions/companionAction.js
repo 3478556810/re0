@@ -6,16 +6,43 @@ import { EFFECT_TYPES } from '../effectDefs'
 export function executeCompanionAction(engine) {
   const { companion, player } = engine
   if (!companion || companion.hp <= 0) return { messages: [] }
+  // ★ 策略优先
+const skills = companion.skills || []
+  const aliveEnemies = engine.getAliveEnemies()
+  if (aliveEnemies.length === 0) return { messages: [] }
 
+  // ★ 策略优先
+  if (companion.strategy === 'attack') {
+    // 全力输出：只选攻击技能
+    const attackSkills = skills.filter(s => (s.baseMul || 0) > 0 && companion.mp >= (s.mpCost || 0))
+    if (attackSkills.length > 0) {
+      const chosen = attackSkills[Math.floor(Math.random() * attackSkills.length)]
+      return executeCompanionSkill(engine, companion, chosen, aliveEnemies[0])
+    }
+    // 没有可用攻击技能，就发呆
+    return { messages: [`${companion.name} 没有可用的攻击技能`] }
+  }
+
+  if (companion.strategy === 'heal') {
+    // 优先治疗：只选治疗技能，没人受伤就发呆
+    const healSkills = skills.filter(s =>
+      s.effects?.some(e => e.type === 'heal') && companion.mp >= (s.mpCost || 0)
+    )
+    const needHeal = player.hp < player.maxHp || companion.hp < companion.maxHp
+    if (healSkills.length > 0 && needHeal) {
+      const chosen = healSkills[Math.floor(Math.random() * healSkills.length)]
+      return executeCompanionSkill(engine, companion, chosen, null)
+    }
+    // 没人受伤或没有治疗技能，发呆（不攻击）
+    return { messages: [`${companion.name} 等待治疗时机`] }
+  }
   if (companion.isStunned()) {
     companion.removeEffect(EFFECT_TYPES.STUN)
     companion.removeEffect(EFFECT_TYPES.FREEZE)
     return { messages: [`${companion.name} 无法行动！`] }
   }
 
-  const skills = companion.skills || []
-  const aliveEnemies = engine.getAliveEnemies()
-  if (aliveEnemies.length === 0) return { messages: [] }
+
 
   const playerHpPercent = player.hp / player.maxHp
   const companionHpPercent = companion.hp / companion.maxHp

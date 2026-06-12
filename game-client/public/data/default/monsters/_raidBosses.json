@@ -44,7 +44,7 @@
         "message": "角斗士·血斧陷入狂怒，攻击力大幅提升！"
       }
     ],
-    "skillsText": "[{\"name\":\"裂地斩\",\"mpCost\":0,\"target\":\"single\",\"baseMul\":6.0,\"effects\":[{\"type\":\"bleed\",\"value\":0.15,\"duration\":3,\"chance\":100}]},{\"name\":\"血之盛宴\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"buff\",\"stat\":\"atk\",\"value\":0.45,\"duration\":5,\"chance\":100}],\"cooldown\":4},{\"name\":\"鲜血仪式\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[],\"cooldown\":6,\"mechanic\":\"blood_ritual\",\"mechanicParams\":{\"totemHp\":50000,\"duration\":3}}]",
+   "skillsText": "[{\"name\":\"裂地斩\",\"mpCost\":0,\"target\":\"single\",\"baseMul\":6.0,\"effects\":[{\"type\":\"bleed\",\"value\":0.15,\"duration\":3,\"chance\":100}]},{\"name\":\"血之盛宴\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[{\"type\":\"buff\",\"stat\":\"atk\",\"value\":0.45,\"duration\":5,\"chance\":100}],\"cooldown\":4},{\"name\":\"鲜血仪式\",\"mpCost\":0,\"target\":\"self\",\"baseMul\":0,\"effects\":[],\"cooldown\":6,\"mechanic\":\"blood_ritual\",\"mechanicParams\":{\"totemHp\":300000,\"duration\":5,\"cloneAtkRatio\":0.8,\"cloneHpRatio\":0.5,\"cloneSkills\":\"[{\\\"name\\\":\\\"裂地斩\\\",\\\"mpCost\\\":0,\\\"target\\\":\\\"single\\\",\\\"baseMul\\\":5.0,\\\"effects\\\":[{\\\"type\\\":\\\"bleed\\\",\\\"value\\\":0.12,\\\"duration\\\":3,\\\"chance\\\":100}]},{\\\"name\\\":\\\"鲜血斩击\\\",\\\"mpCost\\\":0,\\\"target\\\":\\\"single\\\",\\\"baseMul\\\":4.0,\\\"effects\\\":[]}]\"}}]",
     "minLevel": 10,
     "maxLevel": 30,
     "levelRange": [10, 30]

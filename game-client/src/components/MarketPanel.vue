@@ -39,9 +39,9 @@
           <div v-if="marketItems.length" class="grid-list">
             <div v-for="item in marketItems" :key="item.id" class="item-card">
               <div class="item-header">
-                <Icon :icon="getItemIcon(item.item_data)" class="item-icon" />
+              <Icon :icon="getItemIcon(item.item_data || null)" class="item-icon" />
                 <div class="item-info">
-                  <span class="item-name">{{ item.item_data.name || item.item_id }}</span>
+               <span class="item-name">{{ item.item_data?.name || item.item_id }}</span>
                   <span class="item-seller">卖家: {{ item.seller_id }}</span>
                   <span class="item-qty">库存: {{ item.quantity }}</span>
                 </div>
@@ -60,7 +60,7 @@
           </div>
         </div>
 
-        <!-- 上架物品（原界面） -->
+        <!-- 上架物品 -->
         <div v-if="activeTab === 'list'" class="sell-area">
           <div class="bag-list" v-if="inventory.length > 0">
             <div v-for="item in inventory" :key="item.id" class="item-card" @click="selectItem(item)">
@@ -128,12 +128,10 @@ const emit = defineEmits(['close'])
 const store = useGameStore()
 const showToast = inject('showToast', (msg) => alert(msg))
 
-// 标签页
 const activeTab = ref('browse')
-// 用户标识
 const userId = computed(() => store.player.id || 'test-user')
 
-// 市场浏览状态
+// 市场浏览
 const searchKeyword = ref('')
 const sortBy = ref('price_asc')
 const page = ref(1)
@@ -141,7 +139,7 @@ const limit = ref(20)
 const marketItems = ref([])
 const totalPages = ref(1)
 
-// 我的列表状态
+// 我的列表
 const myItems = ref([])
 
 // 上架状态
@@ -164,7 +162,8 @@ async function fetchMarket() {
     const res = await fetch(`/api/market/search?${params.toString()}`)
     const data = await res.json()
     marketItems.value = data.listings || []
-    totalPages.value = Math.ceil((data.page || 1) / (limit.value)) || 1 // 简化分页计算
+    // 修复分页计算：用后端返回的 total
+    totalPages.value = Math.ceil((data.total || 0) / limit.value) || 1
   } catch (err) {
     console.error('获取市场列表失败', err)
     showToast('加载市场失败')
@@ -172,7 +171,7 @@ async function fetchMarket() {
 }
 
 async function buyItem(item) {
-  if (!confirm(`确定购买 ${item.item_data.name || item.item_id} x1，花费 ${item.price}G 吗？`)) return
+  if (!confirm(`确定购买 ${item.item_data?.name || item.item_id} x1，花费 ${item.price}G 吗？`)) return
 
   try {
     const res = await fetch('/api/market/buy', {
@@ -183,10 +182,10 @@ async function buyItem(item) {
     const data = await res.json()
     if (data.success) {
       showToast('购买成功')
-      store.player.gold -= data.paid  // 更新本地金币
+      store.player.gold -= data.paid
       store.save()
       fetchMarket()
-      fetchMyListings() // 如果打开了我页签也刷新
+      fetchMyListings()
     } else {
       showToast(data.error || '购买失败')
     }
@@ -196,13 +195,13 @@ async function buyItem(item) {
   }
 }
 
-// ---------- 我的物品逻辑 ----------
+// ---------- 我的物品 ----------
 async function fetchMyListings() {
   try {
-    // 后端搜索接口可以扩展 seller_id 过滤，这里简单获取所有并过滤
-    const res = await fetch(`/api/market/search?limit=200&sort=newest`)
+    // 直接通过后端过滤卖家
+    const res = await fetch(`/api/market/search?limit=200&sort=newest&sellerId=${userId.value}`)
     const data = await res.json()
-    myItems.value = (data.listings || []).filter(item => item.seller_id === userId.value)
+    myItems.value = data.listings || []
   } catch (err) {
     console.error('获取我的物品失败', err)
   }
@@ -230,7 +229,7 @@ async function cancelListingById(listingId) {
   }
 }
 
-// ---------- 上架逻辑（保持不变，增加刷新市场列表） ----------
+// ---------- 上架逻辑 ----------
 function selectItem(item) {
   selectedItem.value = item
   price.value = 1
@@ -280,8 +279,8 @@ async function confirmList() {
         }
         store.save()
       }
-      cancelListing() // 清空选择
-      fetchMarket() // 刷新市场
+      cancelListing()
+      fetchMarket()
       if (activeTab.value === 'mine') fetchMyListings()
     } else {
       showToast(data.error || '上架失败')
@@ -300,10 +299,10 @@ function cancelListing() {
 
 // ---------- 辅助函数 ----------
 function getItemIcon(item) {
+  if (!item) return 'mdi:circle'              // 防止 null 报错
   if (item.icon) return item.icon
   if (item.type === 'weapon') return 'mdi:sword'
   if (item.type === 'armor') return 'mdi:shield'
-  if (item.item_data?.type === 'weapon') return 'mdi:sword'
   return 'mdi:circle'
 }
 
@@ -312,7 +311,6 @@ function qualityColor(q) {
   return map[q] || '#fff'
 }
 
-// 初始加载市场
 onMounted(() => {
   if (activeTab.value === 'browse') fetchMarket()
 })
@@ -330,7 +328,6 @@ onMounted(() => {
 .tab.active { background:rgba(255,215,0,0.15); border-color:#ffd700; color:#ffd700; }
 .tab-content { min-height:200px; }
 
-/* 市场列表 */
 .search-bar { display:flex; gap:6px; margin-bottom:10px; }
 .search-bar input { flex:2; padding:6px; background:#2a2a3a; border:1px solid #5a5a7a; color:#fff; font-family:inherit; font-size:9px; }
 .search-bar select { padding:6px; background:#2a2a3a; border:1px solid #5a5a7a; color:#fff; font-family:inherit; font-size:9px; }
@@ -345,7 +342,6 @@ onMounted(() => {
 .item-price { font-size:9px; color:#ffd700; }
 .pagination { display:flex; justify-content:center; align-items:center; gap:10px; margin-top:10px; font-size:9px; }
 
-/* 上架区域 */
 .sell-area .bag-list { display:flex; flex-direction:column; gap:6px; }
 .sell-area .item-card { cursor:pointer; }
 .item-detail { display:flex; flex-direction:column; }

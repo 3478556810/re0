@@ -24,7 +24,7 @@ export const useGameStore = defineStore('game', () => {
   const inventoryModule = useInventory()
   const worldModule = useWorld()
   const companionModule = useCompanion()
-
+const companionStrategy = ref('free') // 伙伴策略记忆
   // config 直接使用 defaultConfig，不要省略
   const config = reactive(defaultConfig)
 
@@ -46,17 +46,17 @@ export const useGameStore = defineStore('game', () => {
   // 套装效果配置（暂时保留在主 store 中）
 const setBonuses = {
   // 龙骸套装 —— 强化持续输出与收割
-  dragon_set: {
-    3: { 
-      desc: '攻击时为目标附加「龙焰印记」3回合，使其受到伤害+20%', 
-      dragonMarkOnHit: 0.20   // 原 0.30 → 0.20（基础增伤略降）
-    },
-    6: { 
-      desc: '龙焰印记增伤+80%；自身生命低于50%时，对印记目标吸血60%', 
-      dragonMarkOnHit: 0.60,         // 原 0.60 不变，但3件套降低，6件套总体增伤 0.80（0.20+0.60）
-      lowHpLifestealOnMark: 60       // 吸血提升至 60%，增强残局生存
-    }
+dragon_set: {
+  3: { 
+    desc: '攻击时为目标附加「龙焰印记」3回合，使其受到伤害+25%', 
+    dragonMarkOnHit: 0.25   // 原 0.20 → 0.25
   },
+  6: { 
+    desc: '龙焰印记增伤+85%；自身生命低于50%时，对印记目标吸血80%', 
+    dragonMarkOnHit: 0.60,         // 原 0.60 不变
+    lowHpLifestealOnMark: 80       // 原 60 → 80，残局吸血更强
+  }
+},
 
   // 暗影套装 —— 平衡暴击与增伤，不再无脑强
   shadow_set: {
@@ -88,7 +88,9 @@ const setBonuses = {
   config.setBonuses = setBonuses
 
   const combatModule = useCombatStats(inventoryModule.equipment, config, playerModule.player)
-
+const towerLoot = ref([])         // 无限塔临时战利品
+const towerMode = ref(false)      // 是否在无限塔中
+const towerFloor = ref(1)         // 当前层数
   // 其他 refs
   const pendingDungeonPanel = ref(false)
   const pendingStoryNodeAfterBattle = ref(null)
@@ -101,6 +103,10 @@ const setBonuses = {
   // 持久化
   function save() {
     const state = {
+towerLoot: towerLoot.value || [],
+towerMode: towerMode.value,
+towerFloor: towerFloor.value,
+companionStrategy: companionStrategy.value,
       player: { ...playerModule.player },
       inventory: inventoryModule.inventory.map(item => {
         if (!item) return null
@@ -122,6 +128,7 @@ const setBonuses = {
           type: item.type || item.part
         }
       }),
+      
       materials: Object.fromEntries(Object.entries(inventoryModule.materials).map(([k, v]) => [k, { ...v }])),
       equipment: Object.fromEntries(Object.entries(inventoryModule.equipment).map(([k, v]) => {
         if (!v) return [k, null]
@@ -234,7 +241,12 @@ const setBonuses = {
       defeatedEnemies.value = new Set(data.defeated || [])
       exploredTiles.value = new Set(data.explored || [])
       currentEvent.value = data.currentEvent || { title: '', description: '', effects: [] }
-
+// 恢复塔状态
+if (data.companionStrategy) companionStrategy.value = data.companionStrategy
+if (data.towerLoot) towerLoot.value = data.towerLoot
+else towerLoot.value = []
+if (data.towerMode !== undefined) towerMode.value = data.towerMode
+if (data.towerFloor !== undefined) towerFloor.value = data.towerFloor
       // 恢复伙伴数据
      // 恢复伙伴数据
 if (data.companions) {
@@ -301,7 +313,9 @@ if (!companionModule.companions.value || companionModule.companions.value.length
     activeAffixEffects: combatModule.activeAffixEffects,
     totalAffixLevels: combatModule.totalAffixLevels,
     activeSetBonuses: combatModule.activeSetBonuses,
-    config,
+    config,towerLoot,
+    towerMode,
+    towerFloor,
     dungeon: dungeonModule.dungeon,
     activeHuntQuests: huntQuestModule.activeHuntQuests,
     affection: affectionModule.affection,
@@ -314,7 +328,7 @@ if (!companionModule.companions.value || companionModule.companions.value.length
     defeatedEnemies,
     exploredTiles,
     currentEvent,
-    facilities,
+    facilities,companionStrategy,
     companions: companionModule.companions,
     activeCompanion: companionModule.activeCompanion,
     addGold: (amount) => playerModule.addGold(amount, save),

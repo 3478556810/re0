@@ -1,5 +1,8 @@
 <template>
   <div class="battle-container">
+    <div v-if="store.towerMode" class="tower-floor-display">
+  第 {{ store.towerFloor }} 层
+</div>
     <!-- Boss 独立血条 -->
     <BossHealthBar
       v-if="isBossBattle && bossData"
@@ -125,14 +128,16 @@
     />
 
     <!-- 普通战斗结果面板（仅胜利时使用，失败时不再显示） -->
-    <BattleResultPanel
-      v-if="showResult"
-      :reward="totalReward"
-      :showDungeon="store.dungeon.active && !props.storyBattle"
-      @close="onResultClose"
-      @next="onNextFloor"
-      @retreat="onRetreat"
-    />
+<BattleResultPanel
+  v-if="showResult"
+  :defeated="gameOverMsg === '战斗失败'"
+  :reward="totalReward"
+  :showDungeon="store.dungeon.active && !props.storyBattle"
+  :isTower="store.towerMode"
+  @close="onResultClose"
+  @next="onNextFloor"
+  @retreat="onRetreat"
+/>
   </div>
 </template>
 
@@ -155,7 +160,8 @@ import {
   getEffectTooltip
 } from '@/composables/useBattleHelpers'
 import RaidResultPanel from './RaidResultPanel.vue'
-
+import { createRaidMonster } from '@/config/raidHelpers'
+import { generateTowerMonsters } from '@/config/towerGenerator'
 const props = defineProps({
   enemies: Array,
   battleCoord: Object,
@@ -199,9 +205,10 @@ const {
   floatingNumbers,
   destroy: destroyState,
   showRaidResult,
-  raidResultStats,
+  raidResultStats,resetAndStart,
+  
   raidDefeated,
-  hitEnemyIndex,
+  hitEnemyIndex, 
   isPlayerAttacking, // ★ 只在此处声明一次
   attackingEnemyIndex 
 } = useBattleState()
@@ -210,7 +217,7 @@ const {
 function onRaidResultClose() {
     saveRewards()
     showRaidResult.value = false
-
+ store.dungeon.isRaidBattle = false;  // 确保无论胜利失败都重置
     if (raidDefeated.value) {
         // 失败退出时恢复满血，避免大地图 0 血
         store.player.hp = store.player.maxHp
@@ -221,12 +228,23 @@ function onRaidResultClose() {
         emit('victory', totalReward.value)
     }
 }
-
 function onRaidRetry() {
-  showRaidResult.value = false
-  store.dungeon.isRaidBattle = false  // ★ 先重置，再重新进入副本
-  emit('retry')
+  store.player.hp = store.player.maxHp
+store.player.mp = store.player.maxMp
+store.save()
+  const bossId = store.dungeon.currentRaidBoss
+  if (!bossId) return
+  // 构造怪物数据（和进入副本时一样）
+  const monster = createRaidMonster(bossId) // 需从 @/config/raidHelpers 导入
+  if (!monster) return
+  // 恢复血量（放在这里最简单）
+  store.player.hp = store.player.maxHp
+  store.player.mp = store.player.maxMp
+  store.save()
+  // 重置并开始新战斗
+  resetAndStart([monster])
 }
+
 const {
   floatingMessage,
   showMessage,
@@ -414,29 +432,90 @@ const showEffectBubble = (effect, maxHp, event) => {
 
 const fleeBattle = () => emit('exit')
 
-// ★★★ 普通战斗失败处理：直接退出，不经过 handleGameOver ★★★
-const gameOverHandler = () => {
-  if (gameOverMsg.value === '战斗失败') emit('exit')
+
+
+
+function onNextFloor() {
+    // ★ 如果是无限塔，直接在内部处理下一层
+    if (store.towerMode) {
+        saveRewards()
+        showResult.value = false
+        store.towerFloor++
+        const nextMonsters = generateTowerMonsters(store.towerFloor, store)
+        resetAndStart(nextMonsters)
+        return
+    }
+
+    // ★ 普通地下城：必须保存奖励并关闭面板，再通知父组件
+    saveRewards()
+    showResult.value = false
+    store.clearFloor()
+    emit('nextFloor')
+}
+// ★ 合并版 onRetreat
+function onRetreat() {
+    // ★ 副本战斗 → 必须走副本评分面板关闭逻辑
+    if (store.dungeon.isRaidBattle) {
+        onRaidResultClose()
+        return
+    }
+
+    // 无限塔撤退
+    if (store.towerMode) {
+        if (store.towerLoot && store.towerLoot.length > 0) {
+            for (const gem of store.towerLoot) {
+                const existing = store.inventory.find(i => i.id === gem.id)
+                if (existing) {
+                    existing.qty = (existing.qty || 1) + gem.qty
+                } else {
+                    store.inventory.push({ id: gem.id, name: gem.name, qty: gem.qty })
+                }
+            }
+        }
+        store.towerLoot = []
+        saveRewards()
+        showResult.value = false
+        store.towerMode = false
+        store.towerFloor = 1
+        store.player.hp = store.player.maxHp
+        store.player.mp = store.player.maxMp
+        store.save()
+        emit('exit')
+        return
+    }
+
+    // 普通地下城撤退
+    saveRewards()
+    showResult.value = false
+    store.retreat()
+    emit('retreatToDungeon')
 }
 
-const onResultClose = () => {
-  saveRewards()
-  showResult.value = false
-  emit('victory', totalReward.value)
-}
+function onResultClose() {
+    saveRewards()
+    showResult.value = false
 
-const onNextFloor = () => {
-  saveRewards()
-  showResult.value = false
-  store.clearFloor()
-  emit('nextFloor')
-}
+    // ★ 如果是副本战斗，走副本评分关闭流程
+    if (store.dungeon.isRaidBattle) {
+        onRaidResultClose()
+        return
+    }
 
-const onRetreat = () => {
-  saveRewards()
-  showResult.value = false
-  store.retreat()
-  emit('retreatToDungeon')
+    // 如果是无限塔，复用撤退逻辑（包含状态重置）
+    if (store.towerMode) {
+        onRetreat()
+        return
+    }
+
+    // 普通战斗退出
+    if (gameOverMsg.value === '战斗失败') {
+        store.player.hp = store.player.maxHp
+        store.player.mp = store.player.maxMp
+        store.save()
+        emit('exit')
+    } else {
+        emit('victory', totalReward.value)
+    }
 }
 
 // ---------------------- 生命周期 ----------------------

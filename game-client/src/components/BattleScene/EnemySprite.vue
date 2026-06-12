@@ -3,7 +3,10 @@
     class="enemy-unit"
     :class="{
       'target-unit': isSelected,
-      'flash-white': isHit
+      'flash-white': isHit,
+      'boss-entrance': isBoss && !bossEntrancePlayed,
+      'boss-phase-anim': isBoss && bossPhaseAnim,
+      'boss-low-hp': isBoss && isLowHp
     }"
     @click="$emit('select')"
   >
@@ -66,11 +69,14 @@
         :style="{ marginTop: num.offsetY ? num.offsetY + 'px' : '0' }"
       >-{{ num.amount }}</div>
     </div>
+
+    <!-- Boss 阶段特效闪光层 -->
+    <div v-if="isBoss && bossPhaseAnim" class="boss-phase-flash"></div>
   </div>
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 import { Icon } from '@iconify/vue'
 import {
   getEffectIcon,
@@ -86,7 +92,8 @@ const props = defineProps({
   isSelected: Boolean,
   isHit: Boolean,
   isAttacking: Boolean,
-  floatingNumbers: { type: Array, default: () => [] }
+  floatingNumbers: { type: Array, default: () => [] },
+  bossPhaseAnimTrigger: { type: Number, default: 0 }
 })
 
 defineEmits(['select', 'show-bubble'])
@@ -95,6 +102,24 @@ const imageError = ref(false)
 
 const hpPercentVal = computed(() => props.enemy.hp / props.enemy.maxHp)
 const isHurt = computed(() => hpPercentVal.value < 0.4)
+const isLowHp = computed(() => hpPercentVal.value < 0.2)
+
+const isBoss = computed(() => props.enemy.isBoss === true)
+const bossEntrancePlayed = ref(false)
+const bossPhaseAnim = ref(false)
+
+// 入场动画
+if (isBoss.value && !bossEntrancePlayed.value) {
+  nextTick(() => { bossEntrancePlayed.value = true })
+}
+
+// 阶段动画
+watch(() => props.bossPhaseAnimTrigger, (newVal, oldVal) => {
+  if (isBoss.value && newVal !== oldVal && newVal > 0) {
+    bossPhaseAnim.value = true
+    setTimeout(() => { bossPhaseAnim.value = false }, 500)
+  }
+})
 
 function formatHp(value) {
   if (value >= 1000000) return (value / 1000000).toFixed(1) + 'M'
@@ -103,16 +128,15 @@ function formatHp(value) {
 }
 
 const currentPortrait = computed(() => {
-  const base = `/images/monsters/${props.enemy.id}/`
+  const portraitId = props.enemy.portraitId || props.enemy.id
+  const base = `/images/monsters/${portraitId}/`
   if (props.isAttacking) return base + 'attack.png'
   if (hpPercentVal.value < 0.2) return base + 'defeated.png'
-  if (hpPercentVal.value < 0.5) return base + 'damaged.png'
+  if (hpPercentVal.value < 0.4) return base + 'damaged.png'
   return base + 'normal.png'
 })
 
-function onImageError() {
-  imageError.value = true
-}
+function onImageError() { imageError.value = true }
 
 const hpPercent = computed(() => (props.enemy.hp / props.enemy.maxHp) * 100 + '%')
 const shieldPercent = computed(() => (props.enemy.shield / props.enemy.maxHp) * 100 + '%')
@@ -230,7 +254,6 @@ const visibleEffects = computed(() => {
   font-size: 10px;
 }
 
-/* 血条样式：左对齐数字，永不溢出 */
 .hp-bar {
   width: 85px;
   height: 10px;
@@ -334,5 +357,47 @@ const visibleEffects = computed(() => {
   30%  { transform: scale(1.15) translateX(-8px); }
   60%  { transform: scale(1.1) translateX(-4px); }
   100% { transform: scale(1); }
+}
+
+/* ========== Boss 专属特效 ========== */
+.boss-entrance {
+  animation: bossEntrance 0.6s cubic-bezier(0.2, 0.9, 0.4, 1.1);
+}
+@keyframes bossEntrance {
+  0% { transform: scale(0.8); opacity: 0; filter: blur(4px); }
+  70% { transform: scale(1.08); }
+  100% { transform: scale(1); opacity: 1; filter: blur(0); }
+}
+
+.boss-phase-anim {
+  animation: bossPhaseFlash 0.5s ease-out;
+  position: relative;
+}
+@keyframes bossPhaseFlash {
+  0% { filter: brightness(1); transform: scale(1); }
+  30% { filter: brightness(2) drop-shadow(0 0 20px gold); transform: scale(1.08); }
+  100% { filter: brightness(1); transform: scale(1); }
+}
+.boss-phase-flash {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle, rgba(255,215,0,0.5), transparent);
+  pointer-events: none;
+  animation: phaseFlashOverlay 0.5s ease-out;
+}
+@keyframes phaseFlashOverlay {
+  0% { opacity: 0; }
+  30% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* 低血量特效：仅一次短暂警告，不循环 */
+.boss-low-hp {
+  animation: bossLowHpWarning 0.4s ease-out;
+}
+@keyframes bossLowHpWarning {
+  0% { filter: drop-shadow(0 0 0px red); transform: scale(1); }
+  50% { filter: drop-shadow(0 0 12px #ff4444); transform: scale(1.02); }
+  100% { filter: drop-shadow(0 0 0px red); transform: scale(1); }
 }
 </style>

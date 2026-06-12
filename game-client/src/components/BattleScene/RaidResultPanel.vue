@@ -54,10 +54,10 @@
             <Icon icon="mdi:sword-cross" />
             <span class="stat-value">{{ formatNumber(stats.maxDamage) }}</span>
           </div>
-          <div class="stat-item">
-            <Icon icon="mdi:heart" />
-            <span class="stat-value">{{ stats.remainingHpPercent }}%</span>
-          </div>
+       <div class="stat-item">
+  <Icon icon="mdi:heart" />
+  <span class="stat-value">{{ Math.floor((props.stats.remainingHp / props.stats.maxHp) * 100) }}%</span>
+</div>
         </div>
 
         <!-- 经验奖励 -->
@@ -88,7 +88,7 @@
             <!-- 材料 -->
             <div v-for="mat in (reward.materials || []).slice(0, 6)" :key="mat.id" class="loot-tag material-tag">
               <Icon :icon="materialIcon(mat.id)" class="loot-tag-icon" />
-              <span class="loot-tag-name">{{ mat.name || getMaterialName(mat.id) }}</span>
+             <span class="loot-tag-name">{{ getMaterialName(mat.id) }}</span>
               <span class="loot-tag-qty">x{{ mat.qty }}</span>
             </div>
             <!-- 宝石 -->
@@ -154,8 +154,11 @@ function calculateScore() {
   // 伤害评分（越高越好）：基于Boss血量百分比
   let damageScore = Math.min(100, (totalDamage / 3500000) * 100)
   
-  // 生存评分：剩余血量百分比
-  let survivalScore = (remainingHp / maxHp) * 100
+  // 生存评分：剩余血量百分比，确保数值有效
+  let survivalScore = 0
+  if (maxHp > 0) {
+    survivalScore = (remainingHp / maxHp) * 100
+  }
   
   // 综合评分
   return Math.floor(turnScore * 0.4 + damageScore * 0.3 + survivalScore * 0.3)
@@ -408,4 +411,98 @@ function getGemTier(gemId) {
 .pixel-btn:hover { background: #3a3a5a; }
 .pixel-btn.primary { background: rgba(255,215,0,0.15); border-color: #ffd700; }
 .pixel-btn.danger { background: rgba(255,68,68,0.2); border-color: #ff4444; color: #ff8888; }
+
+
+/* ========== 评分区域（流光羽衣） ========== */
+.rating-section {
+  position: relative;
+  padding: 24px 0;
+  margin-bottom: 16px;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.rating-value {
+  font-size: 72px;
+  font-weight: bold;
+  
+  /* ★ 流光羽衣核心：渐变背景，背景裁剪到文字，文字颜色透明 */
+  background: linear-gradient(
+    135deg,
+    #ffd700 0%,
+    #fff8dc 20%,
+    #ffa500 40%,
+    #ffd700 60%,
+    #fff8dc 80%,
+    #ffa500 100%
+  );
+  background-size: 200% 200%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  
+  /* 文字阴影保持评级颜色光晕 */
+  text-shadow: none;
+  filter: drop-shadow(0 0 16px v-bind('ratingData?.color || "#ffd700"'));
+  
+  /* 入场动画 + 羽衣流动动画 */
+  animation: ratingAppear 0.5s ease-out, featherShine 3s ease-in-out infinite;
+  min-height: 80px;
+}
+
+/* 出场动画（保持不变） */
+@keyframes ratingAppear {
+  0% { transform: scale(0.3); opacity: 0; filter: blur(10px); }
+  100% { transform: scale(1); opacity: 1; filter: blur(0); }
+}
+
+/* ★ 羽衣流动动画：渐变背景位置移动，让文字上有一道流光滑过 */
+@keyframes featherShine {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+/* 光晕：柔和的呼吸效果 */
+.rating-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at center, v-bind('ratingData?.color + "20"') 0%, transparent 70%);
+  animation: glowPulse 2s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+
+/* 评级文字需要提到上层，不被光环遮挡 */
+.rating-content .rating-label,
+.rating-content .rating-value,
+.rating-content .rating-title {
+  position: relative;
+  z-index: 2;
+}
+
+/* 星星粒子：保持循环爆发 */
+.rating-sparkles {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 1;
+}
+
+.sparkle {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  background: v-bind('ratingData?.color || "#ffd700"');
+  border-radius: 50%;
+  animation: sparkleFloat 1.5s ease-out infinite;
+}
+
+@keyframes sparkleFloat {
+  0% { transform: translate(0, 0) scale(1); opacity: 1; }
+  100% { transform: translate(var(--x), var(--y)) scale(0); opacity: 0; }
+}
 </style>

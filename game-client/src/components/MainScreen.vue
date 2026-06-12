@@ -41,14 +41,17 @@
 <button class="corner-btn" @click="openPanel('market')">
   <Icon icon="mdi:store" /><span>交易行</span>
 </button>
+ <button class="corner-btn" @click="openPanel('companion')">
+  <Icon icon="mdi:account-group" /><span>伙伴</span>
+</button>
   </div>
 
   <!-- 竖列：4个独立按钮 -->
   <div class="corner-vert-col">
- <button class="corner-btn" @click="openPanel('companion')">
-  <Icon icon="mdi:account-group" /><span>伙伴</span>
-</button>
 
+<button class="corner-btn" @click="enterTower">
+  <Icon icon="tabler:tower" /><span>无限塔</span>
+</button>
        <button class="corner-btn" @click="triggerDialog">
       <Icon icon="mdi:chat" /><span>剧情</span>
     </button>
@@ -83,9 +86,20 @@
 <ProfessionPanel v-if="currentPanel === 'profession'" @close="popPanel" />
     <!-- 面板组件（保持不变） -->
     <!-- 面板组件 -->
-
+<!-- 放到其他面板的末尾（比如和 CompanionPanel、ProfessionPanel 同级） -->
+<MatchRoomPanel
+  v-if="showMatchRoom"
+  :boss-id="selectedBossId"
+  :boss-name="selectedBossName"
+  @close="showMatchRoom = false"
+/>
     <MarketPanel v-if="currentPanel === 'market'" @close="popPanel" />
-<RaidPanel v-if="currentPanel === 'raid'" @close="popPanel" @startBattle="emit('startBattle', $event)" />
+<RaidPanel
+  v-if="currentPanel === 'raid'"
+  @close="popPanel"
+  @startBattle="emit('startBattle', $event)"
+  @openMatchRoom="onOpenMatchRoom"
+/>
     <DungeonSelectPanel v-if="showDungeonSelect" @close="showDungeonSelect = false" @select="onDungeonSelected" />
     <DevPanel v-if="currentPanel === 'dev'" @close="popPanel" />
     <CharacterPanel v-if="currentPanel === 'character'" @close="popPanel" />
@@ -118,6 +132,8 @@ import RaidPanel from './RaidPanel.vue'
 import CompanionPanel from './CompanionPanel/CompanionPanel.vue'
 import ProfessionPanel from './class/ClassPanel.vue'
 import MarketPanel from './MarketPanel.vue'
+import { generateTowerMonsters } from '@/config/towerGenerator'
+import MatchRoomPanel from './MatchRoomPanel.vue'
 // 速通战斗记录
 const speedrunStats = reactive({
   maxDamage: 0,
@@ -160,9 +176,33 @@ const showDungeonSelect = ref(false)
 const panelStack = ref([])
 const isFullscreen = ref(false)
 const inventorySellMode = ref(false)
-
+const showMatchRoom = ref(false)
+const selectedBossId = ref('')
+const selectedBossName = ref('')
 const forceExit = ref(false) // 强制退出标记
+function enterTower() {
+  store.towerMode = true      // 必须设置
+  store.towerFloor = 1        // 必须设置
+  const monsters = generateTowerMonsters(1, store)
+  emit('startBattle', monsters)
+}
 
+
+
+function onOpenMatchRoom(bossId) {
+  // 根据副本面板传递的 bossId，获取 boss 名称
+  const bossList = [
+    { id: 'raid_gladiator', name: '角斗士·血斧' },
+    { id: 'raid_lava_core', name: '炎核·熔岩巨像' },
+    { id: 'raid_bishop', name: '永夜主教' }
+  ]
+  const boss = bossList.find(b => b.id === bossId)
+  if (boss) {
+    selectedBossId.value = bossId
+    selectedBossName.value = boss.name
+  }
+  showMatchRoom.value = true
+}
 // ========== 速通模式 ==========
 function enterStoryMode() {
   sessionStorage.removeItem('story_raid_clears')
