@@ -54,43 +54,65 @@ export const TALENT_TREES = {
     ]
   },
 mage: {
-  nodes: [
-    // 起点
-    { id: 'm_start', x: 50, y: 85, type: 'small', icon: 'mdi:circle-outline', name: '奥术起源', effect: '魔法之路', cost: 0, connections: [] },
+nodes: [
+  // 起点（保持偏下位置）
+  { id: 'm_start', x: 50, y: 95, type: 'small', icon: 'mdi:circle-outline', name: '奥术起源', effect: '魔法之路', cost: 0, connections: [] },
 
-    // 元素强化路线（数值翻倍）
-    { id: 'm_ele1', x: 44, y: 78, type: 'small', icon: 'mdi:fire', name: '元素亲和', effect: '元素伤害 +15%', cost: 1, connections: ['m_start'] },
-    { id: 'm_ele2', x: 38, y: 71, type: 'small', icon: 'mdi:water', name: '元素精通', effect: '元素伤害 +15%', cost: 1, connections: ['m_ele1'] },
-    { id: 'm_ele3', x: 32, y: 63, type: 'small', icon: 'mdi:lightning-bolt', name: '元素过载', effect: '元素伤害 +25%', cost: 2, connections: ['m_ele2'] },
-    { id: 'm_ele4', x: 26, y: 55, type: 'small', icon: 'mdi:creation', name: '元素共鸣', effect: '元素伤害 +20%', cost: 2, connections: ['m_ele3'] },
-    { id: 'm_notable_ele', x: 18, y: 47, type: 'notable', icon: 'mdi:magic-staff', name: '大魔导之印', effect: '元素伤害 +60%<br/>最大MP +20%', cost: 3, connections: ['m_ele4'] },
-    { id: 'm_keystone_ele', x: 10, y: 39, type: 'keystone', icon: 'mdi:creation', name: '元素主宰', effect: '攻击力 +20%<br/>元素伤害 +50%', cost: 5, connections: ['m_notable_ele'], reqClass: 'archmage' },
-    { id: 'm_ele_overload', x: 14, y: 31, type: 'small', icon: 'mdi:flash', name: '过载增幅', effect: '元素伤害 +30%', cost: 2, connections: ['m_keystone_ele'], reqClass: 'archmage' },
-    { id: 'm_ele_overload2', x: 20, y: 25, type: 'notable', icon: 'mdi:flash-triangle', name: '元素崩解', effect: '元素伤害 +45%', cost: 4, connections: ['m_ele_overload'], reqClass: 'archmage' },
+  // ===== 左侧——元素路线（x 整体减小，向左拉开） =====
+  { id: 'm_ele1',     x: 40, y: 88,  type: 'small', icon: 'mdi:fire',           name: '元素亲和',   effect: '元素伤害 +12%', cost: 1, connections: ['m_start'] },
+  { id: 'm_ele1a',    x: 32, y: 82,  type: 'small', icon: 'mdi:fire',           name: '灼热',       effect: '火焰伤害 +15%', cost: 1, connections: ['m_ele1'] },
+  { id: 'm_ele2',     x: 24, y: 74,  type: 'small', icon: 'mdi:water',          name: '元素精通',   effect: '元素伤害 +15%', cost: 1, connections: ['m_ele1a'] },
+  { id: 'm_ele2a',    x: 18, y: 64,  type: 'small', icon: 'mdi:lightning-bolt', name: '过载准备',   effect: '元素伤害 +15%', cost: 1, connections: ['m_ele2'] },
+  { id: 'm_ele3',     x: 10, y: 54,  type: 'small', icon: 'mdi:lightning-bolt', name: '元素过载',   effect: '元素伤害 +25%', cost: 2, connections: ['m_ele2a'] },
+  { id: 'm_ele3a',    x: 6,  y: 44,  type: 'small', icon: 'mdi:creation',       name: '元素共鸣',   effect: '元素伤害 +20%', cost: 2, connections: ['m_ele3'] },
+  { id: 'm_notable_ele', x: 4, y: 34, type: 'notable', icon: 'mdi:magic-staff', name: '大魔导之印', effect: '元素伤害 +60%<br/>最大MP +20%', cost: 3, connections: ['m_ele3a'] },
+  { id: 'm_keystone_ele', x: 6, y: 22, type: 'keystone', icon: 'mdi:creation',  name: '元素主宰',   effect: '攻击力 +20%<br/>元素伤害 +50%', cost: 5, connections: ['m_notable_ele'], reqClass: 'archmage' },
+  { id: 'm_ele_overload', x: 12, y: 14, type: 'small', icon: 'mdi:flash',       name: '过载增幅',   effect: '元素伤害 +30%', cost: 2, connections: ['m_keystone_ele'], reqClass: 'archmage' },
+  { id: 'm_ele_overload2', x: 20, y: 6, type: 'notable', icon: 'mdi:flash-triangle', name: '元素崩解', effect: '元素伤害 +45%', cost: 4, connections: ['m_ele_overload'], reqClass: 'archmage' },
 
-    // 法力与续航
-    { id: 'm_mp1', x: 56, y: 78, type: 'small', icon: 'mdi:water', name: '冥想', effect: '最大MP +15%', cost: 1, connections: ['m_start'] },
-    { id: 'm_mp2', x: 62, y: 71, type: 'small', icon: 'mdi:water', name: '启迪', effect: '最大MP +15%', cost: 1, connections: ['m_mp1'] },
-    { id: 'm_mp3', x: 68, y: 63, type: 'small', icon: 'mdi:brain', name: '清醒', effect: 'MP消耗 -10%', cost: 1, connections: ['m_mp2'] },
-    { id: 'm_notable_mp', x: 76, y: 55, type: 'notable', icon: 'mdi:brain', name: '智慧之源', effect: '最大MP +40%<br/>MP消耗 -20%', cost: 3, connections: ['m_mp3'] },
-    { id: 'm_mp_keystone', x: 84, y: 47, type: 'keystone', icon: 'mdi:brain-freeze', name: '奥术风暴', effect: '最大MP +35%<br/>MP消耗 -20%', cost: 5, connections: ['m_notable_mp'], reqClass: 'archmage' },
-    { id: 'm_mp_surge', x: 80, y: 39, type: 'notable', icon: 'mdi:pulse', name: '法力涌动', effect: '最大MP +30%', cost: 3, connections: ['m_mp_keystone'], reqClass: 'archmage' },
+  // ===== 右侧——法力路线（保持不变） =====
+  { id: 'm_mp1',      x: 56, y: 88,  type: 'small', icon: 'mdi:water',   name: '冥想',       effect: '最大MP +15%', cost: 1, connections: ['m_start'] },
+  { id: 'm_mp1a',     x: 64, y: 82,  type: 'small', icon: 'mdi:water',   name: '清晰思维',   effect: 'MP消耗 -8%', cost: 1, connections: ['m_mp1'] },
+  { id: 'm_mp2',      x: 72, y: 74,  type: 'small', icon: 'mdi:water',   name: '启迪',       effect: '最大MP +15%', cost: 1, connections: ['m_mp1a'] },
+  { id: 'm_mp2a',     x: 80, y: 64,  type: 'small', icon: 'mdi:brain',   name: '专注',       effect: 'MP消耗 -10%', cost: 1, connections: ['m_mp2'] },
+  { id: 'm_mp3',      x: 86, y: 54,  type: 'small', icon: 'mdi:brain',   name: '清醒',       effect: 'MP消耗 -10%', cost: 1, connections: ['m_mp2a'] },
+  { id: 'm_notable_mp', x: 92, y: 44, type: 'notable', icon: 'mdi:brain', name: '智慧之源',   effect: '最大MP +40%<br/>MP消耗 -20%', cost: 3, connections: ['m_mp3'] },
+  { id: 'm_mp_keystone', x: 94, y: 32, type: 'keystone', icon: 'mdi:brain-freeze', name: '奥术风暴', effect: '最大MP +35%<br/>MP消耗 -20%', cost: 5, connections: ['m_notable_mp'], reqClass: 'archmage' },
+  { id: 'm_mp_surge', x: 90, y: 22, type: 'notable', icon: 'mdi:pulse',  name: '法力涌动',   effect: '最大MP +30%', cost: 3, connections: ['m_mp_keystone'], reqClass: 'archmage' },
 
-    // 暴击强化（对标宝石）
-    { id: 'm_crit1', x: 48, y: 76, type: 'small', icon: 'mdi:target', name: '奥术精准', effect: '暴击率 +10%', cost: 1, connections: ['m_start'] },
-    { id: 'm_crit2', x: 46, y: 68, type: 'small', icon: 'mdi:target', name: '法术暴击', effect: '暴击率 +10%', cost: 1, connections: ['m_crit1'] },
-    { id: 'm_crit3', x: 42, y: 60, type: 'small', icon: 'mdi:flash-circle', name: '致命法术', effect: '暴击伤害 +40%', cost: 2, connections: ['m_crit2'] },
-    { id: 'm_notable_crit', x: 38, y: 52, type: 'notable', icon: 'mdi:star-circle', name: '奥术升华', effect: '暴击伤害 +100%<br/>暴击率 +15%', cost: 3, connections: ['m_crit3'] },
-    { id: 'm_keystone_crit', x: 34, y: 44, type: 'keystone', icon: 'mdi:creation', name: '完美施法', effect: '暴击伤害 +200%', cost: 5, connections: ['m_notable_crit'], reqClass: 'archmage' },
-    { id: 'm_crit_mastery', x: 30, y: 38, type: 'notable', icon: 'mdi:magic-staff', name: '法术穿心', effect: '暴击伤害 +150%', cost: 4, connections: ['m_keystone_crit'], reqClass: 'archmage' },
+  // ===== 中部——暴击路线（x 整体增大，向右拉开） =====
+  { id: 'm_crit1',    x: 52, y: 86,  type: 'small', icon: 'mdi:target',       name: '奥术精准', effect: '暴击率 +10%', cost: 1, connections: ['m_start'] },
+  { id: 'm_crit1a',   x: 46, y: 78,  type: 'small', icon: 'mdi:target',       name: '致命专注', effect: '暴击率 +8%', cost: 1, connections: ['m_crit1'] },
+  { id: 'm_crit2',    x: 40, y: 68,  type: 'small', icon: 'mdi:target',       name: '法术暴击', effect: '暴击率 +10%', cost: 1, connections: ['m_crit1a'] },
+  { id: 'm_crit2a',   x: 34, y: 58,  type: 'small', icon: 'mdi:flash-circle', name: '致命增幅', effect: '暴击伤害 +25%', cost: 1, connections: ['m_crit2'] },
+  { id: 'm_crit3',    x: 28, y: 48,  type: 'small', icon: 'mdi:flash-circle', name: '致命法术', effect: '暴击伤害 +40%', cost: 2, connections: ['m_crit2a'] },
+  { id: 'm_notable_crit', x: 22, y: 38, type: 'notable', icon: 'mdi:star-circle', name: '奥术升华', effect: '暴击伤害 +100%<br/>暴击率 +15%', cost: 3, connections: ['m_crit3'] },
+  { id: 'm_keystone_crit', x: 18, y: 28, type: 'keystone', icon: 'mdi:creation', name: '完美施法', effect: '暴击伤害 +200%', cost: 5, connections: ['m_notable_crit'], reqClass: 'archmage' },
+  { id: 'm_crit_mastery', x: 24, y: 18, type: 'notable', icon: 'mdi:magic-staff', name: '法术穿心', effect: '暴击伤害 +150%', cost: 4, connections: ['m_keystone_crit'], reqClass: 'archmage' },
 
-    // 生存与防御
-    { id: 'm_def1', x: 44, y: 92, type: 'small', icon: 'mdi:shield', name: '魔法护盾', effect: '防御 +15%', cost: 1, connections: ['m_start'] },
-    { id: 'm_def2', x: 38, y: 98, type: 'small', icon: 'mdi:shield-star', name: '元素之盾', effect: '最大HP +15%', cost: 2, connections: ['m_def1'] },
-    { id: 'm_def_notable', x: 32, y: 105, type: 'notable', icon: 'mdi:shield-cross', name: '水晶屏障', effect: '最大HP +30%<br/>防御 +25%', cost: 3, connections: ['m_def2'] },
-    { id: 'm_keystone_def', x: 26, y: 113, type: 'keystone', icon: 'mdi:shield-moon', name: '奥术之躯', effect: '最大HP +40%<br/>防御 +35%', cost: 5, connections: ['m_def_notable'], reqClass: 'archmage' },
-    { id: 'm_def_regen', x: 32, y: 120, type: 'small', icon: 'mdi:heart-pulse', name: '再生魔印', effect: '最大HP +20%', cost: 2, connections: ['m_keystone_def'], reqClass: 'archmage' }
-  ]
+  // ===== 下方——防御路线（不变） =====
+  { id: 'm_def1',     x: 44, y: 102, type: 'small', icon: 'mdi:shield',       name: '魔法护盾', effect: '防御 +15%', cost: 1, connections: ['m_start'] },
+  { id: 'm_def1a',    x: 38, y: 110, type: 'small', icon: 'mdi:shield-star',  name: '元素之盾', effect: '最大HP +15%', cost: 1, connections: ['m_def1'] },
+  { id: 'm_def2',     x: 30, y: 116, type: 'small', icon: 'mdi:shield-star',  name: '防护结界', effect: '防御 +20%', cost: 2, connections: ['m_def1a'] },
+  { id: 'm_def2a',    x: 22, y: 122, type: 'small', icon: 'mdi:heart',        name: '活力',     effect: '最大HP +20%', cost: 2, connections: ['m_def2'] },
+  { id: 'm_def_notable', x: 14, y: 128, type: 'notable', icon: 'mdi:shield-cross', name: '水晶屏障', effect: '最大HP +30%<br/>防御 +25%', cost: 3, connections: ['m_def2a'] },
+  { id: 'm_keystone_def', x: 8, y: 134, type: 'keystone', icon: 'mdi:shield-moon', name: '奥术之躯', effect: '最大HP +40%<br/>防御 +35%', cost: 5, connections: ['m_def_notable'], reqClass: 'archmage' },
+  { id: 'm_def_regen', x: 4, y: 140, type: 'small', icon: 'mdi:heart-pulse', name: '再生魔印', effect: '最大HP +20%', cost: 2, connections: ['m_keystone_def'], reqClass: 'archmage' },
+
+  // ===== 右下——混合收益（不变） =====
+  { id: 'm_mix1',     x: 56, y: 102, type: 'small', icon: 'mdi:auto-fix', name: '平衡发展', effect: '攻击 +10 防御 +10', cost: 1, connections: ['m_start'] },
+  { id: 'm_mix2',     x: 64, y: 110, type: 'small', icon: 'mdi:auto-fix', name: '均衡',     effect: '全属性 +8%', cost: 2, connections: ['m_mix1'] },
+  { id: 'm_mix3',     x: 72, y: 118, type: 'small', icon: 'mdi:auto-fix', name: '万金油',   effect: '攻击 +15 防御 +15', cost: 2, connections: ['m_mix2'] },
+  { id: 'm_mix_notable', x: 80, y: 126, type: 'notable', icon: 'mdi:auto-fix', name: '贤者之智', effect: '最大HP +25%<br/>最大MP +25%', cost: 3, connections: ['m_mix3'] },
+
+  // ===== 编织节点（坐标微调以适应新路线） =====
+  { id: 'm_weave1',   x: 38, y: 72,  type: 'small', icon: 'mdi:creation', name: '魔法涟漪', effect: '元素伤害 +10%<br/>MP消耗 -5%', cost: 1, connections: ['m_ele1a', 'm_crit1'] },
+  { id: 'm_weave2',   x: 50, y: 78,  type: 'small', icon: 'mdi:creation', name: '交织',     effect: '暴击率 +8%<br/>防御 +10%', cost: 2, connections: ['m_weave1', 'm_start'] },
+  { id: 'm_weave3',   x: 60, y: 74,  type: 'small', icon: 'mdi:creation', name: '协调',     effect: '最大MP +10%<br/>最大HP +10%', cost: 1, connections: ['m_weave2', 'm_mp1'] },
+
+  // 顶部孤岛
+  { id: 'm_isolated', x: 50, y: 5, type: 'notable', icon: 'mdi:creation', name: '星空倒影', effect: '所有伤害 +30%<br/>获得额外元素穿透', cost: 4, connections: [] }
+]
 },
   ranger: {
     nodes: [

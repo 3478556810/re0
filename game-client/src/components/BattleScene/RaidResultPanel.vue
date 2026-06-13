@@ -56,7 +56,7 @@
           </div>
        <div class="stat-item">
   <Icon icon="mdi:heart" />
-  <span class="stat-value">{{ Math.floor((props.stats.remainingHp / props.stats.maxHp) * 100) }}%</span>
+  <span class="stat-value">100%</span>
 </div>
         </div>
 
