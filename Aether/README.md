@@ -33,22 +33,24 @@ Aether 旨在解决这些问题，提供一个**私有化、高精度、低延�
 
 ## 架构图
 
+```mermaid
 graph LR
-    User[用户] -->|"HTTP / 80"| FE[前端 (Nginx)]
-    FE -->|"反向代理 /api"| BE[后端 (Go)]
-    BE -->|"SQL + 向量查询"| PG[(PostgreSQL 16 + pgvector)]
-    BE -->|"读/写"| Cache[(LRU 查询缓存)]
+    User[用户] -->|HTTP/80| FE[前端 Nginx]
+    FE -->|反向代理 /api| BE[后端 Go]
+    BE -->|SQL + 向量查询| PG[(PostgreSQL 16 + pgvector)]
+    BE -->|读写| Cache[(LRU 查询缓存)]
     
     subgraph 检索流程
-        BE -->|"1. 关键词检索"| BM25[tsvector GIN 索引]
-        BE -->|"2. 向量检索"| HNSW[HNSW 索引]
-        BE -->|"3. 融合排序"| Fusion[混合排序公式]
+        BE -->|1. 关键词检索| BM25[tsvector GIN 索引]
+        BE -->|2. 向量检索| HNSW[HNSW 索引]
+        BE -->|3. 融合排序| Fusion[混合排序公式]
     end
     
     PG --> BM25
     PG --> HNSW
     BM25 --> Fusion
     HNSW --> Fusion
+```
 
 **请求流程：**
 
@@ -408,5 +410,3 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
- 
- 

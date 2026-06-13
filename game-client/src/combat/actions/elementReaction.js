@@ -1,5 +1,5 @@
 import { EFFECT_TYPES } from '../effectDefs'
-
+import { showReaction } from '@/utils/reactionEffects'
 const ELEMENT_REACTIONS = {
   'fire_water': { name: '蒸发', dmgMul: 2.0 },
   'fire_thunder': { name: '超载', aoeDmgMul: 1.5 },
@@ -78,24 +78,38 @@ export function checkElementReaction(engine, attacker, target, skill, result, da
     }
 
     // 伤害乘算反应
-    if (reaction.dmgMul) {
-      const markDamage = existingMark.markDamage || damage
-      const totalBaseDamage = damage + markDamage
-      let reactionDamage = Math.floor(totalBaseDamage * reaction.dmgMul * scale)
-      reactionDamage = Math.floor(reactionDamage * masteryMultiplier)
-      target.takeDamage(reactionDamage, attacker)
-      if (reaction.freezeDuration) {
-        target.addEffect({ type: EFFECT_TYPES.FREEZE, duration: reaction.freezeDuration, stackable: false })
-        result.messages.push(`触发元素反应：${reaction.name}！造成 ${reactionDamage} 伤害并冻结目标`)
-      } else if (reaction.defReduce) {
-        target.addEffect({ type: EFFECT_TYPES.DEF_DOWN, value: -reaction.defReduce, duration: reaction.defDuration, stackable: false })
-        result.messages.push(`触发元素反应：${reaction.name}！造成 ${reactionDamage} 伤害并降低防御`)
-      } else {
-        result.messages.push(`触发元素反应：${reaction.name}！造成 ${reactionDamage} 点额外伤害`)
-      }
-      target.removeEffect('element_mark')
-      return
+   // 伤害乘算反应（蒸发、湮灭、冻结、超导）
+  if (reaction.dmgMul) {
+    const markDamage = existingMark.markDamage || damage;
+    const totalBaseDamage = damage + markDamage;
+    let reactionDamage = Math.floor(totalBaseDamage * reaction.dmgMul * scale);
+    reactionDamage = Math.floor(reactionDamage * masteryMultiplier);
+    target.takeDamage(reactionDamage, attacker);
+
+    if (reaction.freezeDuration) {
+      target.addEffect({ type: EFFECT_TYPES.FREEZE, duration: reaction.freezeDuration, stackable: false });
+      result.messages.push(`触发元素反应：${reaction.name}！造成 ${reactionDamage} 伤害并冻结目标`);
+    } else if (reaction.defReduce) {
+      target.addEffect({ type: EFFECT_TYPES.DEF_DOWN, value: -reaction.defReduce, duration: reaction.defDuration, stackable: false });
+      result.messages.push(`触发元素反应：${reaction.name}！造成 ${reactionDamage} 伤害并降低防御`);
+    } else {
+      result.messages.push(`触发元素反应：${reaction.name}！造成 ${reactionDamage} 点额外伤害`);
     }
+
+    // ★ 播放湮灭特效
+    if (reaction.name === '湮灭') {
+      const targetEl = document.querySelector('.target-unit');
+      if (targetEl) {
+        const rect = targetEl.getBoundingClientRect();
+        showReaction('湮灭', rect.left + rect.width / 2, rect.top + rect.height / 2, 800);
+      } else {
+        showReaction('湮灭', window.innerWidth / 2, window.innerHeight / 2, 800);
+      }
+    }
+
+    target.removeEffect('element_mark');
+    return;
+  }
 
     // 超载
     if (reaction.aoeDmgMul) {

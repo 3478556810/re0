@@ -62,6 +62,14 @@ func ListItem(w http.ResponseWriter, r *http.Request) {
 		"success": true,
 		"listing": map[string]interface{}{"id": listingID},
 	})
+
+	// 清除所有搜索缓存（简单粗暴但有效）
+	if RDB != nil {
+		keys, _ := RDB.Keys(Ctx, "market:search:*").Result()
+		if len(keys) > 0 {
+			RDB.Del(Ctx, keys...)
+		}
+	}
 }
 
 // 购买
@@ -109,12 +117,12 @@ func BuyItem(w http.ResponseWriter, r *http.Request) {
 	// }
 	totalCost := listing.Price * body.Quantity
 
-	var buyerGold int
-	err = tx.QueryRow(`SELECT gold FROM users WHERE id = $1 FOR UPDATE`, buyerID).Scan(&buyerGold)
-	if err != nil || buyerGold < totalCost {
-		respondError(w, http.StatusBadRequest, "金币不足")
-		return
-	}
+	// var buyerGold int
+	// err = tx.QueryRow(`SELECT gold FROM users WHERE id = $1 FOR UPDATE`, buyerID).Scan(&buyerGold)
+	// if err != nil || buyerGold < totalCost {
+	// 	respondError(w, http.StatusBadRequest, "金币不足")
+	// 	return
+	// }
 
 	_, _ = tx.Exec(`UPDATE users SET gold = gold - $1 WHERE id = $2`, totalCost, buyerID)
 	_, _ = tx.Exec(`UPDATE users SET gold = gold + $1 WHERE id = $2`, totalCost, listing.SellerID)
@@ -127,6 +135,7 @@ func BuyItem(w http.ResponseWriter, r *http.Request) {
 	_, err = tx.Exec(`UPDATE market_listings SET quantity=$1, status=$2, updated_at=NOW() WHERE id=$3`,
 		newQty, newStatus, body.ListingID)
 	if err != nil {
+		log.Printf("更新库存失败: %v, listingID=%s", err, body.ListingID) // 加这行
 		respondError(w, http.StatusInternalServerError, "更新库存失败")
 		return
 	}

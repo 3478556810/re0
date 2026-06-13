@@ -218,7 +218,7 @@
   background: #000000aa; backdrop-filter: blur(8px);
   border: 2px solid #c9a87b; border-radius: 40px;
   padding: 12px 30px; color: #ffffcc; font-size: 18px;
-  z-index: 25; pointer-events: none;
+  z-index: 50; pointer-events: none;
   text-shadow: 1px 1px 0 #000;
 }
 .message-overlay {
@@ -377,7 +377,7 @@
   .big-sprite, .big-sprite-icon { font-size: 80px !important; }
   .player-status-card { min-width: 100px !important; padding: 8px 12px !important; font-size: 7px !important; }
   .action-btn { padding: 6px 14px !important; font-size: 10px !important; }
-  .floating-message { font-size: 12px !important; padding: 8px 20px !important; }
+  .floating-message { font-size: 12px !important; padding: 8px 20px !important;   z-index: 50;}
   .skill-card { min-width: 100px; padding: 6px 10px; }
 }
 

@@ -273,3 +273,51 @@ h2 { font-size: 16px; margin-bottom: 16px; display: flex; align-items: center; g
   .upgrade-layout { flex-direction: column; }
   .upgrade-equip-list { width: 100%; max-height: 40vh; }
 }
+
+
+.affix-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 6px;
+  align-items: center;
+}
+
+.affix-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(184, 154, 106, 0.3);
+  border-radius: 6px;
+  font-size: 8px;
+  color: #ccc;
+  white-space: nowrap;
+  /* 关键：不浮动、不绝对定位 */
+  position: relative;
+  line-height: 1.5;
+}
+
+.affix-tag.fixed {
+  border-color: #f0c060;
+  background: rgba(240, 192, 96, 0.12);
+  box-shadow: 0 0 6px rgba(240, 192, 96, 0.3);
+  font-weight: bold;
+}
+
+.fixed-circle {
+  width: 8px; 
+  height: 8px;
+  border-radius: 50%;
+  border: 2px solid #f0c060;
+  background: transparent;
+  flex-shrink: 0;
+  animation: pulse-gold 2s infinite;
+}
+
+.fixed-text {
+  color: #f0c060;
+  font-weight: bold;
+  text-shadow: 0 0 4px rgba(240, 192, 96, 0.5);
+}
