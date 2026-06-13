@@ -91,15 +91,20 @@
     </Transition>
 
     <!-- 技能栏和逃跑按钮容器 -->
-    <div v-if="!gameOver && playerTurn && !waiting && !showResult" class="skill-flee-row">
+   <div v-if="!gameOver && playerTurn && !waiting && !showResult" class="skill-flee-row">
       <SkillBar
         :skills="battleSkills"
         :player-mp="store.player.mp"
         @use-skill="handleSkillClick"
       />
-      <button class="pixel-btn warning" @click="fleeBattle">
-        <Icon icon="streamline-freehand:safety-fire-exit" /> 逃跑
-      </button>
+     
+  <!-- 逃跑按钮暂时隐藏 -->
+<!--
+<button class="pixel-btn warning" @click="fleeBattle">
+  <Icon icon="streamline-freehand:safety-fire-exit" /> 逃跑
+</button>
+-->
+   
     </div>
 
     <!-- 技能预览浮层（单击显示，双击释放） -->
@@ -206,7 +211,7 @@ const {
   destroy: destroyState,
   showRaidResult,
   raidResultStats,resetAndStart,
-  
+    showSkillBar,
   raidDefeated,
   hitEnemyIndex, 
   isPlayerAttacking, // ★ 只在此处声明一次

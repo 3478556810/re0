@@ -70,7 +70,7 @@
       </div>
     </div>
 
-    <!-- 伙伴卡片（固定右下角，不变） -->
+    <!-- 伙伴卡片（固定右下角，不变） 
     <div v-if="companion" class="companion-card">
       <div class="companion-strategy">
 <button 
@@ -131,6 +131,7 @@
         </div>
       </div>
     </div>
+  -->
   </div>
 </template>
 

@@ -5,135 +5,134 @@ export const AFFIX_EFFECTS = {
   grudge: {
     name: '怨恨', loreName: '怨恨',
     thresholds: [
-      { level: 1, bonus: { attack: 30, dmgTaken: 12 } },
-      { level: 3, bonus: { attack: 55, dmgTaken: 18 } },
-      { level: 5, bonus: { attack: 85, dmgTaken: 25 } },
-      { level: 7, bonus: { attack: 120, dmgTaken: 30 } },
-      { level: 10, bonus: { attack: 180, dmgTaken: 40 } }
+      { level: 1, desc: '攻+30%，受伤+12%', bonus: { attack: 30, dmgTaken: 12 } },
+      { level: 3, desc: '攻+55%，受伤+18%', bonus: { attack: 55, dmgTaken: 18 } },
+      { level: 5, desc: '攻+85%，受伤+25%', bonus: { attack: 85, dmgTaken: 25 } },
+      { level: 7, desc: '攻+120%，受伤+30%', bonus: { attack: 120, dmgTaken: 30 } },
+      { level: 10, desc: '攻+180%，受伤+40%', bonus: { attack: 180, dmgTaken: 40 } }
     ]
   },
   voodooDoll: {
     name: '巫毒娃娃', loreName: '巫毒',
     thresholds: [
-      { level: 1, bonus: { trueDmgPercent: 15 } },
-      { level: 3, bonus: { trueDmgPercent: 30 } },
-      { level: 5, bonus: { trueDmgPercent: 50 } },
-      { level: 7, bonus: { trueDmgPercent: 70 } },
-      { level: 10, bonus: { trueDmgPercent: 100 } }
+      { level: 1, desc: '伤害的 15% 转为真伤', bonus: { trueDmgPercent: 15 } },
+      { level: 3, desc: '伤害的 30% 转为真伤', bonus: { trueDmgPercent: 30 } },
+      { level: 5, desc: '伤害的 50% 转为真伤', bonus: { trueDmgPercent: 50 } },
+      { level: 7, desc: '伤害的 70% 转为真伤', bonus: { trueDmgPercent: 70 } },
+      { level: 10, desc: '伤害的 100% 转为真伤', bonus: { trueDmgPercent: 100 } }
     ]
   },
   bluntWeapon: {
     name: '钝器', loreName: '钝器',
     thresholds: [
-      { level: 1, bonus: { critDmg: 45, critRate: -2 } },
-      { level: 3, bonus: { critDmg: 90, critRate: -4 } },
-      { level: 5, bonus: { critDmg: 150, critRate: -5 } },
-      { level: 7, bonus: { critDmg: 220, critRate: -6 } },
-      { level: 10, bonus: { critDmg: 320, critRate: -8 } }
+      { level: 1, desc: '暴伤+45%, 暴率-2%', bonus: { critDmg: 45, critRate: -2 } },
+      { level: 3, desc: '暴伤+90%, 暴率-4%', bonus: { critDmg: 90, critRate: -4 } },
+      { level: 5, desc: '暴伤+150%, 暴率-5%', bonus: { critDmg: 150, critRate: -5 } },
+      { level: 7, desc: '暴伤+220%, 暴率-6%', bonus: { critDmg: 220, critRate: -6 } },
+      { level: 10, desc: '暴伤+320%, 暴率-8%', bonus: { critDmg: 320, critRate: -8 } }
     ]
   },
   armorBreak: {
     name: '破甲', loreName: '破甲',
     thresholds: [
-      { level: 1, bonus: { ignoreDef: 30, shieldDmg: 40 } },
-      { level: 3, bonus: { ignoreDef: 50, shieldDmg: 70 } },
-      { level: 5, bonus: { ignoreDef: 80, shieldDmg: 100 } },
-      { level: 7, bonus: { ignoreDef: 120, shieldDmg: 150 } },
-      { level: 10, bonus: { ignoreDef: 180, shieldDmg: 200 } }
+      { level: 1, desc: '无视防御 30%，对护盾伤害+40%', bonus: { ignoreDef: 30, shieldDmg: 40 } },
+      { level: 3, desc: '无视防御 50%，对护盾伤害+70%', bonus: { ignoreDef: 50, shieldDmg: 70 } },
+      { level: 5, desc: '无视防御 80%，对护盾伤害+100%', bonus: { ignoreDef: 80, shieldDmg: 100 } },
+      { level: 7, desc: '无视防御 120%，对护盾伤害+150%', bonus: { ignoreDef: 120, shieldDmg: 150 } },
+      { level: 10, desc: '无视防御 180%，对护盾伤害+200%', bonus: { ignoreDef: 180, shieldDmg: 200 } }
     ]
   },
   manaResonance: {
     name: '法力共鸣', loreName: '法力',
     thresholds: [
-      { level: 1, bonus: { mpCostReduction: 15, mpOnHit: 8 } },
-      { level: 3, bonus: { mpCostReduction: 25, mpOnHit: 12 } },
-      { level: 5, bonus: { mpCostReduction: 35, mpOnHit: 18, mpOnKill: 20 } },
-      { level: 7, bonus: { mpCostReduction: 45, mpOnHit: 40, mpOnKill: 45 } },
-      { level: 10, bonus: { mpCostReduction: 50, mpOnHit: 60, mpOnKill: 80 } }
+      { level: 1, desc: 'MP消耗-15%，伤害回蓝8', bonus: { mpCostReduction: 15, mpOnHit: 8 } },
+      { level: 3, desc: 'MP消耗-25%，伤害回蓝12', bonus: { mpCostReduction: 25, mpOnHit: 12 } },
+      { level: 5, desc: 'MP消耗-35%，伤害回蓝18，击杀回蓝20', bonus: { mpCostReduction: 35, mpOnHit: 18, mpOnKill: 20 } },
+      { level: 7, desc: 'MP消耗-45%，伤害回蓝40，击杀回蓝45', bonus: { mpCostReduction: 45, mpOnHit: 40, mpOnKill: 45 } },
+      { level: 10, desc: 'MP消耗-50%，伤害回蓝60，击杀回蓝80', bonus: { mpCostReduction: 50, mpOnHit: 60, mpOnKill: 80 } }
     ]
   },
   adrenaline: {
     name: '肾上腺素', loreName: '肾上腺素',
     thresholds: [
-      { level: 1, bonus: { stackingAtk: 8, maxStacks: 4 } },
-      { level: 3, bonus: { stackingAtk: 12, maxStacks: 5 } },
-      { level: 5, bonus: { stackingAtk: 18, maxStacks: 6 } },
-      { level: 7, bonus: { stackingAtk: 25, maxStacks: 7 } },
-      { level: 10, bonus: { stackingAtk: 35, maxStacks: 8 } }
+      { level: 1, desc: '每回合攻+8%（基于最终攻击），最多4层', bonus: { stackingAtk: 8, maxStacks: 4 } },
+      { level: 3, desc: '每回合攻+12%，最多5层', bonus: { stackingAtk: 12, maxStacks: 5 } },
+      { level: 5, desc: '每回合攻+18%，最多6层', bonus: { stackingAtk: 18, maxStacks: 6 } },
+      { level: 7, desc: '每回合攻+25%，最多7层', bonus: { stackingAtk: 25, maxStacks: 7 } },
+      { level: 10, desc: '每回合攻+35%，最多8层', bonus: { stackingAtk: 35, maxStacks: 8 } }
     ]
   },
   bossHunter: {
     name: 'Boss猎人', loreName: '猎王',
     thresholds: [
-      { level: 1, bonus: { bossDmg: 25 } },
-      { level: 3, bonus: { bossDmg: 45 } },
-      { level: 5, bonus: { bossDmg: 75 } },
-      { level: 7, bonus: { bossDmg: 120 } },
-      { level: 10, bonus: { bossDmg: 180 } }
+      { level: 1, desc: '对Boss增伤 25%', bonus: { bossDmg: 25 } },
+      { level: 3, desc: '对Boss增伤 45%', bonus: { bossDmg: 45 } },
+      { level: 5, desc: '对Boss增伤 75%', bonus: { bossDmg: 75 } },
+      { level: 7, desc: '对Boss增伤 120%', bonus: { bossDmg: 120 } },
+      { level: 10, desc: '对Boss增伤 180%', bonus: { bossDmg: 180 } }
     ]
   },
   elementMaster: {
     name: '属性大师', loreName: '元素',
     thresholds: [
-      { level: 1, bonus: { allElemDmg: 20 } },
-      { level: 3, bonus: { allElemDmg: 45 } },
-      { level: 5, bonus: { allElemDmg: 75 } },
-      { level: 7, bonus: { allElemDmg: 110 } },
-      { level: 10, bonus: { allElemDmg: 160 } }
+      { level: 1, desc: '全元素+20%', bonus: { allElemDmg: 20 } },
+      { level: 3, desc: '全元素+45%', bonus: { allElemDmg: 45 } },
+      { level: 5, desc: '全元素+75%', bonus: { allElemDmg: 75 } },
+      { level: 7, desc: '全元素+110%', bonus: { allElemDmg: 110 } },
+      { level: 10, desc: '全元素+160%', bonus: { allElemDmg: 160 } }
     ]
   },
   fortune: {
     name: '天运', loreName: '天运',
     thresholds: [
-      { level: 1, bonus: { critRate: 12, doubleDrop: 8 } },
-      { level: 3, bonus: { critRate: 25, doubleDrop: 15 } },
-      { level: 5, bonus: { critRate: 40, doubleDrop: 22 } },
-      { level: 7, bonus: { critRate: 60, doubleDrop: 35 } },
-      { level: 10, bonus: { critRate: 85, doubleDrop: 50 } }
+      { level: 1, desc: '暴率+12%，掉落双倍概率+8%', bonus: { critRate: 12, doubleDrop: 8 } },
+      { level: 3, desc: '暴率+25%，掉落双倍概率+15%', bonus: { critRate: 25, doubleDrop: 15 } },
+      { level: 5, desc: '暴率+40%，掉落双倍概率+22%', bonus: { critRate: 40, doubleDrop: 22 } },
+      { level: 7, desc: '暴率+60%，掉落双倍概率+35%', bonus: { critRate: 60, doubleDrop: 35 } },
+      { level: 10, desc: '暴率+85%，掉落双倍概率+50%', bonus: { critRate: 85, doubleDrop: 50 } }
     ]
   },
   ambushMaster: {
     name: '奇袭大师', loreName: '奇袭',
     thresholds: [
-      { level: 1, bonus: { halfHpCrit: 25 } },
-      { level: 3, bonus: { halfHpCrit: 50 } },
-      { level: 5, bonus: { halfHpCrit: 80, halfHpCritDmg: 40 } },
-      { level: 7, bonus: { halfHpCrit: 120, halfHpCritDmg: 65 } },
-      { level: 10, bonus: { halfHpCrit: 170, halfHpCritDmg: 100 } }
+      { level: 1, desc: '对半血以上敌人暴率+25%', bonus: { halfHpCrit: 25 } },
+      { level: 3, desc: '对半血以上敌人暴率+50%', bonus: { halfHpCrit: 50 } },
+      { level: 5, desc: '对半血以上敌人暴率+80%，暴伤+40%', bonus: { halfHpCrit: 80, halfHpCritDmg: 40 } },
+      { level: 7, desc: '对半血以上敌人暴率+120%，暴伤+65%', bonus: { halfHpCrit: 120, halfHpCritDmg: 65 } },
+      { level: 10, desc: '对半血以上敌人暴率+170%，暴伤+100%', bonus: { halfHpCrit: 170, halfHpCritDmg: 100 } }
     ]
   },
   tenacity: {
     name: '顽强', loreName: '顽强',
     thresholds: [
-      { level: 1, bonus: { deathSave: 30, deathShield: 25 } },
-      { level: 3, bonus: { deathSave: 50, deathShield: 40 } },
-      { level: 5, bonus: { deathSave: 75, deathShield: 60 } },
-      { level: 7, bonus: { deathSave: 100, deathShield: 90 } },
-      { level: 10, bonus: { deathSave: 100, deathShield: 150 } }
+      { level: 1, desc: '受致命伤害时，30%概率锁血，获得25%HP护盾', bonus: { deathSave: 30, deathShield: 25 } },
+      { level: 3, desc: '受致命伤害时，50%概率锁血，获得40%HP护盾', bonus: { deathSave: 50, deathShield: 40 } },
+      { level: 5, desc: '受致命伤害时，75%概率锁血，获得60%HP护盾', bonus: { deathSave: 75, deathShield: 60 } },
+      { level: 7, desc: '受致命伤害时，100%锁血，获得90%HP护盾（触发后3回合冷却）', bonus: { deathSave: 100, deathShield: 90 } },
+      { level: 10, desc: '锁血时护盾提升至150%HP（触发后2回合冷却）', bonus: { deathSave: 100, deathShield: 150 } }
     ]
   },
   phoenix: {
     name: '不死鸟', loreName: '不死鸟',
     thresholds: [
-      { level: 1, bonus: { reviveChance: 35, reviveDmg: 15, fireDmg: 20, lifestealPercent: 8 } },
-      { level: 3, bonus: { reviveChance: 55, reviveDmg: 30, fireDmg: 40, lifestealPercent: 15 } },
-      { level: 5, bonus: { reviveChance: 80, reviveDmg: 50, fireDmg: 70, lifestealPercent: 22 } },
-      { level: 7, bonus: { reviveChance: 100, reviveCD: 6, reviveDmg: 70, fireDmg: 110, lifestealPercent: 30 } },
-      { level: 10, bonus: { reviveChance: 100, reviveCD: 3, reviveDmg: 100, fireDmg: 160, lifestealPercent: 40 } }
+      { level: 1, desc: '死亡时35%概率复活(35%HP)；火焰伤害+20%，吸血+8%', bonus: { reviveChance: 35, reviveDmg: 15, fireDmg: 20, lifestealPercent: 8 } },
+      { level: 3, desc: '死亡时55%概率复活(50%HP)；火焰伤害+40%，吸血+15%', bonus: { reviveChance: 55, reviveDmg: 30, fireDmg: 40, lifestealPercent: 15 } },
+      { level: 5, desc: '死亡时80%概率复活(65%HP)；火焰伤害+70%，吸血+22%', bonus: { reviveChance: 80, reviveDmg: 50, fireDmg: 70, lifestealPercent: 22 } },
+      { level: 7, desc: '死亡时100%复活(80%HP)，冷却6回合；火焰伤害+110%，吸血+30%', bonus: { reviveChance: 100, reviveCD: 6, reviveDmg: 70, fireDmg: 110, lifestealPercent: 30 } },
+      { level: 10, desc: '复活冷却减至3回合；火焰伤害+160%，吸血+40%', bonus: { reviveChance: 100, reviveCD: 3, reviveDmg: 100, fireDmg: 160, lifestealPercent: 40 } }
     ]
   },
   swiftWind: {
     name: '疾风', loreName: '疾风',
     thresholds: [
-      { level: 1, bonus: { speed: 20, dodge: 8 } },
-      { level: 3, bonus: { speed: 45, dodge: 15 } },
-      { level: 5, bonus: { speed: 80, dodge: 25 } },
-      { level: 7, bonus: { speed: 130, dodge: 40 } },
-      { level: 10, bonus: { speed: 200, dodge: 60 } }
+      { level: 1, desc: '速度+20，闪避率+8%', bonus: { speed: 20, dodge: 8 } },
+      { level: 3, desc: '速度+45，闪避率+15%', bonus: { speed: 45, dodge: 15 } },
+      { level: 5, desc: '速度+80，闪避率+25%', bonus: { speed: 80, dodge: 25 } },
+      { level: 7, desc: '速度+130，闪避率+40%', bonus: { speed: 130, dodge: 40 } },
+      { level: 10, desc: '速度+200，闪避率+60%', bonus: { speed: 200, dodge: 60 } }
     ]
   }
 }
-
 export const AFFIX_IDS = Object.keys(AFFIX_EFFECTS)
 
 // ========== 品质规则 ==========

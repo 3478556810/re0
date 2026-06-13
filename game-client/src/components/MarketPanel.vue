@@ -127,6 +127,12 @@ import { useGameStore } from '@/store/gameStore'
 const emit = defineEmits(['close'])
 const store = useGameStore()
 const showToast = inject('showToast', (msg) => alert(msg))
+const showConfirm = inject('showConfirm', (msg) => {
+  return new Promise((resolve) => {
+    const ok = window.confirm(msg)
+    resolve(ok)
+  })
+})
 
 const activeTab = ref('browse')
 const userId = computed(() => store.player.id || 'test-user')
@@ -171,7 +177,7 @@ async function fetchMarket() {
 }
 
 async function buyItem(item) {
-  if (!confirm(`确定购买 ${item.item_data?.name || item.item_id} x1，花费 ${item.price}G 吗？`)) return
+  if (!await showConfirm(`确定购买 ${item.item_data?.name || item.item_id} x1，花费 ${item.price}G 吗？`)) return
 
   try {
     const res = await fetch('/api/market/buy', {
@@ -180,7 +186,16 @@ async function buyItem(item) {
       body: JSON.stringify({ listingId: item.id, quantity: 1 })
     })
     const data = await res.json()
-    if (data.success) {
+   if (data.success) {
+  // 更新本地列表
+  const idx = marketItems.value.findIndex(i => i.id === item.id)
+  if (idx !== -1) {
+    if (item.quantity === 1) {
+      marketItems.value.splice(idx, 1) // 卖掉唯一一个就删除
+    } else {
+      marketItems.value[idx].quantity-- // 减少库存
+    }
+  }
       showToast('购买成功')
       store.player.gold -= data.paid
       store.save()
@@ -208,7 +223,7 @@ async function fetchMyListings() {
 }
 
 async function cancelListingById(listingId) {
-  if (!confirm('确定下架该物品吗？')) return
+ if (!await showConfirm('确定下架该物品吗？')) return
   try {
     const res = await fetch('/api/market/cancel', {
       method: 'POST',
@@ -270,6 +285,7 @@ async function confirmList() {
     const data = await res.json()
     if (data.success) {
       showToast('上架成功')
+
       // 本地扣除物品
       const invItem = store.inventory.find(i => i.id === selectedItem.value.id)
       if (invItem) {
@@ -279,8 +295,27 @@ async function confirmList() {
         }
         store.save()
       }
+
+      // 立即将新上架的物品添加到市场列表头部（避免重新请求整个列表）
+      const newListing = {
+        id: data.listing.id,
+        seller_id: userId.value,
+        item_id: payload.itemId,
+        item_data: payload.itemData,
+        price: payload.price,
+        quantity: payload.quantity,
+        status: 'active',
+        created_at: new Date().toISOString()
+      }
+      // 如果当前排序是“最新”，插入头部；否则插入尾部
+      if (sortBy.value === 'newest') {
+        marketItems.value.unshift(newListing)
+      } else {
+        marketItems.value.push(newListing)
+      }
+
       cancelListing()
-      fetchMarket()
+      // 同时刷新我的列表
       if (activeTab.value === 'mine') fetchMyListings()
     } else {
       showToast(data.error || '上架失败')
