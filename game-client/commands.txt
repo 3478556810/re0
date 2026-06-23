@@ -1,4 +1,0 @@
-edge-tts --text "你睁开了双眼，发现自己身处昏暗的洞窟中。" --voice ja-JP-NanamiNeural --write-media "public/voice/narrator_start.mp3"
-edge-tts --text "「你终于醒了！我叫芙蕾雅，是来救你的。」" --voice ja-JP-NanamiNeural --write-media "public/voice/freyja_meet_freyja.mp3"
-edge-tts --text "「前方有史莱姆挡住了去路。怎么办？」" --voice ja-JP-NanamiNeural --write-media "public/voice/freyja_tutorial_choice.mp3"
-... 你的每一句剧情文本
