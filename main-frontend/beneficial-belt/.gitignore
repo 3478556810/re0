@@ -1,0 +1,30 @@
+# build output
+dist/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+
+# environment variables
+
+.env.production
+
+# macOS-specific files
+.DS_Store
+
+# jetbrains setting folder
+.idea/
+# 环境变量（包含 API Key 和敏感配置）
+.env
+
+# 杉汐的长期记忆数据（独立于项目，且为私密数据）
+shanxi_data/
+
+# Agent 前端编程能力测试产物（实测生成，不进版本控制）
+src/components/__agent_test__/

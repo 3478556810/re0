@@ -1,0 +1,80 @@
+# 编译产物
+*.o
+*.obj
+*.exe
+*.out
+*.a
+*.so
+*.dll
+*.dylib
+*.pyc
+*.lnk
+advisor
+main-backend/advisor
+main-backend/server
+main-backend/shanxi-server
+
+# 构建目录
+/build/
+/dist/
+/target/
+/bin/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+*.onnx
+
+# 依赖目录
+/node_modules/
+/vendor/
+/AAP/
+
+# 环境配置
+.env
+.env.local
+.npmrc
+.bfg-report/
+..bfg-report/
+bfg.jar
+
+# 日志
+*.log
+/logs/
+
+# Python 缓存
+__pycache__/
+
+# agent / AI 工具配置（不进仓库）
+.claude/
+.mimocode/
+.agents/
+.hermes/
+.clinerules/
+
+# 工具输出
+.aurora/
+opencode/
+
+# Go 构建缓存
+.gocache/
+
+# 临时测试文件
+login-test.html
+test.c
+
+# 本地模型文件
+main-backend/models/
+*.gguf
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.onnx

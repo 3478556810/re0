@@ -1,0 +1,3657 @@
+/* 聊天窗主题：颜色全部引用 <html> inline style 注入的 --app-*（由 useTheme.js 运行时写入），
+   跟随多主题色板×明暗。不再在此定义 --chat-*（scoped 下 :root 取不到 <html> 值）。
+   仅保留纯几何变量。 */
+:root {
+  --chat-radius-xl: 22px;
+  --chat-radius-lg: 18px;
+  --chat-radius-md: 14px;
+  --chat-radius-sm: 10px;
+}
+
+.chat-window {
+  position: fixed;
+  bottom: 60px;
+  right: 80px;
+  width: 480px;
+  height: 640px;
+  max-height: 85vh;
+  background: var(--chat-bg);
+  border: 1px solid var(--chat-border);
+  border-radius: var(--chat-radius-xl);
+  box-shadow: var(--chat-shadow);
+  z-index: 9998;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--chat-text);
+  font-family: var(--app-font);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+.chat-window.expanded {
+  width: 100vw;
+  height: 100vh;
+  max-height: 100vh;
+  top: 0;
+  left: 0;
+  right: auto;
+  bottom: auto;
+  transform: none;
+  border-radius: 0;
+}
+
+.chat-header {
+  background: var(--chat-header-bg);
+  border-bottom: 1px solid var(--chat-border);
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--chat-text);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.header-left :deep(.pulse-wrapper) {
+  position: relative;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.header-name {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--chat-text);
+  letter-spacing: 0.1px;
+}
+
+.status-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+  min-width: 0;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: #34a853;
+}
+
+.status-text {
+  font-size: 11px;
+  color: var(--chat-text-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  margin-left: auto;
+}
+
+.chat-close-button,
+.chat-expand-button,
+.voice-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--chat-text-soft);
+  transition: color 0.15s ease, transform 0.15s ease, opacity 0.15s ease;
+}
+
+.chat-close-button:hover,
+.chat-expand-button:hover,
+.voice-btn:hover {
+  color: var(--chat-text);
+}
+
+.chat-close-button {
+  font-size: 20px;
+}
+
+.chat-expand-button {
+  font-size: 18px;
+  margin-right: 4px;
+}
+
+.chat-messages {
+  flex: 1;
+ position: relative;
+overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: none;
+  background: transparent;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(107, 99, 89, 0.28) transparent;
+ /* 两层遮罩叠加：基础渐变 + 边缘光晕 */
+  mask-image: 
+    linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.3) 0%,
+      rgba(0,0,0,0.8) 30px,
+      black 80px,
+      black calc(100% - 60px),
+      rgba(0,0,0,0.8) calc(100% - 30px),
+      rgba(0,0,0,0.3) 100%
+    );
+  -webkit-mask-image: 
+    linear-gradient(
+      to bottom,
+      rgba(0,0,0,0.3) 0%,
+      rgba(0,0,0,0.8) 30px,
+      black 80px,
+      black calc(100% - 60px),
+      rgba(0,0,0,0.8) calc(100% - 30px),
+      rgba(0,0,0,0.3) 100%
+    );
+
+}
+
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background: rgba(107, 99, 89, 0.24);
+  border-radius: 999px;
+}
+
+.message-row {
+  display: flex;
+
+  margin-bottom: 12px;
+}
+
+.message-row.user {
+  justify-content: flex-start;
+}
+
+.message-row.bot {
+  justify-content: flex-start;
+}
+.msg-avatar,
+.msg-avatar-header {
+  flex-shrink: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  box-shadow: none;
+}
+
+.message {
+
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+  font-size: 15px;
+  line-height: 1.72;
+  animation: fadeIn 0.22s ease;
+  letter-spacing: 0.1px;
+}
+
+.message.user {
+  background: var(--chat-user-bg);
+  color: var(--chat-user-text);
+  align-self: flex-end;
+  border-radius: 18px 18px 6px 18px;
+  padding: 10px 14px;
+  border: 1px solid rgba(160, 149, 131, 0.18);
+  box-shadow: none;
+}
+
+.message.bot {
+  background: transparent;
+  color: var(--app-text);
+  align-self: flex-start;
+  border: none;
+  box-shadow: none;
+  padding: 2px 0;
+  border-radius: 0;
+}
+
+.chat-input-area {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  padding: 12px 16px 14px;
+  background: transparent;
+  border-top: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+
+
+.input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  width: 100%;
+}
+
+.chat-input {
+  flex: 1;
+min-height: 90px !important;
+  max-height: 200px;
+  resize: none;
+  overflow-y: auto;
+ padding: 16px 48px 24px 48px !important;
+  font-size: 15px;
+  line-height: 1.6;
+  border: 1px solid var(--chat-border-strong);
+  border-radius: 24px;
+  background: var(--app-surface);
+  color: var(--chat-text);
+  outline: none;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  font-family: var(--app-font);
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: var(--chat-border-strong);
+  background: var(--app-surface);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.chat-input::placeholder {
+  color: rgba(43, 42, 42, 0.249);
+  font-style: italic;
+  letter-spacing: 0.2px;
+  transition: color 0.3s ease;
+}
+.chat-input:focus::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+} 
+
+
+.input-inner-btn {
+  position: absolute;
+  bottom: 4px;
+  width: 8px;
+  height: 8px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 2;
+  background: var(--app-surface);
+  transition: all 0.15s ease;
+}
+
+.input-left-btn {
+  left: 12px;
+}
+
+.input-param-btn {
+  left: 44px;
+  background: transparent;
+}
+
+.input-right-btn {
+  right: 12px;
+}
+
+.input-send-btn {
+  background: var(--chat-accent);
+  color: #fff;
+}
+
+.input-send-btn:hover {
+  background: var(--chat-accent-hover);
+}
+
+.input-voice-btn.recording {
+  background: #ef4444;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3);
+}
+
+.ds-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--chat-border-strong);
+  background: var(--chat-surface-strong);
+  color: var(--chat-text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.ds-btn:hover {
+  background: var(--app-surface);
+  color: var(--chat-text);
+  border-color: var(--app-border);
+}
+
+.ds-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.ds-btn-send {
+  background: var(--chat-accent);
+  color: #fff;
+  border-color: var(--chat-accent);
+}
+
+.ds-btn-send:hover {
+  background: var(--chat-accent-hover);
+  border-color: var(--chat-accent-hover);
+  color: #fff;
+}
+
+.ds-btn-msg {
+  width: 26px;
+  height: 26px;
+  margin-left: 6px;
+  opacity: 0.65;
+  border: none;
+  background: transparent;
+  border-radius: 999px;
+}
+
+.ds-btn-msg:hover {
+  opacity: 1;
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.ds-btn .el-icon {
+  color: inherit;
+}
+
+.chat-toggle-button {
+  position: fixed;
+  top: 50%;
+  right: 24px;
+  transform: translateY(-50%);
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background: var(--chat-accent);
+  box-shadow: 0 8px 22px rgba(201, 100, 66, 0.22);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 1000;
+  border: none;
+}
+
+.chat-toggle-button:hover {
+  transform: translateY(-50%) scale(1.05);
+  box-shadow: 0 12px 28px rgba(201, 100, 66, 0.28);
+}
+
+.chat-toggle-button .iconify {
+  width: 28px;
+  height: 28px;
+  color: white;
+}
+
+.debug-panel {
+  margin: 0 16px 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--chat-border);
+  font-size: 13px;
+  color: var(--chat-text-muted);
+}
+
+.debug-panel summary {
+  cursor: pointer;
+  color: var(--chat-text);
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.debug-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.debug-controls label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.debug-controls input[type="range"] {
+  width: 80px;
+  accent-color: var(--chat-accent);
+}
+
+.debug-controls select,
+.debug-controls input[type="number"] {
+  padding: 4px 8px;
+  border: 1px solid var(--chat-border-strong);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--chat-text);
+}
+
+.debug-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  margin-top: 8px;
+  color: var(--chat-text-muted);
+  font-size: 13px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.debug-refresh-btn {
+  padding: 4px 12px;
+  border: 1px solid var(--chat-border-strong);
+  border-radius: 8px;
+  background: var(--app-surface);
+  color: var(--chat-text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-left: auto;
+}
+
+.debug-refresh-btn:hover {
+  background: var(--app-surface);
+  border-color: var(--app-border);
+  color: var(--chat-text);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* 消息气泡 — 仅控制宽度、背景、字体 */
+.message-bubble {
+  max-width: 75%;            /* 桌面端适中，可视情况微调 */
+  word-wrap: break-word;
+  padding: 10px 16px;
+  line-height: 1.7;
+  font-size: 15px;
+  border-radius: 18px;
+}
+
+/* 用户气泡 — 主题色渐变边框 + 入场动画 */
+.message-bubble.user {
+  --_accent: var(--app-accent);
+  width: 100%;
+  max-width: 100%;
+  color: var(--app-text);
+  border: none;
+  padding: 11px 17px;
+  border-radius: 25px;
+  line-height: 1.6;
+  text-align: left;
+  position: relative;
+  background:
+    linear-gradient(var(--app-surface), var(--app-surface)) padding-box,
+    linear-gradient(135deg,
+      var(--_accent) 0%,
+      color-mix(in srgb, var(--_accent) 25%, transparent) 50%,
+      var(--_accent) 100%) border-box;
+  border: 2px solid transparent;
+  box-shadow:
+    0 1px 3px rgba(0,0,0,0.04),
+    0 0 0 1px color-mix(in srgb, var(--_accent) 12%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--_accent) 6%, transparent);
+  animation: userMsgIn 0.32s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* 导航轴选中用户消息：柔和主题色光晕，无硬线圈、无动画、不跳动 */
+.message-bubble.user.active {
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.04),
+    0 0 0 1px color-mix(in srgb, var(--app-accent) 28%, transparent),
+    0 0 20px color-mix(in srgb, var(--app-accent) 22%, transparent),
+    inset 0 1px 0 color-mix(in srgb, var(--app-accent) 8%, transparent);
+}
+
+@keyframes userMsgIn {
+  from { opacity: 0; transform: translateY(6px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* 用户气泡右上角的「编辑并重新发送」按钮：默认隐藏，悬浮气泡才淡入。
+   贴在右上角、带浅底，避免压在正文上看不清。 */
+.message-bubble.user .msg-edit-btn {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  color: var(--app-accent);
+  background: color-mix(in srgb, var(--app-accent) 10%, var(--app-surface));
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity 0.14s ease, transform 0.14s ease, background 0.14s ease;
+  pointer-events: none;
+}
+.message-bubble.user:hover .msg-edit-btn {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+.message-bubble.user .msg-edit-btn:hover {
+  background: color-mix(in srgb, var(--app-accent) 20%, var(--app-surface));
+}
+/* 触屏没有 hover，常驻一个弱化态，保证也能点到 */
+@media (hover: none) {
+  .message-bubble.user .msg-edit-btn { opacity: 0.5; pointer-events: auto; transform: none; }
+}
+
+/* 编辑态：消息框就地变输入框 */
+.message-bubble.user .msg-edit-input {
+  display: block;
+  width: 100%;
+  border: none;
+  outline: none;
+  background: transparent;
+  resize: none;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  padding-right: 30px;        /* 给右上角发送按钮让位，文字不钻到按钮底下 */
+  font: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+/* 编辑态右上角按钮变「发送」：实心主题色、常驻可见（不靠 hover） */
+.message-bubble.user .msg-edit-btn.confirm {
+  color: #fff;
+  background: var(--app-accent);
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+.message-bubble.user .msg-edit-btn.confirm:hover {
+  background: var(--app-accent);
+  filter: brightness(1.06);
+}
+
+/* 助手气泡 — 羊皮纸质感 */
+.message-bubble.bot {
+  background: var(--app-surface);
+  color: var(--app-text);
+  border: 1px solid var(--app-border);
+  font-family: var(--app-font);
+}
+
+/* AI 消息：全宽文章区块，无背景无边框 */
+.assistant-message {
+  width: 100%;
+  padding: 8px 0;
+  color: var(--app-text);
+  font-size: 16px;
+  line-height: 1.75;
+  word-wrap: break-word;
+}
+
+/* 消息行（保持 flex 对齐） */
+.message-row.user {
+  justify-content: flex-start;
+}
+.message-row.bot {
+  justify-content: flex-start;
+}
+
+
+/* 消息行改为垂直排列，不设置 flex 方向（已经是 block 或 flex column） */
+.message-row {
+  display: flex;
+  width: 100%;
+  margin-bottom: 12px;
+}
+
+.message-row.user {
+  justify-content: flex-start;
+}
+
+.message-row.bot {
+  justify-content: flex-start; /* 助手文本贴在容器左侧 */
+}
+
+/* 助手文章块：左对齐，无背景 */
+.assistant-message {
+  width: 100%;
+  text-align: left;
+  padding: 8px 0;
+  color: var(--app-text);
+  font-size: 16px;
+  line-height: 1.75;
+}
+
+/* 用户气泡（保留首处定义的动画样式） */
+
+.chat-window.expanded .header-name {
+  letter-spacing: 0;
+}
+
+.chat-window.expanded .status-text {
+  max-width: 360px;
+}
+
+.chat-window.expanded .chat-header {
+  padding-left: 18px;
+  padding-right: 18px;
+}
+
+.chat-window.expanded .msg-avatar-header {
+  width: 28px;
+  height: 28px;
+}
+
+.chat-window.expanded .message.bot {
+  max-width: 100%;
+}
+
+.chat-window.expanded .message.user {
+  max-width: 100%;
+}
+
+.chat-window .message-row.bot {
+  justify-content: flex-start;
+}
+
+.chat-window .message-row.user {
+  justify-content: flex-start;
+}
+
+.chat-window .message.bot {
+  text-align: left;
+}
+
+.chat-window .message.user {
+  text-align: left;
+}
+
+.chat-window .markdown-body img {
+  max-width: 100%;
+  border-radius: 14px;
+  border: 1px solid var(--app-border);
+}
+
+.chat-window .markdown-body hr {
+  border: 0;
+  border-top: 1px solid var(--app-border);
+  margin: 16px 0;
+}
+
+.chat-window .markdown-body strong {
+  color: var(--app-text);
+  font-weight: 600;
+}
+
+.chat-window .markdown-body em {
+  color: var(--app-text);
+}
+
+.chat-window .markdown-body pre[data-lang]::before {
+  content: attr(data-lang);
+  position: absolute;
+  top: 0.5em;
+  left: 1em;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--app-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+.chat-window .markdown-body pre {
+  position: relative;
+}
+
+.chat-window .markdown-body table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.chat-window .relevant-empty-state,
+.chat-window .empty-state {
+  color: var(--app-text-faint);
+  font-size: 13px;
+}
+
+.chat-header {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: var(--app-surface);
+  border-bottom: 1px solid var(--app-border);
+  padding: 10px 12px;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+   background: rgba(var(--app-surface-rgb), 0.9);  /* 白底半透明 */
+     backdrop-filter: blur(12px) saturate(1.8);
+  -webkit-backdrop-filter: blur(12px) saturate(1.8);
+  border-bottom: 1px solid rgba(229, 229, 229, 0.7);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.header-menu-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--app-text-soft);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.header-menu-btn:hover {
+  background: var(--app-surface);
+  color: var(--app-text);
+}
+
+.chat-layout {
+  position: relative;
+}
+
+.chat-sidebar-backdrop {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  z-index: 20;
+}
+
+.chat-sidebar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 240px;
+  background: var(--app-surface);
+  border-right: 1px solid var(--app-border);
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.06);
+  transform: translateX(-102%);
+  transition: transform 0.18s ease;
+  z-index: 30;
+  overflow: auto;
+}
+
+.chat-sidebar.open {
+  transform: translateX(0);
+}
+
+.chat-sidebar h4 {
+  margin: 0;
+  padding: 14px 16px 10px;
+  font-size: 12px;
+  color: var(--app-text-faint);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.chat-sidebar a {
+  display: block;
+  padding: 10px 16px;
+  color: var(--app-text);
+  text-decoration: none;
+  border-radius: 10px;
+  margin: 4px 10px;
+}
+
+.chat-sidebar a:hover {
+  background: var(--app-surface-3);
+}
+
+.assistant-message {
+  position: relative;
+  padding-bottom: 6px;
+}
+
+.assistant-tools {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  display: flex;
+}
+
+/* agentflow 一条消息 = 工作流面板 + 底部工具栏，竖着排。
+   .message-row 是 flex-direction:row，不包这一层的话工具栏会被当成第二个
+   flex item 塞到面板右边，还被 align stretch 拉成整条高的窄竖条（看着就像没有）。 */
+.agentflow-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+/* agentflow 回复的朗读/复制栏：跟 .assistant-tools 同一套按钮，但这里走正常文档流
+   （工作流卡片是块级内容，绝对定位会盖在正文上） */
+.flow-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-top: 2px;
+  padding-left: 2px;
+  flex: 0 0 auto;   /* 别被父容器拉高 */
+}
+
+.tool-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+
+.assistant-message:hover .tool-btn {
+  opacity: 0.6;
+}
+
+.tool-btn:hover {
+  opacity: 1 !important;
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.copy-toast {
+  position: fixed;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(52, 51, 51, 0.75);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  z-index: 1000;
+  pointer-events: none;
+  animation: copyFadeIn 0.2s ease;
+}
+
+@keyframes copyFadeIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(4px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+.message-bubble.user {
+  font-family: var(--app-font);
+}
+
+.recalling-text {
+  margin-left: 6px;
+  color: var(--app-text-soft);
+  font-size: 13px;
+}
+
+.recalling-dots {
+  display: inline-flex;
+  margin-left: 2px;
+}
+
+.recalling-dots .dot {
+  font-weight: bold;
+  color: var(--app-text-soft);
+  animation: dotBounce 1.2s infinite ease-in-out;
+}
+
+.recalling-dots .dot:nth-child(1) { animation-delay: 0s; }
+.recalling-dots .dot:nth-child(2) { animation-delay: 0.2s; }
+.recalling-dots .dot:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes dotBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+
+.message-bubble.user {
+  font-family: var(--app-font);
+}
+
+/* ==================== 侧边栏面板 ==================== */
+.drawer-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 260px;
+  background: var(--app-surface);
+  border-right: 1px solid var(--app-border);
+  box-shadow: 8px 0 24px rgba(0, 0, 0, 0.04);
+  transform: translateX(-100%);
+  transition: transform 0.2s ease-out;
+  z-index: 250;
+  padding: 16px 0;
+  overflow-y: auto;
+}
+.drawer-panel.open {
+  transform: translateX(0);
+}
+.drawer-panel a {
+  display: flex;
+  align-items: center;
+  padding: 10px 20px;
+  color: var(--app-text);
+  text-decoration: none;
+  border-radius: 10px;
+  margin: 4px 10px;
+  transition: background 0.15s ease;
+}
+.drawer-panel a:hover {
+  background: var(--app-surface-3);
+}
+
+/* ==================== 抽屉遮罩 ==================== */
+.drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 200;
+}
+
+/* ==================== 主内容区 ==================== */
+.chat-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(0);
+  transition: transform 0.2s ease-out;
+  min-width: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.chat-main.shifted {
+  transform: translateX(260px);
+}
+.chat-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+}
+.chat-input-area {
+  flex-shrink: 0;
+}
+
+/* ==================== 星星主图标 ==================== */
+.site-icon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 20px 14px 29px;
+  margin: 0 0 4px 0;
+  cursor: pointer;
+  color: var(--app-text-soft);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  user-select: none;
+  border-bottom: 1px solid var(--app-border);
+}
+.site-icon svg {
+  color: var(--app-accent);
+  animation: starFloat 3.5s ease-in-out infinite;
+  transform-origin: center;
+  transition: transform 0.25s ease, color 0.25s ease;
+}
+@keyframes starFloat {
+  0%   { transform: scale(1) rotate(0deg); opacity: 0.8; }
+  50%  { transform: scale(1.1) rotate(3deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0deg); opacity: 0.8; }
+}
+.site-icon:hover svg {
+  transform: scale(1.2) rotate(6deg);
+  color: #b85737;
+}
+.site-icon:active svg {
+  transform: scale(0.9) rotate(0deg);
+  color: #a04a2e;
+}
+
+/* ==================== 分隔线 ==================== */
+.drawer-divider {
+  height: 1px;
+  background: var(--app-surface-3);
+  margin: 12px 16px;
+}
+
+/* ==================== 阅读器全屏浮层 ==================== */
+.reader-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 99990;
+  background: var(--app-surface);
+  display: flex;
+  flex-direction: column;
+}
+.reader-overlay-close {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(var(--app-surface-rgb), 0.85);
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+.reader-overlay-close:hover {
+  background: var(--app-surface-3);
+}
+.reader-overlay-body {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+/* BookShelf 在浮层里需要撑满高度并留白 */
+.reader-overlay-body .shelf-root {
+  height: 100%;
+  overflow-y: auto;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+/* ==================== 新建对话按钮 ==================== */
+.new-session-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  margin: 0 12px 8px;
+  border-radius: 12px;
+  background: var(--app-surface);
+  border: 1px solid rgba(0,0,0,0.06);
+  cursor: pointer;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
+  font-size: 13px;
+  color: var(--app-text);
+}
+.new-session-btn:hover {
+  background: var(--app-surface);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+
+/* ==================== 会话列表 ==================== */
+.session-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 8px;
+}
+.session-list::-webkit-scrollbar {
+  width: 6px;
+}
+.session-list::-webkit-scrollbar-thumb {
+  background: rgba(0,0,0,0.15);
+  border-radius: 4px;
+}
+.session-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(0,0,0,0.25);
+}
+.session-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ==================== 单个会话项 ==================== */
+.session-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+  margin-bottom: 2px;
+  position: relative;
+}
+.session-item:hover {
+  background: var(--app-surface-3);
+  transform: translateX(4px);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+}
+.session-item.active {
+  background: var(--app-surface-3);
+  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.08);
+}
+.session-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.session-title {
+  font-size: 13px;
+  color: var(--app-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.session-time {
+  font-size: 11px;
+  color: var(--app-text-faint);
+}
+
+/* ==================== 三点按钮 ==================== */
+.session-menu-wrapper {
+  position: relative;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+.session-menu-btn {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+.session-menu-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+/* ★ 三点菜单（固定定位，飞出侧边栏，不被裁剪） */
+.session-menu-dropdown {
+  position: fixed;
+  background: rgba(var(--app-surface-rgb),0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  min-width: 120px;
+  overflow: hidden;
+  z-index: 9999;
+  transform-origin: top right;
+  animation: dropdownScale 0.18s ease;
+}
+@keyframes dropdownScale {
+  0%   { transform: scale(0.92); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+.session-menu-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 8px 14px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--app-text);
+  text-align: left;
+  cursor: pointer;
+}
+.session-menu-dropdown button:hover {
+  background: var(--app-surface-3);
+}
+
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.15);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10000;
+}
+.confirm-dialog {
+  background: rgba(255,251,245,0.9);
+  backdrop-filter: blur(12px);
+  border-radius: 16px;
+  padding: 24px;
+  max-width: 300px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+  text-align: center;
+}
+.confirm-dialog p {
+  color: var(--app-text);
+  margin: 0 0 20px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+.confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+.confirm-actions button {
+  border: none;
+  padding: 8px 20px;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.btn-cancel {
+  background: var(--app-surface-3);
+  color: var(--app-text);
+}
+.btn-cancel:hover {
+  background: var(--app-surface-3);
+}
+.btn-delete {
+  background: #c96442;
+  color: #fff;
+}
+.btn-delete:hover {
+  background: #b85737;
+}
+
+
+.rename-input {
+  width: 80%;
+  padding: 8px 12px;
+  margin: 12px 0;
+  border: 1px solid var(--app-border);
+  border-radius: 8px;
+  font-size: 14px;
+  outline: none;
+  background: var(--app-surface);
+}
+.rename-input:focus {
+  border-color: #c96442;
+}
+
+
+/* ==================== 字体统一调大（对齐 Claude 风格） ==================== */
+
+/* 用户气泡 */
+.message-bubble.user {
+  font-size: 17px;           /* 原 15px */
+  line-height: 1.75;         /* 原 1.6 */
+}
+
+/* 助手消息 */
+.assistant-message {
+  font-size: 17px;           /* 原 16px */
+  line-height: 1.75;
+}
+
+/* 星核记忆面板标题 */
+.memory-panel-header {
+  font-size: 18px;           /* 原 16px */
+}
+
+/* 记忆卡片 ID / role 行 */
+.memory-card-meta {
+  font-size: 14px;           /* 原 12px */
+}
+
+/* 记忆卡片正文 */
+.memory-card-content {
+  font-size: 15px;           /* 原 13px */
+  line-height: 1.6;
+}
+
+/* 情绪标签 */
+.memory-card-emotion {
+  font-size: 13px;           /* 原 11px */
+}
+
+
+
+/* 侧栏会话标题 */
+.session-title {
+  font-size: 15px;           /* 原 13px */
+}
+
+/* 侧栏会话时间 */
+.session-time {
+  font-size: 13px;           /* 原 11px */
+}
+
+/* 新增：项目任务树样式 */
+.project-task-tree {
+  margin-top: 8px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+.tree-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--app-text-soft);
+  border-bottom: 1px solid var(--app-border);
+  margin-bottom: 8px;
+}
+
+.project-item, .subtask-item {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  border-radius: 6px;
+  margin: 2px 6px;
+  font-size: 13px;
+  color: var(--app-text);
+}
+
+.project-item:hover, .subtask-item:hover {
+  background: var(--app-surface-3);
+}
+
+.project-item.active, .subtask-item.active {
+  background: var(--app-surface-3);
+  font-weight: 600;
+}
+
+.expand-icon {
+  margin-right: 4px;
+}
+
+.subtask-list {
+  padding-left: 28px;
+}
+
+.subtask-item {
+  font-size: 12px;
+  color: var(--app-text);
+}
+
+/* 顶部栏项目面包屑 */
+.project-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--app-text);
+  padding: 4px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+}
+
+.project-breadcrumb:hover {
+  background: var(--app-surface-3);
+}
+
+.breadcrumb-separator {
+  color: var(--app-text-faint);
+  margin: 0 4px;
+}
+
+.task-current {
+  color: var(--app-text-soft);
+  font-weight: 400;
+}
+
+/* 任务下拉菜单 */
+.task-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  z-index: 110;
+  min-width: 200px;
+  padding: 8px 0;
+}
+
+.dropdown-project {
+  padding: 4px 0;
+}
+
+.dropdown-project-name {
+  display: flex;
+  align-items: center;
+  padding: 6px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--app-text);
+  cursor: pointer;
+}
+
+.dropdown-project-name:hover {
+  background: var(--app-surface-3);
+}
+
+.dropdown-task {
+  padding: 6px 16px 6px 44px;
+  font-size: 12px;
+  color: var(--app-text);
+  cursor: pointer;
+}
+
+.dropdown-task:hover {
+  background: var(--app-surface-3);
+}
+
+.dropdown-task.active {
+  background: var(--app-surface-3);
+  font-weight: 600;
+}
+
+/* 确保顶部栏相对定位以容纳下拉 */
+.chat-header {
+  position: relative;
+}
+
+/* 其余样式保持不变 */
+.input-model-btn {
+  left: 44px;
+}
+
+.model-menu {
+  position: absolute;
+  bottom: 50px;
+  left: 44px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  z-index: 100;
+  min-width: 140px;
+  overflow: hidden;
+}
+
+.model-option {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--app-text);
+  transition: background 0.15s;
+}
+
+.model-option:hover {
+  background: var(--app-surface-3);
+}
+
+.model-option.active {
+  background: var(--app-surface-3);
+  font-weight: 600;
+}
+.chat-body { display: flex; flex: 1; overflow: hidden; }
+
+.chat-body {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+.chat-content {
+  flex: 1;
+  width: auto !important;        /* 强制覆盖可能存在的 width:100% */
+  max-width: none !important;    /* 移除固定最大宽度 */
+  min-width: 0;                  /* 允许收缩 */
+  overflow: hidden;
+}
+/* 确保编辑器面板占用右侧空间，宽度自适应 */
+.chat-body > .code-editor-panel {
+  flex: 1;
+  min-width: 0;
+}
+
+/* ==================== 输入框容器 ==================== */
+.input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid var(--app-border);
+  border-radius: 5px;
+  background: var(--app-surface);
+  width: 100%;
+  box-sizing: border-box;
+  position: relative;
+  transition: border-color 0.2s;
+}
+.input-wrapper:focus-within {
+  border-color: #c96442;
+}
+
+.input-inner-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  color: var(--app-text-soft);
+  border-radius: 50%;
+  transition: background 0.2s;
+  z-index: 10;
+}
+.input-inner-btn:hover { background: rgba(0, 0, 0, 0.05); }
+
+.input-send-btn {
+  width: 20px;
+  height: 20px;
+  background: #c96442;
+  color: #fff;
+}
+.input-send-btn:hover { background: #b85737; }
+
+.input-stop-btn {
+  width: 20px;
+  height: 20px;
+  background: #1a1a1a;
+}
+.input-stop-btn:hover { background: #000000; }
+
+.chat-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  background: transparent;
+  padding: 15px 0 !important;
+  resize: none;
+  min-height: 44px;
+  max-height: 150px;
+  line-height: 24px;
+  font-size: 15px;
+  color: var(--app-text);
+  font-family: inherit;
+  box-sizing: border-box;
+  overflow-y: hidden;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  position: relative;
+  z-index: 1;
+}
+.chat-input::-webkit-scrollbar { display: none; }
+.chat-input::placeholder {
+  color: var(--app-text-faint);
+  font-style: italic;
+}
+
+.model-menu-dropdown {
+  position: absolute;
+  bottom: 56px;
+  left: 6px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 6px 0;
+  min-width: 140px;
+  max-height: 320px;
+  overflow-y: auto;
+  z-index: 9999;
+}
+.model-menu-item {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.model-menu-item:hover { background: var(--app-surface-3); }
+.model-menu-item.active { background: var(--app-surface-3); font-weight: 500; }
+
+.header-left {
+  flex: 1;
+  min-width: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+/* ==================== 顶部栏图标按钮（扁平化，仿 Claude） ==================== */
+.header-icon-btn {
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+.header-icon-btn:hover { background: rgba(0, 0, 0, 0.06); }
+.header-icon-btn.active { background: var(--app-surface-3); }
+
+.header-session-name {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--app-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ==================== 折叠栏悬浮菜单（仿 Claude 侧边浮层） ==================== */
+.floating-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 55;
+}
+.floating-menu-panel {
+  position: absolute;
+  top: 52px;
+  left: 12px;
+  width: 280px;
+  max-height: min(560px, calc(100vh - 90px));
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 14px;
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.16);
+  z-index: 56;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.fm-mode-switch {
+  display: flex;
+  gap: 6px;
+  padding: 12px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--app-border);
+}
+.fm-mode-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 6px 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+  border-radius: 8px;
+  color: var(--app-text);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.fm-mode-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.fm-mode-btn.active {
+  background: #1b1a18;
+  color: #fff;
+  border-color: var(--app-text);
+}
+.fm-mode-btn.fm-mode-code.active {
+  background: #c96442;
+  border-color: #c96442;
+}
+.fm-session-area {
+  flex: 1;
+  min-height: 0;
+  max-height: 380px;
+  display: flex;
+}
+.fm-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  border-top: 1px solid var(--app-border);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--app-text-soft);
+  flex-shrink: 0;
+}
+
+.tool-panel-preview-empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--app-text-faint);
+  font-size: 12.5px;
+}
+
+/* ==================== AIStudio 工作区三栏布局 ====================
+   悬浮卡片风（对齐 Claude Code）：整体白底，仅左侧栏与右侧 dock 面板靠边框+阴影
+   做出悬浮卡片效果；中间聊天区保持无边框、与白底融为一体，不做成卡片（否则头部/
+   输入区会被圆角框割裂成上下两截）。 */
+.chat-window.expanded .chat-body.studio .chat-content {
+  flex: 1 !important;
+  width: auto !important;
+  max-width: none !important;
+  min-width: 0;
+  background: var(--app-surface);
+}
+.chat-window.expanded .tool-panel {
+  width: 380px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  /* 透明：右侧不再有白色大矩形，只有里面每个 dock-pane 卡片浮在白底上 */
+  background: transparent;
+  /* 去掉基础规则 .tool-panel 的 border-left——否则透明面板上残留一条贯穿上下的竖线 */
+  border-left: none;
+}
+.chat-window.expanded .tool-panel-meta {
+  font-size: 10.5px;
+  color: var(--app-text-faint);
+  font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+.chat-window.expanded .tool-panel-terminal { border-radius: 0; }
+
+/* AIStudio 中栏头部 */
+.chat-window.expanded .studio-chat-header {
+  height: 48px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--app-border);
+  position: relative;
+}
+.chat-window.expanded .studio-chat-header .sch-name { font-size: 13.5px; font-weight: 700; color: var(--app-text); }
+.chat-window.expanded .studio-chat-header .sch-branch {
+  font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-size: 10.5px;
+  padding: 2px 9px;
+  border-radius: 5px;
+  border: 1px solid var(--app-border);
+  color: var(--app-text-soft);
+  background: var(--app-surface-3);
+}
+.chat-window.expanded .studio-chat-header .sch-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11.5px;
+  color: var(--app-text-soft);
+}
+.chat-window.expanded .studio-chat-header .sch-dot { width: 7px; height: 7px; border-radius: 50%; }
+.chat-window.expanded .studio-chat-header .sch-dot.status-running { background: #c96442; animation: sess-pulse 1.6s ease-in-out infinite; }
+.chat-window.expanded .studio-chat-header .sch-dot.status-done { background: #12b76a; }
+.chat-window.expanded .studio-chat-header .sch-dot.status-idle { background: #94a3b8; }
+.chat-window.expanded .studio-chat-header .sch-spacer { flex: 1; }
+.chat-window.expanded .studio-chat-header .sch-model {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--app-surface-3);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--app-text);
+}
+.chat-window.expanded .studio-chat-header .sch-caret { font-size: 9px; color: var(--app-text-faint); }
+.chat-window.expanded .studio-chat-header .sch-model-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  left: auto;
+  bottom: auto;
+  margin-top: 6px;
+}
+@keyframes sess-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.25); }
+}
+
+.chat-window.expanded .chat-body.studio .chat-content .input-wrapper {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+/* 便签 + 看板娘：悬浮层，不占布局宽度——回到 position:absolute 覆盖在聊天区
+   左下角上。中间那版把它们做成真 flex 栏（自己占 180px 宽，中间聊天列靠 flex:1
+   让位）看着工整，但代价是这一栏空间被永久预留，就算把两个部件都拖走了、栏里
+   空空如也，聊天区照样让不回那 180px——这正是要去掉的"占位区域"。拖动/越界救回
+   的 JS（makeDrag/rescueDragged）边界一直算的是 .chat-body-row 整个工作区，
+   不是这一栏本身，所以改成绝对定位不用动一行 JS。 */
+.studio-side-col {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  width: 180px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end; /* 便签在上、看板娘沉底 */
+  gap: 10px;
+  z-index: 25; /* 盖在聊天内容之上，但低于下拉菜单/审批条(50) */
+  pointer-events: none; /* 容器本身不挡聊天区点击/滚动，子元素各自开 */
+}
+.studio-side-col > * { pointer-events: auto; }
+/* 便签自身写死 width:200px 且是 content-box,放进窄栏会溢出——按栏宽走 */
+.studio-side-col .task-sticky { width: 100%; box-sizing: border-box; }
+/* 栏内元素仍可拖动微调(把手=元素自身)。overflow 不设 hidden,
+   否则往栏外拖会被直接裁掉。 */
+/* z-index 是必须的：这一列在 DOM 里排在聊天区之前，两边都是 auto 的话，
+   一旦拖到聊天内容上面就会被聊天区盖住——元素既看不见也点不到，
+   连"双击复位"都无从下手（用户实际遇到的就是这个死循环）。
+   30 高于聊天内容，又低于下拉菜单/审批条那一层(50)。 */
+.side-drag { cursor: grab; flex-shrink: 0; position: relative; z-index: 30; }
+.side-drag.dragging { cursor: grabbing; user-select: none; z-index: 50; }
+/* 只有被挪动过（nudged）才提示可以复位——没挪过的时候提示纯属噪音。
+   悬浮才显形，双击处理在元素本身上，所以这里不用做成可点的按钮。 */
+.side-drag.nudged::after {
+  content: '双击复位';
+  position: absolute;
+  top: -6px;
+  right: -4px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--app-accent, #6366f1);
+  color: #fff;
+  font-size: 10px;
+  line-height: 1.4;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+.side-drag.nudged:hover::after { opacity: 0.92; }
+/* 看板娘按栏宽缩放,别把 200px 的栏撑爆(组件自身是写死的 240×380)。
+   .live2d-widget 是子组件根元素,会同时带上父组件的 scope id,所以这里选得到。 */
+.studio-side-live2d .live2d-widget { width: 100%; height: 285px; }
+.studio-side-live2d canvas { max-width: 100%; }
+
+
+/* ==================== 顶部栏扁平化 ==================== */
+.chat-header {
+  display: flex; justify-content: space-between; align-items: center;
+  height: 48px; padding: 0 12px 0 16px; border-bottom: 1px solid var(--app-border);
+  background: var(--app-surface); flex-shrink: 0; position: relative; z-index: 20;
+}
+.header-left { display: flex; align-items: center; gap: 4px; }
+.header-session-name { font-size: 13.5px; font-weight: 400; color: var(--app-text); margin-left: 4px; }
+.sch-branch {
+  font-family: "JetBrains Mono", ui-monospace, monospace;
+  font-size: 10.5px; padding: 2px 9px; border-radius: 5px; border: 1px solid var(--app-border);
+  color: var(--app-text-soft); background: var(--app-surface-3); margin-left: 8px;
+}
+.sch-status { display: flex; align-items: center; gap: 5px; font-size: 11.5px; color: var(--app-text-soft); margin-left: 8px; }
+.sch-dot { width: 7px; height: 7px; border-radius: 50%; }
+.sch-dot.status-running { background: #c96442; animation: sess-pulse 1.6s ease-in-out infinite; }
+.sch-dot.status-done { background: #12b76a; }
+.sch-dot.status-idle { background: #a3a3a3; }
+@keyframes sess-pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.25); } }
+
+.header-right { display: flex; align-items: center; gap: 10px; }
+.header-tools-group { display: flex; align-items: center; gap: 2px; }
+.header-icon-btn { background: transparent; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 6px; color: var(--app-text-soft); transition: background 0.15s ease; }
+.header-icon-btn:hover { background: var(--app-surface-3); }
+.header-icon-btn.active { background: var(--app-surface-3); }
+
+/* 不加粗、不带折叠箭头——模型名本身就是可点开的（去掉视觉上的"这是个下拉框"提示） */
+.sch-model { position: relative; display: flex; align-items: center; gap: 4px; background: var(--app-surface); border-radius: 999px; padding: 4px 12px; font-size: 12px; font-weight: 400; cursor: pointer; color: var(--app-text); }
+.model-menu-dropdown { position: absolute; top: 100%; right: 0; margin-top: 6px; background: var(--app-surface); border: 1px solid #d4d4d4; border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); padding: 6px 0; min-width: 140px; max-height: 320px; overflow-y: auto; z-index: 9999; color: var(--app-text); }
+.model-menu-item { display: flex; align-items: center; padding: 8px 16px; font-size: 14px; cursor: pointer; transition: background 0.15s; color: var(--app-text); }
+.model-menu-item:hover { background: var(--app-surface-3); }
+.model-menu-item.active { background: var(--app-surface-3); font-weight: 500; }
+
+/* ---------- 思考强度（Effort）：模型选择器右边的小胶囊 + 点开的 Faster↔Smarter 滑块 ---------- */
+.effort-widget {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--app-surface);
+  border-radius: 999px;
+  padding: 4px 12px;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--app-text);
+}
+.effort-label { color: var(--app-text-soft); }
+.effort-value { font-weight: 600; color: var(--app-accent); }
+.effort-panel {
+  width: 220px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.14);
+  padding: 10px 12px;
+}
+.effort-panel-title { font-size: 11px; color: var(--app-text); margin-bottom: 8px; word-break: break-word; }
+.effort-panel-title b { color: var(--app-accent); font-weight: 600; }
+.effort-slider-row { display: flex; align-items: center; gap: 8px; }
+.effort-end { font-size: 10px; color: var(--app-text-faint); flex-shrink: 0; white-space: nowrap; }
+.effort-slider {
+  flex: 1;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--app-border-soft), var(--app-accent));
+  outline: none;
+  cursor: pointer;
+}
+.effort-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--app-accent);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+.effort-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--app-accent);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+
+/* ---------- Context window 用量：与左侧 toolbar-icon-pill-btn 风格统一 ---------- */
+.context-bar-widget {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.context-bar-widget:hover { background: rgba(0,0,0,0.04); }
+.ctx-bar-text,
+.ctx-bar-pct { display: none; }
+.ctx-reservoir {
+  display: block;
+  flex-shrink: 0;
+  pointer-events: none;
+}
+.ctx-water-body {
+  transition: y 0.4s ease, height 0.4s ease;
+}
+
+/* 模型 pill：仿 Yolo 主题色白字 */
+.sch-model {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, var(--app-accent), var(--app-accent-hover));
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: #fff;
+  white-space: nowrap;
+  transition: filter 0.15s ease;
+}
+.sch-model:hover { filter: brightness(1.05); }
+.sch-model-caret { color: rgba(255,255,255,0.85); flex-shrink: 0; }
+.model-menu-dropdown { position: absolute; top: 100%; right: 0; margin-top: 6px; background: var(--app-surface); border: 1px solid #d4d4d4; border-radius: 12px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08); padding: 6px 0; min-width: 140px; max-height: 320px; overflow-y: auto; z-index: 9999; color: var(--app-text); }
+.model-menu-item { display: flex; align-items: center; padding: 8px 16px; font-size: 14px; cursor: pointer; transition: background 0.15s; color: var(--app-text); }
+.model-menu-item:hover { background: var(--app-surface-3); }
+.model-menu-item.active { background: var(--app-surface-3); font-weight: 500; }
+
+/* 模式 pill：浅底 + 主题色字 */
+.effort-widget {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--app-accent-soft);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--app-accent);
+  white-space: nowrap;
+}
+.effort-value { font-weight: 600; color: var(--app-accent); }
+.effort-panel {
+  width: 220px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.14);
+  padding: 10px 12px;
+}
+.effort-panel-title { font-size: 11px; color: var(--app-text); margin-bottom: 8px; word-break: break-word; }
+.effort-panel-title b { color: var(--app-accent); font-weight: 600; }
+.effort-slider-row { display: flex; align-items: center; gap: 8px; }
+.effort-end { font-size: 10px; color: var(--app-text-faint); flex-shrink: 0; white-space: nowrap; }
+.effort-slider {
+  flex: 1;
+  appearance: none;
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--app-border-soft), var(--app-accent));
+  outline: none;
+  cursor: pointer;
+}
+.effort-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--app-accent);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+.effort-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--app-accent);
+  border: 2px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+  cursor: pointer;
+}
+.ctx-bar-pct { white-space: nowrap; color: var(--app-text); font-weight: 600; font-family: var(--app-font); }
+
+/* ==================== 仿 Claude 折叠栏悬浮菜单 ==================== */
+.floating-menu-backdrop { position: fixed; inset: 0; z-index: 40; }
+.floating-menu-panel { position: absolute; top: calc(100% + 6px); left: 8px; width: 280px; background: var(--app-surface); border: 1px solid var(--app-border); border-radius: 8px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12); z-index: 50; padding: 8px 0; display: flex; flex-direction: column; gap: 4px; }
+.fm-mode-switch { display: flex; align-items: center; gap: 4px; background: var(--app-surface-3); border: 1px solid var(--app-border); border-radius: 8px; padding: 2px; margin: 4px 8px 8px; }
+.fm-mode-btn { flex: 1; text-align: center; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 4px 0; border-radius: 8px; font-size: 12px; font-weight: 500; color: var(--app-text-faint); background: transparent; border: none; cursor: pointer; transition: all 0.2s ease; }
+.fm-mode-btn.active { background: var(--app-surface); color: var(--app-text); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+.fm-mode-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.fm-session-area { padding: 0 8px; max-height: 400px; overflow-y: auto; }
+.fm-footer { display: flex; align-items: center; gap: 10px; padding: 12px 16px 4px; border-top: 1px solid var(--app-border-soft); margin-top: 6px; font-size: 13px; color: var(--app-text); font-weight: 500; }
+
+/* ==================== 消息滚动区：外层滚动到屏幕边缘，内层居中阅读列 ==================== */
+.chat-content { position: relative; display: flex; flex-direction: column; height: 100%; overflow: hidden; }
+.chat-messages { flex: 1; overflow-y: auto; width: 100%; }
+.chat-messages-inner { max-width: 720px; width: 100%; margin: 0 auto; padding: 22px 24px; box-sizing: border-box; }
+
+/* ==================== 输入框：悬浮卡片风格（无硬顶边框，柔和投影） ==================== */
+.chat-input-area { position: relative; padding: 12px 20px 18px; background: transparent; }
+/* 这条规则故意把每个相关属性都显式写一遍（哪怕跟视觉上想要的值一样）——文件里
+   还有好几处历史遗留的 .input-wrapper{...} 重复定义（align-items/padding/width 等），
+   CSS 级联是按属性各自比较优先级，不是整条规则一起比，少写一个属性就可能被前面
+   那些遗留规则"捡漏"套用，所以这里不依赖任何隐式继承 */
+.input-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0;
+  gap: 0;
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  background: var(--app-surface);
+  box-shadow: 0 6px 24px rgba(27, 26, 24, 0.08);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+/* 聚焦：蓝色边框 + 柔和蓝光晕（就算下面的流光动画降级，静态态也是蓝的不会露红） */
+.input-wrapper:focus-within { border-color: var(--app-accent); box-shadow: 0 8px 28px color-mix(in srgb, var(--app-accent) 18%, transparent); }
+
+/* 流光边框：一圈旋转的锥形渐变，用 mask 抠成只剩描边的环，聚焦时淡入并转起来。
+   --ring-angle 借助 @property 声明成 <angle> 类型，浏览器才能对它做连续插值动画，
+   否则自定义属性只能离散跳变、转不起来 */
+@property --ring-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+.input-wrapper::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(from var(--ring-angle),
+    transparent 0deg, transparent 190deg,
+    var(--app-accent-soft) 250deg, var(--app-accent) 300deg,
+    var(--app-accent-soft) 340deg, transparent 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+  z-index: 2;
+}
+.input-wrapper:focus-within::before {
+  opacity: 1;
+  animation: input-border-flow 2.6s linear infinite;
+}
+@keyframes input-border-flow {
+  to { --ring-angle: 360deg; }
+}
+.input-row { display: flex; align-items: flex-end; gap: 4px; padding: 0 12px 0 16px; }
+
+/* 附件 chip 行本体样式挪进 AttachmentChipRow.vue（输入框上方/用户气泡两处共用）；
+   这里只留输入框场景专属的外边距——chip 行离输入行要留一点上边距，气泡里不需要 */
+.input-wrapper .attach-chip-row { padding: 10px 12px 0; }
+
+/* min-height 必须 !important——历史遗留的 .chat-input{min-height:90px !important}
+   靠 !important 直接碾过任何后写的普通规则，不加 !important 这里改了也没用。
+   overflow-y 改回 auto：hidden 时内容超过 max-height(150px) 会把光标那行裁掉、
+   看不见输入，配合上面拿掉 scrollTop=0，光标现在能正常跟随滚动。
+   line-height 提到 24px，让光标（高度=行高）更饱满，不再显得"太矮"。 */
+.chat-input { flex: 1; border: none; outline: none; background: transparent; padding: 8px 0 !important; resize: none; min-height: 40px !important; max-height: 150px; line-height: 24px; font-size: 15px; color: var(--app-text); font-family: inherit; box-sizing: border-box; overflow-y: auto; -ms-overflow-style: none; scrollbar-width: none; position: relative; z-index: 1; }
+.chat-input::-webkit-scrollbar { display: none; }
+.chat-input::placeholder { color: var(--app-text-faint); font-style: italic; }
+
+.input-inner-btn { display: flex; align-items: center; justify-content: center; background: transparent; border: none; cursor: pointer; flex-shrink: 0; width: 28px; height: 28px; padding: 0; color: var(--app-text-soft); border-radius: 50%; transition: background 0.2s; z-index: 10; }
+.input-inner-btn:hover { background: rgba(0, 0, 0, 0.05); }
+.input-send-btn { width: 28px; height: 28px; background: var(--app-accent); color: #fff; }
+.input-send-btn:hover { background: var(--app-accent-hover); }
+.input-stop-btn { width: 28px; height: 28px; background: #1a1a1a; }
+.input-stop-btn:hover { background: #000000; }
+
+/* Context window 用量常驻横条本体样式在上面 .context-bar-widget 那组里；
+   这里只剩点开横条后的输入/输出 token 细分弹窗 */
+.token-usage-panel { position: absolute; top: calc(100% - 46px); right: -220px; width: 240px; background: var(--app-surface); border: 1px solid var(--app-border); border-radius: 12px; box-shadow: 0 10px 26px rgba(0, 0, 0, 0.14); padding: 12px 14px; z-index: 30; }
+.tup-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; padding: 2px 0; }
+.tup-label { color: var(--app-text-soft); }
+.tup-value { font-family: var(--app-font); font-weight: 600; color: var(--app-text); }
+
+.vision-status-toast { position: absolute; bottom: calc(100% + 12px); right: 0px; z-index: 6; padding: 3px 10px; border-radius: 999px; background: rgba(var(--app-surface-rgb), 0.9); border: 1px solid var(--app-border); font-size: 11px; color: var(--app-text-soft); display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+.vision-status-toast.error { color: #d94834; border-color: #f3c9c2; background: rgba(255, 245, 243, 0.95); }
+
+/* 回到底部：悬浮在输入框卡片正中间上方（相对 .chat-input-area 定位） */
+.scroll-to-bottom-btn {
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.9;
+}
+.scroll-to-bottom-btn:hover { background: var(--app-surface-3); transform: translateX(-50%) scale(1.05); opacity: 1; }
+
+/* ★ 修复 3：右侧工具面板，直接删掉无用的 Tabs 按钮 ★ */
+.tool-panel { flex: 0 0 320px; /* 稍微缩窄一点面板宽度 */ border-left: 1px solid var(--app-border); background: var(--app-surface); display: flex; flex-direction: column; overflow: hidden; position: relative; }
+.tool-panel-header { height: 40px; display: flex; align-items: center; justify-content: flex-end; padding: 0 16px; border-bottom: 1px solid var(--app-border); background: var(--app-surface); flex-shrink: 0; }
+.tool-panel-meta { font-size: 11px; color: var(--app-text-faint); font-family: var(--app-font); }
+.tool-panel-terminal { border-radius: 0; flex: 1; border: none; }
+/* 终端 + 片段面板水平并排：片段面板固定 260px，终端 flex:1 填满剩余 */
+.terminal-with-snippet { display: flex; flex: 1; min-height: 0; min-width: 0; }
+.terminal-with-snippet .tool-panel-terminal { min-width: 0; }
+
+/* 终端标签组 */
+.terminal-group { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.terminal-tabs-bar {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 32px;
+  padding: 0 4px;
+  background: var(--app-surface-2);
+  border-bottom: 1px solid var(--app-border);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+.terminal-tabs-bar::-webkit-scrollbar { display: none; }
+.terminal-tab-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  padding: 0 10px;
+  border: none;
+  background: transparent;
+  color: var(--app-text-faint);
+  font-size: 11.5px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.terminal-tab-item:hover { background: var(--app-surface-3); color: var(--app-text-soft); }
+.terminal-tab-item.active { background: var(--app-surface); color: var(--app-text); font-weight: 600; }
+.terminal-tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  opacity: 0;
+  transition: opacity 0.12s, background 0.12s;
+}
+.terminal-tab-item:hover .terminal-tab-close { opacity: 1; }
+.terminal-tab-close:hover { background: var(--app-border); }
+.terminal-tab-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--app-text-faint);
+  border-radius: 5px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-left: 2px;
+}
+.terminal-tab-add:hover { background: var(--app-surface-3); color: var(--app-text); }
+.terminal-tabs-spacer { flex: 1; }
+.terminal-tab-snippet-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--app-text-faint);
+  border-radius: 5px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.terminal-tab-snippet-btn:hover { background: var(--app-surface-3); color: var(--app-text); }
+.terminal-tab-snippet-btn.active { color: var(--app-accent); }
+.tool-panel-preview-empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--app-text-faint); font-size: 13px; gap: 8px; }
+
+
+/* ==================== 阶段3：右侧工具标签工作区（dockPanels/dockWidth） ==================== */
+.chat-window.expanded .tool-panel {
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  box-sizing: border-box;
+}
+.chat-window.expanded .tool-panel.tool-panel-tabbed {
+  gap: 0;
+  transition: flex-basis 0.18s ease;
+}
+/* 隐藏：收进 0 宽但不 v-if 卸载——terminal 会话/预览页面导航状态都留着，
+   随手点开任意面板按钮就原样回来（见 openDockPanel 里 dockHidden=false）。
+   ★ 覆盖 flex-basis 而不是 width：这一路径上叠了三层 `flex:` 简写声明
+   （.tool-panel 的 flex:0 0 320px、.chat-window.expanded .tool-panel 的
+   flex:0 0 auto……），flex-basis:auto 时理论上会去接 width 的值，但实测在
+   这套多层覆盖下不可靠——width 加 !important 都测不出效果，直接覆盖
+   flex-basis 才是真正决定渲染宽度的那个属性，改哪个属性就得跟已有规则用
+   同一套语言，不能指望隔着一层 auto 解析链去赢它。 */
+.tool-panel-tabbed.hidden {
+  flex-basis: 0 !important;
+  width: 0 !important;
+  min-width: 0;
+  border-left: none;
+  overflow: hidden;
+}
+/* 放大：撑到接近整个工作区宽度，再点一次收回 dockWidth 记的手动宽度 */
+.tool-panel-tabbed.expanded {
+  border-left: none !important;
+}
+/* 放大时整个工作区切换为单栏：聊天内容/侧栏/间隙全部收掉 */
+.chat-body-row.tool-expanded > .gem-sidebar {
+  display: none !important;
+}
+.chat-body-row.tool-expanded > .chat-body.studio {
+  position: static !important;
+}
+.chat-body-row.tool-expanded > .chat-body.studio > .chat-content {
+  display: none !important;
+}
+.chat-body-row.tool-expanded > .chat-body.studio {
+  gap: 0 !important;
+}
+.chat-window.expanded .chat-body-row.tool-expanded {
+  padding: 0 !important;
+  gap: 0 !important;
+}
+.chat-body-row.tool-expanded > .studio-side-col {
+  display: none !important;
+}
+/* 放大时工具面板脱离文档流，绝对定位覆盖整个 chat-body-row */
+.chat-body-row.tool-expanded > .chat-body.studio > .tool-panel-tabbed.expanded {
+  position: fixed !important;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 20000;
+  flex-basis: auto !important;
+  width: auto !important;
+  border-left: none !important;
+  border-radius: 0;
+}
+.tool-dock-resize-handle {
+  position: absolute;
+  left: -2px;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+  z-index: 5;
+}
+.tool-dock-resize-handle:hover,
+.tool-dock-resize-handle:active {
+  background: rgba(201, 100, 66, 0.25);
+}
+/* 扁平浏览器式标签条：跟 image2 参考图一个量级——细线分隔、当前标签用色块下划线
+   标出，不是"卡片托盘"那种厚重圆角盒子。颜色全部换成 var(--app-*)，之前整块是
+   硬编码的暖米色 hex，跟应用其余部分的主题系统（含暗色模式）完全脱节，切个主题
+   / 深色模式这里就是一块突兀的白底色块。 */
+.tool-dock-tabs {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px;
+  height: 36px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  background: var(--app-surface-2);
+  border-bottom: 1px solid var(--app-border);
+}
+.tool-dock-tabs::-webkit-scrollbar {
+  display: none;
+}
+.tool-dock-tab {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  height: 36px;
+  padding: 0 8px;
+  border: none;
+  background: transparent;
+  color: var(--app-text-faint);
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+.tool-dock-tab:hover {
+  color: var(--app-text-soft);
+}
+.tool-dock-tab.active {
+  color: var(--app-text);
+}
+/* 当前标签用底部色块下划线标出——不再是整块换底色的"卡片"，更接近浏览器标签 */
+.tool-dock-tab.active::after {
+  content: '';
+  position: absolute;
+  left: 6px;
+  right: 6px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--app-accent);
+}
+.tool-dock-tab-icon {
+  flex-shrink: 0;
+  opacity: 0.85;
+}
+.tool-dock-tab-label {
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+/* 关闭按钮默认不占视觉重量，只在标签本身悬浮或被激活时才淡入——
+   平时一排标签更干净，需要关的时候手一放上去就有 */
+.tool-dock-tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  color: var(--app-text-faint);
+  opacity: 0;
+  transition: background 0.15s ease, color 0.15s ease, opacity 0.15s ease;
+}
+.tool-dock-tab:hover .tool-dock-tab-close,
+.tool-dock-tab.active .tool-dock-tab-close {
+  opacity: 1;
+}
+.tool-dock-tab-close:hover {
+  background: var(--app-surface-3);
+  color: var(--app-text);
+}
+/* "+" 紧挨着最后一个标签，不推到最右——最右是 .tool-dock-global-actions
+   （放大/隐藏）的位置，两簇分开，图1 参考的就是"+"贴着标签组这个布局。 */
+.tool-dock-tab-actions {
+  position: relative;
+  flex-shrink: 0;
+}
+.tool-dock-tab-add {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--app-text-faint);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.tool-dock-tab-add:hover {
+  background: var(--app-surface-3);
+  color: var(--app-text);
+}
+/* 放大/隐藏两个按钮，紧跟在 +按钮 那簇后面，一起被 .tool-dock-tab-actions 的
+   margin-left:auto 顶到标签条最右——不用单独再算一次定位 */
+.tool-dock-global-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+  margin-left: auto;
+  padding-right: 2px;
+}
+/* 纯工具列表，不带搜索框——就 5 个自家面板，搜索属于过度设计 */
+/* Teleport 到 body 了，坐标由 dockAddMenuStyle（脚本里量按钮位置算出来的）驱动，
+   position 必须是 fixed——getBoundingClientRect 拿到的是视口坐标，absolute 会按
+   body 的文档流位置算，滚动一下就对不上了 */
+.tool-dock-add-menu {
+  position: fixed;
+  width: 200px;
+  max-height: 260px;
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  background: var(--app-surface);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+  z-index: 20001;
+}
+.tool-dock-add-shortcut {
+  font-size: 10.5px;
+  color: var(--app-text-faint);
+  font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  white-space: nowrap;
+}
+.tool-dock-add-item {
+  width: 100%;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 9px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  color: var(--app-text);
+  cursor: pointer;
+  text-align: left;
+}
+.tool-dock-add-item:hover {
+  background: var(--app-surface-3);
+}
+.tool-dock-add-item-left {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.tool-dock-add-badge {
+  font-size: 10.5px;
+  color: var(--app-text-faint);
+}
+.tool-dock-pane {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--app-surface);
+}
+.tool-dock-pane.tool-dock-pane-single {
+  flex: 1;
+  min-height: 0;
+  margin-top: 0;
+}
+.tool-dock-pane-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  background: var(--app-surface);
+}
+
+/* ==================== 阶段3：左侧钉住面板（menuPinned/menuHovering） ==================== */
+.chat-body-row {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  position: relative; /* 左下角坞(.left-corner-dock)的定位基准 */
+}
+/* 展开态下 chat-body-row 是三栏工作区容器：整体白底 + 内边距 + 栏间距。
+   间隙是白色（与中间聊天区同色）不会割裂视觉，左右卡片靠自身边框+阴影浮起来。
+   非展开的小窗气泡不受影响。 */
+.chat-window.expanded .chat-body-row {
+  background: var(--app-surface);
+  padding: 8px;
+  gap: 8px;
+  box-sizing: border-box;
+}
+/* studio 是「中栏 + 右侧工具栏」的 flex 容器，补一个栏间距 */
+.chat-window.expanded .chat-body.studio {
+  gap: 8px;
+  background: transparent;
+}
+/* ==================== Gemini 风侧栏（悬浮页面卡片感） ==================== */
+.gem-sidebar {
+  flex-shrink: 0;
+  width: 220px;                       /* 初始展开宽度已缩窄，实际由 JS 绑定覆盖 */
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--app-surface);   /* 白色面（暗色自动跟随主题） */
+  border-radius: 16px;
+  border: 1px solid var(--app-border);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.45) inset,
+    0 10px 32px rgba(0, 0, 0, 0.10),
+    0 3px 8px rgba(0, 0, 0, 0.06);
+  transition: width 0.18s ease, box-shadow 0.2s ease;
+  position: relative;
+}
+.chat-window.expanded .chat-body-row:hover .gem-sidebar {
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.45) inset,
+    0 14px 40px rgba(0, 0, 0, 0.13),
+    0 4px 10px rgba(0, 0, 0, 0.07);
+}
+/* 展开态右侧拖拽条：仿右侧 tool-panel 的 resize handle */
+.gem-sidebar-resize-handle {
+  position: absolute;
+  right: -2px;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  cursor: col-resize;
+  z-index: 5;
+}
+.gem-sidebar-resize-handle:hover,
+.gem-sidebar-resize-handle:active {
+  background: rgba(201, 100, 66, 0.25);
+}
+.gem-sidebar.collapsed {
+  width: 56px;
+  align-items: center;
+  padding-bottom: 10px;
+}
+
+/* ==================== Gemini 风格对话搜索面板 ==================== */
+.gem-search-panel {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--app-surface);
+  border-radius: 14px;
+  z-index: 10;
+  overflow: hidden;
+}
+.gem-search-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 8px 12px;
+  box-sizing: border-box;
+}
+.gem-search-input-wrap {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--app-surface);
+  border: 1px solid #e3e3e3;
+  border-radius: 999px;
+  box-sizing: border-box;
+}
+.gem-search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  outline: none;
+  font-size: 14px;
+  color: var(--app-text);
+  font-family: inherit;
+}
+.gem-search-input::placeholder { color: var(--app-text-soft); }
+.gem-search-clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: var(--app-surface-3);
+  color: var(--app-text-soft);
+  cursor: pointer;
+  padding: 0;
+}
+.gem-search-clear:hover { background: var(--app-border); color: var(--app-text); }
+.gem-search-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 12px 14px;
+  display: flex;
+  flex-direction: column;
+}
+.gem-search-section-label {
+  padding: 10px 4px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--app-text);
+}
+.gem-search-empty {
+  padding: 24px 4px;
+  font-size: 13px;
+  color: var(--app-text-soft);
+  text-align: center;
+}
+.gem-search-row {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--app-text);
+  font-size: 13.5px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease;
+  box-sizing: border-box;
+}
+.gem-search-row:hover { background: rgba(0, 0, 0, 0.06); }
+.gem-search-row.active { background: var(--app-accent-soft); color: var(--app-accent); }
+.gem-search-row-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.gem-search-row-date {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  color: var(--app-text-faint);
+  margin-left: 10px;
+}
+.gem-search-row.active .gem-search-row-date { color: var(--app-accent); opacity: 0.8; }
+
+/* 搜索面板进入/离开动画 */
+.search-panel-enter-active,
+.search-panel-leave-active {
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+.search-panel-enter-from,
+.search-panel-leave-to {
+  opacity: 0;
+  transform: translateX(-8px);
+}
+
+.gem-top {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 10px 4px;
+  width: 100%;
+  box-sizing: border-box;
+}
+.gem-sidebar.collapsed .gem-top { justify-content: center; padding: 10px 0 4px; }
+/* 折叠态：顶部默认只露出主题色 logo，hover 才原地换成折叠/展开按钮（仿 Gemini）。
+   两个按钮叠在同一位置做交叉淡入淡出，所以 gem-top 需要定位上下文 + 固定高度。 */
+.gem-sidebar.collapsed .gem-top {
+  position: relative;
+  height: 40px;
+}
+.gem-sidebar.collapsed .gem-home,
+.gem-sidebar.collapsed .gem-collapse {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  transition: opacity 0.15s ease, background 0.12s ease, color 0.12s ease;
+}
+.gem-sidebar.collapsed .gem-home {
+  color: var(--app-accent);
+}
+/* 展开态：首页 icon 也显示主题色 */
+.gem-sidebar:not(.collapsed) .gem-home {
+  color: var(--app-accent);
+}
+.gem-sidebar.collapsed .gem-home:hover {
+  background: transparent;
+}
+.gem-sidebar.collapsed .gem-top:hover .gem-home {
+  opacity: 0;
+  pointer-events: none;
+}
+.gem-sidebar.collapsed .gem-collapse {
+  opacity: 0;
+  pointer-events: none;
+}
+.gem-sidebar.collapsed .gem-top:hover .gem-collapse {
+  opacity: 1;
+  pointer-events: auto;
+}
+.gem-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--app-text-soft);
+  cursor: pointer;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.gem-icon-btn:hover { background: var(--app-accent-soft); color: var(--app-accent); }
+
+/* 折叠态：会话横条列表 */
+.gem-rail-sessions {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 0;
+  width: 100%;
+  scrollbar-width: none;
+}
+.gem-rail-sessions::-webkit-scrollbar { display: none; }
+.gem-rail-bar {
+  flex-shrink: 0;
+  width: 24px;
+  height: 5px;
+  border: none;
+  border-radius: 999px;
+  background: var(--app-border);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+.gem-rail-bar:hover { background: var(--app-text-faint); width: 30px; }
+.gem-rail-bar.active { background: var(--app-accent); width: 30px; }
+.gem-rail-bar.running { box-shadow: 0 0 0 3px var(--app-accent-soft); }
+/* 折叠态会话横条入场动画：随主题强调色展开+淡入，带错开时序 */
+@keyframes railBarIn {
+  from { opacity: 0; transform: scaleX(0.3); }
+  to   { opacity: 1; transform: scaleX(1); }
+}
+.gem-sidebar.collapsed .gem-rail-bar {
+  animation: railBarIn 0.24s ease-out both;
+}
+.gem-sidebar.collapsed .gem-rail-bar:nth-child(1) { animation-delay: 0.02s; }
+.gem-sidebar.collapsed .gem-rail-bar:nth-child(2) { animation-delay: 0.06s; }
+.gem-sidebar.collapsed .gem-rail-bar:nth-child(3) { animation-delay: 0.10s; }
+.gem-sidebar.collapsed .gem-rail-bar:nth-child(4) { animation-delay: 0.14s; }
+.gem-sidebar.collapsed .gem-rail-bar:nth-child(5) { animation-delay: 0.18s; }
+.gem-sidebar.collapsed .gem-rail-bar:nth-child(6) { animation-delay: 0.22s; }
+.gem-sidebar.collapsed .gem-rail-bar:nth-child(7) { animation-delay: 0.26s; }
+.gem-sidebar.collapsed .gem-rail-bar:nth-child(8) { animation-delay: 0.30s; }
+.gem-sidebar.collapsed .gem-rail-bar:nth-child(9) { animation-delay: 0.34s; }
+.gem-sidebar.collapsed .gem-rail-bar:nth-child(10) { animation-delay: 0.38s; }
+/* 笔记本(置顶)横条：与最近会话同为横条，用主题强调色区分 */
+.gem-rail-bar.pinned {
+  background: var(--app-accent);
+}
+.gem-rail-bar.pinned:hover { width: 30px; background: var(--app-accent-hover); }
+.gem-rail-bar.pinned.active { background: var(--app-accent); }
+.gem-rail-divider {
+  flex-shrink: 0;
+  width: 24px;
+  height: 2px;
+  background: var(--app-text-faint);   /* 置顶/最近分区分隔，明显可见 */
+  margin: 4px 0;
+  border-radius: 999px;
+}
+
+/* ==================== 折叠栏横条的悬停会话卡片 ==================== */
+/* Teleport 到 body、position:fixed，位置由 openRailCard 按横条区 rect 计算，
+   避免被折叠栏 56px 宽度和 overflow 裁切。 */
+.rail-card {
+  position: fixed;
+  z-index: 9999;
+  min-width: 220px;
+  max-width: 320px;
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.14);
+  animation: rail-card-in 0.12s ease-out;
+}
+@keyframes rail-card-in {
+  from { opacity: 0; transform: translateX(-4px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.rail-card-label {
+  padding: 6px 10px 4px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--app-text-faint);
+}
+.rail-card-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 7px 10px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--app-text);
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.rail-card-row:hover { background: rgba(0, 0, 0, 0.06); }
+.rail-card-row.active { background: var(--app-accent-soft); }
+/* 左侧标记与折叠栏里的横条一致：最近=扁横条，笔记本=细高竖条 */
+.rail-card-mark {
+  flex-shrink: 0;
+  width: 18px;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--app-text-faint);
+}
+.rail-card-mark.pinned { width: 5px; height: 14px; background: var(--app-accent); }
+.rail-card-mark.running { box-shadow: 0 0 0 3px var(--app-accent-soft); }
+.rail-card-row.active .rail-card-mark { background: var(--app-accent); }
+.rail-card-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* 折叠态底部：汉堡在设置上方，最下面是头像 */
+.gem-rail-bottom {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+.gem-rail-avatar {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--app-accent);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+  flex-shrink: 0;
+}
+img.gem-rail-avatar {
+  object-fit: cover;
+  display: block;
+}
+
+/* ==================== 顶部横条删除后的浮动工具组 + 边缘 blur ==================== */
+/* chat-content 是浮动工具组/顶部 blur 的定位上下文 */
+.chat-window.expanded .chat-body.studio .chat-content { position: relative; }
+.floating-tools {
+  position: absolute;
+  top: 10px;
+  right: 14px;
+  z-index: 6;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 2px;
+  padding: 3px 6px;
+  background: rgba(var(--app-surface-rgb), 0.78);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 999px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  /* flex-direction 本身不能过渡，但按钮都是等大方块，配合 padding/gap/圆角的
+     同步过渡，横条→竖条的重排在 250ms 内观感依然是"丝滑变形"而不是硬切。 */
+  transition: padding 0.25s ease, gap 0.25s ease, border-radius 0.25s ease, box-shadow 0.25s ease;
+}
+/* 工具窗口（终端/Diff/预览）打开后：横向胶囊变竖向胶囊，贴在聊天区右上、
+   紧邻工具面板的边缘——DOM 顺序不变，"更多"按钮本来排最后，转竖排后自然落底部。 */
+.floating-tools.vertical {
+  flex-direction: column;
+  padding: 6px 3px;
+  gap: 3px;
+  /* 竖条态贴在 tool-panel 左缘（距右 8px）；聊天区右侧用 padding-right 把滚轴整体
+     内缩到 pill 左边，二者在 x/y 上完全分离，顶部也不再重叠挡轴 */
+  right: 40px;
+  top: 10px;
+}
+
+/* 聊天内容上下边缘 blur（仿 Gemini）：
+   顶部盖在 chat-content 上沿（消息从模糊里滑出）；
+   底部 sticky 吸在滚动视口底边，正好压在输入区上沿。 */
+.msg-edge-blur {
+  pointer-events: none;
+}
+/* blur 条必须跟正文块同宽同中线：.chat-messages-inner 是 max-width:720 + margin:0 auto，
+   而 blur 原来用 left:0/right:0 铺满整个 padding box——我为了居中给 .chat-content 加了
+   padding-right 之后，它就比正文右出一大截（实测 30px），暗色下是一道很显眼的白痕。 */
+/* 改为 sticky 并挪进 .chat-messages（与底部那条完全对称）。
+   两个坑都踩过，记录一下：
+   1) 原来是 .chat-content 的 absolute 子节点，而绝对定位按 padding box 算，
+      .chat-content 的右侧补偿 padding 会把它整体推右，正文左边露空；
+   2) 试过 left:50%+translateX(-50%) 居中，结果 backdrop-filter 与 transform
+      同元素时背景采样取变换前的位置，左边直接露出一条没模糊的原图。
+   sticky 在同一个滚动容器里，自然与 .chat-messages-inner 同宽同中线，两个问题都没有。 */
+.msg-edge-blur.top {
+  position: sticky;
+  /* -24px 抵消 .chat-messages 的 padding-top:24px —— sticky 是相对父级 content box
+     吸附的，写 0 会让 blur 停在padding 下沿，而内容是穿过 padding 区滚出去的，
+     顶上就留一条 24px 没被淡化的带子。这两个值是绑定的，改 padding 记得同步。 */
+  top: -24px;
+  display: block;
+  width: 100%;
+  max-width: 720px;
+  margin: 0 auto -44px;   /* 负外边距：不占布局高度，纯覆盖在内容之上 */
+  height: 44px;
+  flex-shrink: 0;         /* 同底部那条：flex 列容器里不写会被内容压成 0 高 */
+  z-index: 5;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  background: linear-gradient(to bottom, rgba(var(--app-surface-rgb), 0.85), rgba(var(--app-surface-rgb), 0));
+  -webkit-mask-image: linear-gradient(to bottom, black 30%, transparent);
+  mask-image: linear-gradient(to bottom, black 30%, transparent);
+}
+/* sticky 元素被限制在父容器 content box 内：把 chat-messages 的底部 padding
+   移交给 inner，让 blur 条能贴到真正的滚动视口底边（否则悬空 18px） */
+.chat-window.expanded .chat-body.studio .chat-messages {
+  padding-bottom: 0;
+  box-sizing: border-box;
+  /* 不再用 padding-right 把整块内容往左挤——那会让居中的 .chat-mess-inner 偏出
+     真正的中线，跟居中的输入框对不齐（用户反馈的"内容偏左、宽度不对齐"）。
+     竖条工具组在 right:40px、滚轴在最右 ~6px，二者本就横向不重叠；改用
+     scrollbar-gutter 预留滚轴槽，内容保持居中、与输入框同一条中线。 */
+  scrollbar-gutter: stable both-edges;
+}
+/* 顶部模糊条铺满（内容已不再右缩，无需再让开 56px） */
+/* 顶部模糊条已改为按正文宽度居中，不再需要覆盖 right */
+.chat-window.expanded .chat-body.studio .chat-messages .chat-messages-inner { padding-bottom: 18px; }
+.msg-edge-blur.bottom {
+  position: sticky;
+  bottom: 0;
+  display: block;
+  height: 40px;
+  flex-shrink: 0;   /* chat-messages 是 flex 列容器，不加会被内容压成 0 高 */
+  width: 100%;
+  max-width: 720px;      /* 与 .chat-messages-inner 同宽同中线，见上方 top 的说明 */
+  margin: -40px auto 0;
+  z-index: 5;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  background: linear-gradient(to top, rgba(var(--app-surface-rgb), 0.85), rgba(var(--app-surface-rgb), 0));
+  -webkit-mask-image: linear-gradient(to top, black 30%, transparent);
+  mask-image: linear-gradient(to top, black 30%, transparent);
+}
+
+/* ==================== 阶段3：输入区三段重排（工作目录条 / 输入框 / 底部工具条） ====================
+   工作目录条自己是灰色圆角卡片（跟输入框卡片是两张独立的卡片，不套共享的外层容器）；
+   底部工具条仍然是纯浮层，不带背景 */
+.input-dir-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 14px;
+  margin-bottom: 8px;
+  /* 微渐变底 + 清晰边框 + 双层柔阴影 → 悬浮卡片质感。
+     两个色标都要走主题面变量：原来第二段写死暖灰 #f7f6f4，暗色下就成了
+     "深→浅"的刺眼渐变（用户反馈的"git 栏太丑"）。现在亮色是 白→极浅灰、
+     暗色是 面色→更深一档，两边都是同向的微渐变。 */
+  background: linear-gradient(180deg, var(--app-surface) 0%, var(--app-surface-2) 100%);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 0, 0, 0.06);
+  font-size: 12px;
+}
+.input-dir-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  overflow: hidden;
+}
+.input-dir-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--app-text-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.input-dir-divider { width: 1px; height: 12px; background: var(--app-surface-3); flex-shrink: 0; }
+.input-dir-worktree {
+  font-family: var(--app-font);
+  font-size: 11px;
+  color: var(--app-text-faint);
+}
+.input-dir-add-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+  color: var(--app-text-soft);
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: background 0.15s ease;
+}
+.input-dir-add-btn:hover { background: var(--app-surface-3); }
+/* 悬浮卡片交互反馈：hover 时阴影加深，强化"浮起来"的感觉 */
+.input-dir-bar:hover,
+.input-git-bar:hover {
+  border-color: var(--app-text-faint);
+  box-shadow: 0 1px 3px rgba(28, 25, 23, 0.08), 0 4px 12px rgba(28, 25, 23, 0.10);
+}
+
+.input-dir-menu-wrap { min-width: 0; }
+.input-dir-clickable { cursor: pointer; border-radius: 6px; padding: 2px 4px; margin: -2px -4px; transition: background 0.15s ease; }
+.input-dir-clickable:hover { background: rgba(0, 0, 0, 0.05); }
+
+/* 工作目录切换菜单：Recent 列表 + Open folder... 往上开（工作目录条本来就贴在
+   输入框上方，往下开会盖住输入框），跟 auto-menu-dropdown 同一个开合方向 */
+.workdir-menu-dropdown {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 6px 0;
+  min-width: 190px;
+  max-height: 260px;
+  overflow-y: auto;
+  z-index: 60;
+}
+.workdir-menu-label { padding: 5px 14px; font-size: 11px; color: var(--app-text-faint); }
+.workdir-menu-back { display: flex; align-items: center; gap: 2px; cursor: pointer; color: var(--app-text-soft); }
+.workdir-menu-back:hover { color: var(--app-text); }
+.workdir-menu-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 7px 14px; font-size: 12.5px; color: var(--app-text); cursor: pointer; }
+.workdir-menu-item:hover { background: var(--app-surface-3); }
+.workdir-menu-item.disabled { color: var(--app-text-faint); cursor: default; }
+.workdir-menu-item.disabled:hover { background: transparent; }
+.workdir-menu-divider { height: 1px; background: var(--app-surface-3); margin: 6px 0; }
+
+/* git 状态条：Code 模式下代替工作目录条，同一个位置、同一套卡片外观 */
+.input-git-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 7px 14px;
+  margin-bottom: 8px;
+  /* 微渐变底 + 清晰边框 + 双层柔阴影 → 悬浮卡片质感。
+     两个色标都要走主题面变量：原来第二段写死暖灰 #f7f6f4，暗色下就成了
+     "深→浅"的刺眼渐变（用户反馈的"git 栏太丑"）。现在亮色是 白→极浅灰、
+     暗色是 面色→更深一档，两边都是同向的微渐变。 */
+  background: linear-gradient(180deg, var(--app-surface) 0%, var(--app-surface-2) 100%);
+  border: 1px solid var(--app-border);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05), 0 2px 6px rgba(0, 0, 0, 0.06);
+  font-size: 12px;
+}
+.input-git-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.input-git-branch {
+  font-weight: 600;
+  color: var(--app-text);
+  font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.input-git-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.input-git-diff-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border: 1px solid var(--app-border);
+  border-radius: 999px;
+  background: var(--app-surface);
+}
+.input-git-add,
+.input-git-remove {
+  font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+  font-weight: 600;
+}
+.input-git-add { color: #12b76a; }
+.input-git-remove { color: #d94834; }
+.input-git-pr-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  border: none;
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.input-git-pr-btn:hover { background: #333333; }
+
+/* PR 按钮右侧的折叠菜单：Git Add ./Commit/Push，往下开，锚在按钮正下方 */
+.pr-menu-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 6px 0;
+  min-width: 160px;
+  z-index: 60;
+}
+.pr-menu-item { display: flex; align-items: center; gap: 8px; padding: 7px 14px; font-size: 12.5px; color: var(--app-text); cursor: pointer; }
+.pr-menu-item:hover { background: var(--app-surface-3); }
+
+.git-action-toast {
+  position: fixed;
+  bottom: 120px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(52, 51, 51, 0.75);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  z-index: 1000;
+  pointer-events: none;
+  animation: copyFadeIn 0.2s ease;
+}
+
+/* Git Commit 的毛玻璃浮层：居中悬浮在整个 chat-window 之上 */
+.commit-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2000;
+}
+.commit-modal-glass {
+  width: min(420px, 86vw);
+  background: rgba(var(--app-surface-rgb), 0.72);
+  backdrop-filter: blur(18px) saturate(180%);
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid rgba(var(--app-surface-rgb), 0.5);
+  border-radius: 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  padding: 16px;
+}
+.commit-modal-title { font-size: 12.5px; font-weight: 600; color: var(--app-text-soft); margin-bottom: 8px; }
+.commit-modal-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  /* 无滚轴、随内容撑高：靠 JS 里的 adjustCommitTextareaHeight 同步 scrollHeight，
+     这里只需要禁掉 resize 手柄和滚动条 */
+  resize: none;
+  overflow: hidden;
+  min-height: 60px;
+  max-height: 50vh;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 10px;
+  background: rgba(var(--app-surface-rgb), 0.6);
+  padding: 10px 12px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--app-text);
+  font-family: inherit;
+}
+.commit-modal-textarea:focus { outline: none; border-color: #c96442; background: rgba(var(--app-surface-rgb), 0.85); }
+.commit-modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+.commit-modal-btn {
+  padding: 6px 16px;
+  border-radius: 999px;
+  border: none;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+.commit-modal-cancel { background: rgba(0, 0, 0, 0.06); color: var(--app-text); }
+.commit-modal-cancel:hover { background: rgba(0, 0, 0, 0.1); }
+.commit-modal-confirm { background: #1a1a1a; color: #fff; }
+.commit-modal-confirm:hover { background: #333333; }
+.commit-modal-confirm:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* 工作目录条 / git 状态条 / 底部工具条都要跟输入框卡片严格对齐——input-wrapper 有
+   max-width:720px+居中，这几个兄弟元素之前漏了同一条规则，只有窗口恰好被 dock
+   面板挤窄到刚好剩 720px 宽时才会“碰巧”对齐，其余情况会跑到视口两侧 */
+.chat-window.expanded .chat-body.studio .chat-content .input-dir-bar,
+.chat-window.expanded .chat-body.studio .chat-content .input-git-bar,
+.chat-window.expanded .chat-body.studio .chat-content .input-bottom-toolbar,
+.chat-window.expanded .chat-body.studio .chat-content .approval-bar {
+  /* chat-input-area 是 flex column，光有 margin:auto（cross-axis 自动外边距）
+     反而会让 stretch 失效、退化成按内容宽度收缩；显式给 width:100% 保证跟
+     input-wrapper 一样占满可用宽度，max-width 再统一封顶到 720px */
+  width: 100%;
+  max-width: 720px;
+  margin-left: auto;
+  margin-right: auto;
+  box-sizing: border-box;
+}
+
+.input-bottom-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 6px 0;
+}
+.input-toolbar-left,
+.input-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* 按内容撑开即可：中间的用户消息导航轴(.umr)要靠 flex:1 吃掉富余空间，
+     这里再写 flex:1 1 0 就会跟它抢，把两侧按钮挤变形。
+     外层是 space-between，所以左右仍然各自贴边。 */
+  flex: 0 0 auto;
+}
+.input-toolbar-right { justify-content: flex-end; }
+.toolbar-pill-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--app-text-soft);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.toolbar-pill-btn:hover { background: var(--app-surface-3); }
+.toolbar-icon-pill-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1px solid var(--app-border);
+  background: var(--app-surface);
+  color: var(--app-text-soft);
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.toolbar-icon-pill-btn:hover { background: var(--app-surface-3); }
+
+/* 下拉是 position:absolute + left:0，必须有这个定位基准才会贴在自己的按钮上；
+   少了它就会一路上溯到 .chat-body-row，整个卡片跑到窗口左边去 */
+.toolbar-dropdown-wrap { position: relative; }
+
+
+
+/* Auto/+ 下拉都开在工具条上方——工具条贴着窗口底边，往下开会出屏 */
+.auto-menu-dropdown,
+.add-menu-dropdown {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  padding: 6px 0;
+  min-width: 130px;
+  z-index: 50;
+}
+.add-menu-dropdown { min-width: 170px; }
+.auto-menu-item { padding: 7px 14px; font-size: 12.5px; color: var(--app-text-soft); cursor: pointer; }
+.auto-menu-item:hover { background: var(--app-surface-3); }
+.auto-menu-item.active { background: var(--app-surface-3); color: var(--app-text); font-weight: 600; }
+
+/* ===== Yolo 模式按钮：开启走主题色脉冲/流光动画，关闭变灰停动画 ===== */
+.toolbar-pill-btn.mode-pill { transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; }
+.toolbar-pill-btn.mode-pill.mode-yolo {
+  color: #fff;
+  border-color: transparent;
+  background: linear-gradient(135deg, var(--app-accent), var(--app-accent-hover));
+  box-shadow: 0 0 0 0 var(--app-accent-soft);
+  animation: yolo-pulse 1.8s ease-in-out infinite;
+}
+.toolbar-pill-btn.mode-pill.mode-yolo:hover { filter: brightness(1.05); }
+.toolbar-pill-btn.mode-pill.mode-idle {
+  color: var(--app-text-faint);
+  border-color: var(--app-border);
+  background: var(--app-surface-2);
+  animation: none;
+  box-shadow: none;
+}
+@keyframes yolo-pulse {
+  0%   { box-shadow: 0 0 0 0 var(--app-accent-soft); }
+  70%  { box-shadow: 0 0 0 7px rgba(201, 100, 66, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(201, 100, 66, 0); }
+}
+
+/* ===== 工具审批轻量条（Ask 模式）=====
+   原来是全屏遮罩弹窗，太打断；改成贴在输入框正上方的一行窄条：
+   左侧倒计时数字 + 工具名/参数单行预览 + 进度条，右侧「不再问 / 拒绝 / 允许」。
+   60s 归零自动同意（倒计时逻辑在 useAgentWorkflow.js）。 */
+.approval-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+  padding: 7px 10px 7px 8px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-accent-soft);
+  border-left: 3px solid var(--app-accent);
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  animation: approval-bar-in 0.16s ease-out;
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow: hidden;
+}
+@keyframes approval-bar-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+/* 倒计时数字：主题色圆牌 */
+.approval-bar-countdown {
+  flex-shrink: 0;
+  min-width: 26px;
+  height: 26px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: var(--app-accent-soft);
+  color: var(--app-accent);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.approval-bar-main { flex: 1; min-width: 0; }
+.approval-bar-line {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.approval-bar-tool {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--app-text);
+  font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+/* 越界访问的角标：与普通危险工具审批区分开 */
+.approval-bar-badge {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--app-accent);
+  background: var(--app-accent-soft);
+  white-space: nowrap;
+}
+.approval-bar-args {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  color: var(--app-text-faint);
+  font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+/* 细进度条：随倒计时排空，1s 一跳用线性过渡抹平 */
+.approval-bar-progress {
+  margin-top: 5px;
+  height: 2px;
+  border-radius: 999px;
+  background: var(--app-border-soft);
+  overflow: hidden;
+}
+.approval-bar-progress-fill {
+  height: 100%;
+  background: var(--app-accent);
+  transition: width 1s linear;
+}
+.approval-bar-remember {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11.5px;
+  color: var(--app-text-faint);
+  cursor: pointer;
+  user-select: none;
+}
+.approval-bar-remember input { accent-color: var(--app-accent); margin: 0; }
+.approval-bar-btn {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: filter 0.15s ease, background 0.15s ease;
+}
+.approval-bar-btn.allow { color: #fff; background: var(--app-accent); }
+.approval-bar-btn.allow:hover { filter: brightness(1.06); }
+.approval-bar-btn.deny {
+  color: var(--app-text-soft);
+  background: var(--app-surface-3);
+  border-color: var(--app-border);
+}
+.approval-bar-btn.deny:hover { background: var(--app-border-soft); }
+
+/* ===== 断点续跑条 =====
+   与审批条同一套视觉语言（输入框上方轻量条），但用中性描边而非主题色左栏——
+   它是「可以做但不急」的提示，不该抢审批条那种「正等你决定」的注意力权重。 */
+.resume-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 8px;
+  padding: 7px 10px;
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
+  animation: approval-bar-in 0.16s ease-out;
+  box-sizing: border-box;
+  max-width: 100%;
+  overflow: hidden;
+}
+.resume-bar-icon { flex-shrink: 0; color: var(--app-text-faint); }
+.resume-bar-main { flex: 1; min-width: 0; }
+.resume-bar-line { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+.resume-bar-label { font-size: 12.5px; font-weight: 600; color: var(--app-text); }
+.resume-bar-round {
+  font-size: 11px;
+  color: var(--app-text-faint);
+  font-variant-numeric: tabular-nums;
+}
+/* 任务原文可能很长，单行省略——续跑条只是提醒，不是任务详情面板 */
+.resume-bar-task {
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--app-text-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.resume-bar-btn {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: filter 0.15s ease, background 0.15s ease;
+}
+.resume-bar-btn.primary { color: #fff; background: var(--app-accent); }
+.resume-bar-btn.primary:hover { filter: brightness(1.06); }
+.resume-bar-btn.ghost {
+  color: var(--app-text-soft);
+  background: var(--app-surface-3);
+  border-color: var(--app-border);
+}
+.resume-bar-btn.ghost:hover { background: var(--app-border-soft); }
+
+.add-menu-item { display: flex; align-items: center; gap: 8px; padding: 7px 14px; font-size: 12.5px; color: var(--app-text); cursor: pointer; }
+.add-menu-item:hover { background: var(--app-surface-3); }
+.add-menu-item.disabled { color: var(--app-text-faint); cursor: not-allowed; }
+.add-menu-item.disabled:hover { background: transparent; }
+
+/* 模型切换器/Context window 横条现在都在底部工具条，弹窗必须向上展开，
+   往下弹会直接冲出可视窗口底部——同时把 top/bottom/left/right 四个偏移
+   全部显式重置，不然旧版本遗留的 top/bottom 同时生效会把弹窗撑变形 */
+.input-toolbar-right .token-usage-panel {
+  top: auto;
+  bottom: calc(100% + 8px);
+  left: auto;
+  right: 0;
+}
+.input-toolbar-right .model-menu-dropdown {
+  top: auto;
+  bottom: calc(100% + 6px);
+  left: auto;
+  right: 0;
+  margin-top: 0;
+}
+
