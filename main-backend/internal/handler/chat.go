@@ -22,7 +22,7 @@ type DSMessage struct {
 	//   （空）     —— 历史遗留数据；见 taskDone 的说明，按已完成处理
 	// 存在的意义：历史里的旧任务指令如果不带状态，模型会把它们读成"还没做的待办"，
 	// 收尾时注意力一发散就回头去执行上一个任务（实际发生过）。
-	Status string `json:"status,omitempty"` // 生成该消息所用的模型标识（ds/cloud/local/***REMOVED***），仅统计用途
+	Status string `json:"status,omitempty"` // 生成该消息所用的模型标识（ds/cloud/local/ds_browser），仅统计用途
 	// WorkflowID 把同一工作流的 user/assistant 历史消息绑成一组。失败后续跑成功时
 	// 用它原位更新状态，而不是再追加一份重复任务。只用于本地持久化，不发给模型。
 	WorkflowID string `json:"-"`

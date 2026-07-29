@@ -42,9 +42,9 @@ type ToolProperty struct {
 }
 
 // 具体工具实现位于 handler：本机基础能力由 Go 内置，外部扩展可走 MCP。
-// 本文件只保留工具定义的数据结构与 ***REMOVED***标记解析辅助。
+// 本文件只保留工具定义的数据结构与 DS 浏览器标记解析辅助。
 
-// unescapeToolMarker 还原 ***REMOVED***返回的转义字符
+// unescapeToolMarker 还原 DS 浏览器返回的转义字符
 func unescapeToolMarker(raw string) string {
 	raw = strings.ReplaceAll(raw, "\\[TOOL:", "[TOOL:")
 	raw = strings.ReplaceAll(raw, "\\]", "]")

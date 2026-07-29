@@ -30,7 +30,7 @@ var previewCandidates = []previewServerCandidate{
 	{Name: "Astro 默认", Port: 4321, Category: "frontend"},
 	{Name: "main-backend API", Port: 8080, Category: "backend"},
 	{Name: "Harness (:8001)", Port: 8001, Category: "backend"},
-	{Name: "***REMOVED***代理", Port: 3000, Category: "other"},
+	{Name: "DS 浏览器代理", Port: 3000, Category: "other"},
 }
 
 // alivePreviewServers 并发探测候选端口，按候选清单原始顺序返回存活的服务。
