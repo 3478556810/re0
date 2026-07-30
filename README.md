@@ -81,6 +81,7 @@ Rescene 不是一开始就全知的。它随时间成长：
 | **🔌 零依赖 MCP 扩展** | 接入 MCP 官方 Registry。内置 Go 语言底层 Transport，无需为了运行远程 MCP 服务而在本地额外安装 Node、Python 或运行 `npx` |
 | **🛡️ AgentFS 变更审计** | 通过隔离快照、Diff 和回滚管理 AI 文件修改，设置系统级安全门阀，危险操作必须经用户批准 |
 | **🚦 多模型混合路由** | 免费模型、自定义 API Key、本地 Ollama / llama.cpp 可并存，支持失败熔断与自动切换 |
+| **🎨 多引擎设计系统** | 内置 54 个真实设计系统参考（Linear / Vercel / Stripe / Notion...），根据任务类型自动匹配设计风格——仪表盘用 Linear 极简风，落地页用 Stripe 优雅风 |
 
 ## 🔄 从生成代码到验证结果
 
