@@ -359,18 +359,4 @@ func RegisterRoutes(r *gin.Engine, sessionStore *SessionStore) {
 	r.GET("/api/comic/page/:id", HandleComicPage)
 	// 漫画图片静态服务
 	r.Static("/api/comic/image", comicOutputDir())
-	// 免费无 key 生图（Pollinations 直连，SD 在线时兜底）
-	r.POST("/api/image/generate", HandleImageGenerate)
-	r.Static("/api/image/file", imageOutputDir())
-	// Galgame 模式：AI 生立绘 + 剧本对话 + 选项分支
-	r.POST("/api/galgame/new", HandleGalgameNew)
-	r.POST("/api/galgame/advance", HandleGalgameAdvance)
-	r.POST("/api/galgame/rollback", HandleGalgameRollback)
-	r.POST("/api/galgame/portrait", HandleGalgamePortrait)
-	r.POST("/api/galgame/background", HandleGalgameBackground)
-	r.GET("/api/galgame/sessions", HandleGalgameSessions)
-	r.GET("/api/galgame/session/:id", HandleGalgameSession)
-	r.DELETE("/api/galgame/session/:id", HandleGalgameDeleteSession)
-	// Galgame 立绘/背景静态服务
-	r.Static("/api/galgame/asset", galgameOutputDir())
 }
