@@ -1023,7 +1023,7 @@ func (r *WorkflowRunner) executeCodeCalls(c *gin.Context, backends []RouterBacke
 	// yolo 模式 / 非危险且未越界 / 已设 don't-ask-again → 直接放行。
 	maybeRequestApproval := func(tc core.ToolCall) bool {
 		name := tc.Function.Name
-		if mode == "yolo" {
+		if mode == "yolo" && !ProtectedWorkspaceEnabled() {
 			// Yolo 畅通无阻：危险工具与越界访问一律不拦——但三类操作除外，
 			// 必须进下方审批，避免 agent 全自动毁掉不可挽回的东西：
 			//  1. 不可逆文件操作（删除/移动/重命名）
@@ -1051,7 +1051,7 @@ func (r *WorkflowRunner) executeCodeCalls(c *gin.Context, backends []RouterBacke
 		if outside {
 			key = outsideRememberKey(outPath)
 		}
-		if r.shouldAutoApproveKey(sessionID, key) {
+		if !ProtectedWorkspaceEnabled() && r.shouldAutoApproveKey(sessionID, key) {
 			return true
 		}
 		// 登记 + 推 SSE 事件 + 阻塞等批准。approval id 编码 workflowID::callID，
@@ -1084,6 +1084,14 @@ func (r *WorkflowRunner) executeCodeCalls(c *gin.Context, backends []RouterBacke
 	// 保证两类执行路径的行为完全一致。
 	runOne := func(i int, tc core.ToolCall) {
 		name := tc.Function.Name
+		// 受保护工作区不是“审批后越界放行”：路径越出当前项目即硬拒绝。
+		// shell 命令无法在应用层可靠静态解析其所有路径，仍会进入下方的强制审批。
+		if ProtectedWorkspaceEnabled() {
+			if outside, path := toolOutsideRoot(tc.Function.Arguments); outside {
+				results[i] = codeExecResult{output: "受保护工作区已拒绝工作目录外的访问: " + path, failed: true}
+				return
+			}
+		}
 		if !maybeRequestApproval(tc) {
 			results[i] = codeExecResult{output: "用户未批准执行 " + name + "，已跳过", failed: true}
 			return

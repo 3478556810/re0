@@ -36,11 +36,17 @@ func RegisterRoutes(r *gin.Engine, sessionStore *SessionStore) {
 	r.GET("/api/file-tree", gin.WrapH(http.HandlerFunc(FileTreeHandler)))
 	r.GET("/api/file", gin.WrapH(http.HandlerFunc(FileReadHandler)))
 	r.POST("/api/file", gin.WrapH(http.HandlerFunc(FileWriteHandler)))
+	r.POST("/api/folder", gin.WrapH(http.HandlerFunc(FileCreateFolderHandler)))
+	r.POST("/api/file/rename", gin.WrapH(http.HandlerFunc(FileRenameHandler)))
+	r.DELETE("/api/file", gin.WrapH(http.HandlerFunc(FileDeleteHandler)))
 	r.GET("/api/file/changes", gin.WrapH(http.HandlerFunc(FileChangesHandler)))
 	// agent 实际工具执行的工作目录：GET 读当前值，POST 真正切换 + 落盘持久化
 	r.GET("/api/workdir", GetWorkdir)
 	r.POST("/api/workdir/pick", PickWorkdir)
 	r.POST("/api/workdir", SetWorkdir)
+	// 受保护工作区：默认关闭；开启后 filesystem MCP 限定项目根，Agent 越界文件访问硬拒绝。
+	r.GET("/api/protected-workspace/config", HandleGetProtectedWorkspaceConfig)
+	r.PUT("/api/protected-workspace/config", HandlePutProtectedWorkspaceConfig)
 	// AgentFS：本地文件历史时间线（VS Code Timeline 风格，无 git）
 	r.POST("/api/agentfs/open", AgentFSOpen)
 	r.GET("/api/agentfs/log", AgentFSLog)
@@ -241,6 +247,10 @@ func RegisterRoutes(r *gin.Engine, sessionStore *SessionStore) {
 	// 暴露 ResceneCloud 基址给前端，供其直接发起 GitHub 登录跳转
 	r.GET("/api/auth/cloud-config", CloudAuthConfig)
 	r.GET("/api/memory/inject", HandleMemoryInject)
+	// Automatic fact extraction is opt-in; it uses a background free-model route
+	// and persists a correction ledger locally.
+	r.GET("/api/memory/automatic/settings", HandleAutomaticMemorySettings)
+	r.POST("/api/memory/automatic/settings", HandleAutomaticMemorySettingsUpdate)
 	// 新闻标题抓取代理：DS 搜索 open_page 只给 URL，前端要显示标题走这里（防 CORS）
 	r.GET("/api/fetch-title", HandleFetchTitle)
 

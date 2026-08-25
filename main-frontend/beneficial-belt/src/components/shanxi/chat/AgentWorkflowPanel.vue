@@ -26,7 +26,7 @@
           <span v-else class="flow-spacer"></span>
           <span class="flow-chevron" :class="{ open: thinkOpen[`single-${gIdx}`] ?? true }">›</span>
         </div>
-        <div v-if="thinkOpen[`single-${gIdx}`] ?? true" class="flow-detail">
+        <div v-if="thinkOpen[`single-${gIdx}`] ?? true" class="flow-detail flow-thinking-detail">
           <div class="flow-thinking-text">{{ group.block.text }}</div>
         </div>
       </div>
@@ -133,7 +133,7 @@
                   <span v-else class="flow-spacer"></span>
                   <span class="flow-chevron" :class="{ open: thinkOpen[`${gIdx}-${i}`] ?? true }">›</span>
                 </div>
-                <div v-if="thinkOpen[`${gIdx}-${i}`] ?? true" class="flow-detail">
+                <div v-if="thinkOpen[`${gIdx}-${i}`] ?? true" class="flow-detail flow-thinking-detail">
                   <div class="flow-thinking-text">{{ b.text }}</div>
                 </div>
               </div>
@@ -924,6 +924,22 @@ function toolBodyText(b) {
   padding: 0 0 2px 16px;
   border-left: 2px solid var(--app-border);
   min-width: 0;
+}
+.flow-thinking-detail {
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--app-text-faint) 45%, transparent) transparent;
+}
+.flow-thinking-detail::-webkit-scrollbar { width: 6px; }
+.flow-thinking-detail::-webkit-scrollbar-track { background: transparent; }
+.flow-thinking-detail::-webkit-scrollbar-thumb {
+  border-radius: 0;
+  background: color-mix(in srgb, var(--app-text-faint) 45%, transparent);
+}
+.flow-thinking-detail::-webkit-scrollbar-thumb:hover {
+  background: color-mix(in srgb, var(--app-text-soft) 58%, transparent);
 }
 .flow-tool-detail { margin-top: 6px; }
 
