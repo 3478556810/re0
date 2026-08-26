@@ -624,6 +624,15 @@ type mcpImageArtifact struct {
 	MimeType string
 }
 
+// mcpVideoArtifact 是视频生成工具携带的视频工件（视频体积大，不走 base64，存 URL）。
+type mcpVideoArtifact struct {
+	URL     string `json:"url"`     // 前端可播放路径（如 /api/video/file/...）
+	File    string `json:"file"`    // 本地落盘路径
+	Mime    string `json:"mime"`    // video/mp4
+	Size    string `json:"size"`    // 分辨率
+	Seconds string `json:"seconds"` // 时长
+}
+
 type mcpToolCallResult struct {
 	Text   string
 	Images []mcpImageArtifact

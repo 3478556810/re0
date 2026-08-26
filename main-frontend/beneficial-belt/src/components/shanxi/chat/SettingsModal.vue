@@ -479,6 +479,10 @@
                                 </button>
                               </div>
                               <div v-if="aggHealthLoading" class="settings-loading">加载健康度...</div>
+                              <div v-else-if="aggHealthError" class="agg-health-error">
+                                ⚠️ Rescene 桌面应用未启动或当前 Agent 连接配置错误
+                                <div class="agg-health-error-sub">请确认 Rescene 桌面应用已运行、本地聚合端口未被占用；如刚改过配置，点右上角「刷新」重试。</div>
+                              </div>
                               <template v-else>
                                 <div v-if="!aggHealthModels.length" class="settings-empty">没有可展示的模型（聚合端口不暴露任何模型时为空）。</div>
                                 <template v-else>
@@ -513,7 +517,7 @@
                                       </span>
                                     </div>
                                   </div>
-                                  <div class="agg-health-foot">探活每 30 分钟一轮（免 key / 已配 key 模型），信号格 0-4：绿=快(≤3s) 黄=中(≤8s) 红=慢(>8s) 灰=未探测。</div>
+                                  <div class="agg-health-foot">探活每日一轮（免 key 网关，零成本），信号格 0-4：绿=快(≤3s) 黄=中(≤8s) 红=慢(>8s) 灰=未探测。</div>
                                 </template>
                               </template>
                             </div>
@@ -1403,6 +1407,7 @@ const aggAutoChain = ref([])
 const aggHealthModels = ref([])
 const aggHealthLoading = ref(false)
 const aggHealthLoaded = ref(false)
+const aggHealthError = ref(false)
 const aggHealthOK = computed(() => aggHealthModels.value.filter(m => !m.disabled).length)
 const aggHealthDown = computed(() => aggHealthModels.value.filter(m => m.disabled).length)
 
@@ -1415,10 +1420,12 @@ async function loadAggHealth() {
     aggAutoChain.value = data.auto_chain || []
     aggHealthModels.value = data.models || []
     aggHealthLoaded.value = true
+    aggHealthError.value = false
   } catch (e) {
     aggAutoChain.value = []
     aggHealthModels.value = []
     aggHealthLoaded.value = false
+    aggHealthError.value = true
   } finally {
     aggHealthLoading.value = false
   }
@@ -2918,6 +2925,8 @@ onUnmounted(() => {
 .agg-health-title { font-size: 12.5px; font-weight: 600; color: var(--app-text); }
 .agg-health-summary { font-size: 10.5px; color: var(--app-text-soft); display: inline-flex; align-items: center; gap: 4px; }
 .agg-health-dot { display: inline-block; min-width: 16px; text-align: center; padding: 1px 5px; border-radius: 8px; font-size: 10px; background: var(--app-surface-2); color: var(--app-text-faint); }
+.agg-health-error { font-size: 12px; color: var(--app-danger, #e5484d); background: var(--app-surface-2); border: 1px solid var(--app-danger, #e5484d); border-radius: 8px; padding: 10px 12px; line-height: 1.5; }
+.agg-health-error-sub { font-size: 11px; color: var(--app-text-soft); margin-top: 4px; }
 .agg-health-dot.ok { background: rgba(52, 199, 89, 0.15); color: #34c759; }
 .agg-health-dot.warn.on { background: rgba(255, 69, 58, 0.15); color: #ff453a; }
 .agg-health-block { margin-bottom: 12px; }

@@ -13,6 +13,14 @@ func RegisterRoutes(r *gin.Engine, sessionStore *SessionStore) {
 	// 全局会话存储引用，供 session_search 等工具使用
 	globalSessionStore = sessionStore
 
+	// 公司 API 鉴权（2026-08-26）：写操作（评分/花钱/改标签）必须带 API Key。
+	// key 从环境变量 COMPANY_API_KEY 读；未设置 = 本地开发模式，放行（兼容桌面版）。
+	// 云端部署必须设置 COMPANY_API_KEY，否则外部可随意刷分/花钱。
+	r.POST("/api/company/reviews", companyAuthRequired(), HandleCompanyReviewSubmit)
+	r.POST("/api/company/finance/spend", companyAuthRequired(), HandleCompanyFinanceSpend)
+	r.POST("/api/company/tags", companyAuthRequired(), HandleCompanyAddTag)
+	r.DELETE("/api/company/tags/:id", companyAuthRequired(), HandleCompanyDeleteTag)
+
 	// 全局 CORS 处理
 	r.Use(func(c *gin.Context) {
 		c.Header("Access-Control-Allow-Origin", "*")
@@ -340,8 +348,6 @@ func RegisterRoutes(r *gin.Engine, sessionStore *SessionStore) {
 	r.GET("/api/company/meetings", HandleCompanyMeetings)
 	// 公司标签系统（调研方向 + 热门标签云端维护）
 	r.GET("/api/company/tags", HandleCompanyTags)
-	r.POST("/api/company/tags", HandleCompanyAddTag)
-	r.DELETE("/api/company/tags/:id", HandleCompanyDeleteTag)
 	// 迭代计划（预设：从已审批项目选，每天调研前沿技术迭代产品）
 	r.GET("/api/company/iterate", HandleCompanyIterate)
 	r.POST("/api/company/iterate", HandleCompanyIterateStart)
@@ -350,8 +356,11 @@ func RegisterRoutes(r *gin.Engine, sessionStore *SessionStore) {
 	// 用户自定义指令（考题/项目目标，立项最高优先级）
 	r.GET("/api/company/directive", HandleCompanyDirective)
 	r.PUT("/api/company/directive", HandleCompanySaveDirective)
-	// 发行评测：用户 Agent 打分评论
+	// 发行评测：真实用户评分评奖（每一个评分都来自真人）
 	r.GET("/api/company/reviews", HandleCompanyReviews)
+	r.GET("/api/company/finance", HandleCompanyFinance)
+	// 应用大厅：B站式信息流（推荐分+推广位）
+	r.GET("/api/company/market", HandleCompanyMarket)
 	// AI PPT 生成（看得见的幻灯片）
 	r.POST("/api/ai/ppt", HandleAIPPT)
 	// AI 项目工坊（写出真实可运行项目）
@@ -372,6 +381,8 @@ func RegisterRoutes(r *gin.Engine, sessionStore *SessionStore) {
 	// 免费无 key 生图（Pollinations 直连，SD 在线时兜底）
 	r.POST("/api/image/generate", HandleImageGenerate)
 	r.Static("/api/image/file", imageOutputDir())
+	// AI 生视频（Agnes 免费 API，$0/秒）产物静态服务
+	r.Static("/api/video/file", videoOutputDir())
 	// Galgame 模式：AI 生立绘 + 剧本对话 + 选项分支
 	r.POST("/api/galgame/new", HandleGalgameNew)
 	r.POST("/api/galgame/advance", HandleGalgameAdvance)
